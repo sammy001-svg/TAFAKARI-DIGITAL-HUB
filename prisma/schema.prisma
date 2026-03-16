@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum ContentStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+enum ContentType {
+  ARTICLE
+  GALLERY_IMAGE
+  PODCAST
+  VIDEO
+  DOCUMENT
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  username      String?   @unique
+  password      String
+  role          Role      @default(ADMIN)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  posts         Post[]    @relation("UserPosts")
+  approvedPosts Post[]    @relation("ApprovedBy")
+}
+
+model Post {
+  id              String        @id @default(cuid())
+  title           String
+  content         String?
+  description     String?
+  thumbnailUrl    String?
+  mediaUrl        String?
+  type            ContentType   @default(ARTICLE)
+  status          ContentStatus @default(DRAFT)
+  authorId        String
+  author          User          @relation("UserPosts", fields: [authorId], references: [id])
+  approverId      String?
+  approver        User?         @relation("ApprovedBy", fields: [approverId], references: [id])
+  rejectionNotes  String?
+  
+  // Regional Tagging
+  country         String
+  region          String
+  issueCategory   String
+  
+  // Analytics
+  viewCount       Int           @default(0)
+  downloadCount   Int           @default(0)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  comments        Comment[]
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  name        String?
+  email       String?
+  isModerated Boolean  @default(false)
+  isFlagged   Boolean  @default(false)
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
