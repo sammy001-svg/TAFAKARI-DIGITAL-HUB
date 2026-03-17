@@ -75,7 +75,7 @@ export default function VideosPage() {
         {videos.map((vid) => (
           <div key={vid.id} className="flex flex-col gap-5 group cursor-pointer">
             {/* Thumbnail */}
-            <div className="aspect-video rounded-4xl overflow-hidden relative shadow-lg group-hover:shadow-2xl transition-all duration-500 border-4 border-white group-hover:scale-[1.02]">
+            <div className="aspect-video rounded-[2.5rem] overflow-hidden relative shadow-lg group-hover:shadow-2xl transition-all duration-500 border-4 border-white group-hover:scale-[1.02]">
               {/* Real background image */}
               <Image
                 src={vid.thumbnail}

@@ -116,7 +116,7 @@ export default function GalleryPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {albums.map((album) => (
           <div key={album.id} className="group cursor-pointer" onClick={() => openAlbum(album)}>
-            <div className="aspect-4/5 rounded-4xl overflow-hidden relative mb-4 transition-all duration-500 group-hover:shadow-2xl group-hover:translate-y-[-8px] group-hover:-rotate-1">
+            <div className="aspect-4/5 rounded-[2.5rem] overflow-hidden relative mb-4 transition-all duration-500 group-hover:shadow-2xl group-hover:translate-y-[-8px] group-hover:-rotate-1">
               <Image src={album.image} alt={album.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"></div>
               {/* Photos count badge */}

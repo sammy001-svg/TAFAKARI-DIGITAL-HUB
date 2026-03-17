@@ -337,7 +337,7 @@ export default function RegionalMap({ country, categories = [] }: RegionalMapPro
     }
   }, [country, mapInstance]);
 
-  const getStyle = (feature: any) => {
+  const getStyle = (feature: import("geojson").Feature<import("geojson").Geometry> | undefined) => {
     const f = feature as GeoFeature;
     const intensity = f?.properties?.intensity || 0;
     return {
@@ -394,8 +394,9 @@ export default function RegionalMap({ country, categories = [] }: RegionalMapPro
           />
           {geoData && L && (
             <GeoJSON 
-              data={geoData as any} 
+              data={geoData as unknown as import("geojson").GeoJsonObject} 
               style={getStyle} 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               pointToLayer={(feature: any, latlng: import("leaflet").LatLng) => {
                 const f = feature as GeoFeature;
                 const intensity = f?.properties?.intensity || 0;
