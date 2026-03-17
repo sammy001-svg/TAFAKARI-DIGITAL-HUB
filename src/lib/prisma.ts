@@ -1,5 +1,6 @@
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
+// Use a more robust import that works across different bundler configurations
 import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
@@ -7,7 +8,12 @@ const prismaClientSingleton = () => {
   const pool = new Pool({ connectionString })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adapter = new PrismaPg(pool as any)
-  return new PrismaClient({ adapter })
+  try {
+    return new PrismaClient({ adapter })
+  } catch (error) {
+    console.error('Failed to initialize PrismaClient:', error)
+    throw error
+  }
 }
 
 declare global {
