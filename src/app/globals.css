@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #020617;
+
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+
+  --secondary: #020617;
+  --secondary-foreground: #ffffff;
+
+  --accent: #f8fafc;
+  --accent-foreground: #020617;
+
+  --card: #10b981; /* Primary Emerald Green for Cards */
+  --card-foreground: #ffffff; /* Contrast white for readability */
+
+  --border: rgba(255, 255, 255, 0.2);
+  --input: #f1f5f9;
+  --ring: #10b981;
+
+  --glass-bg: rgba(6, 95, 70, 0.9); /* Deep emerald glass */
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020617;
+    --foreground: #f8fafc;
+
+    --primary: #10b981;
+    --primary-foreground: #ffffff;
+
+    --secondary: #ffffff;
+    --secondary-foreground: #020617;
+
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
+
+    --card: #064e3b; /* Deeper emerald for dark cards */
+    --card-foreground: #ffffff;
+
+    --border: rgba(255, 255, 255, 0.05);
+    --input: #1e293b;
+    --ring: #10b981;
+
+    --glass-bg: rgba(1, 45, 35, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    @apply antialiased transition-colors duration-300;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-md shadow-xl;
+  }
+
+  .premium-gradient {
+    @apply bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-800;
+  }
+
+  .premium-shadow {
+    box-shadow:
+      0 10px 50px -10px rgba(0, 0, 0, 0.1),
+      0 4px 25px -5px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-primary {
+    @apply bg-[var(--primary)] text-[var(--primary-foreground)] px-6 py-3 rounded-full font-semibold transition-all hover:scale-105 hover:shadow-lg active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-[var(--secondary)] text-[var(--secondary-foreground)] px-6 py-3 rounded-full font-semibold transition-all hover:scale-105 hover:shadow-lg active:scale-95;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-card: var(--card);
+  --color-border: var(--border);
+}
