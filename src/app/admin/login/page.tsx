@@ -85,7 +85,7 @@ export default function AdminLogin() {
         ))}
 
         {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/80 via-slate-900/60 to-black/80 z-10" />
+        <div className="absolute inset-0 bg-linear-to-br from-emerald-950/80 via-slate-900/60 to-black/80 z-10" />
 
         {/* Content */}
         <div className="relative z-20 flex flex-col justify-between p-14 w-full">

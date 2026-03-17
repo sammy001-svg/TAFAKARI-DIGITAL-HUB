@@ -428,7 +428,7 @@ export default function RegionalMap({ country, categories = [] }: RegionalMapPro
           )}
 
           {/* Action Controls */}
-          <div className="absolute bottom-6 right-6 z-[1000] flex flex-col gap-2">
+          <div className="absolute bottom-6 right-6 z-1000 flex flex-col gap-2">
              <button className="glass w-10 h-10 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-500 hover:text-white transition-all shadow-lg font-black">+</button>
              <button className="glass w-10 h-10 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-500 hover:text-white transition-all shadow-lg font-black">-</button>
           </div>
@@ -464,15 +464,15 @@ export default function RegionalMap({ country, categories = [] }: RegionalMapPro
           <h4 className="font-outfit font-bold text-xs uppercase tracking-widest text-emerald-800 mb-4 opacity-60">Issue Intensity</h4>
           <div className="flex flex-col gap-3 text-[11px] font-black">
             <div className="flex items-center gap-3 text-emerald-900/80">
-              <span className="w-3 h-3 rounded-full bg-emerald-800 flex-shrink-0 shadow-[0_0_8px_rgba(6,95,70,0.5)]"></span>
+              <span className="w-3 h-3 rounded-full bg-emerald-800 shrink-0 shadow-[0_0_8px_rgba(6,95,70,0.5)]"></span>
               <span className="uppercase">Critical Zone (8–10)</span>
             </div>
             <div className="flex items-center gap-3 text-emerald-700/80">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+              <span className="w-3 h-3 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
               <span className="uppercase">Moderate Focus (5–7)</span>
             </div>
             <div className="flex items-center gap-3 text-emerald-600">
-              <span className="w-3 h-3 rounded-full bg-emerald-300 flex-shrink-0"></span>
+              <span className="w-3 h-3 rounded-full bg-emerald-300 shrink-0"></span>
               <span className="uppercase">Localized Incident (1–4)</span>
             </div>
           </div>

@@ -75,7 +75,7 @@ export default function VideosPage() {
         {videos.map((vid) => (
           <div key={vid.id} className="flex flex-col gap-5 group cursor-pointer">
             {/* Thumbnail */}
-            <div className="aspect-video rounded-[2rem] overflow-hidden relative shadow-lg group-hover:shadow-2xl transition-all duration-500 border-4 border-white group-hover:scale-[1.02]">
+            <div className="aspect-video rounded-4xl overflow-hidden relative shadow-lg group-hover:shadow-2xl transition-all duration-500 border-4 border-white group-hover:scale-[1.02]">
               {/* Real background image */}
               <Image
                 src={vid.thumbnail}
@@ -88,11 +88,11 @@ export default function VideosPage() {
               <div className={`absolute inset-0 ${vid.overlay} transition-opacity duration-500`}></div>
 
               {/* Dark vignette bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent"></div>
 
               {/* Play button */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-18 h-18 w-[4.5rem] h-[4.5rem] bg-white/25 backdrop-blur-xl border-2 border-white/50 rounded-full flex items-center justify-center text-white text-3xl shadow-2xl group-hover:scale-110 group-hover:bg-white/40 transition-all duration-300 pl-1">
+                <div className="w-18 h-18 bg-white/25 backdrop-blur-xl border-2 border-white/50 rounded-full flex items-center justify-center text-white text-3xl shadow-2xl group-hover:scale-110 group-hover:bg-white/40 transition-all duration-300 pl-1">
                   ▶
                 </div>
               </div>
@@ -137,7 +137,7 @@ export default function VideosPage() {
                   {vid.views} views • 2 weeks ago
                 </p>
               </div>
-              <button className="text-slate-400 hover:text-emerald-600 transition-colors flex-shrink-0 ml-4 mt-1">
+              <button className="text-slate-400 hover:text-emerald-600 transition-colors shrink-0 ml-4 mt-1">
                 <span className="text-xl">⋮</span>
               </button>
             </div>

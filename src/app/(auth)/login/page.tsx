@@ -82,7 +82,7 @@ export default function LoginPage() {
             <Image src={s.image} alt={s.title} fill className="object-cover" priority={i === 0} />
           </div>
         ))}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/80 via-slate-900/60 to-black/80 z-10" />
+        <div className="absolute inset-0 bg-linear-to-br from-emerald-950/80 via-slate-900/60 to-black/80 z-10" />
         <div className="relative z-20 flex flex-col justify-between p-14 w-full">
           <Link href="/" className="flex items-center gap-3 w-fit">
             <div className="w-10 h-10 premium-gradient rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">T</div>

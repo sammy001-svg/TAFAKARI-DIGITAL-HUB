@@ -116,9 +116,9 @@ export default function GalleryPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {albums.map((album) => (
           <div key={album.id} className="group cursor-pointer" onClick={() => openAlbum(album)}>
-            <div className="aspect-[4/5] rounded-[2rem] overflow-hidden relative mb-4 transition-all duration-500 group-hover:shadow-2xl group-hover:translate-y-[-8px] group-hover:rotate-[-1deg]">
+            <div className="aspect-4/5 rounded-4xl overflow-hidden relative mb-4 transition-all duration-500 group-hover:shadow-2xl group-hover:translate-y-[-8px] group-hover:-rotate-1">
               <Image src={album.image} alt={album.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"></div>
               {/* Photos count badge */}
               <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">
                 {album.images.length} Photos
@@ -171,11 +171,11 @@ export default function GalleryPage() {
           onClick={closeAlbum}
         >
           <div
-            className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto"
+            className="relative bg-white rounded-4xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-xl rounded-t-[2rem] px-8 py-6 border-b border-slate-100 flex items-start justify-between">
+            <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-xl rounded-t-4xl px-8 py-6 border-b border-slate-100 flex items-start justify-between">
               <div>
                 <span className="text-[10px] uppercase tracking-widest font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
                   {selectedAlbum.country} • {selectedAlbum.region}
@@ -185,7 +185,7 @@ export default function GalleryPage() {
               </div>
               <button
                 onClick={closeAlbum}
-                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-slate-500 transition-colors font-bold text-lg flex-shrink-0 mt-1"
+                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-slate-500 transition-colors font-bold text-lg shrink-0 mt-1"
               >
                 ✕
               </button>
@@ -196,11 +196,11 @@ export default function GalleryPage() {
               {selectedAlbum.images.map((img, i) => (
                 <div
                   key={i}
-                  className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-zoom-in shadow-md hover:shadow-xl transition-all duration-300"
+                  className="group relative aspect-4/3 rounded-2xl overflow-hidden cursor-zoom-in shadow-md hover:shadow-xl transition-all duration-300"
                   onClick={() => openLightbox(i)}
                 >
                   <Image src={img.src} alt={img.caption} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                     <span className="text-white text-xs font-semibold">{img.caption}</span>
                   </div>
                   <div className="absolute top-3 right-3 w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -216,7 +216,7 @@ export default function GalleryPage() {
       {/* ── Full-screen Lightbox ── */}
       {selectedAlbum && lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+          className="fixed inset-0 z-60 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
           onClick={closeLightbox}
         >
           {/* Close */}
