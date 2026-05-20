@@ -13,11 +13,12 @@ export default function AdminSidebar() {
     { name: "Overview", href: "/admin/dashboard", icon: "📊" },
     { name: "My Content", href: "/admin/content", icon: "📝" },
     { name: "Create New", href: "/admin/content/new", icon: "➕" },
-    { name: "Media Library", href: "/admin/media", icon: "🖼️" },
+    { name: "My Profile", href: "/admin/profile", icon: "👤" },
   ];
 
   const superAdminItems = [
     { name: "Approval Queue", href: "/admin/super/approvals", icon: "⚖️" },
+    { name: "Comment Moderation", href: "/admin/super/moderation", icon: "🛡️" },
     { name: "User Management", href: "/admin/super/users", icon: "👥" },
     { name: "Platform Settings", href: "/admin/super/settings", icon: "⚙️" },
     { name: "Audit Logs", href: "/admin/super/logs", icon: "📜" },
