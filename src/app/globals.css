@@ -63,11 +63,11 @@
 
 @layer components {
   .glass {
-    @apply bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-md shadow-xl;
+    @apply bg-(--glass-bg) border border-(--glass-border) backdrop-blur-md shadow-xl;
   }
 
   .premium-gradient {
-    @apply bg-[var(--primary)];
+    @apply bg-primary;
   }
 
   .premium-shadow {
@@ -77,11 +77,11 @@
   }
 
   .btn-primary {
-    @apply bg-[var(--primary)] text-[var(--primary-foreground)] px-6 py-3 rounded-full font-semibold transition-all hover:scale-105 hover:shadow-lg active:scale-95;
+    @apply bg-primary text-(--primary-foreground) px-6 py-3 rounded-full font-semibold transition-all hover:scale-105 hover:shadow-lg active:scale-95;
   }
 
   .btn-secondary {
-    @apply bg-[var(--secondary)] text-[var(--secondary-foreground)] px-6 py-3 rounded-full font-semibold transition-all hover:scale-105 hover:shadow-lg active:scale-95;
+    @apply bg-secondary text-(--secondary-foreground) px-6 py-3 rounded-full font-semibold transition-all hover:scale-105 hover:shadow-lg active:scale-95;
   }
 }
 

@@ -32,7 +32,7 @@ export default function CommentModerationPage() {
              <div key={comment.id} className="p-8 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col md:flex-row gap-8 items-start relative overflow-hidden group">
                <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
                
-               <div className="flex-grow">
+               <div className="grow">
                  <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-bold text-xs text-slate-400 shadow-sm">
                       {comment.author[0]}
@@ -49,8 +49,8 @@ export default function CommentModerationPage() {
                </div>
 
                <div className="flex gap-2 w-full md:w-fit mt-4 md:mt-0">
-                  <button className="flex-grow md:flex-none px-6 py-3 bg-white text-primary border border-primary/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">Accept</button>
-                  <button className="flex-grow md:flex-none px-6 py-3 bg-rose-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">Delete</button>
+                  <button className="grow md:flex-none px-6 py-3 bg-white text-primary border border-primary/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">Accept</button>
+                  <button className="grow md:flex-none px-6 py-3 bg-rose-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">Delete</button>
                </div>
              </div>
            ))}
@@ -58,7 +58,7 @@ export default function CommentModerationPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-         <div className="glass p-8 rounded-[2rem] border-white/20 bg-slate-50">
+         <div className="glass p-8 rounded-4xl border-white/20 bg-slate-50">
             <h4 className="font-outfit font-bold text-lg mb-4">Moderation Stats</h4>
             <div className="space-y-4">
                <div className="flex justify-between items-center text-sm">
@@ -76,7 +76,7 @@ export default function CommentModerationPage() {
             </div>
          </div>
          
-         <div className="glass p-8 rounded-[2rem] border-white/20 bg-[#1F0404] text-white">
+         <div className="glass p-8 rounded-4xl border-white/20 bg-[#1F0404] text-white">
             <h4 className="font-outfit font-bold text-lg mb-4 text-secondary">Moderation AI</h4>
             <p className="text-white/70 text-xs leading-relaxed mb-6"> Our multilingual AI filter currently supports English, Swahili, Amharic, and French with an accuracy rate of 94.2%.</p>
             <button className="w-full bg-primary text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary/80 transition-colors shadow-lg shadow-black/20">Open API Settings</button>

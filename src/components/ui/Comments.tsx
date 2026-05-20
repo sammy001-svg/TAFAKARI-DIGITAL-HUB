@@ -36,7 +36,7 @@ export default function Comments() {
       <form onSubmit={handleSubmit} className="mb-16">
         <textarea 
           rows={3} 
-          className="w-full glass p-6 rounded-[2rem] border-white/60 bg-white/50 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium text-sm mb-4"
+          className="w-full glass p-6 rounded-4xl border-white/60 bg-white/50 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium text-sm mb-4"
           placeholder="Join the discussion... (Comments are moderated for safety)"
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
@@ -53,7 +53,7 @@ export default function Comments() {
             <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-lg font-bold text-slate-300 shadow-inner group-hover:bg-[#1F0404]/5 group-hover:text-primary transition-colors">
               {comment.name[0]}
             </div>
-            <div className="flex-grow">
+            <div className="grow">
               <div className="flex items-center gap-3 mb-2">
                 <span className="font-bold text-slate-900">{comment.name}</span>
                 <span className="text-[10px] uppercase tracking-widest font-black text-slate-300 italic">{comment.date}</span>

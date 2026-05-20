@@ -20,7 +20,7 @@ export default function DocumentsPage() {
       </div>
 
       <div className="flex flex-col gap-4 mb-12 lg:flex-row">
-        <div className="flex-grow glass px-6 py-4 rounded-2xl flex items-center gap-4 border-secondary/20 text-white">
+        <div className="grow glass px-6 py-4 rounded-2xl flex items-center gap-4 border-secondary/20 text-white">
           <span className="text-secondary">🔍</span>
           <input 
             type="text" 
@@ -43,7 +43,7 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      <div className="glass rounded-[2rem] overflow-hidden border-secondary/20 shadow-2xl">
+      <div className="glass rounded-4xl overflow-hidden border-secondary/20 shadow-2xl">
         <table className="w-full text-left">
           <thead>
             <tr className="bg-primary/20 border-b border-secondary/20">

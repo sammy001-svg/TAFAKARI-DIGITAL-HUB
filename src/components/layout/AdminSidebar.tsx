@@ -35,7 +35,7 @@ export default function AdminSidebar() {
         </div>
       </div>
 
-      <nav className="flex-grow space-y-8">
+      <nav className="grow space-y-8">
         <div className="space-y-1">
           <h4 className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Core Actions</h4>
           {navItems.map((item) => {

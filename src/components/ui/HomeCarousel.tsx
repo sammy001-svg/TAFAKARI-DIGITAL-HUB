@@ -116,7 +116,7 @@ export default function HomeCarousel() {
               }`}
             >
               <div 
-                className={`h-full bg-secondary transition-all duration-[6500ms] ease-linear rounded-full ${
+                className={`h-full bg-secondary transition-all duration-6500 ease-linear rounded-full ${
                   index === current ? "w-full" : "w-0"
                 }`}
               />

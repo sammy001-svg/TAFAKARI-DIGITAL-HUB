@@ -42,7 +42,7 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 glass p-8 rounded-[2rem] border-white/50 bg-white">
+        <div className="lg:col-span-2 glass p-8 rounded-4xl border-white/50 bg-white">
           <div className="flex justify-between items-center mb-8">
             <h3 className="font-outfit font-bold text-xl">Recent Activity</h3>
             <button className="text-xs font-bold text-primary hover:underline">View All</button>
@@ -51,7 +51,7 @@ export default async function AdminDashboard() {
              {[1, 2, 3, 4].map((i) => (
                <div key={i} className="flex items-center gap-4 group">
                  <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-lg group-hover:bg-[#1F0404]/5 transition-colors">📄</div>
-                 <div className="flex-grow">
+                 <div className="grow">
                    <h4 className="text-sm font-bold text-slate-800">New article submitted for review</h4>
                    <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tighter">Kenya • Security • 2 hours ago</p>
                  </div>
@@ -61,7 +61,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="glass p-8 rounded-[2rem] border-white/50 bg-slate-950 text-white flex flex-col justify-between">
+        <div className="glass p-8 rounded-4xl border-white/50 bg-slate-950 text-white flex flex-col justify-between">
            <div>
             <h3 className="font-outfit font-bold text-xl mb-4">Quick Tip</h3>
             <p className="text-slate-400 text-sm leading-relaxed">

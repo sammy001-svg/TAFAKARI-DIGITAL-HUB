@@ -20,11 +20,11 @@ export default function PodcastsPage() {
 
       <div className="grid grid-cols-1 gap-6">
         {episodes.map((ep) => (
-          <div key={ep.id} className="glass p-8 rounded-[2rem] border-secondary/20 flex flex-col md:flex-row items-center gap-8 transition-all hover:border-white/40 hover:shadow-2xl text-white">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl shadow-lg flex-shrink-0 cursor-pointer hover:scale-110 transition-transform border border-white/20">
+          <div key={ep.id} className="glass p-8 rounded-4xl border-secondary/20 flex flex-col md:flex-row items-center gap-8 transition-all hover:border-white/40 hover:shadow-2xl text-white">
+            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl shadow-lg shrink-0 cursor-pointer hover:scale-110 transition-transform border border-white/20">
               ▶
             </div>
-            <div className="flex-grow text-center md:text-left">
+            <div className="grow text-center md:text-left">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary mb-2 block">{ep.series}</span>
               <h3 className="font-outfit font-bold text-xl mb-1 text-white">{ep.title}</h3>
               <p className="text-xs text-slate-300">{ep.date} • {ep.duration}</p>
