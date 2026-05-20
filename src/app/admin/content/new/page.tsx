@@ -36,7 +36,7 @@ export default function CreateContentPage() {
         </div>
         <div className="flex gap-2">
           {[1, 2, 3].map((s) => (
-            <div key={s} className={`h-1.5 w-12 rounded-full transition-all ${s <= step ? "bg-indigo-600" : "bg-slate-200"}`}></div>
+            <div key={s} className={`h-1.5 w-12 rounded-full transition-all ${s <= step ? "bg-primary" : "bg-slate-200"}`}></div>
           ))}
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function CreateContentPage() {
               <input 
                 type="text" 
                 required
-                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium"
                 placeholder="Enter a descriptive title..."
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
@@ -58,9 +58,11 @@ export default function CreateContentPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Content Type</label>
+                <label htmlFor="contentType" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Content Type</label>
                 <select 
-                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  id="contentType"
+                  title="Content Type"
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium"
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
                 >
@@ -91,7 +93,7 @@ export default function CreateContentPage() {
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Short Description</label>
               <textarea 
                 rows={3}
-                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium"
                 placeholder="Give a brief summary for previews..."
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -102,7 +104,7 @@ export default function CreateContentPage() {
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Main Content Body</label>
               <textarea 
                 rows={8}
-                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium font-inter"
+                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium font-inter"
                 placeholder="Write your article or add media transcript here..."
                 value={formData.content}
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
@@ -111,7 +113,7 @@ export default function CreateContentPage() {
 
             <div className="flex gap-4 pt-6">
               <button type="button" onClick={prevStep} className="glass py-4 px-8 rounded-full font-bold text-sm">Go Back</button>
-              <button type="button" onClick={nextStep} className="btn-primary flex-grow py-4 text-sm font-bold">Tag Regions & Finish &rarr;</button>
+              <button type="button" onClick={nextStep} className="btn-primary grow py-4 text-sm font-bold">Tag Regions & Finish &rarr;</button>
             </div>
           </div>
         )}
@@ -120,9 +122,11 @@ export default function CreateContentPage() {
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Target Country</label>
+                <label htmlFor="targetCountry" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Target Country</label>
                 <select 
-                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  id="targetCountry"
+                  title="Target Country"
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium"
                   value={formData.country}
                   onChange={(e) => setFormData({...formData, country: e.target.value})}
                 >
@@ -132,9 +136,11 @@ export default function CreateContentPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Issue Category</label>
+                <label htmlFor="issueCategory" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Issue Category</label>
                 <select 
-                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                  id="issueCategory"
+                  title="Issue Category"
+                  className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium"
                   value={formData.issueCategory}
                   onChange={(e) => setFormData({...formData, issueCategory: e.target.value})}
                 >
@@ -152,7 +158,7 @@ export default function CreateContentPage() {
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Specific Region / County</label>
               <input 
                 type="text" 
-                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-indigo-500 transition-all font-medium"
+                className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-slate-900 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 focus:outline-none transition-all font-medium"
                 placeholder="e.g., Nairobi, Addis Ababa, North Kivu..."
                 value={formData.region}
                 onChange={(e) => setFormData({...formData, region: e.target.value})}
@@ -166,7 +172,7 @@ export default function CreateContentPage() {
                </p>
                <div className="flex gap-4">
                   <button type="button" onClick={prevStep} className="glass py-4 px-8 rounded-full font-bold text-sm">Go Back</button>
-                  <button type="submit" className="flex-grow btn-primary py-4 text-sm font-bold shadow-indigo-500/40">Submit for Approval</button>
+                  <button type="submit" className="grow btn-primary py-4 text-sm font-bold shadow-black/10">Submit for Approval</button>
                </div>
             </div>
           </div>

@@ -9,10 +9,9 @@ const videos = [
     duration: "5:30",
     views: "1.2k",
     thumbnail: "/gallery_featured_1.png",
-    // Deep slate/emerald overlay for governance authority
-    overlay: "bg-gradient-to-br from-emerald-900/60 via-slate-900/30 to-emerald-800/60",
-    accent: "text-emerald-300",
-    badge: "bg-emerald-600",
+    overlay: "bg-black/45",
+    accent: "text-secondary",
+    badge: "bg-primary",
   },
   {
     id: 2,
@@ -22,10 +21,9 @@ const videos = [
     duration: "12:15",
     views: "850",
     thumbnail: "/gallery_mombasa.png",
-    // Warm amber/orange overlay for economic/coastal energy
-    overlay: "bg-gradient-to-br from-orange-900/50 via-transparent to-amber-800/50",
-    accent: "text-amber-300",
-    badge: "bg-amber-600",
+    overlay: "bg-black/45",
+    accent: "text-secondary",
+    badge: "bg-secondary",
   },
   {
     id: 3,
@@ -35,10 +33,9 @@ const videos = [
     duration: "8:45",
     views: "2.1k",
     thumbnail: "/gallery_addis.png",
-    // Earthy green overlay for agriculture/climate
-    overlay: "bg-gradient-to-br from-lime-900/50 via-transparent to-green-800/60",
-    accent: "text-lime-300",
-    badge: "bg-lime-600",
+    overlay: "bg-black/45",
+    accent: "text-secondary",
+    badge: "bg-primary",
   },
   {
     id: 4,
@@ -48,10 +45,9 @@ const videos = [
     duration: "15:20",
     views: "3.4k",
     thumbnail: "/gallery_goma.png",
-    // Deep red/dark overlay for security/conflict gravity
-    overlay: "bg-gradient-to-br from-red-900/60 via-slate-900/30 to-rose-800/50",
-    accent: "text-red-300",
-    badge: "bg-red-600",
+    overlay: "bg-black/45",
+    accent: "text-secondary",
+    badge: "bg-primary",
   },
 ];
 
@@ -60,8 +56,8 @@ export default function VideosPage() {
     <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Header */}
       <div className="flex flex-col gap-4 mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/10 text-emerald-400 text-sm font-semibold w-fit border border-emerald-500/20">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-sm font-semibold w-fit border border-secondary/20">
+          <span className="flex h-2 w-2 rounded-full bg-secondary"></span>
           Visual Reports
         </div>
         <h1 className="font-outfit text-4xl md:text-5xl font-bold">Video Library</h1>
@@ -84,11 +80,8 @@ export default function VideosPage() {
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
 
-              {/* Category color-grade overlay */}
+              {/* Category color-grade overlay (No Gradients) */}
               <div className={`absolute inset-0 ${vid.overlay} transition-opacity duration-500`}></div>
-
-              {/* Dark vignette bottom */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent"></div>
 
               {/* Play button */}
               <div className="absolute inset-0 flex items-center justify-center">
@@ -97,17 +90,12 @@ export default function VideosPage() {
                 </div>
               </div>
 
-              {/* Scan-lines texture effect (subtle) */}
-              <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, black 2px, black 4px)" }}>
-              </div>
-
               {/* Bottom left: country + category badges */}
               <div className="absolute bottom-5 left-5 flex gap-2 flex-wrap">
                 <span className="glass px-3 py-1 rounded-full text-[10px] font-bold text-white border-white/20 uppercase tracking-widest backdrop-blur-md">
                   {vid.country}
                 </span>
-                <span className={`${vid.badge} px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest`}>
+                <span className={`${vid.badge} px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest border border-white/10`}>
                   {vid.category}
                 </span>
               </div>
@@ -130,14 +118,14 @@ export default function VideosPage() {
             {/* Info row */}
             <div className="flex justify-between items-start px-1">
               <div>
-                <h3 className="font-outfit font-bold text-xl group-hover:text-emerald-600 transition-colors uppercase tracking-tight leading-snug">
+                <h3 className="font-outfit font-bold text-xl group-hover:text-secondary transition-colors uppercase tracking-tight leading-snug">
                   {vid.title}
                 </h3>
                 <p className="text-sm text-slate-400 mt-1.5 font-medium italic">
                   {vid.views} views • 2 weeks ago
                 </p>
               </div>
-              <button className="text-slate-400 hover:text-emerald-600 transition-colors shrink-0 ml-4 mt-1">
+              <button className="text-slate-400 hover:text-secondary transition-colors shrink-0 ml-4 mt-1">
                 <span className="text-xl">⋮</span>
               </button>
             </div>

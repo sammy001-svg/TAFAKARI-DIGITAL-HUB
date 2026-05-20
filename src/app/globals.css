@@ -4,24 +4,24 @@
   --background: #ffffff;
   --foreground: #020617;
 
-  --primary: #10b981;
+  --primary: #9A1415;
   --primary-foreground: #ffffff;
 
-  --secondary: #020617;
-  --secondary-foreground: #ffffff;
+  --secondary: #D99F51;
+  --secondary-foreground: #020617;
 
   --accent: #f8fafc;
   --accent-foreground: #020617;
 
-  --card: #10b981; /* Primary Emerald Green for Cards */
-  --card-foreground: #ffffff; /* Contrast white for readability */
+  --card: #9A1415; /* Main burgundy red for cards */
+  --card-foreground: #ffffff;
 
   --border: rgba(255, 255, 255, 0.2);
   --input: #f1f5f9;
-  --ring: #10b981;
+  --ring: #9A1415;
 
-  --glass-bg: rgba(6, 95, 70, 0.9); /* Deep emerald glass */
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(154, 20, 21, 0.95); /* Deep burgundy glass */
+  --glass-border: rgba(255, 255, 255, 0.15);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -29,23 +29,23 @@
     --background: #020617;
     --foreground: #f8fafc;
 
-    --primary: #10b981;
+    --primary: #9A1415;
     --primary-foreground: #ffffff;
 
-    --secondary: #ffffff;
+    --secondary: #D99F51;
     --secondary-foreground: #020617;
 
     --accent: #1e293b;
     --accent-foreground: #f8fafc;
 
-    --card: #064e3b; /* Deeper emerald for dark cards */
+    --card: #6B0A0C; /* Deeper burgundy for dark cards */
     --card-foreground: #ffffff;
 
     --border: rgba(255, 255, 255, 0.05);
     --input: #1e293b;
-    --ring: #10b981;
+    --ring: #9A1415;
 
-    --glass-bg: rgba(1, 45, 35, 0.9);
+    --glass-bg: rgba(74, 8, 9, 0.95);
     --glass-border: rgba(255, 255, 255, 0.1);
   }
 }
@@ -67,7 +67,7 @@
   }
 
   .premium-gradient {
-    @apply bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-800;
+    @apply bg-[var(--primary)];
   }
 
   .premium-shadow {

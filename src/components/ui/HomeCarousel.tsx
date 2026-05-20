@@ -58,9 +58,8 @@ export default function HomeCarousel() {
             index === current ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 pointer-events-none z-0"
           }`}
         >
-          {/* Immersive Overlay Gradient */}
-          <div className="absolute inset-0 bg-emerald-950/40 z-10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/90 via-transparent to-emerald-950/20 z-10" />
+          {/* Solid Dark Overlay (No Gradients) */}
+          <div className="absolute inset-0 bg-black/60 z-10" />
           
           <Image
             src={slide.image}
@@ -72,8 +71,8 @@ export default function HomeCarousel() {
 
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6">
             <div className="max-w-4xl space-y-6">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 backdrop-blur-md text-emerald-300 text-xs font-bold uppercase tracking-widest border border-emerald-400/20 animate-in fade-in slide-in-from-top-4 duration-1000">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/20 backdrop-blur-md text-secondary text-xs font-bold uppercase tracking-widest border border-secondary/30 animate-in fade-in slide-in-from-top-4 duration-1000">
+                <span className="flex h-2 w-2 rounded-full bg-secondary animate-pulse"></span>
                 Tafakari Regional Hub
               </div>
               
@@ -81,14 +80,14 @@ export default function HomeCarousel() {
                 {slide.title}
               </h1>
               
-              <p className="text-emerald-50/90 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-500">
+              <p className="text-slate-200 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed drop-shadow-md animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-500">
                 {slide.description}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-700">
                 <a
                   href={slide.link}
-                  className="bg-emerald-500 text-white px-10 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-2xl hover:scale-105 hover:translate-y-[-2px] border border-emerald-400/30"
+                  className="bg-primary text-white px-10 py-5 rounded-full font-black text-sm uppercase tracking-widest hover:opacity-90 transition-all shadow-2xl hover:scale-105 hover:translate-y-[-2px] border border-secondary/30"
                 >
                   {slide.linkText}
                 </a>
@@ -111,12 +110,13 @@ export default function HomeCarousel() {
             <button
               key={index}
               onClick={() => setCurrent(index)}
+              aria-label={`Go to slide ${index + 1}`}
               className={`h-1.5 rounded-full transition-all duration-500 overflow-hidden ${
                 index === current ? "w-12 bg-white" : "w-3 bg-white/30 hover:bg-white/50"
               }`}
             >
               <div 
-                className={`h-full bg-emerald-400 transition-all duration-[6500ms] ease-linear rounded-full ${
+                className={`h-full bg-secondary transition-all duration-[6500ms] ease-linear rounded-full ${
                   index === current ? "w-full" : "w-0"
                 }`}
               />

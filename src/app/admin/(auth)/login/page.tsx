@@ -84,14 +84,14 @@ export default function AdminLogin() {
           </div>
         ))}
 
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-br from-emerald-950/80 via-slate-900/60 to-black/80 z-10" />
+        {/* Solid dark overlay */}
+        <div className="absolute inset-0 bg-[#1F0404]/80 z-10" />
 
         {/* Content */}
         <div className="relative z-20 flex flex-col justify-between p-14 w-full">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 w-fit">
-            <div className="w-10 h-10 premium-gradient rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
               T
             </div>
             <span className="font-outfit font-bold text-xl tracking-tight text-white">Tafakari Hub</span>
@@ -99,7 +99,7 @@ export default function AdminLogin() {
 
           {/* Slide text */}
           <div className="space-y-5 max-w-lg">
-            <span className="inline-block text-[11px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-3 py-1 rounded-full">
+            <span className="inline-block text-[11px] font-black uppercase tracking-widest text-secondary bg-secondary/15 border border-secondary/20 px-3 py-1 rounded-full">
               {current.tag}
             </span>
             <h2 className="font-outfit font-black text-4xl xl:text-5xl text-white leading-tight">
@@ -112,9 +112,10 @@ export default function AdminLogin() {
               {CAROUSEL_SLIDES.map((_, i) => (
                 <button
                   key={i}
+                  aria-label={`Go to slide ${i + 1}`}
                   onClick={() => setSlide(i)}
                   className={`h-1.5 rounded-full transition-all duration-500 ${
-                    i === slide ? "w-8 bg-emerald-400" : "w-2 bg-white/30 hover:bg-white/50"
+                    i === slide ? "w-8 bg-secondary" : "w-2 bg-white/30 hover:bg-white/50"
                   }`}
                 />
               ))}
@@ -131,13 +132,13 @@ export default function AdminLogin() {
       {/* ── RIGHT: Login Form ── */}
       <div className="flex flex-1 items-center justify-center px-6 py-12 bg-slate-950 relative overflow-hidden">
         {/* Subtle background glow */}
-        <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-emerald-600/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-secondary/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-[-20%] left-[-20%] w-[60%] h-[60%] bg-white/5 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="w-full max-w-md z-10">
           {/* Mobile logo (shown on small screens) */}
           <div className="flex items-center gap-2 mb-10 lg:hidden">
-            <div className="w-9 h-9 premium-gradient rounded-xl flex items-center justify-center text-white font-bold">T</div>
+            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white font-bold">T</div>
             <span className="font-outfit font-bold text-lg text-white">Tafakari Hub</span>
           </div>
 
@@ -164,7 +165,7 @@ export default function AdminLogin() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 transition-all"
                 placeholder="Enter your identifier"
               />
             </div>
@@ -174,7 +175,7 @@ export default function AdminLogin() {
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
                   Password
                 </label>
-                <span className="text-xs text-emerald-400 hover:text-emerald-300 cursor-pointer transition-colors">
+                <span className="text-xs text-secondary hover:text-secondary/80 cursor-pointer transition-colors">
                   Forgot password?
                 </span>
               </div>
@@ -183,7 +184,7 @@ export default function AdminLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary/50 transition-all"
                 placeholder="••••••••••••"
               />
             </div>
@@ -209,7 +210,7 @@ export default function AdminLogin() {
             <p className="text-slate-600 text-xs">
               Protected by regional access controls. All login events are audited.
             </p>
-            <Link href="/" className="text-slate-500 text-sm hover:text-emerald-400 transition-colors inline-block">
+            <Link href="/" className="text-slate-500 text-sm hover:text-secondary transition-colors inline-block">
               ← Return to Public Portal
             </Link>
           </div>

@@ -24,9 +24,9 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <aside className="w-72 h-screen sticky top-0 bg-emerald-950 border-r border-white/10 flex flex-col p-6 overflow-y-auto">
+    <aside className="w-72 h-screen sticky top-0 bg-[#1F0404] border-r border-white/10 flex flex-col p-6 overflow-y-auto">
       <div className="flex items-center gap-3 mb-12 px-2">
-        <div className="w-10 h-10 premium-gradient rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg border border-secondary/20">
           T
         </div>
         <div className="flex flex-col">
@@ -46,7 +46,7 @@ export default function AdminSidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   isActive 
-                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20" 
+                    ? "bg-primary text-white shadow-lg shadow-primary/20" 
                     : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >

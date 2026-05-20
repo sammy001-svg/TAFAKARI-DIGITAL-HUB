@@ -5,13 +5,13 @@ export default function AboutPage() {
     <div className="max-w-7xl mx-auto px-6 py-20">
       {/* Header */}
       <div className="flex flex-col gap-4 mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/10 text-emerald-600 text-sm font-semibold w-fit border border-emerald-500/20">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-sm font-semibold w-fit border border-secondary/20">
+          <span className="flex h-2 w-2 rounded-full bg-secondary animate-pulse" />
           Our Story
         </div>
         <h1 className="font-outfit text-4xl md:text-6xl font-bold leading-tight">
           About{" "}
-          <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-emerald-400">
+          <span className="text-primary">
             Tafakari Hub
           </span>
         </h1>
@@ -43,19 +43,19 @@ export default function AboutPage() {
         ].map((card) => (
           <div
             key={card.title}
-            className="glass p-8 rounded-3xl border-emerald-400/30 text-white flex flex-col gap-4"
+            className="glass p-8 rounded-3xl border-secondary/20 text-white flex flex-col gap-4"
           >
             <div className="text-4xl">{card.icon}</div>
             <h3 className="font-outfit font-bold text-xl">{card.title}</h3>
-            <p className="text-emerald-50/70 text-sm leading-relaxed">{card.text}</p>
+            <p className="text-white/70 text-sm leading-relaxed">{card.text}</p>
           </div>
         ))}
       </div>
 
       {/* Countries Section */}
-      <div className="rounded-[3rem] bg-emerald-950 p-12 md:p-16 text-white text-center">
+      <div className="rounded-[3rem] bg-[#3B0708] p-12 md:p-16 text-white text-center">
         <h2 className="font-outfit text-3xl md:text-4xl font-bold mb-4">Our Geographic Focus</h2>
-        <p className="text-emerald-100/60 max-w-2xl mx-auto mb-12 leading-relaxed">
+        <p className="text-slate-300 max-w-2xl mx-auto mb-12 leading-relaxed">
           We operate across three strategic nations in East and Central Africa, providing structured
           information sharing and data visualization.
         </p>
@@ -63,7 +63,7 @@ export default function AboutPage() {
           {["🇰🇪 Kenya", "🇪🇹 Ethiopia", "🇨🇩 DR Congo"].map((country) => (
             <div
               key={country}
-              className="px-8 py-4 bg-emerald-800/50 rounded-2xl font-outfit font-bold text-lg border border-emerald-700/30"
+              className="px-8 py-4 bg-primary/20 rounded-2xl font-outfit font-bold text-lg border border-secondary/20"
             >
               {country}
             </div>
@@ -72,7 +72,7 @@ export default function AboutPage() {
         <div className="mt-12">
           <Link
             href="/contact"
-            className="inline-block bg-emerald-500 text-white px-10 py-4 rounded-full font-bold hover:bg-emerald-400 transition-all shadow-xl"
+            className="inline-block bg-primary text-white px-10 py-4 rounded-full font-bold hover:bg-primary/90 transition-all shadow-xl border border-secondary/20"
           >
             Connect with Us →
           </Link>

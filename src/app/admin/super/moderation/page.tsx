@@ -16,7 +16,7 @@ export default function CommentModerationPage() {
         <div className="flex gap-4">
            <div className="flex flex-col items-end">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Auto-Moderation</span>
-              <div className="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full text-[10px] font-black uppercase ring-4 ring-emerald-50">Active</div>
+              <div className="flex items-center gap-2 bg-secondary/15 text-secondary px-3 py-1.5 rounded-full text-[10px] font-black uppercase ring-4 ring-secondary/5">Active</div>
            </div>
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function CommentModerationPage() {
                </div>
 
                <div className="flex gap-2 w-full md:w-fit mt-4 md:mt-0">
-                  <button className="flex-grow md:flex-none px-6 py-3 bg-white text-emerald-600 border border-emerald-200 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-sm">Accept</button>
+                  <button className="flex-grow md:flex-none px-6 py-3 bg-white text-primary border border-primary/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">Accept</button>
                   <button className="flex-grow md:flex-none px-6 py-3 bg-rose-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">Delete</button>
                </div>
              </div>
@@ -67,19 +67,19 @@ export default function CommentModerationPage() {
                </div>
                <div className="flex justify-between items-center text-sm border-y border-slate-200 py-4">
                   <span className="text-slate-500 font-medium">Manually Reviewed</span>
-                  <span className="font-black text-indigo-600">84</span>
+                  <span className="font-black text-primary">84</span>
                </div>
                <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-500 font-medium">Reported by Users</span>
-                  <span className="font-black text-amber-600">12</span>
+                  <span className="font-black text-secondary">12</span>
                </div>
             </div>
          </div>
          
-         <div className="glass p-8 rounded-[2rem] border-white/20 bg-emerald-950 text-white">
-            <h4 className="font-outfit font-bold text-lg mb-4 text-emerald-400">Moderation AI</h4>
-            <p className="text-emerald-100/70 text-xs leading-relaxed mb-6"> Our multilingual AI filter currently supports English, Swahili, Amharic, and French with an accuracy rate of 94.2%.</p>
-            <button className="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-900/40">Open API Settings</button>
+         <div className="glass p-8 rounded-[2rem] border-white/20 bg-[#1F0404] text-white">
+            <h4 className="font-outfit font-bold text-lg mb-4 text-secondary">Moderation AI</h4>
+            <p className="text-white/70 text-xs leading-relaxed mb-6"> Our multilingual AI filter currently supports English, Swahili, Amharic, and French with an accuracy rate of 94.2%.</p>
+            <button className="w-full bg-primary text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary/80 transition-colors shadow-lg shadow-black/20">Open API Settings</button>
          </div>
       </div>
     </div>

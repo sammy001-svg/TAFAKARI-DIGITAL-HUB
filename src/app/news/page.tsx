@@ -27,12 +27,12 @@ export default function NewsPage() {
                </div>
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-2 block">{art.topic}</span>
-              <h3 className="font-outfit font-bold text-2xl group-hover:text-indigo-600 transition-colors leading-snug mb-3">{art.title}</h3>
+              <span className="text-[10px] font-black uppercase tracking-widest text-secondary mb-2 block">{art.topic}</span>
+              <h3 className="font-outfit font-bold text-2xl group-hover:text-primary transition-colors leading-snug mb-3">{art.title}</h3>
               <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3">{art.snippet}</p>
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{art.date}</span>
-                <span className="text-indigo-600 font-black text-xs uppercase tracking-widest group-hover:translate-x-2 transition-transform">&rarr; Read Full</span>
+                <span className="text-primary font-black text-xs uppercase tracking-widest group-hover:translate-x-2 transition-transform">&rarr; Read Full</span>
               </div>
             </div>
           </div>

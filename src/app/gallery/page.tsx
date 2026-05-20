@@ -102,8 +102,8 @@ export default function GalleryPage() {
     <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Header */}
       <div className="flex flex-col gap-4 mb-16">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/10 text-emerald-400 text-sm font-semibold w-fit border border-emerald-500/20">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/15 text-secondary text-sm font-semibold w-fit border border-secondary/20">
+          <span className="flex h-2 w-2 rounded-full bg-secondary animate-pulse"></span>
           Visual Stories
         </div>
         <h1 className="font-outfit text-4xl md:text-5xl font-bold">Photo Gallery</h1>
@@ -118,39 +118,39 @@ export default function GalleryPage() {
           <div key={album.id} className="group cursor-pointer" onClick={() => openAlbum(album)}>
             <div className="aspect-4/5 rounded-[2.5rem] overflow-hidden relative mb-4 transition-all duration-500 group-hover:shadow-2xl group-hover:translate-y-[-8px] group-hover:-rotate-1">
               <Image src={album.image} alt={album.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-black/45"></div>
               {/* Photos count badge */}
               <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">
                 {album.images.length} Photos
               </div>
               {/* Click hint */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="bg-emerald-600/90 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-full shadow-xl">
+                <div className="bg-primary/95 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded-full shadow-xl">
                   View Album →
                 </div>
               </div>
               {/* Country badge */}
               <div className="absolute bottom-6 left-6">
-                <div className="glass px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest w-fit text-white backdrop-blur-xl border-white/30 bg-emerald-600/30">
+                <div className="glass px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest w-fit text-white backdrop-blur-xl border-white/30 bg-primary/30">
                   {album.country}
                 </div>
               </div>
             </div>
-            <h3 className="font-outfit font-bold text-lg group-hover:text-emerald-600 transition-colors">{album.title}</h3>
+            <h3 className="font-outfit font-bold text-lg group-hover:text-secondary transition-colors">{album.title}</h3>
             <p className="text-xs text-slate-400 font-medium italic mt-1">{album.region} • {album.date}</p>
           </div>
         ))}
       </div>
 
       {/* Featured Large View */}
-      <div className="mt-24 p-12 glass rounded-[3rem] border-emerald-400/30 flex flex-col lg:flex-row gap-12 items-center text-white">
+      <div className="mt-24 p-12 glass rounded-[3rem] border-secondary/20 flex flex-col lg:flex-row gap-12 items-center text-white">
         <div className="flex-1 space-y-6">
           <h2 className="font-outfit text-3xl font-bold">Latest field documentation</h2>
-          <p className="text-emerald-50/70 leading-relaxed">
+          <p className="text-white/75 leading-relaxed">
             Our teams routinely document sub-national developments to provide visual context to our data-driven reports.
             All items are vetted for accuracy and local sensitivity before publication.
           </p>
-          <button className="bg-white text-emerald-900 px-8 py-3 rounded-xl font-bold hover:bg-emerald-50 transition-all shadow-xl">
+          <button className="bg-white text-primary px-8 py-3 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-xl">
             View Featured Album
           </button>
         </div>
@@ -177,7 +177,7 @@ export default function GalleryPage() {
             {/* Modal Header */}
             <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-xl rounded-t-4xl px-8 py-6 border-b border-slate-100 flex items-start justify-between">
               <div>
-                <span className="text-[10px] uppercase tracking-widest font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                <span className="text-[10px] uppercase tracking-widest font-black text-primary bg-secondary/15 px-3 py-1 rounded-full">
                   {selectedAlbum.country} • {selectedAlbum.region}
                 </span>
                 <h2 className="font-outfit font-black text-2xl mt-2 text-slate-900">{selectedAlbum.title}</h2>
@@ -200,7 +200,7 @@ export default function GalleryPage() {
                   onClick={() => openLightbox(i)}
                 >
                   <Image src={img.src} alt={img.caption} fill className="object-cover transition-transform duration-500 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                     <span className="text-white text-xs font-semibold">{img.caption}</span>
                   </div>
                   <div className="absolute top-3 right-3 w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -230,7 +230,7 @@ export default function GalleryPage() {
           {/* Prev */}
           <button
             onClick={(e) => { e.stopPropagation(); prevImage(); }}
-            className="absolute left-6 w-12 h-12 rounded-full bg-white/10 hover:bg-emerald-600 flex items-center justify-center text-white font-bold text-xl transition-colors z-10"
+            className="absolute left-6 w-12 h-12 rounded-full bg-white/10 hover:bg-primary flex items-center justify-center text-white font-bold text-xl transition-colors z-10"
           >
             ‹
           </button>
@@ -248,7 +248,7 @@ export default function GalleryPage() {
           {/* Next */}
           <button
             onClick={(e) => { e.stopPropagation(); nextImage(); }}
-            className="absolute right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-emerald-600 flex items-center justify-center text-white font-bold text-xl transition-colors z-10"
+            className="absolute right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-primary flex items-center justify-center text-white font-bold text-xl transition-colors z-10"
           >
             ›
           </button>
@@ -264,8 +264,9 @@ export default function GalleryPage() {
             {selectedAlbum.images.map((img, i) => (
               <button
                 key={i}
+                aria-label={`View image ${i + 1}: ${img.caption}`}
                 onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
-                className={`relative w-12 h-9 rounded-lg overflow-hidden border-2 transition-all ${i === lightboxIndex ? "border-emerald-500 scale-110 shadow-lg" : "border-white/20 hover:border-white/50"}`}
+                className={`relative w-12 h-9 rounded-lg overflow-hidden border-2 transition-all ${i === lightboxIndex ? "border-secondary scale-110 shadow-lg" : "border-white/20 hover:border-white/50"}`}
               >
                 <Image src={img.src} alt={img.caption} fill className="object-cover" />
               </button>
