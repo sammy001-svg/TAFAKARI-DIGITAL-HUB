@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -10,6 +11,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") ?? "";
+  const isLoginPage = pathname === "/admin/login";
+
+  // Skip auth check and sidebar for the login page to avoid infinite redirect loop
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
   const session = await getServerSession(authOptions);
   if (!session) redirect("/admin/login");
 

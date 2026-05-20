@@ -5,7 +5,10 @@
       "Bash(xargs grep:*)",
       "Bash(npx prisma:*)",
       "Bash(npm run:*)",
-      "Bash(node -e ':*)"
+      "Bash(node -e ':*)",
+      "Read(//tmp/**)",
+      "Bash(curl -s http://localhost:3001/api/setup)",
+      "Bash(curl -s http://localhost:3000/api/setup)"
     ]
   }
 }
