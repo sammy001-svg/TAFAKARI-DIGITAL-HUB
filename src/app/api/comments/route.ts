@@ -37,3 +37,31 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ data: { comments, total, page, limit } });
 }
+
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+
+  const { content, name, email, postId } = body;
+
+  if (!content?.trim() || !postId) {
+    return NextResponse.json({ error: "content and postId are required" }, { status: 400 });
+  }
+
+  const post = await prisma.post.findFirst({
+    where: { id: postId, status: "PUBLISHED" },
+    select: { id: true },
+  });
+  if (!post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+
+  const comment = await prisma.comment.create({
+    data: {
+      content: content.trim().slice(0, 2000),
+      name: name?.trim().slice(0, 100) ?? null,
+      email: email?.trim().slice(0, 200) ?? null,
+      postId,
+    },
+  });
+
+  return NextResponse.json({ data: comment }, { status: 201 });
+}

@@ -86,6 +86,23 @@ CREATE TABLE IF NOT EXISTS `Comment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================
+-- TABLE: ContactMessage
+-- =============================================================
+CREATE TABLE IF NOT EXISTS `ContactMessage` (
+  `id`        VARCHAR(191) NOT NULL,
+  `fullName`  VARCHAR(191) NOT NULL,
+  `email`     VARCHAR(191) NOT NULL,
+  `country`   VARCHAR(191) NOT NULL,
+  `interest`  VARCHAR(191) NOT NULL,
+  `message`   TEXT         NOT NULL,
+  `isRead`    TINYINT(1)   NOT NULL DEFAULT 0,
+  `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+  PRIMARY KEY (`id`),
+  INDEX `ContactMessage_isRead_idx` (`isRead`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================
 -- ADMIN ACCOUNTS
 -- Passwords hashed with bcrypt (cost 12) — DO NOT MODIFY the
 -- hash values below; they must match exactly.

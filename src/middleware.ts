@@ -5,12 +5,17 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
-
-    // Stamp the current path onto every response so server layouts can read it
     const res = NextResponse.next();
+
+    // Stamp x-pathname on every /admin response so layouts can detect the current route
     res.headers.set("x-pathname", pathname);
 
-    // Block non-super-admins from super-admin routes
+    // Redirect already-authenticated users away from the login page
+    if (pathname === "/admin/login" && token) {
+      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+    }
+
+    // Guard super-admin-only routes
     if (pathname.startsWith("/admin/super") && token?.role !== "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     }
@@ -19,19 +24,17 @@ export default withAuth(
   },
   {
     callbacks: {
-      // NextAuth redirects to pages.signIn when this returns false
-      authorized: ({ token }) => !!token,
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
+        // Always allow the login page — prevents the redirect loop
+        if (pathname === "/admin/login") return true;
+        return !!token;
+      },
     },
   }
 );
 
 export const config = {
-  // Protect every /admin/* route EXCEPT the login page itself
-  matcher: [
-    "/admin/dashboard/:path*",
-    "/admin/content/:path*",
-    "/admin/profile/:path*",
-    "/admin/super/:path*",
-    "/admin/media/:path*",
-  ],
+  // Cover ALL /admin routes so x-pathname is always set for the admin layout
+  matcher: ["/admin/:path*"],
 };

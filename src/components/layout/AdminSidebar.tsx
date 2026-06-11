@@ -19,9 +19,8 @@ export default function AdminSidebar() {
   const superAdminItems = [
     { name: "Approval Queue", href: "/admin/super/approvals", icon: "⚖️" },
     { name: "Comment Moderation", href: "/admin/super/moderation", icon: "🛡️" },
+    { name: "Contact Inbox", href: "/admin/super/messages", icon: "📬" },
     { name: "User Management", href: "/admin/super/users", icon: "👥" },
-    { name: "Platform Settings", href: "/admin/super/settings", icon: "⚙️" },
-    { name: "Audit Logs", href: "/admin/super/logs", icon: "📜" },
   ];
 
   return (
@@ -93,7 +92,8 @@ export default function AdminSidebar() {
           </div>
         </div>
         
-        <button 
+        <button
+          type="button"
           onClick={() => signOut({ callbackUrl: "/" })}
           className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/5 transition-all flex items-center gap-3"
         >

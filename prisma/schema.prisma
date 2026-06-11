@@ -89,3 +89,16 @@ model Comment {
   @@index([postId])
   @@index([isFlagged])
 }
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  fullName  String
+  email     String
+  country   String
+  interest  String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+}
