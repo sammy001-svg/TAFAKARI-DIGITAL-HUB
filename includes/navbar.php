@@ -35,6 +35,10 @@
 
     <!-- Desktop CTA -->
     <div class="hidden md:flex items-center gap-3">
+      <!-- Search icon button -->
+      <a href="/search" aria-label="Search" class="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all" title="Search">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </a>
       <a href="/admin/login" class="text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full transition-all hover:brightness-110" style="background:#D99F51">
         Login
       </a>
@@ -56,6 +60,10 @@
     <?php foreach ($navLinks as [$href, $label]): ?>
       <a href="<?= h($href) ?>" class="text-base font-semibold hover:text-secondary transition-colors py-1.5 block"><?= h($label) ?></a>
     <?php endforeach; ?>
+    <a href="/search" class="text-base font-semibold hover:text-secondary transition-colors py-1.5 flex items-center gap-2">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Search
+    </a>
     <div class="flex gap-3 mt-3 pt-3 border-t border-white/20">
       <a href="/admin/login" class="flex-1 text-center text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full" style="background:#D99F51">Login</a>
       <a href="/contact" class="flex-1 text-center text-sm font-bold text-white px-4 py-2.5 rounded-full border-2 border-white/40">Get Involved</a>

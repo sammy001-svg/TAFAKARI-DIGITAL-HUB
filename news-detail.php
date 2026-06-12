@@ -96,9 +96,15 @@ $twitterUrl  = 'https://twitter.com/intent/tweet?url=' . rawurlencode($shareUrl)
 $facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . rawurlencode($shareUrl);
 $linkedinUrl = 'https://www.linkedin.com/sharing/share-offsite/?url=' . rawurlencode($shareUrl);
 
-$pageTitle     = h($post['title']) . ' | Tafakari Digital Hub';
+$pageTitle     = strip_tags($post['title']) . ' | Tafakari Digital Hub';
 $pageDesc      = $post['description'] ?? '';
+$pageImage     = $post['thumbnailUrl'] ?? '';
+$pageType      = 'article';
+$pagePublished = $post['createdAt'] ?? '';
+$pageModified  = $post['updatedAt'] ?? $post['createdAt'] ?? '';
+$pageKeywords  = implode(', ', array_filter([$post['country'] ?? '', $post['issueCategory'] ?? '', $post['region'] ?? '', 'Africa', 'research']));
 $authorDisplay = $post['authorName'] ?? $post['authorUsername'] ?? 'Staff';
+$pageAuthor    = $authorDisplay;
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
