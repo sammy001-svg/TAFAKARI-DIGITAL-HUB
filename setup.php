@@ -152,7 +152,7 @@ $pageTitle = 'Setup | Tafakari Digital Hub';
           <p class="font-bold mb-2">Connection error:</p>
           <code class="text-xs"><?= h($dbError) ?></code>
         </div>
-        <p class="text-sm text-slate-600">Check your <code class="bg-slate-100 px-1 rounded">.env</code> file and ensure the database exists in cPanel → MySQL Databases.</p>
+        <p class="text-sm text-slate-600">Open <code class="bg-slate-100 px-1 rounded">config.php</code> and fill in your real cPanel database credentials (DB_NAME, DB_USER, DB_PASS), then ensure the database exists in cPanel &rarr; MySQL Databases.</p>
       <?php else: ?>
         <p class="text-sm text-slate-500">Connected to <strong><?= h(DB_NAME) ?></strong> on <strong><?= h(DB_HOST) ?></strong>.</p>
       <?php endif; ?>
