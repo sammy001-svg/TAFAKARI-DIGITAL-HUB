@@ -219,6 +219,7 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
     /* ── Focus ring for accessibility ── */
     :focus-visible { outline: 2px solid #E7952A; outline-offset: 2px; }
   </style>
+<?php if (!empty($extraHead)) echo "\n" . $extraHead . "\n"; ?>
   <!-- ── PWA prompt + service worker ──────────────────────────────────────── -->
   <script src="/public/pwa.js" defer></script>
 </head>
