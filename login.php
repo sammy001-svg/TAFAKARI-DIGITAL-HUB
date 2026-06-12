@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/functions.php';
@@ -95,14 +95,15 @@ $pageTitle = 'Login | Tafakari Digital Hub';
     <div class="w-full max-w-md">
 
       <!-- Logo -->
-      <div class="flex items-center gap-3 mb-12">
-        <img src="/public/crtp-logo.png" alt="CRTP"
-             class="h-12 w-auto object-contain brightness-0 invert"
-             onerror="this.style.display='none';document.getElementById('login-logo-fb').style.display='flex'">
-        <div id="login-logo-fb" class="w-12 h-12 rounded-2xl items-center justify-center text-white font-black text-2xl shadow-lg" style="background:#750B25;display:none">T</div>
-        <div>
-          <div class="font-outfit font-bold text-xl text-white leading-tight">Admin Portal</div>
-          <div class="text-[10px] text-slate-500 uppercase tracking-widest">Tafakari Digital Hub</div>
+      <div class="mb-10 flex flex-col items-center gap-4">
+        <div class="bg-white rounded-2xl px-5 py-3 shadow-xl">
+          <img src="/public/crtp-logo.png"
+               alt="Centre For Research Training and Publications — CRTP"
+               class="h-12 w-auto object-contain block"
+               onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-xl text-[#750B25] tracking-tight px-2\'>CRTP</span>'">
+        </div>
+        <div class="text-center">
+          <div class="font-outfit font-bold text-base text-white/80 uppercase tracking-[.18em] text-[11px]">Admin Portal</div>
         </div>
       </div>
 

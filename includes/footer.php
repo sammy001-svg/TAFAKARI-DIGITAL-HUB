@@ -1,4 +1,4 @@
-﻿<footer class="text-white/80 py-16 px-6 mt-20 border-t border-yellow-800/30" style="background:#2A0515">
+<footer class="text-white/80 py-16 px-6 mt-20 border-t border-yellow-800/30" style="background:#2A0515">
   <div class="max-w-7xl mx-auto">
 
     <!-- Top row: logo + columns -->
@@ -7,17 +7,15 @@
       <!-- Brand column -->
       <div class="col-span-1">
         <!-- CRTP Logo -->
-        <div class="flex items-center gap-3 mb-5">
-          <img src="/public/crtp-logo.png" alt="CRTP Logo"
-               class="h-12 w-auto object-contain brightness-0 invert"
-               onerror="this.style.display='none';document.getElementById('footer-logo-fallback').style.display='flex'">
-          <div id="footer-logo-fallback" class="items-center gap-2" style="display:none">
-            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-lg" style="background:#750B25">C</div>
-          </div>
-          <div class="flex flex-col leading-tight">
-            <span class="font-outfit font-bold text-lg tracking-tight text-white">Tafakari Hub</span>
-            <span class="text-[9px] uppercase tracking-[.14em] text-white/40 font-semibold">CRTP Platform</span>
-          </div>
+        <div class="mb-5">
+          <a href="/" aria-label="CRTP — Home">
+            <div class="inline-block bg-white rounded-xl px-3 py-2 shadow-sm">
+              <img src="/public/crtp-logo.png"
+                   alt="Centre For Research Training and Publications — CRTP"
+                   class="h-10 w-auto object-contain block"
+                   onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-lg text-[#750B25] tracking-tight px-1\'>CRTP</span>'">
+            </div>
+          </a>
         </div>
         <p class="text-sm leading-relaxed text-slate-300">
           A multi-user digital platform serving as a centralized knowledge repository,

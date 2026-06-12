@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $_u       = current_user();
 $_role    = $_u['role'] ?? '';
 $_name    = $_u['name'] ?? $_u['username'] ?? 'User';
@@ -75,13 +75,16 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
        style="background:#0D0102;border-right:1px solid rgba(255,255,255,.055)">
 
   <!-- Branding -->
-  <div class="flex items-center gap-3 px-4 h-[60px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
-    <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-xs shrink-0"
-         style="background:#750B25;box-shadow:0 0 0 2px rgba(117,11,37,.35)">T</div>
-    <div class="min-w-0">
-      <p class="font-outfit font-bold text-[13px] text-white leading-none truncate">Tafakari Hub</p>
-      <p class="text-[9px] font-bold uppercase tracking-[.14em] mt-0.5" style="color:rgba(231,149,42,.55)">Admin Portal</p>
-    </div>
+  <div class="flex items-center justify-between px-4 h-[64px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
+    <a href="/" aria-label="CRTP — Home" class="flex items-center">
+      <div class="bg-white rounded-lg px-2 py-1.5 shadow-sm">
+        <img src="/public/crtp-logo.png"
+             alt="CRTP"
+             class="h-7 w-auto object-contain block"
+             onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-sm text-[#750B25] px-0.5\'>CRTP</span>'">
+      </div>
+    </a>
+    <span class="text-[9px] font-black uppercase tracking-[.16em] ml-2 shrink-0" style="color:rgba(231,149,42,.55)">Admin Portal</span>
   </div>
 
   <!-- Navigation -->

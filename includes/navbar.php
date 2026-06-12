@@ -1,18 +1,13 @@
-﻿<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
+<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
   <div class="flex items-center justify-between max-w-7xl mx-auto w-full">
 
-    <!-- Logo: CRTP logo image, falls back to styled wordmark -->
-    <a href="/" class="flex items-center gap-3 no-underline text-white">
-      <img src="/public/crtp-logo.png" alt="CRTP Logo"
-           class="h-11 w-auto object-contain"
-           onerror="this.style.display='none';document.getElementById('nav-logo-fallback').style.display='flex'">
-      <div id="nav-logo-fallback" class="items-center gap-2" style="display:none">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg border border-white/20" style="background:rgba(255,255,255,.1)">C</div>
-        <span class="font-outfit font-bold text-xl tracking-tight hidden md:block">CRTP</span>
-      </div>
-      <div class="hidden md:flex flex-col leading-tight ml-1">
-        <span class="font-outfit font-bold text-[1.1rem] tracking-tight leading-none">Tafakari Hub</span>
-        <span class="text-[9px] uppercase tracking-[.15em] text-white/50 font-semibold mt-0.5">CRTP Knowledge Platform</span>
+    <!-- Logo -->
+    <a href="/" class="flex items-center no-underline group" aria-label="CRTP — Centre For Research Training and Publications">
+      <div class="bg-white rounded-xl px-3 py-1.5 shadow-md group-hover:shadow-lg transition-shadow duration-200">
+        <img src="/public/crtp-logo.png"
+             alt="Centre For Research Training and Publications — CRTP"
+             class="h-10 md:h-11 w-auto object-contain block"
+             onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-lg text-[#750B25] tracking-tight px-1\'>CRTP</span>'">
       </div>
     </a>
 

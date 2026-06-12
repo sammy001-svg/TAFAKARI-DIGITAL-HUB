@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /*
  * Admin Topbar — include AFTER setting these in the calling page:
  *   $adminPageTitle  (string) — page heading shown in topbar
