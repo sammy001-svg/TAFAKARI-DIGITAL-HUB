@@ -100,10 +100,22 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
   <meta name="twitter:description" content="<?= htmlspecialchars($_desc,  ENT_QUOTES, 'UTF-8') ?>">
   <meta name="twitter:image"       content="<?= htmlspecialchars($_image, ENT_QUOTES, 'UTF-8') ?>">
 
+  <!-- ── PWA ───────────────────────────────────────────────────────────────── -->
+  <link rel="manifest"         href="/manifest.json">
+  <meta name="theme-color"     content="#750B25">
+  <meta name="mobile-web-app-capable"                content="yes">
+  <meta name="apple-mobile-web-app-capable"          content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title"            content="Tafakari Hub">
+  <meta name="application-name"                      content="Tafakari Hub">
+  <meta name="msapplication-TileColor"               content="#750B25">
+  <meta name="msapplication-TileImage"               content="/pwa-icon.php?size=144">
+
   <!-- ── Favicons ──────────────────────────────────────────────────────────── -->
-  <link rel="icon"             href="/public/crtp-logo.jpg" type="image/png">
-  <link rel="shortcut icon"    href="/public/crtp-logo.jpg" type="image/png">
-  <link rel="apple-touch-icon" href="/public/crtp-logo.jpg">
+  <link rel="icon"             href="/pwa-icon.php?size=32"  type="image/png" sizes="32x32">
+  <link rel="icon"             href="/pwa-icon.php?size=96"  type="image/png" sizes="96x96">
+  <link rel="shortcut icon"    href="/pwa-icon.php?size=192" type="image/png">
+  <link rel="apple-touch-icon" href="/pwa-icon.php?size=180" sizes="180x180">
 
   <!-- ── JSON-LD Structured Data ──────────────────────────────────────────── -->
   <script type="application/ld+json"><?= $_schemaJson ?></script>
@@ -207,4 +219,6 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
     /* ── Focus ring for accessibility ── */
     :focus-visible { outline: 2px solid #E7952A; outline-offset: 2px; }
   </style>
+  <!-- ── PWA prompt + service worker ──────────────────────────────────────── -->
+  <script src="/public/pwa.js" defer></script>
 </head>
