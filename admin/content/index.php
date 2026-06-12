@@ -10,38 +10,54 @@ $isSuper = is_super_admin();
 $uid     = $user['id'];
 
 $statusFilter = $_GET['status'] ?? 'ALL';
+$search       = trim($_GET['q']      ?? '');
+$typeFilter   = trim($_GET['type']   ?? '');
 $page         = max(1, (int)($_GET['page'] ?? 1));
 $pageSize     = 20;
 $skip         = ($page - 1) * $pageSize;
 
 $validStatuses = ['DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
 if (!in_array($statusFilter, $validStatuses)) $statusFilter = 'ALL';
+$validTypes = ['ARTICLE','VIDEO','PODCAST','DOCUMENT','GALLERY_IMAGE'];
+if (!in_array($typeFilter, $validTypes)) $typeFilter = '';
 
 $whereParts = [];
-if (!$isSuper) $whereParts[] = "p.authorId = '$uid'";
-if ($statusFilter !== 'ALL') $whereParts[] = "p.status = '$statusFilter'";
+$params     = [];
+if (!$isSuper) { $whereParts[] = 'p.authorId = ?'; $params[] = $uid; }
+if ($statusFilter !== 'ALL') { $whereParts[] = 'p.status = ?'; $params[] = $statusFilter; }
+if ($typeFilter  !== '')     { $whereParts[] = 'p.type = ?';   $params[] = $typeFilter;   }
+if ($search      !== '')     { $whereParts[] = '(p.title LIKE ? OR p.country LIKE ?)'; $params[] = "%$search%"; $params[] = "%$search%"; }
 $where = $whereParts ? 'WHERE ' . implode(' AND ', $whereParts) : '';
 
-$pdo   = db();
-$total = (int)$pdo->query("SELECT COUNT(*) FROM Post p $where")->fetchColumn();
-$posts = $pdo->query(
+$pdo = db();
+$stCount = $pdo->prepare("SELECT COUNT(*) FROM Post p $where");
+$stCount->execute($params);
+$total = (int)$stCount->fetchColumn();
+
+$stPosts = $pdo->prepare(
     "SELECT p.id, p.title, p.type, p.status, p.country, p.region, p.authorId, p.updatedAt,
             u.name AS authorName, u.username AS authorUsername
      FROM Post p LEFT JOIN User u ON p.authorId = u.id
      $where ORDER BY p.createdAt DESC LIMIT $pageSize OFFSET $skip"
-)->fetchAll();
+);
+$stPosts->execute($params);
+$posts = $stPosts->fetchAll();
 
 $totalPages = max(1, (int)ceil($total / $pageSize));
 
-function pageHref(string $status, int $p): string {
+function pageHref(string $status, int $p, string $search = '', string $type = ''): string {
     $q = [];
     if ($status !== 'ALL') $q['status'] = $status;
     if ($p > 1)            $q['page']   = $p;
+    if ($search !== '')    $q['q']      = $search;
+    if ($type   !== '')    $q['type']   = $type;
     return '/admin/content' . ($q ? '?' . http_build_query($q) : '');
 }
 
-$tabs = ['ALL','DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
-$pageTitle    = ($isSuper ? 'All Content' : 'My Content') . ' | Tafakari Admin';
+$tabs      = ['ALL','DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
+$typeNames = ['ARTICLE'=>'Article','VIDEO'=>'Video','PODCAST'=>'Podcast','DOCUMENT'=>'Document','GALLERY_IMAGE'=>'Gallery'];
+
+$pageTitle      = ($isSuper ? 'All Content' : 'My Content') . ' | Tafakari Admin';
 $adminPageTitle = $isSuper ? 'All Content' : 'My Content';
 $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter !== 'ALL' ? ' · ' . strtolower($statusFilter) : '');
 ?>
@@ -55,10 +71,40 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
 
+  <!-- Search + Filter bar -->
+  <form method="GET" action="/admin/content" class="flex flex-wrap items-center gap-3 mb-5">
+    <div class="relative flex-grow max-w-sm">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search by title or country…"
+             class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 shadow-sm"
+             style="focus-ring-color:#750B25">
+    </div>
+    <select name="type" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-[130px]">
+      <option value="">All Types</option>
+      <?php foreach ($typeNames as $val => $label): ?>
+        <option value="<?= h($val) ?>" <?= $typeFilter === $val ? 'selected' : '' ?>><?= h($label) ?></option>
+      <?php endforeach; ?>
+    </select>
+    <?php if ($statusFilter !== 'ALL'): ?><input type="hidden" name="status" value="<?= h($statusFilter) ?>"><?php endif; ?>
+    <button type="submit" class="px-4 py-2.5 rounded-xl text-[12px] font-bold text-white shadow-sm transition-opacity hover:opacity-90"
+            style="background:#750B25">Search</button>
+    <?php if ($search !== '' || $typeFilter !== ''): ?>
+      <a href="<?= h(pageHref($statusFilter, 1)) ?>"
+         class="px-4 py-2.5 rounded-xl text-[12px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 bg-white shadow-sm transition-colors">Clear</a>
+    <?php endif; ?>
+    <div class="ml-auto">
+      <a href="/admin/content/new" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold text-white shadow-sm"
+         style="background:#E7952A;color:#0D0102">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+        New Content
+      </a>
+    </div>
+  </form>
+
   <!-- Status Tabs -->
   <div class="flex items-center gap-1 p-1 bg-white rounded-xl border border-slate-100 shadow-sm w-fit flex-wrap mb-6">
     <?php foreach ($tabs as $tab): ?>
-      <a href="<?= h(pageHref($tab, 1)) ?>"
+      <a href="<?= h(pageHref($tab, 1, $search, $typeFilter)) ?>"
          class="px-3.5 py-2 rounded-lg text-[11px] font-bold transition-all <?= $statusFilter === $tab ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50' ?>"
          <?= $statusFilter === $tab ? 'style="background:#750B25"' : '' ?>>
         <?= ucfirst(strtolower($tab)) ?>
@@ -75,7 +121,7 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
       </div>
       <h3 class="font-outfit font-bold text-xl text-slate-900">No content found</h3>
       <p class="text-slate-500 mt-2 text-sm mb-6">
-        <?= $statusFilter !== 'ALL' ? 'No ' . strtolower($statusFilter) . ' posts.' : 'Start by creating your first piece of content.' ?>
+        <?= $search !== '' ? 'No results for "' . h($search) . '".' : ($statusFilter !== 'ALL' ? 'No ' . strtolower($statusFilter) . ' posts.' : 'Start by creating your first piece of content.') ?>
       </p>
       <a href="/admin/content/new" class="btn-primary" style="padding:.65rem 1.5rem">Create Content</a>
     </div>
@@ -119,9 +165,10 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
                   </div>
                   <div class="min-w-0">
                     <p class="text-[13px] font-semibold text-slate-900 truncate max-w-xs"><?= h($p['title']) ?></p>
-                    <?php if ($isSuper): ?>
-                      <p class="text-[10px] text-slate-400 mt-0.5">by <?= h($p['authorName'] ?? $p['authorUsername'] ?? '—') ?></p>
-                    <?php endif; ?>
+                    <p class="text-[10px] text-slate-400 mt-0.5">
+                      <?= h($typeNames[$p['type']] ?? $p['type']) ?>
+                      <?php if ($isSuper): ?> &bull; <?= h($p['authorName'] ?? $p['authorUsername'] ?? '—') ?><?php endif; ?>
+                    </p>
                   </div>
                 </div>
               </td>
@@ -170,14 +217,14 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
         <p class="text-[11px] text-slate-400">Showing <?= $skip+1 ?>–<?= min($skip+$pageSize,$total) ?> of <?= $total ?></p>
         <div class="flex items-center gap-2">
           <?php if ($page > 1): ?>
-            <a href="<?= h(pageHref($statusFilter, $page-1)) ?>"
+            <a href="<?= h(pageHref($statusFilter, $page-1, $search, $typeFilter)) ?>"
                class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">&larr; Prev</a>
           <?php else: ?>
             <span class="px-3 py-2 text-[11px] font-bold rounded-xl text-slate-300">&larr; Prev</span>
           <?php endif; ?>
           <span class="px-3 py-2 text-[11px] font-bold text-slate-500"><?= $page ?> / <?= $totalPages ?></span>
           <?php if ($page < $totalPages): ?>
-            <a href="<?= h(pageHref($statusFilter, $page+1)) ?>"
+            <a href="<?= h(pageHref($statusFilter, $page+1, $search, $typeFilter)) ?>"
                class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Next &rarr;</a>
           <?php else: ?>
             <span class="px-3 py-2 text-[11px] font-bold rounded-xl text-slate-300">Next &rarr;</span>
@@ -195,15 +242,14 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
 function postAction(url, method, btn, confirmMsg) {
   if (confirmMsg && !confirm(confirmMsg)) return;
   var origText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '…';
+  btn.disabled = true; btn.textContent = '…';
   fetch(url, { method: method, headers: { 'Content-Type': 'application/json' } })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
+    .then(r => r.json())
+    .then(function(d) {
       if (d.error) { alert(d.error); btn.disabled=false; btn.textContent=origText; }
       else { location.reload(); }
     })
-    .catch(function(){ alert('Request failed'); btn.disabled=false; btn.textContent=origText; });
+    .catch(function() { alert('Request failed'); btn.disabled=false; btn.textContent=origText; });
 }
 </script>
 </body>

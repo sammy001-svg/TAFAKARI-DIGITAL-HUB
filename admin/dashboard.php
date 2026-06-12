@@ -32,15 +32,58 @@ $recentPosts = $pdo->query(
      ORDER BY p.updatedAt DESC LIMIT 6"
 )->fetchAll();
 
-$hour = (int)date('G');
+// ── Chart: content by type ─────────────────────────────────────────────────
+$typeStats = array_fill_keys(['ARTICLE','VIDEO','PODCAST','DOCUMENT','GALLERY_IMAGE'], 0);
+try {
+    if ($isSuper) {
+        $rows = $pdo->query("SELECT type, COUNT(*) as cnt FROM Post GROUP BY type")->fetchAll();
+    } else {
+        $st = $pdo->prepare("SELECT type, COUNT(*) as cnt FROM Post WHERE authorId=? GROUP BY type");
+        $st->execute([$uid]); $rows = $st->fetchAll();
+    }
+    foreach ($rows as $r) if (isset($typeStats[$r['type']])) $typeStats[$r['type']] = (int)$r['cnt'];
+} catch (Exception $e) {}
+
+// ── Chart: monthly activity (last 6 months) ────────────────────────────────
+$monthLabels = [];
+$monthMap    = [];
+for ($i = 5; $i >= 0; $i--) {
+    $key = date('Y-m', strtotime("-{$i} months"));
+    $monthLabels[] = date('M', strtotime("-{$i} months"));
+    $monthMap[$key] = 0;
+}
+try {
+    if ($isSuper) {
+        $rows = $pdo->query(
+            "SELECT DATE_FORMAT(createdAt,'%Y-%m') as ym, COUNT(*) as cnt
+             FROM Post WHERE createdAt >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+             GROUP BY ym ORDER BY ym ASC"
+        )->fetchAll();
+    } else {
+        $st = $pdo->prepare(
+            "SELECT DATE_FORMAT(createdAt,'%Y-%m') as ym, COUNT(*) as cnt
+             FROM Post WHERE authorId=? AND createdAt >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+             GROUP BY ym ORDER BY ym ASC"
+        );
+        $st->execute([$uid]); $rows = $st->fetchAll();
+    }
+    foreach ($rows as $r) if (isset($monthMap[$r['ym']])) $monthMap[$r['ym']] = (int)$r['cnt'];
+} catch (Exception $e) {}
+$monthCounts = array_values($monthMap);
+
+// ── Real system health check ───────────────────────────────────────────────
+$dbOk = false;
+try { $pdo->query('SELECT 1'); $dbOk = true; } catch (Exception $e) {}
+
+$hour     = (int)date('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
 
-$pageTitle    = 'Dashboard Overview | Tafakari Admin';
+$pageTitle      = 'Dashboard Overview | Tafakari Admin';
 $adminPageTitle = 'Dashboard Overview';
 $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. Here\'s what\'s happening.';
 ?>
 <?php include dirname(__DIR__) . '/includes/head.php'; ?>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   .kpi-icon { transition: transform .2s; }
   .kpi-card:hover .kpi-icon { transform: scale(1.08); }
@@ -94,48 +137,53 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
     <?php
     $kpis = [
       [
-        'label'  => 'Published',
-        'value'  => format_number($publishedPosts),
-        'meta'   => 'of ' . $totalPosts . ' total',
-        'icon'   => 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
-        'ic_bg'  => 'rgba(16,185,129,.1)',
-        'ic_col' => '#10B981',
-        'trend'  => $publishedPosts > 0 ? 'Live' : 'None',
+        'label'    => 'Published',
+        'value'    => format_number($publishedPosts),
+        'meta'     => 'of ' . $totalPosts . ' total',
+        'href'     => '/admin/content?status=PUBLISHED',
+        'icon'     => 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
+        'ic_bg'    => 'rgba(16,185,129,.1)',
+        'ic_col'   => '#10B981',
+        'trend'    => $publishedPosts > 0 ? 'Live' : 'None',
         'trendcls' => $publishedPosts > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500',
       ],
       [
-        'label'  => 'Pending Review',
-        'value'  => $pendingPosts,
-        'meta'   => $pendingPosts > 0 ? 'Needs attention' : 'Queue clear',
-        'icon'   => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-        'ic_bg'  => 'rgba(245,158,11,.1)',
-        'ic_col' => '#F59E0B',
-        'trend'  => $pendingPosts > 0 ? '!' : '✓',
+        'label'    => 'Pending Review',
+        'value'    => $pendingPosts,
+        'meta'     => $pendingPosts > 0 ? 'Needs attention' : 'Queue clear',
+        'href'     => '/admin/content?status=PENDING',
+        'icon'     => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+        'ic_bg'    => 'rgba(245,158,11,.1)',
+        'ic_col'   => '#F59E0B',
+        'trend'    => $pendingPosts > 0 ? '!' : '✓',
         'trendcls' => $pendingPosts > 0 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700',
       ],
       [
-        'label'  => 'Total Views',
-        'value'  => format_number($totalViews),
-        'meta'   => format_number($totalDL) . ' downloads',
-        'icon'   => 'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-        'ic_bg'  => 'rgba(99,102,241,.1)',
-        'ic_col' => '#6366F1',
-        'trend'  => 'Impressions',
+        'label'    => 'Total Views',
+        'value'    => format_number($totalViews),
+        'meta'     => format_number($totalDL) . ' downloads',
+        'href'     => '/admin/content',
+        'icon'     => 'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+        'ic_bg'    => 'rgba(99,102,241,.1)',
+        'ic_col'   => '#6366F1',
+        'trend'    => 'Impressions',
         'trendcls' => 'bg-indigo-50 text-indigo-700',
       ],
       [
-        'label'  => 'Flagged Comments',
-        'value'  => $flagged,
-        'meta'   => $flagged > 0 ? 'Needs moderation' : 'All clear',
-        'icon'   => 'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9',
-        'ic_bg'  => 'rgba(239,68,68,.1)',
-        'ic_col' => '#EF4444',
-        'trend'  => $flagged > 0 ? 'Review' : 'Clean',
+        'label'    => 'Flagged Comments',
+        'value'    => $flagged,
+        'meta'     => $flagged > 0 ? 'Needs moderation' : 'All clear',
+        'href'     => '/admin/super/moderation',
+        'icon'     => 'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9',
+        'ic_bg'    => 'rgba(239,68,68,.1)',
+        'ic_col'   => '#EF4444',
+        'trend'    => $flagged > 0 ? 'Review' : 'Clean',
         'trendcls' => $flagged > 0 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700',
       ],
     ];
     foreach ($kpis as $k): ?>
-      <div class="kpi-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col gap-4">
+      <a href="<?= h($k['href']) ?>"
+         class="kpi-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
         <div class="flex items-start justify-between">
           <div class="kpi-icon w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                style="background:<?= $k['ic_bg'] ?>">
@@ -153,7 +201,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
           <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-widest"><?= h($k['label']) ?></p>
           <p class="text-[10px] text-slate-400 mt-0.5"><?= h($k['meta']) ?></p>
         </div>
-      </div>
+      </a>
     <?php endforeach; ?>
   </div>
 
@@ -162,14 +210,14 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
     <?php
     $breakdown = [
-      ['label'=>'Draft',     'value'=>$draftPosts,     'href'=>'/admin/content?status=DRAFT',     'bg'=>'bg-slate-50',    'border'=>'border-slate-200',  'txt'=>'text-slate-700',  'num'=>'text-slate-900'],
-      ['label'=>'Pending',   'value'=>$pendingPosts,   'href'=>'/admin/content?status=PENDING',   'bg'=>'bg-amber-50',    'border'=>'border-amber-200',  'txt'=>'text-amber-700',  'num'=>'text-amber-900'],
-      ['label'=>'Published', 'value'=>$publishedPosts, 'href'=>'/admin/content?status=PUBLISHED', 'bg'=>'bg-emerald-50',  'border'=>'border-emerald-200','txt'=>'text-emerald-700','num'=>'text-emerald-900'],
-      ['label'=>'Users',     'value'=>$totalUsers,     'href'=>'/admin/super/users',              'bg'=>'bg-indigo-50',   'border'=>'border-indigo-200', 'txt'=>'text-indigo-700', 'num'=>'text-indigo-900'],
+      ['label'=>'Draft',     'value'=>$draftPosts,     'href'=>'/admin/content?status=DRAFT',     'bg'=>'bg-slate-50',   'border'=>'border-slate-200',  'txt'=>'text-slate-700',  'num'=>'text-slate-900'],
+      ['label'=>'Pending',   'value'=>$pendingPosts,   'href'=>'/admin/content?status=PENDING',   'bg'=>'bg-amber-50',   'border'=>'border-amber-200',  'txt'=>'text-amber-700',  'num'=>'text-amber-900'],
+      ['label'=>'Published', 'value'=>$publishedPosts, 'href'=>'/admin/content?status=PUBLISHED', 'bg'=>'bg-emerald-50', 'border'=>'border-emerald-200','txt'=>'text-emerald-700','num'=>'text-emerald-900'],
+      ['label'=>'Users',     'value'=>$totalUsers,     'href'=>'/admin/super/users',              'bg'=>'bg-indigo-50',  'border'=>'border-indigo-200', 'txt'=>'text-indigo-700', 'num'=>'text-indigo-900'],
     ];
     foreach ($breakdown as $b): ?>
       <a href="<?= h($b['href']) ?>"
-         class="flex items-center justify-between px-4 py-3.5 rounded-xl border text-center hover:scale-[1.02] transition-transform <?= $b['bg'] ?> <?= $b['border'] ?>">
+         class="flex items-center justify-between px-4 py-3.5 rounded-xl border hover:scale-[1.02] transition-transform <?= $b['bg'] ?> <?= $b['border'] ?>">
         <span class="text-[10px] font-black uppercase tracking-widest <?= $b['txt'] ?>"><?= h($b['label']) ?></span>
         <span class="font-outfit font-black text-xl <?= $b['num'] ?>"><?= $b['value'] ?></span>
       </a>
@@ -178,7 +226,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
   <?php endif; ?>
 
   <!-- Main Content Grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
     <!-- Recent Activity -->
     <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -250,12 +298,13 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         <div class="space-y-2">
           <?php
           $actions = [
-            ['href'=>'/admin/content/new',          'label'=>'Create New Content',    'sub'=>'Start drafting',     'svg'=>'M12 4v16m8-8H4'],
-            ['href'=>'/admin/content',              'label'=>'Manage Content',        'sub'=>'View all posts',     'svg'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-            ['href'=>'/admin/profile',              'label'=>'Edit Profile',          'sub'=>'Update your info',   'svg'=>'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+            ['href'=>'/admin/content/new', 'label'=>'Create New Content',  'sub'=>'Start drafting',     'svg'=>'M12 4v16m8-8H4'],
+            ['href'=>'/admin/content',     'label'=>'Manage Content',      'sub'=>'View all posts',     'svg'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+            ['href'=>'/admin/profile',     'label'=>'Edit Profile',        'sub'=>'Update your info',   'svg'=>'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
           ];
           if ($isSuper) {
-              $actions[] = ['href'=>'/admin/super/users', 'label'=>'Manage Users', 'sub'=>'Add or edit accounts', 'svg'=>'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'];
+              $actions[] = ['href'=>'/admin/super/users',     'label'=>'Manage Users',    'sub'=>'Add or edit accounts','svg'=>'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'];
+              $actions[] = ['href'=>'/admin/super/approvals', 'label'=>'Approval Queue',  'sub'=>$pendingPosts . ' pending',   'svg'=>'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'];
           }
           foreach ($actions as $a): ?>
             <a href="<?= h($a['href']) ?>"
@@ -284,24 +333,29 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         <div class="space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-[11px] text-white/50">Database</span>
-            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Operational
-            </span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] text-white/50">Content API</span>
-            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Operational
-            </span>
+            <?php if ($dbOk): ?>
+              <span class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Operational
+              </span>
+            <?php else: ?>
+              <span class="flex items-center gap-1.5 text-[11px] font-semibold text-rose-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Error
+              </span>
+            <?php endif; ?>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-[11px] text-white/50">Session</span>
             <span class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              Active
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Active
             </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-white/50">PHP</span>
+            <span class="text-[11px] font-semibold text-white/40"><?= phpversion() ?></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-white/50">Server Time</span>
+            <span class="text-[11px] font-semibold text-white/40"><?= date('H:i') ?></span>
           </div>
         </div>
         <?php if ($isSuper && $pendingPosts > 0): ?>
@@ -319,8 +373,107 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
     </div>
   </div>
 
+  <!-- Analytics Charts -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Monthly Activity Bar Chart -->
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="font-outfit font-bold text-[15px] text-slate-900">Monthly Activity</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Posts created — last 6 months</p>
+        </div>
+        <div class="text-right">
+          <div class="font-outfit font-black text-2xl text-slate-900"><?= array_sum($monthCounts) ?></div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest">Total</p>
+        </div>
+      </div>
+      <canvas id="monthlyChart" height="100"></canvas>
+    </div>
+
+    <!-- Content Types Doughnut Chart -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <div class="mb-4">
+        <h3 class="font-outfit font-bold text-[15px] text-slate-900">Content Types</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Distribution by category</p>
+      </div>
+      <?php $hasTypeData = array_sum($typeStats) > 0; ?>
+      <?php if ($hasTypeData): ?>
+        <canvas id="typeChart" height="180"></canvas>
+      <?php else: ?>
+        <div class="flex flex-col items-center justify-center h-40 text-center">
+          <p class="text-sm text-slate-400">No content yet</p>
+          <a href="/admin/content/new" class="text-[11px] font-bold mt-2" style="color:#750B25">Create your first post &rarr;</a>
+        </div>
+      <?php endif; ?>
+    </div>
+
+  </div>
+
 </main>
 </div>
 </div>
+
+<script>
+<?php if (array_sum($monthCounts) > 0): ?>
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: <?= json_encode($monthLabels, JSON_UNESCAPED_UNICODE) ?>,
+    datasets: [{
+      label: 'Posts',
+      data: <?= json_encode($monthCounts) ?>,
+      backgroundColor: 'rgba(117,11,37,.85)',
+      hoverBackgroundColor: '#ED1C24',
+      borderRadius: 8,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' post' + (ctx.parsed.y !== 1 ? 's' : '') } } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,.04)' } },
+      x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+    },
+    responsive: true, maintainAspectRatio: true
+  }
+});
+<?php else: ?>
+var ctx = document.getElementById('monthlyChart').getContext('2d');
+ctx.font = '13px Inter, sans-serif'; ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center';
+ctx.fillText('No posts in the last 6 months', ctx.canvas.width / 2, 60);
+<?php endif; ?>
+
+<?php if ($hasTypeData): ?>
+new Chart(document.getElementById('typeChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Article','Video','Podcast','Document','Gallery'],
+    datasets: [{
+      data: [
+        <?= $typeStats['ARTICLE'] ?>,
+        <?= $typeStats['VIDEO'] ?>,
+        <?= $typeStats['PODCAST'] ?>,
+        <?= $typeStats['DOCUMENT'] ?>,
+        <?= $typeStats['GALLERY_IMAGE'] ?>
+      ],
+      backgroundColor: ['#750B25','#ED1C24','#E7952A','#6366F1','#10B981'],
+      borderWidth: 0,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    cutout: '68%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { boxWidth: 10, boxHeight: 10, padding: 16, font: { size: 11 }, color: '#64748b' }
+      }
+    },
+    responsive: true, maintainAspectRatio: false
+  }
+});
+<?php endif; ?>
+</script>
 </body>
 </html>

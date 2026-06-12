@@ -5,7 +5,7 @@ require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 
-$me = require_super_admin();
+$me  = require_super_admin();
 $pdo = db();
 
 $users = $pdo->query(
@@ -28,28 +28,65 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
 <?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
-  <div class="flex justify-between items-center mb-6">
-    <div></div>
-    <button onclick="openModal('create')" class="btn-primary" style="padding:.6rem 1.25rem">+ Add User</button>
+
+  <!-- Toolbar -->
+  <div class="flex flex-wrap items-center gap-3 mb-6">
+    <div class="relative flex-grow max-w-sm">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="user-search" type="text" placeholder="Search by name, username or email…"
+             class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm"
+             oninput="filterUsers(this.value)">
+    </div>
+    <select id="role-filter" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-[140px]" onchange="filterUsers(document.getElementById('user-search').value)">
+      <option value="">All Roles</option>
+      <option value="ADMIN">Admin</option>
+      <option value="SUPER_ADMIN">Super Admin</option>
+    </select>
+    <div class="ml-auto">
+      <button onclick="openModal('create')" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold text-white shadow-sm" style="background:#750B25">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+        Add User
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary chips -->
+  <div class="flex flex-wrap gap-3 mb-5">
+    <?php
+    $admins = count(array_filter($users, fn($u) => $u['role'] === 'ADMIN'));
+    $supers = count(array_filter($users, fn($u) => $u['role'] === 'SUPER_ADMIN'));
+    ?>
+    <div class="px-4 py-2 rounded-xl bg-white border border-slate-200 shadow-sm text-[11px] font-bold text-slate-700">
+      <span class="text-slate-900 font-black text-base mr-1"><?= count($users) ?></span> Total
+    </div>
+    <div class="px-4 py-2 rounded-xl bg-rose-50 border border-rose-200 shadow-sm text-[11px] font-bold text-rose-700">
+      <span class="text-rose-900 font-black text-base mr-1"><?= $supers ?></span> Super Admin<?= $supers !== 1 ? 's' : '' ?>
+    </div>
+    <div class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 shadow-sm text-[11px] font-bold text-slate-600">
+      <span class="text-slate-900 font-black text-base mr-1"><?= $admins ?></span> Admin<?= $admins !== 1 ? 's' : '' ?>
+    </div>
   </div>
 
   <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-    <table class="w-full">
+    <table class="w-full" id="users-table">
       <thead>
-        <tr class="border-b border-slate-100">
-          <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">User</th>
-          <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Role</th>
-          <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Posts</th>
-          <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Joined</th>
-          <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+        <tr class="border-b border-slate-100" style="background:#FAFBFC">
+          <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">User</th>
+          <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Role</th>
+          <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Posts</th>
+          <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Joined</th>
+          <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-slate-50">
+      <tbody class="divide-y divide-slate-50" id="users-tbody">
         <?php foreach ($users as $u): ?>
-          <tr class="hover:bg-slate-50/50 transition-colors">
-            <td class="px-8 py-5">
+          <tr class="hover:bg-slate-50/50 transition-colors user-row"
+              data-search="<?= strtolower(h(($u['name'] ?? '') . ' ' . ($u['username'] ?? '') . ' ' . ($u['email'] ?? ''))) ?>"
+              data-role="<?= h($u['role']) ?>">
+            <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0" style="background:#750B25">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0"
+                     style="background:<?= $u['role'] === 'SUPER_ADMIN' ? '#750B25' : '#64748b' ?>">
                   <?= strtoupper(substr($u['name'] ?? $u['username'] ?? 'U', 0, 1)) ?>
                 </div>
                 <div>
@@ -58,22 +95,31 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
                 </div>
               </div>
             </td>
-            <td class="px-8 py-5 hidden md:table-cell">
+            <td class="px-6 py-4 hidden md:table-cell">
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest <?= $u['role'] === 'SUPER_ADMIN' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600' ?>">
                 <?= h(str_replace('_', ' ', $u['role'])) ?>
               </span>
             </td>
-            <td class="px-8 py-5 text-sm text-slate-600 hidden lg:table-cell"><?= $u['postCount'] ?></td>
-            <td class="px-8 py-5 text-xs text-slate-400 hidden lg:table-cell"><?= format_date($u['createdAt'], 'M j, Y') ?></td>
-            <td class="px-8 py-5">
+            <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">
+              <?php if ((int)$u['postCount'] > 0): ?>
+                <a href="/admin/content?q=<?= urlencode($u['username'] ?? '') ?>" target="_blank"
+                   class="font-semibold hover:underline" style="color:#750B25">
+                  <?= $u['postCount'] ?> post<?= $u['postCount'] != 1 ? 's' : '' ?>
+                </a>
+              <?php else: ?>
+                <span class="text-slate-400">0 posts</span>
+              <?php endif; ?>
+            </td>
+            <td class="px-6 py-4 text-xs text-slate-400 hidden lg:table-cell"><?= format_date($u['createdAt'], 'M j, Y') ?></td>
+            <td class="px-6 py-4">
               <div class="flex justify-end gap-2">
                 <button onclick='openModal("edit",<?= json_encode($u) ?>)'
-                        class="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors">
+                        class="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors">
                   Edit
                 </button>
                 <?php if ($u['id'] !== $me['id']): ?>
-                  <button onclick="deleteUser('<?= h($u['id']) ?>',<?= (int)$u['postCount'] ?>,'<?= h($u['name'] ?? $u['username']) ?>')"
-                          class="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-700 rounded-xl hover:bg-rose-200 transition-colors">
+                  <button onclick="deleteUser('<?= h($u['id']) ?>',<?= (int)$u['postCount'] ?>,'<?= h(addslashes($u['name'] ?? $u['username'])) ?>')"
+                          class="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-700 rounded-xl hover:bg-rose-200 transition-colors">
                     Delete
                   </button>
                 <?php endif; ?>
@@ -83,7 +129,13 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
         <?php endforeach; ?>
       </tbody>
     </table>
+
+    <!-- Empty state for search -->
+    <div id="no-results" class="hidden py-12 text-center">
+      <p class="text-sm text-slate-400">No users match your search.</p>
+    </div>
   </div>
+
 </main>
 </div>
 </div>
@@ -97,17 +149,19 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
     </div>
     <div id="modal-err" class="hidden mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm"></div>
     <div class="space-y-4">
-      <input id="f-name"     type="text"  placeholder="Full Name"  class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
-      <input id="f-username" type="text"  placeholder="Username"   class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
-      <input id="f-email"    type="email" placeholder="Email"      class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
-      <input id="f-password" type="password" placeholder="Password (leave blank to keep)" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
+      <input id="f-name"     type="text"     placeholder="Full Name"  class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
+      <input id="f-username" type="text"     placeholder="Username"   class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
+      <input id="f-email"    type="email"    placeholder="Email"      class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
+      <input id="f-password" type="password" placeholder="Password"   class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
       <select id="f-role" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
         <option value="ADMIN">Admin</option>
         <option value="SUPER_ADMIN">Super Admin</option>
       </select>
     </div>
     <div class="flex gap-3 mt-6">
-      <button id="modal-submit" onclick="submitModal()" class="btn-primary flex-1 py-3">Save</button>
+      <button id="modal-submit" onclick="submitModal()"
+              class="flex-1 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
+              style="background:#750B25">Save</button>
       <button onclick="closeModal()" class="flex-1 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
     </div>
   </div>
@@ -117,16 +171,30 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
 var modalMode = 'create';
 var editId    = null;
 
+function filterUsers(q) {
+  q = q.toLowerCase().trim();
+  var roleVal = document.getElementById('role-filter').value;
+  var rows    = document.querySelectorAll('.user-row');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var matchQ    = q === '' || row.dataset.search.includes(q);
+    var matchRole = roleVal === '' || row.dataset.role === roleVal;
+    var show      = matchQ && matchRole;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('no-results').classList.toggle('hidden', visible > 0);
+}
+
 function openModal(mode, user) {
-  modalMode = mode;
-  editId = user ? user.id : null;
-  document.getElementById('modal-title').textContent = mode==='create' ? 'Add User' : 'Edit User';
-  document.getElementById('f-name').value     = user ? (user.name||'')     : '';
-  document.getElementById('f-username').value = user ? (user.username||'') : '';
-  document.getElementById('f-email').value    = user ? (user.email||'')    : '';
+  modalMode = mode; editId = user ? user.id : null;
+  document.getElementById('modal-title').textContent = mode === 'create' ? 'Add User' : 'Edit User';
+  document.getElementById('f-name').value     = user ? (user.name || '')     : '';
+  document.getElementById('f-username').value = user ? (user.username || '') : '';
+  document.getElementById('f-email').value    = user ? (user.email || '')    : '';
   document.getElementById('f-password').value = '';
   document.getElementById('f-role').value     = user ? user.role : 'ADMIN';
-  document.getElementById('f-password').placeholder = mode==='create' ? 'Password (required)' : 'Password (leave blank to keep)';
+  document.getElementById('f-password').placeholder = mode === 'create' ? 'Password (required)' : 'Password (leave blank to keep)';
   document.getElementById('modal-err').classList.add('hidden');
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('modal').classList.add('flex');
@@ -146,30 +214,32 @@ function submitModal() {
   };
   var pass = document.getElementById('f-password').value;
   if (pass) data.password = pass;
-
-  var url    = modalMode==='create' ? '/api/users' : '/api/users/'+editId;
-  var method = modalMode==='create' ? 'POST' : 'PUT';
-
-  document.getElementById('modal-submit').textContent = 'Saving…';
-  fetch(url, { method:method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) })
-    .then(r=>r.json())
+  var url    = modalMode === 'create' ? '/api/users' : '/api/users/' + editId;
+  var method = modalMode === 'create' ? 'POST' : 'PUT';
+  var btn    = document.getElementById('modal-submit');
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) })
+    .then(r => r.json())
     .then(function(d) {
-      document.getElementById('modal-submit').textContent = 'Save';
-      if (d.error) { var e=document.getElementById('modal-err'); e.textContent=d.error; e.classList.remove('hidden'); return; }
+      btn.textContent = 'Save'; btn.disabled = false;
+      if (d.error) {
+        var e = document.getElementById('modal-err');
+        e.textContent = d.error; e.classList.remove('hidden'); return;
+      }
       closeModal(); location.reload();
-    }).catch(function(){ document.getElementById('modal-submit').textContent='Save'; });
+    }).catch(function() { btn.textContent = 'Save'; btn.disabled = false; });
 }
 
 function deleteUser(id, postCount, name) {
   if (postCount > 0) { alert(name + ' has ' + postCount + ' post(s). Delete or reassign them first.'); return; }
-  if (!confirm('Permanently delete user ' + name + '?')) return;
-  fetch('/api/users/'+id, { method:'DELETE' }).then(r=>r.json()).then(function(d){
+  if (!confirm('Permanently delete user ' + name + '? This cannot be undone.')) return;
+  fetch('/api/users/' + id, { method: 'DELETE' }).then(r => r.json()).then(function(d) {
     if (d.error) { alert(d.error); return; }
     location.reload();
   });
 }
 
-document.getElementById('modal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 </script>
 </body>
 </html>
