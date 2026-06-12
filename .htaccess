@@ -35,6 +35,7 @@ RewriteRule ^podcasts/?$                  podcasts.php         [L]
 RewriteRule ^videos/?$                    videos.php           [L]
 RewriteRule ^setup/?$                     setup.php            [L]
 RewriteRule ^login/?$                     login.php            [L]
+RewriteRule ^reset-admin/?$               reset-admin.php      [L]
 
 # ── Admin routes ─────────────────────────────────────────────────
 RewriteRule ^admin/?$                     admin/dashboard.php          [L]

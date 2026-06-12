@@ -1,28 +1,58 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/functions.php';
 
-// Already logged in → go to dashboard
-if (is_logged_in()) {
+// ── Session bootstrap (config.php starts the session, but ensure it's active) ──
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Already logged in
+if (isset($_SESSION['user']['id'])) {
     header('Location: /admin/dashboard');
     exit;
 }
 
-// Guard prevents double-execution when included via admin/login.php
-if (!defined('_LOGIN_HANDLED')) {
-    $error = '';
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $username = trim($_POST['username'] ?? '');
-        $password = trim($_POST['password'] ?? '');
-        if (auth_login($username, $password)) {
-            header('Location: /admin/dashboard');
-            exit;
+// ── Process login inline — no dependency on auth.php or db.php ──
+$error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';      // do NOT trim passwords
+
+    if ($username === '' || $password === '') {
+        $error = 'Please enter both username and password.';
+    } else {
+        $loginOk  = false;
+        $dbFailed = false;
+        try {
+            $pdo = new PDO(
+                DB_DSN, DB_USER, DB_PASS,
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+            );
+            $stmt = $pdo->prepare(
+                'SELECT id, name, email, username, password, role FROM User WHERE username = ? LIMIT 1'
+            );
+            $stmt->execute([$username]);
+            $row = $stmt->fetch();
+
+            if ($row && password_verify($password, $row['password'])) {
+                unset($row['password']);
+                session_regenerate_id(true);
+                $_SESSION['user'] = $row;
+                header('Location: /admin/dashboard');
+                exit;
+            }
+        } catch (\PDOException $e) {
+            $dbFailed = true;
+            error_log('[Tafakari login] DB error: ' . $e->getMessage());
         }
-        $error = !empty($GLOBALS['auth_db_error'])
-            ? 'Database connection failed — please contact the site administrator.'
-            : 'Invalid username or password.';
+
+        if ($dbFailed) {
+            $error = 'Database connection failed. Please check config.php on the server.';
+        } else {
+            $error = 'Invalid username or password.';
+        }
     }
 }
 
@@ -32,6 +62,7 @@ $pageTitle = 'Login | Tafakari Digital Hub';
 <body class="antialiased min-h-screen flex font-inter" style="background:#1F0404">
 
 <div class="flex w-full min-h-screen">
+
   <!-- Left: Marketing carousel -->
   <div class="hidden lg:flex flex-col w-1/2 relative overflow-hidden">
     <?php
@@ -52,7 +83,6 @@ $pageTitle = 'Login | Tafakari Digital Hub';
         </div>
       </div>
     <?php endforeach; ?>
-    <!-- Dots -->
     <div class="absolute bottom-8 left-12 flex gap-2 z-10">
       <?php foreach ($slides as $i => $_): ?>
         <button class="login-dot w-2 h-2 rounded-full transition-all <?= $i === 0 ? 'w-6 bg-secondary' : 'bg-white/40' ?>" data-index="<?= $i ?>"></button>
@@ -63,9 +93,13 @@ $pageTitle = 'Login | Tafakari Digital Hub';
   <!-- Right: Login form -->
   <div class="flex-1 flex flex-col items-center justify-center px-8 py-12 min-h-screen" style="background:#1F0404">
     <div class="w-full max-w-md">
+
       <!-- Logo -->
       <div class="flex items-center gap-3 mb-12">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg" style="background:#9A1415">T</div>
+        <img src="/public/crtp-logo.png" alt="CRTP"
+             class="h-12 w-auto object-contain brightness-0 invert"
+             onerror="this.style.display='none';document.getElementById('login-logo-fb').style.display='flex'">
+        <div id="login-logo-fb" class="w-12 h-12 rounded-2xl items-center justify-center text-white font-black text-2xl shadow-lg" style="background:#9A1415;display:none">T</div>
         <div>
           <div class="font-outfit font-bold text-xl text-white leading-tight">Admin Portal</div>
           <div class="text-[10px] text-slate-500 uppercase tracking-widest">Tafakari Digital Hub</div>
@@ -81,47 +115,34 @@ $pageTitle = 'Login | Tafakari Digital Hub';
         </div>
       <?php endif; ?>
 
-      <form method="POST" class="space-y-5">
+      <form method="POST" action="/login" class="space-y-5">
         <div>
           <label class="block text-xs font-black uppercase tracking-widest mb-2 text-slate-400">Username</label>
-          <input type="text" name="username" required autofocus value="<?= h($_POST['username'] ?? '') ?>"
-                 class="w-full px-4 py-4 rounded-2xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"
+          <input type="text" name="username" required autofocus
+                 value="<?= h($_POST['username'] ?? '') ?>"
+                 class="w-full px-4 py-4 rounded-2xl text-white text-sm focus:outline-none focus:ring-2"
+                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);outline-color:#D99F51"
                  placeholder="Enter your username">
         </div>
         <div>
           <label class="block text-xs font-black uppercase tracking-widest mb-2 text-slate-400">Password</label>
           <input type="password" name="password" required
-                 class="w-full px-4 py-4 rounded-2xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)"
+                 class="w-full px-4 py-4 rounded-2xl text-white text-sm focus:outline-none focus:ring-2"
+                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);outline-color:#D99F51"
                  placeholder="••••••••">
         </div>
-        <button type="submit" class="btn-primary w-full py-4 text-base mt-2">Sign In</button>
+        <button type="submit"
+                class="w-full py-4 text-base font-bold rounded-2xl mt-2 transition-all hover:brightness-110"
+                style="background:#D99F51;color:#0D0102">
+          Sign In
+        </button>
       </form>
 
-      <div class="mt-8 space-y-3">
-        <p class="text-center text-xs text-slate-600">
-          <a href="/" class="hover:text-white transition-colors">&larr; Back to public site</a>
-        </p>
-        <!-- Demo credentials hint (remove this block in production) -->
-        <div class="rounded-xl p-4 border" style="background:rgba(217,159,81,.06);border-color:rgba(217,159,81,.25)">
-          <p class="text-[9px] font-black uppercase tracking-[.14em] mb-2.5" style="color:rgba(217,159,81,.7)">Demo Login Credentials</p>
-          <div class="space-y-1.5">
-            <div class="flex justify-between items-center">
-              <span class="text-[10px] text-slate-400 font-medium">Super Admin</span>
-              <code class="text-[10px] font-bold text-white/70">superadmin / Admin@Tafakari2024</code>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-[10px] text-slate-400 font-medium">Editor</span>
-              <code class="text-[10px] font-bold text-white/70">editor / Editor@Tafakari2024</code>
-            </div>
-          </div>
-          <p class="text-[9px] text-slate-600 mt-2.5">
-            Run <a href="/seed.php" class="underline" style="color:rgba(217,159,81,.8)">seed.php</a> first to create these accounts.
-            Change passwords in <a href="/admin/profile" class="underline" style="color:rgba(217,159,81,.8)">Admin &rsaquo; Profile</a>.
-          </p>
-        </div>
-      </div>
+      <p class="text-center text-xs text-slate-600 mt-8">
+        <a href="/" class="hover:text-white transition-colors">&larr; Back to public site</a>
+        &nbsp;&nbsp;·&nbsp;&nbsp;
+        <a href="/reset-admin" class="hover:text-white transition-colors" style="color:rgba(217,159,81,.6)">Account Setup</a>
+      </p>
     </div>
   </div>
 </div>

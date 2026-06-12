@@ -17,7 +17,7 @@ function is_super_admin(): bool {
 
 function require_auth(): array {
     if (!is_logged_in()) {
-        header('Location: /admin/login');
+        header('Location: /login');
         exit;
     }
     return $_SESSION['user'];
