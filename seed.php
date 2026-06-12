@@ -38,7 +38,7 @@ $demoAccounts = [
 
 $dbOk = false;
 $tableExists = false;
-$accountStatus = []; // username => bool (exists in DB)
+$accountStatus = []; // username => ['exists'=>bool, 'passOk'=>bool|null, 'role'=>string|null]
 try {
     $pdo = new PDO(DB_DSN, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     $dbOk = true;
@@ -46,9 +46,18 @@ try {
     $tableExists = in_array('User', $tables);
     if ($tableExists) {
         foreach ($demoAccounts as $acc) {
-            $chk = $pdo->prepare('SELECT id FROM User WHERE username=? LIMIT 1');
+            $chk = $pdo->prepare('SELECT id, password, role FROM User WHERE username=? LIMIT 1');
             $chk->execute([$acc['username']]);
-            $accountStatus[$acc['username']] = (bool) $chk->fetch();
+            $row = $chk->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $accountStatus[$acc['username']] = [
+                    'exists' => true,
+                    'passOk' => password_verify($acc['password'], $row['password']),
+                    'role'   => $row['role'],
+                ];
+            } else {
+                $accountStatus[$acc['username']] = ['exists' => false, 'passOk' => null, 'role' => null];
+            }
         }
     }
 } catch (PDOException $e) {
@@ -76,17 +85,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['seed']) && $dbOk && $
         }
     }
     $seeded = true;
-    // Refresh account status after seeding
+    // Refresh full diagnostic after seeding
     if ($tableExists) {
         foreach ($demoAccounts as $acc) {
-            $chk = $pdo->prepare('SELECT id FROM User WHERE username=? LIMIT 1');
+            $chk = $pdo->prepare('SELECT id, password, role FROM User WHERE username=? LIMIT 1');
             $chk->execute([$acc['username']]);
-            $accountStatus[$acc['username']] = (bool) $chk->fetch();
+            $row = $chk->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $accountStatus[$acc['username']] = [
+                    'exists' => true,
+                    'passOk' => password_verify($acc['password'], $row['password']),
+                    'role'   => $row['role'],
+                ];
+            } else {
+                $accountStatus[$acc['username']] = ['exists' => false, 'passOk' => null, 'role' => null];
+            }
         }
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && $tableExists) {
     // Reset passwords only
     foreach ($demoAccounts as $acc) {
         try {
@@ -98,6 +116,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
         }
     }
     $status = 'reset';
+    // Refresh diagnostic after reset
+    if ($dbOk && $tableExists) {
+        foreach ($demoAccounts as $acc) {
+            $chk = $pdo->prepare('SELECT id, password, role FROM User WHERE username=? LIMIT 1');
+            $chk->execute([$acc['username']]);
+            $row = $chk->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $accountStatus[$acc['username']] = [
+                    'exists' => true,
+                    'passOk' => password_verify($acc['password'], $row['password']),
+                    'role'   => $row['role'],
+                ];
+            } else {
+                $accountStatus[$acc['username']] = ['exists' => false, 'passOk' => null, 'role' => null];
+            }
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -184,24 +219,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
   </div>
 
   <!-- Action prompt: clearly tell user what to do next -->
-  <?php if ($dbOk && $tableExists && !$seeded): ?>
-    <?php $allExist = !empty($accountStatus) && !in_array(false, $accountStatus, true); ?>
-    <?php if (!$allExist): ?>
+  <?php if ($dbOk && $tableExists && !$seeded):
+      $allReady     = !empty($accountStatus) && !in_array(false, array_column($accountStatus,'exists'), true) && !in_array(false, array_column($accountStatus,'passOk'), true);
+      $existsNotOk  = !empty($accountStatus) && !in_array(false, array_column($accountStatus,'exists'), true) && in_array(false, array_column($accountStatus,'passOk'), true);
+      $someMissing  = empty($accountStatus) || in_array(false, array_column($accountStatus,'exists'), true);
+  ?>
+    <?php if ($someMissing): ?>
       <div class="rounded-2xl p-5 border" style="background:#EFF6FF;border-color:#BFDBFE">
         <p class="font-bold text-[13px] text-blue-800">
           Action required: Click <strong>"Seed Demo Accounts"</strong> below to create the login accounts.
         </p>
         <p class="text-[11px] text-blue-700 mt-1">
-          The login credentials shown on the login page won't work until you seed them here.
+          The credentials shown on the login page won't work until you seed them here.
         </p>
       </div>
-    <?php else: ?>
+    <?php elseif ($existsNotOk): ?>
+      <div class="rounded-2xl p-5 border" style="background:#FEF2F2;border-color:#FECACA">
+        <p class="font-bold text-[13px] text-rose-800">
+          Accounts exist but the passwords don't match the demo credentials.
+        </p>
+        <p class="text-[11px] text-rose-700 mt-1">
+          Click <strong>"Reset Passwords to Defaults"</strong> below to fix this.
+        </p>
+      </div>
+    <?php elseif ($allReady): ?>
       <div class="rounded-2xl p-5 border" style="background:#F0FDF4;border-color:#BBF7D0">
         <p class="font-bold text-[13px] text-emerald-800">
-          Both accounts exist in the database. You can log in now.
+          Both accounts exist and passwords are verified. You should be able to log in now.
         </p>
         <p class="text-[11px] text-emerald-700 mt-1">
-          If login still fails, click <strong>"Reset Passwords to Defaults"</strong> to restore the original passwords.
+          If login still fails, check that your browser is submitting to <code>/admin/login</code> or <code>/login</code> and that cookies are not blocked.
         </p>
       </div>
     <?php endif; ?>
@@ -215,7 +262,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
     </div>
     <div class="divide-y divide-slate-50">
       <?php foreach ($demoAccounts as $acc):
-          $exists = $accountStatus[$acc['username']] ?? false; ?>
+          $diag   = $accountStatus[$acc['username']] ?? ['exists'=>false,'passOk'=>null,'role'=>null];
+          $exists = $diag['exists'];
+          $passOk = $diag['passOk']; ?>
         <div class="px-6 py-5">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -231,15 +280,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
               </div>
             </div>
             <?php if ($tableExists): ?>
-              <?php if ($exists): ?>
-                <span class="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 shrink-0">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Account exists
-                </span>
-              <?php else: ?>
-                <span class="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 shrink-0">
-                  <span class="w-2 h-2 rounded-full bg-amber-500"></span> Not created yet
-                </span>
-              <?php endif; ?>
+              <div class="flex flex-col items-end gap-1.5 shrink-0 text-right">
+                <?php if ($exists): ?>
+                  <span class="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Account exists
+                  </span>
+                  <?php if ($passOk): ?>
+                    <span class="flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Password OK &mdash; login ready
+                    </span>
+                  <?php else: ?>
+                    <span class="flex items-center gap-1 text-[11px] font-bold text-rose-700">
+                      <span class="w-2 h-2 rounded-full bg-rose-500"></span> Password mismatch &mdash; click Reset
+                    </span>
+                  <?php endif; ?>
+                <?php else: ?>
+                  <span class="flex items-center gap-1 text-[11px] font-bold text-amber-700">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> Not created yet
+                  </span>
+                <?php endif; ?>
+              </div>
             <?php endif; ?>
           </div>
           <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
