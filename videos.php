@@ -4,76 +4,271 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$videos = [];
-try {
-    $stmt = db()->query(
-        "SELECT id, title, description, thumbnailUrl, mediaUrl, country, issueCategory, viewCount, createdAt
-         FROM Post WHERE type = 'VIDEO' AND status = 'PUBLISHED'
-         ORDER BY createdAt DESC LIMIT 12"
-    );
-    $videos = $stmt->fetchAll();
-} catch (Exception $e) { /* ignore */ }
+// ── Filter params ──────────────────────────────────────────────────────────────
+$country = trim($_GET['country'] ?? '');
+$cat     = trim($_GET['cat']     ?? '');
 
+$videos         = [];
+$countryOptions = [];
+
+$where  = ["type = 'VIDEO'", "status = 'PUBLISHED'"];
+$params = [];
+if ($country !== '') {
+    $where[]  = 'country = ?';
+    $params[] = $country;
+}
+if ($cat !== '') {
+    $where[]  = 'issueCategory = ?';
+    $params[] = $cat;
+}
+$whereStr = implode(' AND ', $where);
+
+try {
+    $cs = db()->query(
+        "SELECT DISTINCT country FROM Post WHERE type='VIDEO' AND status='PUBLISHED' AND country IS NOT NULL AND country != '' ORDER BY country"
+    );
+    $countryOptions = $cs->fetchAll(PDO::FETCH_COLUMN);
+
+    $stmt = db()->prepare(
+        "SELECT id, title, description, thumbnailUrl, mediaUrl, country, issueCategory, viewCount, createdAt
+         FROM Post WHERE $whereStr ORDER BY createdAt DESC LIMIT 30"
+    );
+    $stmt->execute($params);
+    $videos = $stmt->fetchAll();
+} catch (Exception $e) { /* DB not ready */ }
+
+// ── YouTube / Vimeo embed helpers ──────────────────────────────────────────────
+function youtube_id(string $url): string {
+    if (preg_match('/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
+        return $m[1];
+    }
+    return '';
+}
+
+function vimeo_id(string $url): string {
+    if (preg_match('/vimeo\.com\/(\d+)/', $url, $m)) {
+        return $m[1];
+    }
+    return '';
+}
+
+function embed_html(string $url, string $title): string {
+    $ytId = youtube_id($url);
+    if ($ytId) {
+        $src = 'https://www.youtube.com/embed/' . $ytId . '?rel=0&modestbranding=1';
+        return '<iframe src="' . htmlspecialchars($src, ENT_QUOTES) . '" title="' . htmlspecialchars($title, ENT_QUOTES) . '"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen class="w-full h-full rounded-t-2xl border-0"></iframe>';
+    }
+    $vmId = vimeo_id($url);
+    if ($vmId) {
+        $src = 'https://player.vimeo.com/video/' . $vmId . '?title=0&byline=0&portrait=0&color=D99F51';
+        return '<iframe src="' . htmlspecialchars($src, ENT_QUOTES) . '" title="' . htmlspecialchars($title, ENT_QUOTES) . '"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowfullscreen class="w-full h-full rounded-t-2xl border-0"></iframe>';
+    }
+    return '';
+}
+
+$hasFilter = $country !== '' || $cat !== '';
 $pageTitle = 'Video Library | Tafakari Digital Hub';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col bg-slate-50 font-inter">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
-<main class="flex-grow max-w-7xl mx-auto px-6 py-16">
-  <div class="mb-12">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-widest mb-4">Video Archive</div>
-    <h1 class="font-outfit text-4xl font-black text-slate-900">Video Library</h1>
-    <p class="text-slate-500 mt-2">Documentaries, field reports, and community stories on video.</p>
+<!-- ── Page header ──────────────────────────────────────────────────────────── -->
+<div style="background:#0D0102" class="py-14 px-6">
+  <div class="max-w-7xl mx-auto">
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#D99F51">Video Archive</span>
+    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">Video Library</h1>
+    <p class="text-white/60 max-w-xl">Documentaries, field reports, community stories, and conference recordings — all in one place.</p>
+  </div>
+</div>
+
+<main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+
+  <!-- ── Filter bar ───────────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 mb-8">
+    <form method="GET" action="/videos" class="flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Country</label>
+        <select name="country" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none min-w-[150px]">
+          <option value="">All Countries</option>
+          <?php foreach ($countryOptions as $c): ?>
+            <option value="<?= h($c) ?>" <?= $country === $c ? 'selected' : '' ?>><?= h($c) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Category</label>
+        <select name="cat" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none min-w-[180px]">
+          <option value="">All Categories</option>
+          <?php foreach (issue_categories() as $c): ?>
+            <option value="<?= h($c) ?>" <?= $cat === $c ? 'selected' : '' ?>><?= h($c) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
+              style="background:#D99F51;color:#0D0102">
+        Filter
+      </button>
+      <?php if ($hasFilter): ?>
+        <a href="/videos" class="px-6 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Clear</a>
+      <?php endif; ?>
+    </form>
   </div>
 
+  <!-- ── Results meta ──────────────────────────────────────────────────────── -->
+  <?php if (!empty($videos)): ?>
+    <p class="text-sm text-slate-500 mb-6">
+      <strong class="text-slate-800"><?= count($videos) ?></strong> video<?= count($videos) !== 1 ? 's' : '' ?>
+      <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : '' ?>
+    </p>
+  <?php endif; ?>
+
+  <!-- ── Video grid ───────────────────────────────────────────────────────── -->
   <?php if (empty($videos)): ?>
-    <div class="text-center py-24">
-      <div class="text-5xl mb-4">🎬</div>
-      <h3 class="font-outfit font-bold text-xl text-slate-900">No videos yet</h3>
-      <p class="text-slate-400 mt-2 text-sm">Video content will appear here once published.</p>
+    <div class="text-center py-24 bg-white rounded-3xl border border-amber-100">
+      <div class="text-6xl mb-4">🎬</div>
+      <h3 class="font-outfit font-bold text-xl text-slate-900">No videos found</h3>
+      <p class="text-slate-400 mt-2 text-sm mb-6">
+        <?= $hasFilter ? 'Try different filter options.' : 'Video content will appear here once published.' ?>
+      </p>
+      <?php if ($hasFilter): ?>
+        <a href="/videos" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#D99F51;color:#0D0102">View All Videos</a>
+      <?php endif; ?>
     </div>
   <?php else: ?>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <?php foreach ($videos as $v): ?>
-        <?php $wrapper = !empty($v['mediaUrl']) ? '<a href="' . h($v['mediaUrl']) . '" target="_blank" rel="noopener noreferrer">' : '<div>'; ?>
-        <?= $wrapper ?>
-          <div class="group bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all">
-            <div class="relative h-52 bg-slate-900 overflow-hidden">
-              <?php if (!empty($v['thumbnailUrl'])): ?>
-                <img src="<?= h($v['thumbnailUrl']) ?>" alt="<?= h($v['title']) ?>"
-                     class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-105 duration-500">
-              <?php endif; ?>
-              <!-- Play overlay -->
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+      <?php foreach ($videos as $v):
+        $ytId      = !empty($v['mediaUrl']) ? youtube_id($v['mediaUrl']) : '';
+        $vmId      = !empty($v['mediaUrl']) ? vimeo_id($v['mediaUrl']) : '';
+        $isEmbed   = ($ytId !== '' || $vmId !== '');
+        $embedCode = $isEmbed && !empty($v['mediaUrl']) ? embed_html($v['mediaUrl'], $v['title']) : '';
+      ?>
+        <div class="group bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden hover:shadow-lg hover:border-amber-200 transition-all duration-300 flex flex-col">
+
+          <!-- Video / thumbnail area -->
+          <div class="relative overflow-hidden" style="aspect-ratio:16/9;background:#0D0102">
+
+            <?php if ($isEmbed): ?>
+              <!-- Embed iframe shown after click -->
+              <div id="vid-thumb-<?= $v['id'] ?>" class="absolute inset-0 cursor-pointer" onclick="playEmbed('<?= h($v['id']) ?>')">
+                <?php if (!empty($v['thumbnailUrl'])): ?>
+                  <img src="<?= h($v['thumbnailUrl']) ?>" alt="<?= h($v['title']) ?>"
+                       class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300 group-hover:scale-105 transition-transform">
+                <?php elseif ($ytId): ?>
+                  <img src="https://img.youtube.com/vi/<?= h($ytId) ?>/hqdefault.jpg" alt="<?= h($v['title']) ?>"
+                       class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                <?php else: ?>
+                  <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,#1a0203,#3B0708)">
+                    <svg width="40" height="40" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
+                  </div>
+                <?php endif; ?>
+                <!-- Play overlay -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="w-16 h-16 rounded-full flex items-center justify-center border-2 border-white/30 backdrop-blur-sm group-hover:scale-110 transition-transform shadow-xl"
+                       style="background:rgba(217,159,81,.9)">
+                    <svg class="w-7 h-7 ml-0.5 text-slate-900" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
                 </div>
+                <?php if ($ytId): ?>
+                  <div class="absolute top-3 right-3 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest text-white" style="background:rgba(255,0,0,.85)">YouTube</div>
+                <?php elseif ($vmId): ?>
+                  <div class="absolute top-3 right-3 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest text-white" style="background:rgba(26,183,234,.85)">Vimeo</div>
+                <?php endif; ?>
               </div>
-              <?php if ($v['viewCount'] > 0): ?>
-                <div class="absolute top-4 right-4 px-2 py-1 rounded-full text-[10px] font-black text-white" style="background:rgba(0,0,0,.6)">
-                  👁 <?= format_number((int)$v['viewCount']) ?>
+              <div id="vid-frame-<?= h($v['id']) ?>" class="hidden absolute inset-0">
+                <?= $embedCode ?>
+              </div>
+
+            <?php elseif (!empty($v['mediaUrl'])): ?>
+              <!-- External link — no embed -->
+              <a href="<?= h($v['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer" class="block w-full h-full">
+                <?php if (!empty($v['thumbnailUrl'])): ?>
+                  <img src="<?= h($v['thumbnailUrl']) ?>" alt="<?= h($v['title']) ?>"
+                       class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                <?php else: ?>
+                  <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,#1a0203,#3B0708)">
+                    <svg width="40" height="40" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
+                  </div>
+                <?php endif; ?>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="w-16 h-16 rounded-full flex items-center justify-center border-2 border-white/30 backdrop-blur-sm group-hover:scale-110 transition-transform shadow-xl"
+                       style="background:rgba(217,159,81,.9)">
+                    <svg class="w-7 h-7 ml-0.5 text-slate-900" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
                 </div>
-              <?php endif; ?>
+              </a>
+
+            <?php else: ?>
+              <!-- No URL -->
+              <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,#1a0203,#3B0708)">
+                <svg width="40" height="40" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".3" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
+              </div>
+            <?php endif; ?>
+
+            <!-- View count badge -->
+            <?php if (!empty($v['viewCount']) && (int)$v['viewCount'] > 0): ?>
+              <div class="absolute bottom-3 left-3 px-2 py-0.5 rounded text-[10px] font-black text-white" style="background:rgba(0,0,0,.65)">
+                <?= format_number((int)$v['viewCount']) ?> views
+              </div>
+            <?php endif; ?>
+          </div>
+
+          <!-- Content block -->
+          <div class="p-5 flex flex-col flex-grow">
+            <div class="flex flex-wrap gap-2 mb-3">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#D99F51"><?= h($v['country']) ?></span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($v['issueCategory']) ?></span>
             </div>
-            <div class="p-6">
-              <div class="flex flex-wrap gap-2 mb-3">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($v['country']) ?></span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-700"><?= h($v['issueCategory']) ?></span>
-              </div>
-              <h3 class="font-outfit font-bold text-base uppercase tracking-tight text-slate-900 mb-2 line-clamp-2"><?= h($v['title']) ?></h3>
-              <?php if (!empty($v['description'])): ?>
-                <p class="text-sm text-slate-500 line-clamp-3 mb-4"><?= h($v['description']) ?></p>
-              <?php endif; ?>
+            <h3 class="font-outfit font-bold text-base text-slate-900 leading-snug mb-2 line-clamp-2 flex-grow"><?= h($v['title']) ?></h3>
+            <?php if (!empty($v['description'])): ?>
+              <p class="text-sm text-slate-500 line-clamp-2 mb-3"><?= h($v['description']) ?></p>
+            <?php endif; ?>
+            <div class="flex items-center justify-between mt-auto pt-3 border-t border-amber-50">
               <span class="text-xs text-slate-400"><?= format_date($v['createdAt']) ?></span>
+              <?php if (!empty($v['mediaUrl'])): ?>
+                <?php if ($isEmbed): ?>
+                  <button onclick="playEmbed('<?= h($v['id']) ?>')"
+                          class="text-xs font-bold transition-colors" style="color:#B07D2A">
+                    Watch &rarr;
+                  </button>
+                <?php else: ?>
+                  <a href="<?= h($v['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
+                     class="text-xs font-bold transition-colors" style="color:#B07D2A">
+                    Watch &rarr;
+                  </a>
+                <?php endif; ?>
+              <?php endif; ?>
             </div>
           </div>
-        <?= !empty($v['mediaUrl']) ? '</a>' : '</div>' ?>
+        </div>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
+
 </main>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
+<script>
+function playEmbed(id) {
+    var thumb = document.getElementById('vid-thumb-' + id);
+    var frame = document.getElementById('vid-frame-' + id);
+    if (!thumb || !frame) return;
+    thumb.classList.add('hidden');
+    frame.classList.remove('hidden');
+    // Force iframe src load by resetting (handles lazy state)
+    var iframe = frame.querySelector('iframe');
+    if (iframe) {
+        var src = iframe.src;
+        if (!src) {
+            iframe.src = iframe.getAttribute('data-src') || src;
+        }
+    }
+}
+</script>
 </body>
 </html>
