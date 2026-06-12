@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -45,7 +45,7 @@ try {
     transition: border-color .2s, transform .22s, box-shadow .22s;
   }
   .pillar-card:hover {
-    border-left-color: #D99F51;
+    border-left-color: #E7952A;
     transform: translateY(-5px);
     box-shadow: 0 24px 60px rgba(0,0,0,.09);
   }
@@ -69,7 +69,7 @@ try {
   .geo-card:hover img.geo-bg { transform: scale(1.07); }
   .geo-overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(15deg, rgba(13,2,3,.9) 0%, rgba(13,2,3,.55) 55%, rgba(0,0,0,.15) 100%);
+    background: rgba(13,2,3,.72);
     transition: opacity .3s;
   }
   .geo-card:hover .geo-overlay { opacity: .95; }
@@ -78,21 +78,21 @@ try {
   .eyebrow-left {
     display: inline-flex; align-items: center; gap: 10px;
     font-size: .65rem; font-weight: 800; letter-spacing: .14em;
-    text-transform: uppercase; color: #D99F51; margin-bottom: 1rem;
+    text-transform: uppercase; color: #E7952A; margin-bottom: 1rem;
   }
   .eyebrow-left::before {
     content: ''; display: block;
-    width: 30px; height: 2px; background: #D99F51; flex-shrink: 0;
+    width: 30px; height: 2px; background: #E7952A; flex-shrink: 0;
   }
   .eyebrow-center {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     font-size: .65rem; font-weight: 800; letter-spacing: .14em;
-    text-transform: uppercase; color: #D99F51; margin-bottom: 1rem;
+    text-transform: uppercase; color: #E7952A; margin-bottom: 1rem;
   }
   .eyebrow-center::before,
   .eyebrow-center::after {
     content: ''; display: block;
-    width: 28px; height: 2px; background: #D99F51;
+    width: 28px; height: 2px; background: #E7952A;
   }
 
   /* Mission drop-cap quote mark */
@@ -101,7 +101,7 @@ try {
     content: '\201C';
     position: absolute; top: -2.5rem; left: -1rem;
     font-size: 9rem; line-height: 1; font-family: 'Outfit', sans-serif;
-    font-weight: 900; color: #D99F51; opacity: .15;
+    font-weight: 900; color: #E7952A; opacity: .15;
     pointer-events: none; user-select: none;
   }
 
@@ -162,14 +162,14 @@ try {
         <img src="<?= h($s['img']) ?>" alt="<?= h($s['title']) ?>"
              class="w-full h-full object-cover" style="filter:brightness(.7) saturate(1.1)">
         <div class="absolute inset-0"
-             style="background:linear-gradient(110deg,rgba(5,0,1,.85) 0%,rgba(5,0,1,.5) 55%,rgba(0,0,0,.12) 100%)"></div>
+             style="background:rgba(5,0,1,.72)"></div>
 
         <div class="absolute inset-0 flex flex-col justify-center px-8 md:px-24 pb-20">
 
           <!-- Region eyebrow -->
           <div class="flex items-center gap-3 mb-6">
-            <span class="block w-10 h-px" style="background:#D99F51"></span>
-            <span class="text-[11px] font-black uppercase tracking-[.22em]" style="color:#D99F51"><?= h($s['region']) ?></span>
+            <span class="block w-10 h-px" style="background:#E7952A"></span>
+            <span class="text-[11px] font-black uppercase tracking-[.22em]" style="color:#E7952A"><?= h($s['region']) ?></span>
           </div>
 
           <!-- Headline -->
@@ -194,7 +194,7 @@ try {
           <!-- Coverage badge -->
           <div class="mt-10">
             <span class="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border"
-                  style="color:#D99F51;border-color:rgba(217,159,81,.45);background:rgba(217,159,81,.07)">
+                  style="color:#E7952A;border-color:rgba(231,149,42,.45);background:rgba(231,149,42,.07)">
               <?= h($s['badge']) ?>
             </span>
           </div>
@@ -207,14 +207,14 @@ try {
       <?php foreach ($slides as $i => $_): ?>
         <button class="carousel-dot py-1 flex items-center justify-end" data-index="<?= $i ?>">
           <span class="hero-dot-bar block h-0.5 rounded-full transition-all duration-500"
-                style="width:<?= $i === 0 ? '2rem' : '1rem' ?>;background:<?= $i === 0 ? '#D99F51' : 'rgba(255,255,255,.35)' ?>"></span>
+                style="width:<?= $i === 0 ? '2rem' : '1rem' ?>;background:<?= $i === 0 ? '#E7952A' : 'rgba(255,255,255,.35)' ?>"></span>
         </button>
       <?php endforeach; ?>
     </div>
 
     <!-- Slide counter (bottom-left) -->
     <div class="absolute bottom-10 left-8 md:left-24 z-20 flex items-center gap-4">
-      <span id="hero-cur" class="font-outfit font-black text-3xl" style="color:#D99F51">01</span>
+      <span id="hero-cur" class="font-outfit font-black text-3xl" style="color:#E7952A">01</span>
       <div class="h-px w-10 bg-white/25"></div>
       <span class="text-white/40 text-sm font-semibold">0<?= count($slides) ?></span>
     </div>
@@ -244,7 +244,7 @@ try {
       foreach ($impactStats as $j => $st): ?>
         <div class="stat-item text-center py-10 px-4">
           <div class="font-outfit font-black text-4xl md:text-5xl leading-none mb-2.5">
-            <span style="color:#D99F51"><?= h($st['num']) ?></span><span style="color:#EAD2AC"><?= h($st['suf']) ?></span>
+            <span style="color:#E7952A"><?= h($st['num']) ?></span><span style="color:#F4C87E"><?= h($st['suf']) ?></span>
           </div>
           <div class="text-white/45 text-[11px] font-semibold uppercase tracking-widest"><?= h($st['label']) ?></div>
         </div>
@@ -294,28 +294,28 @@ try {
         <?php
         $pillars = [
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>',
             'title' => 'Media Broadcasting',
             'desc'  => 'Photo galleries, podcasts, and video libraries documenting field activities and regional oral histories across three nations.',
             'href'  => '/gallery',
             'cta'   => 'View Gallery',
           ],
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>',
             'title' => 'Knowledge Repository',
             'desc'  => 'A structured library of research reports, policy briefs, and actionable datasets made freely accessible for public and academic use.',
             'href'  => '/documents',
             'cta'   => 'Browse Documents',
           ],
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>',
             'title' => 'Community Engagement',
             'desc'  => 'Moderated public comment systems and contact infrastructure ensuring safe, constructive, and inclusive community dialogue.',
             'href'  => '/contact',
             'cta'   => 'Get Involved',
           ],
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>',
             'title' => 'Interactive Data Maps',
             'desc'  => 'Visual heatmaps displaying issue intensity by geography and category, enabling pattern recognition across regions and time periods.',
             'href'  => '/heatmap',
@@ -324,13 +324,13 @@ try {
         ];
         foreach ($pillars as $p): ?>
           <div class="pillar-card bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:rgba(217,159,81,.10)">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:rgba(231,149,42,.10)">
               <?= $p['svg'] ?>
             </div>
             <h3 class="font-outfit font-bold text-[1.1rem] text-slate-900 mb-3 leading-snug"><?= h($p['title']) ?></h3>
             <p class="text-slate-500 text-sm leading-relaxed mb-6"><?= h($p['desc']) ?></p>
             <a href="<?= h($p['href']) ?>"
-               class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-2.5" style="color:#B07D2A">
+               class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-2.5" style="color:#C47C1A">
               <?= h($p['cta']) ?>
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
@@ -351,7 +351,7 @@ try {
         <span class="eyebrow-left">Latest from the Region</span>
         <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Recent Articles</h2>
       </div>
-      <a href="/news" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#B07D2A">
+      <a href="/news" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
         View All Articles
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
@@ -368,21 +368,21 @@ try {
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
             <?php else: ?>
               <div class="w-full h-full flex items-center justify-center"
-                   style="background:linear-gradient(135deg,#1a1200 0%,#7a5718 100%)">
+                   style="background:#0D0102">
                 <svg width="42" height="42" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.4" viewBox="0 0 24 24">
                   <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
                 </svg>
               </div>
             <?php endif; ?>
             <div class="absolute top-4 left-4">
-              <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-slate-900" style="background:#D99F51">
+              <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-slate-900" style="background:#E7952A">
                 <?= h($art['country']) ?>
               </span>
             </div>
           </div>
 
           <div class="flex flex-col flex-grow p-6">
-            <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#D99F51">
+            <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A">
               <?= h($art['issueCategory']) ?>
             </span>
             <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
@@ -475,13 +475,13 @@ try {
             <!-- Content -->
             <div class="absolute inset-0 z-10 flex flex-col justify-end p-8">
               <span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border inline-block w-fit mb-3"
-                    style="color:#D99F51;border-color:rgba(217,159,81,.4)"><?= h($g['region']) ?></span>
+                    style="color:#E7952A;border-color:rgba(231,149,42,.4)"><?= h($g['region']) ?></span>
               <h3 class="font-outfit font-black text-[2.5rem] text-white leading-none mb-1"><?= h($g['name']) ?></h3>
               <p class="text-white/50 text-xs mb-1"><?= h($g['units']) ?></p>
               <p class="text-white/40 text-[11px] italic mb-5"><?= $g['cities'] ?></p>
               <p class="text-white/75 text-sm leading-relaxed mb-6 max-w-[260px]"><?= h($g['desc']) ?></p>
               <a href="/heatmap"
-                 class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-3" style="color:#D99F51">
+                 class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-3" style="color:#E7952A">
                 Explore Region
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
@@ -497,10 +497,10 @@ try {
        7. CALL TO ACTION BAND
   ══════════════════════════════════════════ -->
   <section class="py-28 px-6"
-           style="background:linear-gradient(118deg,#100102 0%,#2d0405 40%,#9A1415 100%)">
+           style="background:#750B25">
     <div class="max-w-3xl mx-auto text-center">
       <span class="inline-block text-[9px] font-black uppercase tracking-[.2em] px-3.5 py-1.5 rounded-full mb-8"
-            style="background:rgba(217,159,81,.12);color:#D99F51;border:1px solid rgba(217,159,81,.3)">
+            style="background:rgba(231,149,42,.12);color:#E7952A;border:1px solid rgba(231,149,42,.3)">
         Join the Platform
       </span>
       <h2 class="font-outfit font-black text-4xl md:text-[3.25rem] text-white leading-[1.06] mb-6">
@@ -547,7 +547,7 @@ try {
     slides[cur].classList.add('opacity-100');
     if (dotBars[cur]) {
       dotBars[cur].style.width      = '2rem';
-      dotBars[cur].style.background = '#D99F51';
+      dotBars[cur].style.background = '#E7952A';
     }
     if (numEl) numEl.textContent = pad(cur + 1);
   }

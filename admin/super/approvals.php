@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
@@ -60,8 +60,8 @@ $adminPageSub   = $pendingCount > 0 ? $pendingCount . ' submission' . ($pendingC
           <div class="p-6">
             <div class="flex items-start gap-4">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                   style="background:rgba(154,20,21,.06)">
-                <svg width="18" height="18" fill="none" stroke="#9A1415" stroke-width="1.8"
+                   style="background:rgba(117,11,37,.06)">
+                <svg width="18" height="18" fill="none" stroke="#750B25" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                   <path d="<?= $svg ?>"/>
                 </svg>
@@ -94,7 +94,7 @@ $adminPageSub   = $pendingCount > 0 ? $pendingCount . ' submission' . ($pendingC
               </label>
               <textarea id="notes-<?= h($p['id']) ?>" rows="3"
                         class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 resize-none"
-                        style="focus-ring-color:#9A1415"
+                        style="focus-ring-color:#750B25"
                         placeholder="Explain why this submission is being rejected…"></textarea>
             </div>
             <div id="err-<?= h($p['id']) ?>" class="hidden mt-2 text-rose-600 text-xs font-semibold"></div>

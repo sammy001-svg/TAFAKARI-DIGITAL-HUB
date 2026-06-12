@@ -1,4 +1,4 @@
-<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-secondary/20" style="background:rgba(154,20,21,.97)">
+﻿<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
   <div class="flex items-center justify-between max-w-7xl mx-auto w-full">
 
     <!-- Logo: CRTP logo image, falls back to styled wordmark -->
@@ -27,7 +27,9 @@
       foreach ($navLinks as [$href, $label]):
         $active = ($currentPath === $href);
       ?>
-        <a href="<?= h($href) ?>" class="transition-colors tracking-wide <?= $active ? 'text-secondary font-bold border-b-2 border-secondary/70 pb-0.5' : 'hover:text-secondary' ?>">
+        <a href="<?= h($href) ?>"
+           class="transition-colors tracking-wide <?= $active ? 'font-bold pb-1' : 'hover:text-secondary' ?>"
+           <?= $active ? 'style="color:#ED1C24;border-bottom:2px solid #ED1C24"' : '' ?>>
           <?= h($label) ?>
         </a>
       <?php endforeach; ?>
@@ -39,7 +41,7 @@
       <a href="/search" aria-label="Search" class="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all" title="Search">
         <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </a>
-      <a href="/admin/login" class="text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full transition-all hover:brightness-110" style="background:#D99F51">
+      <a href="/admin/login" class="text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full transition-all hover:brightness-110" style="background:#E7952A">
         Login
       </a>
       <a href="/contact" class="text-sm font-bold text-white px-5 py-2.5 rounded-full border-2 border-white/40 hover:border-white/80 hover:bg-white/10 transition-all">
@@ -65,7 +67,7 @@
       Search
     </a>
     <div class="flex gap-3 mt-3 pt-3 border-t border-white/20">
-      <a href="/admin/login" class="flex-1 text-center text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full" style="background:#D99F51">Login</a>
+      <a href="/admin/login" class="flex-1 text-center text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full" style="background:#E7952A">Login</a>
       <a href="/contact" class="flex-1 text-center text-sm font-bold text-white px-4 py-2.5 rounded-full border-2 border-white/40">Get Involved</a>
     </div>
   </div>

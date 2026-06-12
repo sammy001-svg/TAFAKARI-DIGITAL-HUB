@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -85,7 +85,7 @@ $pageTitle = 'Contact Us | Tafakari Digital Hub';
             <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Full Name *</label>
             <input type="text" name="fullName" required value="<?= h($_POST['fullName'] ?? '') ?>"
                    class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:border-transparent text-sm"
-                   style="--tw-ring-color:#9A1415" placeholder="Your full name">
+                   style="--tw-ring-color:#750B25" placeholder="Your full name">
           </div>
           <div>
             <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Email Address *</label>

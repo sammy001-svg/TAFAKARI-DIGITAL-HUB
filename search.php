@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -12,7 +12,7 @@ $typeConfig = [
         'label' => 'Articles',
         'icon'  => 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z',
         'url'   => fn($r) => '/news/' . $r['id'],
-        'color' => '#9A1415',
+        'color' => '#750B25',
     ],
     'DOCUMENT' => [
         'label' => 'Documents',
@@ -73,7 +73,7 @@ $pageDesc     = 'Search across articles, research documents, podcasts, and video
 $pageKeywords = 'search, Africa research, conflict news, peace studies';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <!-- ── Search header ──────────────────────────────────────────────────────── -->
@@ -95,7 +95,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
                style="background:#fff">
         <button type="submit"
                 class="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-                style="background:#D99F51;color:#0D0102">
+                style="background:#E7952A;color:#0D0102">
           Search
         </button>
       </div>
@@ -108,8 +108,8 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
   <?php if ($q === ''): ?>
     <!-- ── No query yet — show suggestions ─────────────────────────────── -->
     <div class="text-center py-16">
-      <div class="w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center" style="background:#FBF5E6">
-        <svg width="36" height="36" fill="none" stroke="#B07D2A" stroke-width="1.8" viewBox="0 0 24 24">
+      <div class="w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center" style="background:#F8F8F0">
+        <svg width="36" height="36" fill="none" stroke="#C47C1A" stroke-width="1.8" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
       </div>
@@ -200,7 +200,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
               <div class="flex-grow min-w-0">
                 <div class="flex flex-wrap gap-2 mb-1">
                   <?php if (!empty($r['country'])): ?>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#D99F51"><?= h($r['country']) ?></span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#E7952A"><?= h($r['country']) ?></span>
                   <?php endif; ?>
                   <?php if (!empty($r['issueCategory'])): ?>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($r['issueCategory']) ?></span>
@@ -215,7 +215,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
               <!-- Date + arrow -->
               <div class="shrink-0 text-right">
                 <span class="text-xs text-slate-400 block mb-1"><?= format_date($r['createdAt']) ?></span>
-                <svg width="16" height="16" fill="none" stroke="#B07D2A" stroke-width="2.5" viewBox="0 0 24 24" class="ml-auto group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                <svg width="16" height="16" fill="none" stroke="#C47C1A" stroke-width="2.5" viewBox="0 0 24 24" class="ml-auto group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
               </div>
             </a>
           <?php endforeach; ?>

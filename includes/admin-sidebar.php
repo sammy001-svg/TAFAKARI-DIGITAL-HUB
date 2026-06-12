@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $_u       = current_user();
 $_role    = $_u['role'] ?? '';
 $_name    = $_u['name'] ?? $_u['username'] ?? 'User';
@@ -35,7 +35,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
     <a href="<?= h($item['href']) ?>"
        class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all"
        style="<?= $isActive
-           ? 'background:rgba(154,20,21,.85);color:#fff'
+           ? 'background:rgba(117,11,37,.85);color:#fff'
            : 'color:rgba(255,255,255,.45)' ?>">
       <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
             style="<?= $isActive ? 'background:rgba(255,255,255,.15)' : 'background:rgba(255,255,255,.05)' ?>">
@@ -47,7 +47,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
       <span class="flex-grow leading-none"><?= h($item['label']) ?></span>
       <?php if ($badge > 0): ?>
         <span class="text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-              style="background:#D99F51;color:#0D0203"><?= min($badge, 9) ?><?= $badge > 9 ? '+' : '' ?></span>
+              style="background:#E7952A;color:#0D0203"><?= min($badge, 9) ?><?= $badge > 9 ? '+' : '' ?></span>
       <?php endif; ?>
     </a>
     <?php
@@ -77,10 +77,10 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
   <!-- Branding -->
   <div class="flex items-center gap-3 px-4 h-[60px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
     <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-xs shrink-0"
-         style="background:#9A1415;box-shadow:0 0 0 2px rgba(154,20,21,.35)">T</div>
+         style="background:#750B25;box-shadow:0 0 0 2px rgba(117,11,37,.35)">T</div>
     <div class="min-w-0">
       <p class="font-outfit font-bold text-[13px] text-white leading-none truncate">Tafakari Hub</p>
-      <p class="text-[9px] font-bold uppercase tracking-[.14em] mt-0.5" style="color:rgba(217,159,81,.55)">Admin Portal</p>
+      <p class="text-[9px] font-bold uppercase tracking-[.14em] mt-0.5" style="color:rgba(231,149,42,.55)">Admin Portal</p>
     </div>
   </div>
 
@@ -117,7 +117,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
   <div class="px-2 pb-3 border-t shrink-0" style="border-color:rgba(255,255,255,.055)">
     <div class="flex items-center gap-2.5 px-3 py-3 mt-3 rounded-xl" style="background:rgba(255,255,255,.04)">
       <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shrink-0"
-           style="background:#9A1415"><?= h($_initial) ?></div>
+           style="background:#750B25"><?= h($_initial) ?></div>
       <div class="flex-grow min-w-0">
         <p class="text-[12px] font-bold text-white truncate leading-none"><?= h($_name) ?></p>
         <p class="text-[9px] mt-0.5 truncate" style="color:rgba(255,255,255,.3)">

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
@@ -78,8 +78,8 @@ $adminPageSub   = 'Manage your account information and security settings.';
     transition: border-color .15s, box-shadow .15s;
   }
   .form-input:focus {
-    border-color: #9A1415;
-    box-shadow: 0 0 0 3px rgba(154,20,21,.1);
+    border-color: #750B25;
+    box-shadow: 0 0 0 3px rgba(117,11,37,.1);
     background: #fff;
   }
   .form-label {
@@ -109,7 +109,7 @@ $adminPageSub   = 'Manage your account information and security settings.';
     <div class="lg:col-span-1">
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 text-center sticky top-6">
         <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-lg"
-             style="background:#9A1415"><?= h($initial) ?></div>
+             style="background:#750B25"><?= h($initial) ?></div>
         <h3 class="font-outfit font-bold text-[15px] text-slate-900 leading-tight">
           <?= h($dbUser['name'] ?? $dbUser['username'] ?? '—') ?>
         </h3>
@@ -142,8 +142,8 @@ $adminPageSub   = 'Manage your account information and security settings.';
       <!-- Profile Information -->
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(154,20,21,.06)">
-            <svg width="15" height="15" fill="none" stroke="#9A1415" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(117,11,37,.06)">
+            <svg width="15" height="15" fill="none" stroke="#750B25" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
               <path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
@@ -192,8 +192,8 @@ $adminPageSub   = 'Manage your account information and security settings.';
       <!-- Change Password -->
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(154,20,21,.06)">
-            <svg width="15" height="15" fill="none" stroke="#9A1415" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(117,11,37,.06)">
+            <svg width="15" height="15" fill="none" stroke="#750B25" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
               <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
           </div>

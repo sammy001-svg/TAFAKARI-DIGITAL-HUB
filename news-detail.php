@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -27,13 +27,13 @@ if (!$post) {
     http_response_code(404);
     $pageTitle = '404 Not Found | Tafakari Digital Hub';
     include __DIR__ . '/includes/head.php';
-    echo '<body class="flex flex-col min-h-screen font-inter" style="background:#F7F3EC">';
+    echo '<body class="flex flex-col min-h-screen font-inter" style="background:#F8F8F0">';
     include __DIR__ . '/includes/navbar.php';
     echo '<main class="flex-grow flex flex-col items-center justify-center py-24 text-center px-6">
             <div class="text-6xl mb-6">📭</div>
             <h1 class="font-outfit text-4xl font-black text-slate-900 mb-4">Article Not Found</h1>
             <p class="text-slate-500 mb-8">This article may have been removed or is not yet published.</p>
-            <a href="/news" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#D99F51;color:#0D0102">&larr; Back to News</a>
+            <a href="/news" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">&larr; Back to News</a>
           </main>';
     include __DIR__ . '/includes/footer.php';
     echo '</body></html>';
@@ -107,7 +107,7 @@ $authorDisplay = $post['authorName'] ?? $post['authorUsername'] ?? 'Staff';
 $pageAuthor    = $authorDisplay;
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <main class="flex-grow">
@@ -124,8 +124,8 @@ $pageAuthor    = $authorDisplay;
 
       <!-- Badges -->
       <div class="flex flex-wrap gap-2 mb-5">
-        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-900" style="background:#D99F51"><?= h($post['country']) ?></span>
-        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style="background:rgba(217,159,81,.15);color:#D99F51"><?= h($post['issueCategory']) ?></span>
+        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-900" style="background:#E7952A"><?= h($post['country']) ?></span>
+        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style="background:rgba(231,149,42,.15);color:#E7952A"><?= h($post['issueCategory']) ?></span>
       </div>
 
       <!-- Title -->
@@ -167,10 +167,10 @@ $pageAuthor    = $authorDisplay;
 
     <!-- Attached media link -->
     <?php if (!empty($post['mediaUrl'])): ?>
-      <div class="my-8 p-6 rounded-2xl border border-amber-200" style="background:#FBF5E6">
+      <div class="my-8 p-6 rounded-2xl border border-amber-200" style="background:#F8F8F0">
         <p class="text-sm font-bold text-amber-900 mb-3">📎 Attached Media / Source Document</p>
         <a href="<?= h($post['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
-           class="inline-block px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:brightness-110" style="background:#D99F51;color:#0D0102">
+           class="inline-block px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:brightness-110" style="background:#E7952A;color:#0D0102">
           Open Media &rarr;
         </a>
       </div>
@@ -247,7 +247,7 @@ $pageAuthor    = $authorDisplay;
             </div>
             <div class="flex items-center justify-between">
               <p class="text-xs text-slate-400">Comments are reviewed before publishing.</p>
-              <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110" style="background:#D99F51;color:#0D0102">
+              <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110" style="background:#E7952A;color:#0D0102">
                 Post Comment
               </button>
             </div>
@@ -262,7 +262,7 @@ $pageAuthor    = $authorDisplay;
           <?php foreach ($comments as $c): ?>
             <div class="bg-white rounded-2xl border border-amber-100 p-6 shadow-sm">
               <div class="flex items-center gap-3 mb-3">
-                <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#9A1415">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#750B25">
                   <?= strtoupper(substr($c['name'] ?: 'A', 0, 1)) ?>
                 </div>
                 <div>
@@ -279,7 +279,7 @@ $pageAuthor    = $authorDisplay;
 
     <!-- Back link -->
     <div class="mt-12 pt-8 border-t border-amber-100">
-      <a href="/news" class="inline-flex items-center gap-2 text-sm font-bold transition-colors hover:text-amber-700" style="color:#B07D2A">
+      <a href="/news" class="inline-flex items-center gap-2 text-sm font-bold transition-colors hover:text-amber-700" style="color:#C47C1A">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
         Back to News
       </a>
@@ -292,33 +292,33 @@ $pageAuthor    = $authorDisplay;
       <div class="max-w-7xl mx-auto">
         <div class="flex items-center justify-between mb-8">
           <div>
-            <span class="block text-[10px] font-black uppercase tracking-widest mb-1" style="color:#D99F51">You May Also Like</span>
+            <span class="block text-[10px] font-black uppercase tracking-widest mb-1" style="color:#E7952A">You May Also Like</span>
             <h2 class="font-outfit font-bold text-2xl text-white">Related Articles</h2>
           </div>
-          <a href="/news?country=<?= urlencode($post['country']) ?>" class="text-xs font-bold hidden sm:block" style="color:#D99F51">
+          <a href="/news?country=<?= urlencode($post['country']) ?>" class="text-xs font-bold hidden sm:block" style="color:#E7952A">
             More from <?= h($post['country']) ?> &rarr;
           </a>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <?php foreach ($related as $r): ?>
             <a href="/news/<?= h($r['id']) ?>"
-               class="group rounded-2xl overflow-hidden border border-white/10 hover:border-amber-400/40 transition-all hover:-translate-y-1 duration-300 flex flex-col" style="background:#1a0203">
+               class="group rounded-2xl overflow-hidden border border-white/10 hover:border-amber-400/40 transition-all hover:-translate-y-1 duration-300 flex flex-col" style="background:#0D0102">
               <div class="h-40 overflow-hidden" style="background:#0D0102">
                 <?php if (!empty($r['thumbnailUrl'])): ?>
                   <img src="<?= h($r['thumbnailUrl']) ?>" alt="<?= h($r['title']) ?>"
                        class="w-full h-full object-cover opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500">
                 <?php else: ?>
                   <div class="w-full h-full flex items-center justify-center">
-                    <svg width="32" height="32" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".3" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M9 3v18M9 9h10"/></svg>
+                    <svg width="32" height="32" fill="none" stroke="#E7952A" stroke-width="1.5" opacity=".3" viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M9 3v18M9 9h10"/></svg>
                   </div>
                 <?php endif; ?>
               </div>
               <div class="p-5 flex flex-col flex-grow">
-                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#D99F51"><?= h($r['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($r['issueCategory']) ?></span>
                 <h3 class="font-outfit font-bold text-sm text-white leading-snug line-clamp-2 group-hover:text-amber-300 transition-colors flex-grow"><?= h($r['title']) ?></h3>
                 <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
                   <span class="text-[10px] text-white/40"><?= format_date($r['createdAt']) ?></span>
-                  <span class="text-[10px] font-bold" style="color:#D99F51">Read &rarr;</span>
+                  <span class="text-[10px] font-bold" style="color:#E7952A">Read &rarr;</span>
                 </div>
               </div>
             </a>

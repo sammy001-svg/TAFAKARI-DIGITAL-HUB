@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -25,22 +25,19 @@ $pageDesc     = 'The Centre for Research, Training and Policy (CRTP) is a resear
 $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace research, conflict analysis, Hekima, Kenya, Ethiopia, DR Congo';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <!-- HERO                                                                      -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
-<div style="background:#0D0102" class="relative overflow-hidden">
-  <!-- Background pattern -->
-  <div class="absolute inset-0 pointer-events-none" style="background-image:radial-gradient(circle at 20% 50%, rgba(217,159,81,.06) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(154,20,21,.12) 0%, transparent 50%)"></div>
-
-  <div class="max-w-7xl mx-auto px-6 py-20 relative">
+<div style="background:#0D0102" class="py-20 px-6">
+  <div class="max-w-7xl mx-auto">
     <div class="max-w-3xl">
-      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 text-amber-900" style="background:#D99F51">About CRTP</span>
+      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 text-white" style="background:#750B25">About CRTP</span>
       <h1 class="font-outfit text-5xl md:text-6xl font-black text-white leading-tight mb-6">
         Reflecting on Our<br>
-        <span style="color:#D99F51">Shared Future</span>
+        <span style="color:#E7952A">Shared Future</span>
       </h1>
       <p class="text-white/70 text-lg leading-relaxed max-w-2xl mb-8">
         The Centre for Research, Training and Policy (CRTP) is an independent research and capacity-building
@@ -49,7 +46,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
         connecting research, media, and community.
       </p>
       <div class="flex flex-wrap gap-4">
-        <a href="/contact" class="px-7 py-3.5 rounded-2xl font-bold text-slate-900 transition-all hover:brightness-110" style="background:#D99F51">
+        <a href="/contact" class="px-7 py-3.5 rounded-2xl font-bold text-white transition-all hover:brightness-110" style="background:#750B25">
           Partner With Us
         </a>
         <a href="/heatmap" class="px-7 py-3.5 rounded-2xl font-bold text-white transition-all border hover:bg-white/10" style="border-color:rgba(255,255,255,.2)">
@@ -58,15 +55,12 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
       </div>
     </div>
   </div>
-
-  <!-- Bottom fade to page background -->
-  <div class="h-12" style="background:linear-gradient(to bottom, transparent, #F7F3EC)"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <!-- LIVE IMPACT STATISTICS                                                    -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
-<div class="max-w-7xl mx-auto px-6 -mt-4 mb-16">
+<div class="max-w-7xl mx-auto px-6 pt-12 mb-16">
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
     <?php
     $impactStats = [
@@ -80,8 +74,8 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     ?>
     <?php foreach ($impactStats as $s): ?>
       <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 text-center hover:shadow-md hover:border-amber-200 transition-all">
-        <div class="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center" style="background:#FBF5E6">
-          <svg width="20" height="20" fill="none" stroke="#B07D2A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <div class="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center" style="background:#F8F8F0">
+          <svg width="20" height="20" fill="none" stroke="#C47C1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="<?= $s['icon'] ?>"/>
           </svg>
         </div>
@@ -101,8 +95,8 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Mission -->
     <div class="bg-white rounded-3xl border border-amber-100 p-10 shadow-sm relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" style="background:rgba(217,159,81,.06)"></div>
-      <span class="inline-block w-10 h-1 rounded-full mb-5" style="background:#D99F51"></span>
+      <div class="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" style="background:rgba(231,149,42,.06)"></div>
+      <span class="inline-block w-10 h-1 rounded-full mb-5" style="background:#E7952A"></span>
       <h2 class="font-outfit font-black text-3xl text-slate-900 mb-4">Our Mission</h2>
       <p class="text-slate-600 leading-relaxed text-lg">
         To generate rigorous, policy-relevant research and provide capacity-building support
@@ -111,9 +105,9 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
       </p>
     </div>
     <!-- Vision -->
-    <div class="rounded-3xl border p-10 relative overflow-hidden" style="background:#0D0102;border-color:rgba(217,159,81,.2)">
-      <div class="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" style="background:rgba(154,20,21,.15)"></div>
-      <span class="inline-block w-10 h-1 rounded-full mb-5" style="background:#D99F51"></span>
+    <div class="rounded-3xl border p-10 relative overflow-hidden" style="background:#0D0102;border-color:rgba(231,149,42,.2)">
+      <div class="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" style="background:rgba(117,11,37,.15)"></div>
+      <span class="inline-block w-10 h-1 rounded-full mb-5" style="background:#E7952A"></span>
       <h2 class="font-outfit font-black text-3xl text-white mb-4">Our Vision</h2>
       <p class="text-white/70 leading-relaxed text-lg">
         An Africa where knowledge-driven decision-making, inclusive dialogue, and accountable
@@ -129,7 +123,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 mb-20">
   <div class="mb-10">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#D99F51">What We Do</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A">What We Do</span>
     <h2 class="font-outfit font-black text-4xl text-slate-900">Core Programme Areas</h2>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -160,8 +154,8 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     <?php foreach ($programmes as $p): ?>
       <div class="bg-white rounded-3xl border border-amber-100 p-8 shadow-sm hover:shadow-md hover:border-amber-200 transition-all group">
         <div class="flex items-start justify-between mb-5">
-          <span class="font-outfit font-black text-4xl" style="color:rgba(217,159,81,.25)"><?= h($p['num']) ?></span>
-          <span class="w-8 h-0.5 mt-5" style="background:#D99F51;display:block"></span>
+          <span class="font-outfit font-black text-4xl" style="color:rgba(231,149,42,.25)"><?= h($p['num']) ?></span>
+          <span class="w-8 h-0.5 mt-5" style="background:#E7952A;display:block"></span>
         </div>
         <h3 class="font-outfit font-bold text-xl text-slate-900 mb-3 group-hover:text-amber-800 transition-colors"><?= h($p['title']) ?></h3>
         <p class="text-slate-500 leading-relaxed text-sm mb-5"><?= h($p['desc']) ?></p>
@@ -182,14 +176,14 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
   <div class="max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
       <div>
-        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-5 text-amber-900" style="background:#D99F51">Where We Work</span>
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-5 text-amber-900" style="background:#E7952A">Where We Work</span>
         <h2 class="font-outfit font-black text-4xl text-white mb-4">Geographic Focus</h2>
         <p class="text-white/60 leading-relaxed mb-8">
           Our primary focus spans East Africa and the Great Lakes region, with expanding coverage
           across the Sahel and Horn of Africa — regions experiencing the most complex and
           intersecting conflict dynamics on the continent.
         </p>
-        <a href="/heatmap" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-900 transition-all hover:brightness-110" style="background:#D99F51">
+        <a href="/heatmap" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-900 transition-all hover:brightness-110" style="background:#E7952A">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           Explore Interactive Heatmap
         </a>
@@ -210,7 +204,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
               <h4 class="font-outfit font-bold text-white text-sm"><?= h($g['region']) ?></h4>
               <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest
                 <?= $g['tag'] === 'Primary' ? 'text-amber-900' : ($g['tag'] === 'Active' ? 'text-emerald-800' : 'text-slate-500') ?>"
-                style="background:<?= $g['tag'] === 'Primary' ? '#D99F51' : ($g['tag'] === 'Active' ? 'rgba(52,211,153,.15)' : 'rgba(255,255,255,.08)') ?>">
+                style="background:<?= $g['tag'] === 'Primary' ? '#E7952A' : ($g['tag'] === 'Active' ? 'rgba(52,211,153,.15)' : 'rgba(255,255,255,.08)') ?>">
                 <?= h($g['tag']) ?>
               </span>
             </div>
@@ -227,7 +221,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 py-20">
   <div class="text-center max-w-2xl mx-auto mb-12">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#D99F51">Our Foundation</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A">Our Foundation</span>
     <h2 class="font-outfit font-black text-4xl text-slate-900">Guiding Values</h2>
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -240,7 +234,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     ];
     foreach ($values as $i => $v): ?>
       <div class="bg-white rounded-2xl border border-amber-100 p-7 shadow-sm text-center hover:shadow-md hover:-translate-y-1 transition-all">
-        <div class="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center font-outfit font-black text-lg text-white" style="background:#9A1415">
+        <div class="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center font-outfit font-black text-lg text-white" style="background:#750B25">
           <?= ['R', 'I', 'I', 'I'][$i] ?>
         </div>
         <h3 class="font-outfit font-bold text-lg text-slate-900 mb-2"><?= h($v['title']) ?></h3>
@@ -255,7 +249,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 mb-20">
   <div class="mb-10">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#D99F51">The People</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A">The People</span>
     <h2 class="font-outfit font-black text-4xl text-slate-900">Our Team</h2>
     <p class="text-slate-500 mt-2">Researchers, journalists, and policy specialists committed to the long game.</p>
   </div>
@@ -274,7 +268,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     foreach ($team as $member): ?>
       <div class="bg-white rounded-2xl border border-amber-100 p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all">
         <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center font-outfit font-black text-xl text-white shadow-sm"
-             style="background:linear-gradient(135deg,#9A1415,#6B0E0F)">
+             style="background:#750B25">
           <?= h($member['initials']) ?>
         </div>
         <p class="font-bold text-sm text-slate-800 leading-snug mb-1"><?= h($member['name']) ?></p>
@@ -291,7 +285,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <div class="max-w-7xl mx-auto px-6 mb-20">
   <div class="bg-white rounded-3xl border border-amber-100 p-10 shadow-sm">
     <div class="text-center mb-10">
-      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#D99F51">Network</span>
+      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A">Network</span>
       <h2 class="font-outfit font-black text-3xl text-slate-900">Partners &amp; Network Members</h2>
       <p class="text-slate-500 mt-2 max-w-xl mx-auto text-sm">
         We work alongside academic institutions, civil society, and international organizations
@@ -299,11 +293,11 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
       </p>
     </div>
     <!-- Featured partner -->
-    <div class="max-w-sm mx-auto rounded-2xl border border-amber-100 p-8 text-center mb-8" style="background:#FBF5E6">
+    <div class="max-w-sm mx-auto rounded-2xl border border-amber-100 p-8 text-center mb-8" style="background:#F8F8F0">
       <img src="/public/hekima-logo.png" alt="Hekima University College"
            class="h-16 object-contain mx-auto mb-4"
            onerror="this.parentElement.querySelector('.hekima-fb').style.display='flex';this.style.display='none'">
-      <div class="hekima-fb w-16 h-16 rounded-2xl mx-auto mb-4 items-center justify-center font-outfit font-black text-2xl text-white hidden" style="background:#9A1415">H</div>
+      <div class="hekima-fb w-16 h-16 rounded-2xl mx-auto mb-4 items-center justify-center font-outfit font-black text-2xl text-white hidden" style="background:#750B25">H</div>
       <h3 class="font-outfit font-bold text-lg text-slate-900 mb-1">Hekima University College</h3>
       <p class="text-xs text-amber-800 font-bold uppercase tracking-widest mb-3">Jesuit Institute of Peace Studies &amp; International Relations</p>
       <p class="text-slate-500 text-sm">A leading Jesuit institution in Nairobi, Kenya, specializing in peace studies, conflict transformation, and social justice in the African context.</p>
@@ -331,7 +325,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
       there is a place for your expertise in our network.
     </p>
     <div class="flex flex-wrap justify-center gap-4">
-      <a href="/contact" class="px-8 py-4 rounded-2xl font-bold text-slate-900 transition-all hover:brightness-110 text-base" style="background:#D99F51">
+      <a href="/contact" class="px-8 py-4 rounded-2xl font-bold text-slate-900 transition-all hover:brightness-110 text-base" style="background:#E7952A">
         Get In Touch
       </a>
       <a href="/news" class="px-8 py-4 rounded-2xl font-bold text-white transition-all border hover:bg-white/10 text-base" style="border-color:rgba(255,255,255,.2)">

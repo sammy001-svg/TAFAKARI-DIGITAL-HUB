@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 /*
  * DEMO SEED FILE — Tafakari Digital Hub
@@ -157,15 +157,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && 
   <!-- Header -->
   <div class="text-center mb-8">
     <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl mx-auto mb-4"
-         style="background:#9A1415">T</div>
+         style="background:#750B25">T</div>
     <h1 class="font-outfit font-black text-3xl text-slate-900">Demo Seed Tool</h1>
     <p class="text-slate-500 mt-2">Tafakari Digital Hub &mdash; Admin Account Setup</p>
   </div>
 
   <!-- Warning Banner -->
-  <div class="rounded-2xl p-5 border" style="background:#FEF9EC;border-color:#D99F51">
+  <div class="rounded-2xl p-5 border" style="background:#FEF9EC;border-color:#E7952A">
     <div class="flex gap-3">
-      <svg width="20" height="20" fill="none" stroke="#D99F51" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" class="shrink-0 mt-0.5">
+      <svg width="20" height="20" fill="none" stroke="#E7952A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" class="shrink-0 mt-0.5">
         <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
       </svg>
       <div>
@@ -173,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && 
         <p class="text-[12px] mt-1" style="color:#78350F">
           This file creates accounts with known default credentials.
           <strong>Delete <code>seed.php</code> from your server immediately after first use</strong>,
-          or change all passwords via <a href="/admin/profile" style="color:#9A1415" class="underline">Admin &rsaquo; Profile</a>.
+          or change all passwords via <a href="/admin/profile" style="color:#750B25" class="underline">Admin &rsaquo; Profile</a>.
         </p>
       </div>
     </div>
@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && 
         <?php else: ?>
           <span class="flex items-center gap-1.5 text-[12px] font-semibold text-amber-700">
             <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            Not found &mdash; run <a href="/setup.php" style="color:#9A1415" class="underline">setup.php</a> first
+            Not found &mdash; run <a href="/setup.php" style="color:#750B25" class="underline">setup.php</a> first
           </span>
         <?php endif; ?>
       </div>
@@ -269,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && 
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black shrink-0"
-                   style="background:<?= $acc['role'] === 'SUPER_ADMIN' ? '#9A1415' : '#475569' ?>">
+                   style="background:<?= $acc['role'] === 'SUPER_ADMIN' ? '#750B25' : '#475569' ?>">
                 <?= strtoupper(substr($acc['name'], 0, 1)) ?>
               </div>
               <div>
@@ -341,7 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && 
       <?php endif; ?>
       <?php if (!empty($created)): ?>
         <a href="/login" class="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-xl text-[12px] font-bold text-white"
-           style="background:#9A1415">
+           style="background:#750B25">
           Go to Admin Login &rarr;
         </a>
       <?php endif; ?>
@@ -360,7 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && 
     <form method="POST" class="flex-1">
       <button type="submit" name="seed" value="1"
               class="w-full py-3 rounded-xl font-bold text-[13px] text-white transition-all hover:opacity-90"
-              style="background:#9A1415">
+              style="background:#750B25">
         Seed Demo Accounts
       </button>
     </form>
@@ -380,7 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset']) && $dbOk && 
   <!-- Footer note -->
   <p class="text-center text-[11px] text-slate-400 pb-8">
     After logging in, change credentials at
-    <a href="/admin/profile" style="color:#9A1415" class="font-semibold hover:underline">Admin &rsaquo; My Profile</a>.
+    <a href="/admin/profile" style="color:#750B25" class="font-semibold hover:underline">Admin &rsaquo; My Profile</a>.
     Then delete this file from your server.
   </p>
 

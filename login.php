@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/functions.php';
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pageTitle = 'Login | Tafakari Digital Hub';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex font-inter" style="background:#1F0404">
+<body class="antialiased min-h-screen flex font-inter" style="background:#0D0102">
 
 <div class="flex w-full min-h-screen">
 
@@ -77,7 +77,7 @@ $pageTitle = 'Login | Tafakari Digital Hub';
         <img src="<?= h($s['img']) ?>" alt="" class="w-full h-full object-cover">
         <div class="absolute inset-0" style="background:rgba(0,0,0,.6)"></div>
         <div class="absolute inset-0 flex flex-col justify-end pb-16 px-12">
-          <span class="inline-flex mb-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit" style="background:#D99F51;color:#020617"><?= h($s['tag']) ?></span>
+          <span class="inline-flex mb-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit" style="background:#E7952A;color:#020617"><?= h($s['tag']) ?></span>
           <h2 class="font-outfit font-black text-3xl text-white mb-3"><?= h($s['title']) ?></h2>
           <p class="text-white/70 text-sm"><?= h($s['sub']) ?></p>
         </div>
@@ -91,7 +91,7 @@ $pageTitle = 'Login | Tafakari Digital Hub';
   </div>
 
   <!-- Right: Login form -->
-  <div class="flex-1 flex flex-col items-center justify-center px-8 py-12 min-h-screen" style="background:#1F0404">
+  <div class="flex-1 flex flex-col items-center justify-center px-8 py-12 min-h-screen" style="background:#0D0102">
     <div class="w-full max-w-md">
 
       <!-- Logo -->
@@ -99,7 +99,7 @@ $pageTitle = 'Login | Tafakari Digital Hub';
         <img src="/public/crtp-logo.png" alt="CRTP"
              class="h-12 w-auto object-contain brightness-0 invert"
              onerror="this.style.display='none';document.getElementById('login-logo-fb').style.display='flex'">
-        <div id="login-logo-fb" class="w-12 h-12 rounded-2xl items-center justify-center text-white font-black text-2xl shadow-lg" style="background:#9A1415;display:none">T</div>
+        <div id="login-logo-fb" class="w-12 h-12 rounded-2xl items-center justify-center text-white font-black text-2xl shadow-lg" style="background:#750B25;display:none">T</div>
         <div>
           <div class="font-outfit font-bold text-xl text-white leading-tight">Admin Portal</div>
           <div class="text-[10px] text-slate-500 uppercase tracking-widest">Tafakari Digital Hub</div>
@@ -121,19 +121,19 @@ $pageTitle = 'Login | Tafakari Digital Hub';
           <input type="text" name="username" required autofocus
                  value="<?= h($_POST['username'] ?? '') ?>"
                  class="w-full px-4 py-4 rounded-2xl text-white text-sm focus:outline-none focus:ring-2"
-                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);outline-color:#D99F51"
+                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);outline-color:#E7952A"
                  placeholder="Enter your username">
         </div>
         <div>
           <label class="block text-xs font-black uppercase tracking-widest mb-2 text-slate-400">Password</label>
           <input type="password" name="password" required
                  class="w-full px-4 py-4 rounded-2xl text-white text-sm focus:outline-none focus:ring-2"
-                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);outline-color:#D99F51"
+                 style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);outline-color:#E7952A"
                  placeholder="••••••••">
         </div>
         <button type="submit"
                 class="w-full py-4 text-base font-bold rounded-2xl mt-2 transition-all hover:brightness-110"
-                style="background:#D99F51;color:#0D0102">
+                style="background:#E7952A;color:#0D0102">
           Sign In
         </button>
       </form>
@@ -141,7 +141,7 @@ $pageTitle = 'Login | Tafakari Digital Hub';
       <p class="text-center text-xs text-slate-600 mt-8">
         <a href="/" class="hover:text-white transition-colors">&larr; Back to public site</a>
         &nbsp;&nbsp;·&nbsp;&nbsp;
-        <a href="/reset-admin" class="hover:text-white transition-colors" style="color:rgba(217,159,81,.6)">Account Setup</a>
+        <a href="/reset-admin" class="hover:text-white transition-colors" style="color:rgba(231,149,42,.6)">Account Setup</a>
       </p>
     </div>
   </div>

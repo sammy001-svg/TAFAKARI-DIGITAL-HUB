@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /*
  * Admin Topbar — include AFTER setting these in the calling page:
  *   $adminPageTitle  (string) — page heading shown in topbar
@@ -50,7 +50,7 @@ if (is_super_admin()) {
         <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
       </svg>
       <span class="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white"
-            style="background:#9A1415"><?= min($_tb_pending, 9) ?><?= $_tb_pending > 9 ? '+' : '' ?></span>
+            style="background:#750B25"><?= min($_tb_pending, 9) ?><?= $_tb_pending > 9 ? '+' : '' ?></span>
     </a>
     <?php endif; ?>
 
@@ -70,7 +70,7 @@ if (is_super_admin()) {
     <!-- Create content CTA -->
     <a href="/admin/content/new"
        class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold text-white transition-all hover:opacity-90"
-       style="background:#9A1415">
+       style="background:#750B25">
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"
            stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
       New Content

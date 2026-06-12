@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -70,13 +70,13 @@ function doc_icon_color(string $ext): string {
 }
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-14 px-6">
   <div class="max-w-7xl mx-auto">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#D99F51">Knowledge Repository</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">Knowledge Repository</span>
     <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">Document Library</h1>
     <p class="text-white/60 max-w-xl">Research reports, policy briefs, field assessments, and actionable datasets from across the region.</p>
   </div>
@@ -93,7 +93,7 @@ function doc_icon_color(string $ext): string {
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="text" name="q" value="<?= h($q) ?>" placeholder="Search by title or description..."
                  class="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2"
-                 style="--tw-ring-color:#D99F51">
+                 style="--tw-ring-color:#E7952A">
         </div>
       </div>
       <?php if (!empty($countryOptions)): ?>
@@ -117,7 +117,7 @@ function doc_icon_color(string $ext): string {
         </select>
       </div>
       <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style="background:#D99F51;color:#0D0102">
+              style="background:#E7952A;color:#0D0102">
         Search
       </button>
       <?php if ($hasFilter): ?>
@@ -149,7 +149,7 @@ function doc_icon_color(string $ext): string {
         <?= $hasFilter ? 'Try broadening your search or clearing filters.' : 'Research reports and briefs will appear here once published.' ?>
       </p>
       <?php if ($hasFilter): ?>
-        <a href="/documents" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#D99F51;color:#0D0102">Clear Filters</a>
+        <a href="/documents" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">Clear Filters</a>
       <?php endif; ?>
     </div>
   <?php else: ?>
@@ -208,7 +208,7 @@ function doc_icon_color(string $ext): string {
                 <a href="<?= h($doc['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
                    onclick="trackDownload('<?= h($doc['id']) ?>')"
                    class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:brightness-110"
-                   style="background:#D99F51;color:#0D0102">
+                   style="background:#E7952A;color:#0D0102">
                   <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Download
                 </a>

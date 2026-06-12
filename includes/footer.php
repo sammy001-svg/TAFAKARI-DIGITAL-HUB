@@ -1,4 +1,4 @@
-<footer class="text-white/80 py-16 px-6 mt-20 border-t border-yellow-800/30" style="background:#3B0708">
+﻿<footer class="text-white/80 py-16 px-6 mt-20 border-t border-yellow-800/30" style="background:#2A0515">
   <div class="max-w-7xl mx-auto">
 
     <!-- Top row: logo + columns -->
@@ -12,7 +12,7 @@
                class="h-12 w-auto object-contain brightness-0 invert"
                onerror="this.style.display='none';document.getElementById('footer-logo-fallback').style.display='flex'">
           <div id="footer-logo-fallback" class="items-center gap-2" style="display:none">
-            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-lg" style="background:#9A1415">C</div>
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-lg" style="background:#750B25">C</div>
           </div>
           <div class="flex flex-col leading-tight">
             <span class="font-outfit font-bold text-lg tracking-tight text-white">Tafakari Hub</span>

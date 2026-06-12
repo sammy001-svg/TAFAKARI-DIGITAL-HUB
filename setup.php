@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/functions.php';
@@ -121,7 +121,7 @@ $pageTitle = 'Setup | Tafakari Digital Hub';
 
 <main class="flex-grow max-w-2xl mx-auto px-6 py-16">
   <div class="mb-10 text-center">
-    <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto mb-4 shadow-lg" style="background:#9A1415">T</div>
+    <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto mb-4 shadow-lg" style="background:#750B25">T</div>
     <h1 class="font-outfit text-3xl font-black text-slate-900">Platform Setup</h1>
     <p class="text-slate-500 mt-2">One-time configuration to get your Tafakari Hub running.</p>
   </div>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -74,13 +74,13 @@ $hasFilter = $country !== '' || $cat !== '';
 $pageTitle = 'Video Library | Tafakari Digital Hub';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-14 px-6">
   <div class="max-w-7xl mx-auto">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#D99F51">Video Archive</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">Video Archive</span>
     <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">Video Library</h1>
     <p class="text-white/60 max-w-xl">Documentaries, field reports, community stories, and conference recordings — all in one place.</p>
   </div>
@@ -110,7 +110,7 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
         </select>
       </div>
       <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style="background:#D99F51;color:#0D0102">
+              style="background:#E7952A;color:#0D0102">
         Filter
       </button>
       <?php if ($hasFilter): ?>
@@ -136,7 +136,7 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
         <?= $hasFilter ? 'Try different filter options.' : 'Video content will appear here once published.' ?>
       </p>
       <?php if ($hasFilter): ?>
-        <a href="/videos" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#D99F51;color:#0D0102">View All Videos</a>
+        <a href="/videos" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">View All Videos</a>
       <?php endif; ?>
     </div>
   <?php else: ?>
@@ -162,15 +162,15 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
                   <img src="https://img.youtube.com/vi/<?= h($ytId) ?>/hqdefault.jpg" alt="<?= h($v['title']) ?>"
                        class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300">
                 <?php else: ?>
-                  <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,#1a0203,#3B0708)">
-                    <svg width="40" height="40" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
+                  <div class="w-full h-full flex items-center justify-center" style="background:#0D0102">
+                    <svg width="40" height="40" fill="none" stroke="#ED1C24" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
                   </div>
                 <?php endif; ?>
                 <!-- Play overlay -->
                 <div class="absolute inset-0 flex items-center justify-center">
                   <div class="w-16 h-16 rounded-full flex items-center justify-center border-2 border-white/30 backdrop-blur-sm group-hover:scale-110 transition-transform shadow-xl"
-                       style="background:rgba(217,159,81,.9)">
-                    <svg class="w-7 h-7 ml-0.5 text-slate-900" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                       style="background:rgba(237,28,36,.9)">
+                    <svg class="w-7 h-7 ml-0.5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                   </div>
                 </div>
                 <?php if ($ytId): ?>
@@ -190,22 +190,22 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
                   <img src="<?= h($v['thumbnailUrl']) ?>" alt="<?= h($v['title']) ?>"
                        class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300">
                 <?php else: ?>
-                  <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,#1a0203,#3B0708)">
-                    <svg width="40" height="40" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
+                  <div class="w-full h-full flex items-center justify-center" style="background:#0D0102">
+                    <svg width="40" height="40" fill="none" stroke="#ED1C24" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
                   </div>
                 <?php endif; ?>
                 <div class="absolute inset-0 flex items-center justify-center">
                   <div class="w-16 h-16 rounded-full flex items-center justify-center border-2 border-white/30 backdrop-blur-sm group-hover:scale-110 transition-transform shadow-xl"
-                       style="background:rgba(217,159,81,.9)">
-                    <svg class="w-7 h-7 ml-0.5 text-slate-900" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                       style="background:rgba(237,28,36,.9)">
+                    <svg class="w-7 h-7 ml-0.5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                   </div>
                 </div>
               </a>
 
             <?php else: ?>
               <!-- No URL -->
-              <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,#1a0203,#3B0708)">
-                <svg width="40" height="40" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".3" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
+              <div class="w-full h-full flex items-center justify-center" style="background:#0D0102">
+                <svg width="40" height="40" fill="none" stroke="#ED1C24" stroke-width="1.5" opacity=".3" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21 5,3"/></svg>
               </div>
             <?php endif; ?>
 
@@ -220,7 +220,7 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
           <!-- Content block -->
           <div class="p-5 flex flex-col flex-grow">
             <div class="flex flex-wrap gap-2 mb-3">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#D99F51"><?= h($v['country']) ?></span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#E7952A"><?= h($v['country']) ?></span>
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($v['issueCategory']) ?></span>
             </div>
             <h3 class="font-outfit font-bold text-base text-slate-900 leading-snug mb-2 line-clamp-2 flex-grow"><?= h($v['title']) ?></h3>
@@ -232,12 +232,12 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
               <?php if (!empty($v['mediaUrl'])): ?>
                 <?php if ($isEmbed): ?>
                   <button onclick="playEmbed('<?= h($v['id']) ?>')"
-                          class="text-xs font-bold transition-colors" style="color:#B07D2A">
+                          class="text-xs font-bold transition-colors" style="color:#C47C1A">
                     Watch &rarr;
                   </button>
                 <?php else: ?>
                   <a href="<?= h($v['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
-                     class="text-xs font-bold transition-colors" style="color:#B07D2A">
+                     class="text-xs font-bold transition-colors" style="color:#C47C1A">
                     Watch &rarr;
                   </a>
                 <?php endif; ?>

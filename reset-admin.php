@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 /*
  * Admin Account Setup — Tafakari Digital Hub
@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $dbOk) {
 <style>
   body { font-family: 'Inter', sans-serif; }
   .font-outfit { font-family: 'Outfit', sans-serif; }
-  input:focus { outline: 2px solid #D99F51; outline-offset: 2px; }
+  input:focus { outline: 2px solid #E7952A; outline-offset: 2px; }
 </style>
 </head>
 <body class="antialiased min-h-screen" style="background:#F4F6F8">
@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $dbOk) {
   <!-- Header -->
   <div class="text-center mb-10">
     <div class="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center text-white font-black text-2xl shadow-lg"
-         style="background:#9A1415">T</div>
+         style="background:#750B25">T</div>
     <h1 class="font-outfit font-black text-3xl text-slate-900">Admin Account Setup</h1>
     <p class="text-slate-500 mt-2 text-sm">Tafakari Digital Hub &mdash; One-time account creation</p>
   </div>
@@ -143,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $dbOk) {
       <p class="text-slate-400 text-xs mb-8">You are now logged in. Head to your dashboard to get started.</p>
       <a href="/admin/dashboard"
          class="inline-block py-3.5 px-8 rounded-2xl font-bold text-slate-900 text-base transition-all hover:brightness-110"
-         style="background:#D99F51">
+         style="background:#E7952A">
         Open Admin Dashboard &rarr;
       </a>
       <p class="mt-8 text-xs text-rose-600 font-bold">
@@ -263,14 +263,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $dbOk) {
 
         <button type="submit"
                 class="w-full py-4 rounded-2xl font-bold text-base transition-all hover:brightness-110"
-                style="background:#D99F51;color:#0D0102">
+                style="background:#E7952A;color:#0D0102">
           Create Account &amp; Login
         </button>
       </form>
     </div>
 
     <p class="text-center text-xs text-slate-400 mt-6">
-      Already have an account? <a href="/login" class="font-bold" style="color:#9A1415">Go to Login</a>
+      Already have an account? <a href="/login" class="font-bold" style="color:#750B25">Go to Login</a>
     </p>
 
   <?php endif; ?>

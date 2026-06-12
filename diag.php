@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 /*
  * LOGIN DIAGNOSTIC — Tafakari Digital Hub
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $dbOk) {
             if ($u) {
                 $_SESSION['user'] = $u;
                 session_regenerate_id(true);
-                $actionMsg = 'Session manually set for superadmin. <a href="/admin/dashboard" style="color:#9A1415;font-weight:bold">Click here to open Dashboard &rarr;</a>';
+                $actionMsg = 'Session manually set for superadmin. <a href="/admin/dashboard" style="color:#750B25;font-weight:bold">Click here to open Dashboard &rarr;</a>';
             } else {
                 $actionErr = 'User "superadmin" not found. Run Force Recreate first.';
             }

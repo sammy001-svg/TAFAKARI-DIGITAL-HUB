@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // ── Compute canonical URL + OG values from page variables ─────────────────────
 $_proto    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $_host     = $_SERVER['HTTP_HOST'] ?? 'tafakaridigitalhub.com';
@@ -124,8 +124,9 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
             inter:  ['Inter', 'sans-serif'],
           },
           colors: {
-            primary:   '#9A1415',
-            secondary: '#D99F51',
+            primary:   '#750B25',
+            secondary: '#E7952A',
+            accent:    '#ED1C24',
           },
           borderRadius: {
             '4xl': '2rem',
@@ -138,9 +139,12 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
   <!-- ── Global styles ─────────────────────────────────────────────────────── -->
   <style>
     :root {
-      --primary:      #9A1415;
-      --secondary:    #D99F51;
-      --glass-bg:     rgba(154, 20, 21, 0.95);
+      --primary:      #750B25;
+      --secondary:    #E7952A;
+      --accent:       #ED1C24;
+      --offwhite:     #F8F8F0;
+      --dark:         #0D0102;
+      --glass-bg:     rgba(117, 11, 37, 0.97);
       --glass-border: rgba(255, 255, 255, 0.15);
     }
     body { font-family: 'Inter', sans-serif; }
@@ -160,17 +164,17 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
     /* ── Buttons ── */
     .btn-primary {
       display: inline-flex; align-items: center;
-      background: #9A1415; color: #fff;
+      background: #750B25; color: #fff;
       padding: 0.65rem 1.4rem;
       border-radius: 9999px; font-weight: 700; font-size: 0.875rem;
       text-decoration: none; border: none; cursor: pointer;
       transition: transform .15s, box-shadow .15s;
     }
-    .btn-primary:hover  { transform: scale(1.04); box-shadow: 0 8px 24px rgba(154,20,21,.35); }
+    .btn-primary:hover  { transform: scale(1.04); box-shadow: 0 8px 24px rgba(117,11,37,.35); }
     .btn-primary:active { transform: scale(.97); }
     .btn-secondary {
       display: inline-flex; align-items: center;
-      background: #D99F51; color: #020617;
+      background: #E7952A; color: #020617;
       padding: 0.65rem 1.4rem;
       border-radius: 9999px; font-weight: 700; font-size: 0.875rem;
       text-decoration: none; border: none; cursor: pointer;
@@ -179,28 +183,28 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
     .btn-secondary:hover { transform: scale(1.04); }
     .btn-gold {
       display: inline-flex; align-items: center;
-      background: #D99F51; color: #0D0102;
+      background: #E7952A; color: #0D0102;
       padding: 0.65rem 1.4rem;
       border-radius: 9999px; font-weight: 700; font-size: 0.875rem;
       text-decoration: none; border: none; cursor: pointer;
       transition: transform .15s, box-shadow .15s;
     }
-    .btn-gold:hover  { transform: scale(1.04); box-shadow: 0 8px 24px rgba(217,159,81,.4); }
+    .btn-gold:hover  { transform: scale(1.04); box-shadow: 0 8px 24px rgba(231,149,42,.4); }
     .btn-gold:active { transform: scale(.97); }
     .btn-cream {
       display: inline-flex; align-items: center;
-      background: #FBF5E6; color: #3B0708;
+      background: #F8F8F0; color: #2A0515;
       padding: 0.65rem 1.4rem;
       border-radius: 9999px; font-weight: 700; font-size: 0.875rem;
-      text-decoration: none; border: 1.5px solid #D99F51; cursor: pointer;
+      text-decoration: none; border: 1.5px solid #E7952A; cursor: pointer;
       transition: transform .15s, background .15s;
     }
     .btn-cream:hover { background: #F5E9C8; transform: scale(1.03); }
     /* ── Utilities ── */
     .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
     .line-clamp-3 { display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
-    .premium-gradient { background: #9A1415; }
+    .premium-gradient { background: #750B25; }
     /* ── Focus ring for accessibility ── */
-    :focus-visible { outline: 2px solid #D99F51; outline-offset: 2px; }
+    :focus-visible { outline: 2px solid #E7952A; outline-offset: 2px; }
   </style>
 </head>

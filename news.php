@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -73,13 +73,13 @@ $hasFilter = $q !== '' || $country !== '' || $cat !== '';
 $pageTitle = 'News & Articles | Tafakari Digital Hub';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-16 px-6">
   <div class="max-w-7xl mx-auto">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#D99F51">News & Analysis</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">News & Analysis</span>
     <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">News & Articles</h1>
     <p class="text-white/60 max-w-xl">In-depth reporting and analysis from across the African continent — conflict, governance, climate, and community voices.</p>
   </div>
@@ -96,7 +96,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="text" name="q" value="<?= h($q) ?>" placeholder="Search articles..."
                  class="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2"
-                 style="--tw-ring-color:#D99F51">
+                 style="--tw-ring-color:#E7952A">
         </div>
       </div>
       <div>
@@ -120,7 +120,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
         </select>
       </div>
       <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style="background:#D99F51;color:#0D0102">
+              style="background:#E7952A;color:#0D0102">
         Apply Filters
       </button>
       <?php if ($hasFilter): ?>
@@ -157,7 +157,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
         <?= $hasFilter ? 'Try broadening your search or clearing filters.' : 'Check back soon for the latest news.' ?>
       </p>
       <?php if ($hasFilter): ?>
-        <a href="/news" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#D99F51;color:#0D0102">
+        <a href="/news" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">
           Clear Filters
         </a>
       <?php endif; ?>
@@ -169,13 +169,13 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
            class="group bg-white rounded-3xl border border-amber-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
 
           <!-- Thumbnail -->
-          <div class="h-48 overflow-hidden relative" style="background:#1a0203">
+          <div class="h-48 overflow-hidden relative" style="background:#0D0102">
             <?php if (!empty($p['thumbnailUrl'])): ?>
               <img src="<?= h($p['thumbnailUrl']) ?>" alt="<?= h($p['title']) ?>"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100">
             <?php else: ?>
-              <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,#1a0203 0%,#3B0708 100%)">
-                <svg width="40" height="40" fill="none" stroke="#D99F51" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24">
+              <div class="w-full h-full flex items-center justify-center" style="background:#0D0102">
+                <svg width="40" height="40" fill="none" stroke="#E7952A" stroke-width="1.5" opacity=".4" viewBox="0 0 24 24">
                   <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
                   <path d="M9 3v18M9 9h10"/>
                 </svg>
@@ -183,7 +183,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
             <?php endif; ?>
             <!-- Country badge -->
             <div class="absolute top-3 left-3">
-              <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-900" style="background:#D99F51">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-900" style="background:#E7952A">
                 <?= h($p['country']) ?>
               </span>
             </div>
@@ -191,7 +191,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
 
           <!-- Content -->
           <div class="p-6 flex flex-col flex-grow">
-            <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#B07D2A">
+            <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#C47C1A">
               <?= h($p['issueCategory']) ?>
             </span>
             <h3 class="font-outfit font-bold text-lg leading-snug text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 mb-2 flex-grow">
@@ -202,7 +202,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
             <?php endif; ?>
             <div class="flex items-center justify-between mt-auto pt-4 border-t border-amber-50">
               <span class="text-xs text-slate-400"><?= format_date($p['createdAt']) ?></span>
-              <span class="text-xs font-bold" style="color:#B07D2A">Read Full &rarr;</span>
+              <span class="text-xs font-bold" style="color:#C47C1A">Read Full &rarr;</span>
             </div>
           </div>
         </a>
@@ -235,7 +235,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
           <a href="<?= h(news_url($i, $q, $country, $cat)) ?>"
              class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-colors
                     <?= $i === $page ? 'text-slate-900 border-2' : 'border border-slate-200 bg-white text-slate-600 hover:bg-amber-50' ?>"
-             style="<?= $i === $page ? 'border-color:#D99F51;background:#FBF5E6' : '' ?>">
+             style="<?= $i === $page ? 'border-color:#E7952A;background:#F8F8F0' : '' ?>">
             <?= $i ?>
           </a>
         <?php endfor; ?>

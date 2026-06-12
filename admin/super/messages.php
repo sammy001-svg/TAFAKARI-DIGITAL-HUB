@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
@@ -44,7 +44,7 @@ $adminPageSub   = count($messages) . ' total · ' . $unreadCount . ' unread';
           <!-- Collapsed header -->
           <div class="flex items-center gap-4 p-6 cursor-pointer msg-header" onclick="toggleMsg('<?= h($m['id']) ?>')">
             <?php if (!$m['isRead']): ?>
-              <div class="w-2 h-2 rounded-full shrink-0" style="background:#D99F51"></div>
+              <div class="w-2 h-2 rounded-full shrink-0" style="background:#E7952A"></div>
             <?php else: ?>
               <div class="w-2 h-2 rounded-full bg-slate-200 shrink-0"></div>
             <?php endif; ?>

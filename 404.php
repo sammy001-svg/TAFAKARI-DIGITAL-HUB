@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 http_response_code(404);
 require_once __DIR__ . '/config.php';
@@ -20,7 +20,7 @@ $pageTitle = '404 — Page Not Found | Tafakari Digital Hub';
 $pageDesc  = 'The page you are looking for does not exist.';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
-<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F7F3EC">
+<body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <main class="flex-grow flex flex-col items-center justify-center px-6 py-20 text-center">
@@ -28,10 +28,10 @@ $pageDesc  = 'The page you are looking for does not exist.';
   <!-- Error display -->
   <div class="max-w-lg mx-auto">
     <div class="relative mb-8 inline-block">
-      <span class="font-outfit font-black text-9xl leading-none select-none" style="color:rgba(217,159,81,.15)">404</span>
+      <span class="font-outfit font-black text-9xl leading-none select-none" style="color:rgba(231,149,42,.15)">404</span>
       <div class="absolute inset-0 flex items-center justify-center">
         <div class="w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg" style="background:#0D0102">
-          <svg width="36" height="36" fill="none" stroke="#D99F51" stroke-width="1.8" viewBox="0 0 24 24">
+          <svg width="36" height="36" fill="none" stroke="#E7952A" stroke-width="1.8" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 8v4M12 16h.01"/>
           </svg>
@@ -47,7 +47,7 @@ $pageDesc  = 'The page you are looking for does not exist.';
 
     <!-- Primary actions -->
     <div class="flex flex-wrap justify-center gap-3 mb-12">
-      <a href="/" class="px-6 py-3 rounded-xl font-bold text-slate-900 transition-all hover:brightness-110" style="background:#D99F51">
+      <a href="/" class="px-6 py-3 rounded-xl font-bold text-slate-900 transition-all hover:brightness-110" style="background:#E7952A">
         Go to Homepage
       </a>
       <a href="/news" class="px-6 py-3 rounded-xl font-bold text-slate-700 bg-white border border-amber-100 hover:bg-amber-50 transition-colors">
@@ -71,7 +71,7 @@ $pageDesc  = 'The page you are looking for does not exist.';
       ];
       foreach ($links as $l): ?>
         <a href="<?= h($l['href']) ?>" class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white border border-amber-100 text-sm font-bold text-slate-700 hover:bg-amber-50 hover:border-amber-200 transition-colors shadow-sm">
-          <svg width="15" height="15" fill="none" stroke="#B07D2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <svg width="15" height="15" fill="none" stroke="#C47C1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="<?= $l['icon'] ?>"/>
           </svg>
           <?= h($l['label']) ?>
@@ -88,10 +88,10 @@ $pageDesc  = 'The page you are looking for does not exist.';
             <a href="/news/<?= h($r['id']) ?>"
                class="flex items-center justify-between gap-3 bg-white rounded-xl border border-amber-100 px-5 py-3.5 shadow-sm hover:shadow-md hover:border-amber-200 transition-all group">
               <div class="min-w-0">
-                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-amber-900 mr-2" style="background:#D99F51"><?= h($r['country']) ?></span>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-amber-900 mr-2" style="background:#E7952A"><?= h($r['country']) ?></span>
                 <span class="text-sm font-bold text-slate-800 group-hover:text-amber-800 transition-colors"><?= h($r['title']) ?></span>
               </div>
-              <svg width="14" height="14" fill="none" stroke="#B07D2A" stroke-width="2.5" viewBox="0 0 24 24" class="shrink-0 group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+              <svg width="14" height="14" fill="none" stroke="#C47C1A" stroke-width="2.5" viewBox="0 0 24 24" class="shrink-0 group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
             </a>
           <?php endforeach; ?>
         </div>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
@@ -22,7 +22,7 @@ $pageTitle = 'Regional Issue Tracker | Tafakari Digital Hub';
 
 <main class="flex-grow max-w-7xl mx-auto px-6 py-16">
   <div class="mb-10">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4 text-xs font-black uppercase tracking-widest" style="background:rgba(217,159,81,.12);color:#B07D2A;border:1px solid rgba(217,159,81,.3)">Live Data</div>
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4 text-xs font-black uppercase tracking-widest" style="background:rgba(231,149,42,.12);color:#C47C1A;border:1px solid rgba(231,149,42,.3)">Live Data</div>
     <h1 class="font-outfit text-4xl font-black text-slate-900">Regional Issue Tracker</h1>
     <p class="text-slate-500 mt-2 max-w-2xl">Visualizing conflict intensity and reported issues across African nations experiencing active fragility, displacement, and humanitarian crises.</p>
   </div>
@@ -78,15 +78,15 @@ $pageTitle = 'Regional Issue Tracker | Tafakari Digital Hub';
         <h3 class="font-outfit font-bold text-base mb-4 text-slate-900">Intensity Scale</h3>
         <div class="space-y-2.5">
           <div class="flex items-center gap-3">
-            <span class="w-4 h-4 rounded-full shrink-0" style="background:#9A1415"></span>
+            <span class="w-4 h-4 rounded-full shrink-0" style="background:#ED1C24"></span>
             <span class="text-xs text-slate-600">High (8–10) &mdash; Active conflict</span>
           </div>
           <div class="flex items-center gap-3">
-            <span class="w-4 h-4 rounded-full shrink-0" style="background:#D99F51"></span>
+            <span class="w-4 h-4 rounded-full shrink-0" style="background:#E7952A"></span>
             <span class="text-xs text-slate-600">Medium (5–7) &mdash; Elevated risk</span>
           </div>
           <div class="flex items-center gap-3">
-            <span class="w-4 h-4 rounded-full shrink-0" style="background:#EAD2AC"></span>
+            <span class="w-4 h-4 rounded-full shrink-0" style="background:#F4C87E"></span>
             <span class="text-xs text-slate-600">Low (1–4) &mdash; Emerging concern</span>
           </div>
         </div>
@@ -102,11 +102,11 @@ $pageTitle = 'Regional Issue Tracker | Tafakari Digital Hub';
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
     <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm text-center">
-      <div class="text-3xl font-outfit font-black" style="color:#9A1415"><?= format_number($totalReports) ?></div>
+      <div class="text-3xl font-outfit font-black" style="color:#750B25"><?= format_number($totalReports) ?></div>
       <div class="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">Total Validated Reports</div>
     </div>
     <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm text-center">
-      <div class="text-3xl font-outfit font-black" style="color:#D99F51"><?= format_number($monthlyReports) ?></div>
+      <div class="text-3xl font-outfit font-black" style="color:#E7952A"><?= format_number($monthlyReports) ?></div>
       <div class="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">New Reports This Month</div>
     </div>
     <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm text-center">
@@ -223,7 +223,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 
 var circles = [];
 
-function getColor(i){ return i>7?'#9A1415':i>4?'#D99F51':'#EAD2AC'; }
+function getColor(i){ return i>7?'#ED1C24':i>4?'#E7952A':'rgba(231,149,42,.4)'; }
 
 function filterMap(){
   var country = document.querySelector('input[name=country]:checked').value;

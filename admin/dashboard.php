@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
@@ -44,7 +44,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
 <style>
   .kpi-icon { transition: transform .2s; }
   .kpi-card:hover .kpi-icon { transform: scale(1.08); }
-  .activity-row:hover { background: rgba(154,20,21,.025); }
+  .activity-row:hover { background: rgba(117,11,37,.025); }
 </style>
 
 <body class="antialiased font-inter" style="background:#F4F6F8">
@@ -58,9 +58,9 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
 
   <!-- Welcome Banner -->
   <div class="rounded-2xl p-6 md:p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-       style="background:linear-gradient(115deg,#0D0102 0%,#3B0708 60%,#9A1415 100%)">
+       style="background:#750B25">
     <div>
-      <p class="text-[11px] font-black uppercase tracking-[.15em] mb-1" style="color:#D99F51"><?= $greeting ?></p>
+      <p class="text-[11px] font-black uppercase tracking-[.15em] mb-1" style="color:#E7952A"><?= $greeting ?></p>
       <h2 class="font-outfit font-black text-2xl text-white leading-tight">
         <?= h($user['name'] ?? $user['username']) ?>
       </h2>
@@ -82,7 +82,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
       <?php endif; ?>
       <a href="/admin/content/new"
          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-bold text-[#0D0102]"
-         style="background:#D99F51">
+         style="background:#E7952A">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
         Create Content
       </a>
@@ -191,8 +191,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
 
       <?php if (empty($recentPosts)): ?>
         <div class="flex flex-col items-center justify-center py-16 px-8 text-center">
-          <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style="background:rgba(154,20,21,.06)">
-            <svg width="22" height="22" fill="none" stroke="#9A1415" stroke-width="1.6" stroke-linecap="round" viewBox="0 0 24 24">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style="background:rgba(117,11,37,.06)">
+            <svg width="22" height="22" fill="none" stroke="#750B25" stroke-width="1.6" stroke-linecap="round" viewBox="0 0 24 24">
               <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
           </div>
@@ -217,8 +217,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
           ?>
             <div class="activity-row flex items-center gap-4 px-6 py-4 transition-colors">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                   style="background:rgba(154,20,21,.06)">
-                <svg width="16" height="16" fill="none" stroke="#9A1415" stroke-width="1.8"
+                   style="background:rgba(117,11,37,.06)">
+                <svg width="16" height="16" fill="none" stroke="#750B25" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                   <path d="<?= $svg ?>"/>
                 </svg>
@@ -260,8 +260,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
           foreach ($actions as $a): ?>
             <a href="<?= h($a['href']) ?>"
                class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:rgba(154,20,21,.06)">
-                <svg width="14" height="14" fill="none" stroke="#9A1415" stroke-width="2"
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:rgba(117,11,37,.06)">
+                <svg width="14" height="14" fill="none" stroke="#750B25" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                   <path d="<?= $a['svg'] ?>"/>
                 </svg>
@@ -308,7 +308,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
           <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,.06)">
             <a href="/admin/super/approvals"
                class="flex items-center gap-2 text-[11px] font-bold hover:opacity-80 transition-opacity"
-               style="color:#D99F51">
+               style="color:#E7952A">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
               <?= $pendingPosts ?> post<?= $pendingPosts !== 1 ? 's' : '' ?> awaiting approval
             </a>

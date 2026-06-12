@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
@@ -49,7 +49,7 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
           <tr class="hover:bg-slate-50/50 transition-colors">
             <td class="px-8 py-5">
               <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0" style="background:#9A1415">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0" style="background:#750B25">
                   <?= strtoupper(substr($u['name'] ?? $u['username'] ?? 'U', 0, 1)) ?>
                 </div>
                 <div>

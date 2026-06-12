@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
@@ -60,7 +60,7 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
     <?php foreach ($tabs as $tab): ?>
       <a href="<?= h(pageHref($tab, 1)) ?>"
          class="px-3.5 py-2 rounded-lg text-[11px] font-bold transition-all <?= $statusFilter === $tab ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50' ?>"
-         <?= $statusFilter === $tab ? 'style="background:#9A1415"' : '' ?>>
+         <?= $statusFilter === $tab ? 'style="background:#750B25"' : '' ?>>
         <?= ucfirst(strtolower($tab)) ?>
       </a>
     <?php endforeach; ?>
@@ -68,8 +68,8 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
 
   <?php if (empty($posts)): ?>
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-16 text-center">
-      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:rgba(154,20,21,.06)">
-        <svg width="24" height="24" fill="none" stroke="#9A1415" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:rgba(117,11,37,.06)">
+        <svg width="24" height="24" fill="none" stroke="#750B25" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
         </svg>
       </div>
@@ -111,8 +111,8 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
             <tr class="hover:bg-slate-50/70 transition-colors group">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:rgba(154,20,21,.06)">
-                    <svg width="14" height="14" fill="none" stroke="#9A1415" stroke-width="1.8"
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:rgba(117,11,37,.06)">
+                    <svg width="14" height="14" fill="none" stroke="#750B25" stroke-width="1.8"
                          stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                       <path d="<?= $svg ?>"/>
                     </svg>
