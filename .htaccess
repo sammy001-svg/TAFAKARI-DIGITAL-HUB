@@ -1,6 +1,51 @@
 Options -MultiViews
 RewriteEngine On
-RewriteRule ^$ http://127.0.0.1:%{ENV:PORT}/ [P,L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ http://127.0.0.1:%{ENV:PORT}/$1 [P,L]
+RewriteBase /
+
+# Let real files and directories pass through
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# ── API routes ──────────────────────────────────────────────────
+RewriteRule ^api/posts/([^/]+)/approve/?$ api/post-approve.php?id=$1 [L,QSA]
+RewriteRule ^api/posts/([^/]+)/submit/?$  api/post-submit.php?id=$1  [L,QSA]
+RewriteRule ^api/posts/([^/]+)/archive/?$ api/post-archive.php?id=$1 [L,QSA]
+RewriteRule ^api/posts/([^/]+)/?$         api/post.php?id=$1         [L,QSA]
+RewriteRule ^api/posts/?$                 api/posts.php              [L,QSA]
+RewriteRule ^api/comments/([^/]+)/?$      api/comment.php?id=$1      [L,QSA]
+RewriteRule ^api/comments/?$              api/comments.php           [L,QSA]
+RewriteRule ^api/contact/([^/]+)/?$       api/contact-message.php?id=$1 [L,QSA]
+RewriteRule ^api/contact/?$               api/contact.php            [L,QSA]
+RewriteRule ^api/users/([^/]+)/?$         api/user.php?id=$1         [L,QSA]
+RewriteRule ^api/users/?$                 api/users.php              [L,QSA]
+RewriteRule ^api/stats/?$                 api/stats.php              [L,QSA]
+RewriteRule ^api/setup/init-db/?$         api/setup-init.php         [L,QSA]
+RewriteRule ^api/setup/?$                 api/setup-check.php        [L,QSA]
+
+# ── Public pages ─────────────────────────────────────────────────
+RewriteRule ^about/?$                     about.php            [L]
+RewriteRule ^contact/?$                   contact.php          [L]
+RewriteRule ^news/([^/]+)/?$              news-detail.php?id=$1 [L,QSA]
+RewriteRule ^news/?$                      news.php             [L]
+RewriteRule ^documents/?$                 documents.php        [L]
+RewriteRule ^gallery/?$                   gallery.php          [L]
+RewriteRule ^heatmap/?$                   heatmap.php          [L]
+RewriteRule ^podcasts/?$                  podcasts.php         [L]
+RewriteRule ^videos/?$                    videos.php           [L]
+RewriteRule ^setup/?$                     setup.php            [L]
+RewriteRule ^login/?$                     login.php            [L]
+
+# ── Admin routes ─────────────────────────────────────────────────
+RewriteRule ^admin/?$                     admin/dashboard.php          [L]
+RewriteRule ^admin/login/?$               admin/login.php              [L]
+RewriteRule ^admin/logout/?$              admin/logout.php             [L]
+RewriteRule ^admin/dashboard/?$           admin/dashboard.php          [L]
+RewriteRule ^admin/profile/?$             admin/profile.php            [L]
+RewriteRule ^admin/content/?$             admin/content/index.php      [L,QSA]
+RewriteRule ^admin/content/new/?$         admin/content/new.php        [L]
+RewriteRule ^admin/content/([^/]+)/edit/?$ admin/content/edit.php?id=$1 [L,QSA]
+RewriteRule ^admin/super/approvals/?$     admin/super/approvals.php    [L]
+RewriteRule ^admin/super/moderation/?$    admin/super/moderation.php   [L]
+RewriteRule ^admin/super/users/?$         admin/super/users.php        [L]
+RewriteRule ^admin/super/messages/?$      admin/super/messages.php     [L]
