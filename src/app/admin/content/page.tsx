@@ -9,6 +9,8 @@ import ContentActions from "@/components/admin/ContentActions";
 import { formatRelativeTime } from "@/lib/format";
 import { ContentStatus } from "@prisma/client";
 
+const PAGE_SIZE = 20;
+
 const STATUS_TABS: { label: string; value: ContentStatus | "ALL" }[] = [
   { label: "All", value: "ALL" },
   { label: "Draft", value: "DRAFT" },
@@ -21,23 +23,42 @@ const STATUS_TABS: { label: string; value: ContentStatus | "ALL" }[] = [
 export default async function ContentListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   const session = await requireAuth();
   const isSuper = isSuperAdmin(session);
-  const { status: statusParam } = await searchParams;
-  const statusFilter = statusParam && statusParam !== "ALL" ? (statusParam as ContentStatus) : undefined;
+  const { status: statusParam, page: pageParam } = await searchParams;
+
+  const statusFilter =
+    statusParam && statusParam !== "ALL" ? (statusParam as ContentStatus) : undefined;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const skip = (page - 1) * PAGE_SIZE;
 
   const where = {
     ...(isSuper ? {} : { authorId: session.user.id }),
-    ...(statusFilter && { status: statusFilter }),
+    ...(statusFilter ? { status: statusFilter } : {}),
   };
 
-  const posts = await prisma.post.findMany({
-    where,
-    include: { author: { select: { id: true, name: true, username: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [posts, total] = await prisma.$transaction([
+    prisma.post.findMany({
+      where,
+      include: { author: { select: { id: true, name: true, username: true } } },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: PAGE_SIZE,
+    }),
+    prisma.post.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  function pageHref(p: number) {
+    const params = new URLSearchParams();
+    if (statusParam && statusParam !== "ALL") params.set("status", statusParam);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return `/admin/content${qs ? `?${qs}` : ""}`;
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -47,7 +68,8 @@ export default async function ContentListPage({
             {isSuper ? "All Content" : "My Content"}
           </h1>
           <p className="text-slate-500 mt-1 italic">
-            {posts.length} item{posts.length !== 1 ? "s" : ""} {statusFilter ? `with status: ${statusFilter}` : "total"}
+            {total} item{total !== 1 ? "s" : ""}{statusFilter ? ` · ${statusFilter.toLowerCase()}` : ""}
+            {totalPages > 1 && ` · page ${page} of ${totalPages}`}
           </p>
         </div>
         <Link href="/admin/content/new" className="btn-primary px-6 py-3 text-sm">
@@ -60,7 +82,11 @@ export default async function ContentListPage({
         {STATUS_TABS.map((tab) => (
           <Link
             key={tab.value}
-            href={tab.value === "ALL" ? "/admin/content" : `/admin/content?status=${tab.value}`}
+            href={
+              tab.value === "ALL"
+                ? "/admin/content"
+                : `/admin/content?status=${tab.value}`
+            }
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
               (statusParam ?? "ALL") === tab.value
                 ? "bg-primary text-white shadow-lg"
@@ -77,78 +103,148 @@ export default async function ContentListPage({
           <div className="text-4xl mb-4">📭</div>
           <h3 className="font-outfit font-bold text-xl text-slate-900">No content found</h3>
           <p className="text-slate-500 mt-2 text-sm">
-            {statusFilter ? `No ${statusFilter.toLowerCase()} posts.` : "Start by creating new content."}
+            {statusFilter
+              ? `No ${statusFilter.toLowerCase()} posts.`
+              : "Start by creating new content."}
           </p>
-          <Link href="/admin/content/new" className="btn-primary inline-block mt-6 px-6 py-3 text-sm">
+          <Link
+            href="/admin/content/new"
+            className="btn-primary inline-block mt-6 px-6 py-3 text-sm"
+          >
             Create Content
           </Link>
         </div>
       ) : (
-        <div className="glass rounded-[2.5rem] border-white/50 bg-white overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Content</th>
-                <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Status</th>
-                <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Region</th>
-                <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Updated</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {posts.map((post) => {
-                const isOwner = post.authorId === session.user.id;
-                const canDelete =
-                  isSuper ||
-                  (isOwner && (post.status === "DRAFT" || post.status === "REJECTED"));
+        <>
+          <div className="glass rounded-[2.5rem] border-white/50 bg-white overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Content</th>
+                  <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Status</th>
+                  <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Region</th>
+                  <th className="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Updated</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {posts.map((post) => {
+                  const isOwner = post.authorId === session.user.id;
+                  const canDelete =
+                    isSuper ||
+                    (isOwner &&
+                      (post.status === "DRAFT" || post.status === "REJECTED"));
 
-                return (
-                  <tr key={post.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex flex-col gap-1">
-                        <TypeBadge type={post.type as "ARTICLE" | "GALLERY_IMAGE" | "PODCAST" | "VIDEO" | "DOCUMENT"} />
-                        <p className="text-sm font-bold text-slate-900 line-clamp-1">{post.title}</p>
-                        {isSuper && (
-                          <p className="text-[10px] text-slate-400">
-                            by {post.author.name ?? post.author.username}
+                  return (
+                    <tr
+                      key={post.id}
+                      className="hover:bg-slate-50/50 transition-colors group"
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex flex-col gap-1">
+                          <TypeBadge
+                            type={
+                              post.type as
+                                | "ARTICLE"
+                                | "GALLERY_IMAGE"
+                                | "PODCAST"
+                                | "VIDEO"
+                                | "DOCUMENT"
+                            }
+                          />
+                          <p className="text-sm font-bold text-slate-900 line-clamp-1">
+                            {post.title}
                           </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 hidden md:table-cell">
-                      <StatusBadge status={post.status as "DRAFT" | "PENDING" | "PUBLISHED" | "REJECTED" | "ARCHIVED"} />
-                    </td>
-                    <td className="px-8 py-5 hidden lg:table-cell">
-                      <div className="text-xs text-slate-500">
-                        <span className="font-bold text-slate-700">{post.country}</span>
-                        <span className="mx-1">·</span>
-                        {post.region}
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-xs text-slate-400 hidden lg:table-cell">
-                      {formatRelativeTime(post.updatedAt)}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/admin/content/${post.id}/edit`}
-                          className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors"
-                        >
-                          Edit
-                        </Link>
-                        <ContentActions
-                          postId={post.id}
-                          status={post.status}
-                          canDelete={canDelete}
+                          {isSuper && (
+                            <p className="text-[10px] text-slate-400">
+                              by {post.author.name ?? post.author.username}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 hidden md:table-cell">
+                        <StatusBadge
+                          status={
+                            post.status as
+                              | "DRAFT"
+                              | "PENDING"
+                              | "PUBLISHED"
+                              | "REJECTED"
+                              | "ARCHIVED"
+                          }
                         />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-8 py-5 hidden lg:table-cell">
+                        <div className="text-xs text-slate-500">
+                          <span className="font-bold text-slate-700">{post.country}</span>
+                          <span className="mx-1">·</span>
+                          {post.region}
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-xs text-slate-400 hidden lg:table-cell">
+                        {formatRelativeTime(post.updatedAt)}
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/admin/content/${post.id}/edit`}
+                            className="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors"
+                          >
+                            Edit
+                          </Link>
+                          <ContentActions
+                            postId={post.id}
+                            status={post.status}
+                            canDelete={canDelete}
+                            isSuper={isSuper}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-2">
+              <p className="text-xs text-slate-400 font-medium">
+                Showing {skip + 1}–{Math.min(skip + PAGE_SIZE, total)} of {total}
+              </p>
+              <div className="flex items-center gap-2">
+                {page > 1 ? (
+                  <Link
+                    href={pageHref(page - 1)}
+                    className="px-4 py-2 text-xs font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    ← Previous
+                  </Link>
+                ) : (
+                  <span className="px-4 py-2 text-xs font-bold rounded-xl text-slate-300 cursor-not-allowed">
+                    ← Previous
+                  </span>
+                )}
+                <span className="px-4 py-2 text-xs font-bold text-slate-500">
+                  {page} / {totalPages}
+                </span>
+                {page < totalPages ? (
+                  <Link
+                    href={pageHref(page + 1)}
+                    className="px-4 py-2 text-xs font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    Next →
+                  </Link>
+                ) : (
+                  <span className="px-4 py-2 text-xs font-bold rounded-xl text-slate-300 cursor-not-allowed">
+                    Next →
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

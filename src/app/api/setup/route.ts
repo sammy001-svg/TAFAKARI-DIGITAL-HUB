@@ -1,7 +1,7 @@
 /**
  * One-time setup endpoint.
- * Creates the first Super Admin account.
- * Automatically disabled once any user exists in the database.
+ * GET  — reports DB connectivity, schema status, and whether setup is needed.
+ * POST — creates the first Super Admin account (disabled once any user exists).
  */
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
@@ -9,14 +9,48 @@ import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
+type TableRow = { TABLE_NAME: string };
+
 export async function GET() {
   try {
-    const count = await prisma.user.count();
-    return NextResponse.json({ setupRequired: count === 0 });
+    await prisma.$queryRaw`SELECT 1`;
+
+    const rows = await prisma.$queryRaw<TableRow[]>`
+      SELECT TABLE_NAME
+      FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME IN ('User','Post','Comment','ContactMessage')
+    `;
+
+    const existingTables = rows.map((r) => r.TABLE_NAME);
+    const required = ["User", "Post", "Comment", "ContactMessage"];
+    const missingTables = required.filter((t) => !existingTables.includes(t));
+    const tablesReady = missingTables.length === 0;
+
+    let userCount = 0;
+    if (tablesReady) {
+      userCount = await prisma.user.count();
+    }
+
+    return NextResponse.json({
+      dbConnected: true,
+      tablesReady,
+      missingTables,
+      setupRequired: tablesReady && userCount === 0,
+      userCount,
+    });
   } catch (err) {
-    console.error("[setup/GET] Database error:", err);
+    console.error("[setup/GET]", err);
     return NextResponse.json(
-      { error: "Cannot connect to the database. Check DATABASE_URL and ensure MySQL is running.", setupRequired: false },
+      {
+        dbConnected: false,
+        tablesReady: false,
+        missingTables: ["User", "Post", "Comment", "ContactMessage"],
+        setupRequired: false,
+        userCount: 0,
+        error:
+          err instanceof Error ? err.message : "Cannot connect to the database.",
+      },
       { status: 503 }
     );
   }

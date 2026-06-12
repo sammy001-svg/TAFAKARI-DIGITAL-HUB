@@ -2,16 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-const COUNTRIES = ["Kenya", "Ethiopia", "DR Congo"];
-const CATEGORIES = [
-  "Health",
-  "Education",
-  "Security & Conflict",
-  "Climate & Environment",
-  "Economic Development",
-  "Policy & Governance",
-];
+import MarkdownEditor from "@/components/admin/MarkdownEditor";
+import { AFRICAN_COUNTRIES, ISSUE_CATEGORIES } from "@/lib/constants";
 
 export default function CreateContentPage() {
   const [step, setStep] = useState(1);
@@ -98,6 +90,7 @@ export default function CreateContentPage() {
       )}
 
       <form onSubmit={handleSubmit} className="glass p-10 rounded-[2.5rem] border-white/50 bg-white">
+        {/* ── Step 1: Basic Information ─────────────────────────── */}
         {step === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-2">
@@ -151,6 +144,7 @@ export default function CreateContentPage() {
           </div>
         )}
 
+        {/* ── Step 2: Content Body ──────────────────────────────── */}
         {step === 2 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-2">
@@ -164,13 +158,15 @@ export default function CreateContentPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Main Content Body</label>
-              <textarea
-                rows={8}
-                className={`${inputClass} font-inter`}
-                placeholder="Write your article or add media transcript here..."
+              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                Main Content Body
+                <span className="ml-2 text-[10px] font-normal normal-case text-slate-400">Markdown supported</span>
+              </label>
+              <MarkdownEditor
                 value={formData.content}
-                onChange={(e) => set("content", e.target.value)}
+                onChange={(v) => set("content", v)}
+                placeholder="Write your article in Markdown. Use **bold**, *italic*, ## headings, - lists, etc."
+                minRows={14}
               />
             </div>
             <div className="flex gap-4 pt-6">
@@ -184,19 +180,20 @@ export default function CreateContentPage() {
           </div>
         )}
 
+        {/* ── Step 3: Regional Tagging ──────────────────────────── */}
         {step === 3 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Target Country</label>
                 <select title="Target Country" className={inputClass} value={formData.country} onChange={(e) => set("country", e.target.value)}>
-                  {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+                  {AFRICAN_COUNTRIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Issue Category</label>
                 <select title="Issue Category" className={inputClass} value={formData.issueCategory} onChange={(e) => set("issueCategory", e.target.value)}>
-                  {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  {ISSUE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
             </div>

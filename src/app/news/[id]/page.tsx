@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import prisma from "@/lib/prisma";
 import { formatDate, formatNumber } from "@/lib/format";
+import { markdownToHtml } from "@/lib/markdown";
 import CommentForm from "./CommentForm";
 
 export async function generateMetadata({
@@ -126,9 +127,10 @@ export default async function ArticlePage({
 
       {/* Content body */}
       {post.content ? (
-        <div className="text-slate-700 leading-relaxed text-base whitespace-pre-wrap mb-16 space-y-4">
-          {post.content}
-        </div>
+        <div
+          className="text-slate-700 text-base mb-16"
+          dangerouslySetInnerHTML={{ __html: markdownToHtml(post.content) }}
+        />
       ) : (
         <div className="py-8 text-slate-400 italic text-sm mb-16">
           Full article content will be available soon.

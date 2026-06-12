@@ -6,15 +6,20 @@ import { useRouter } from "next/navigation";
 type Props = {
   postId: string;
   status: string;
-  canDelete: boolean; // true if SUPER_ADMIN or (own DRAFT/REJECTED)
+  canDelete: boolean;
+  isSuper: boolean;
 };
 
-export default function ContentActions({ postId, status, canDelete }: Props) {
+type Loading = "submit" | "delete" | "archive" | null;
+
+export default function ContentActions({ postId, status, canDelete, isSuper }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState<"submit" | "delete" | null>(null);
+  const [loading, setLoading] = useState<Loading>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = status === "DRAFT" || status === "REJECTED";
+  const canSubmit  = status === "DRAFT" || status === "REJECTED";
+  const canArchive = isSuper && status === "PUBLISHED";
+  const canRestore = isSuper && status === "ARCHIVED";
 
   async function handleSubmit() {
     setLoading("submit");
@@ -24,6 +29,24 @@ export default function ContentActions({ postId, status, canDelete }: Props) {
       if (!res.ok) {
         const data = await res.json();
         setError(data.error ?? "Failed to submit");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleArchive() {
+    setLoading("archive");
+    setError(null);
+    try {
+      const res = await fetch(`/api/posts/${postId}/archive`, { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "Failed");
       } else {
         router.refresh();
       }
@@ -55,25 +78,49 @@ export default function ContentActions({ postId, status, canDelete }: Props) {
 
   return (
     <div className="flex items-center gap-2">
-      {error && (
-        <span className="text-[10px] text-rose-500 font-bold">{error}</span>
-      )}
+      {error && <span className="text-[10px] text-rose-500 font-bold">{error}</span>}
+
       {canSubmit && (
         <button
+          type="button"
           onClick={handleSubmit}
-          disabled={loading === "submit"}
+          disabled={!!loading}
           className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
         >
-          {loading === "submit" ? "Submitting..." : "Submit for Review"}
+          {loading === "submit" ? "Submitting…" : "Submit for Review"}
         </button>
       )}
+
+      {canArchive && (
+        <button
+          type="button"
+          onClick={handleArchive}
+          disabled={!!loading}
+          className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50"
+        >
+          {loading === "archive" ? "Archiving…" : "Archive"}
+        </button>
+      )}
+
+      {canRestore && (
+        <button
+          type="button"
+          onClick={handleArchive}
+          disabled={!!loading}
+          className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-50"
+        >
+          {loading === "archive" ? "Restoring…" : "Restore"}
+        </button>
+      )}
+
       {canDelete && (
         <button
+          type="button"
           onClick={handleDelete}
-          disabled={loading === "delete"}
+          disabled={!!loading}
           className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-colors disabled:opacity-50"
         >
-          {loading === "delete" ? "Deleting..." : "Delete"}
+          {loading === "delete" ? "Deleting…" : "Delete"}
         </button>
       )}
     </div>

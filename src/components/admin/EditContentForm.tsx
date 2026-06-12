@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import StatusBadge from "@/components/admin/StatusBadge";
+import MarkdownEditor from "@/components/admin/MarkdownEditor";
+import { AFRICAN_COUNTRIES, ISSUE_CATEGORIES } from "@/lib/constants";
 
 type Post = {
   id: string;
@@ -18,8 +20,6 @@ type Post = {
   mediaUrl: string | null;
 };
 
-const COUNTRIES = ["Kenya", "Ethiopia", "DR Congo"];
-const CATEGORIES = ["Health", "Education", "Security & Conflict", "Climate & Environment", "Economic Development", "Policy & Governance"];
 
 export default function EditContentForm({ post, canSubmit }: { post: Post; canSubmit: boolean }) {
   const router = useRouter();
@@ -115,13 +115,13 @@ export default function EditContentForm({ post, canSubmit }: { post: Post; canSu
         {step === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Content Title</label>
-              <input type="text" required className={inputClass} value={formData.title} onChange={(e) => set("title", e.target.value)} />
+              <label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Content Title</label>
+              <input id="title" type="text" required className={inputClass} placeholder="Enter content title..." value={formData.title} onChange={(e) => set("title", e.target.value)} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Content Type</label>
-                <select className={inputClass} value={formData.type} onChange={(e) => set("type", e.target.value)}>
+                <label htmlFor="type" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Content Type</label>
+                <select id="type" title="Content Type" className={inputClass} value={formData.type} onChange={(e) => set("type", e.target.value)}>
                   <option value="ARTICLE">Article / Post</option>
                   <option value="GALLERY_IMAGE">Gallery Album</option>
                   <option value="PODCAST">Podcast Episode</option>
@@ -130,13 +130,13 @@ export default function EditContentForm({ post, canSubmit }: { post: Post; canSu
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Thumbnail URL</label>
-                <input type="url" className={inputClass} placeholder="https://..." value={formData.thumbnailUrl} onChange={(e) => set("thumbnailUrl", e.target.value)} />
+                <label htmlFor="thumbnailUrl" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Thumbnail URL</label>
+                <input id="thumbnailUrl" type="url" className={inputClass} placeholder="https://..." value={formData.thumbnailUrl} onChange={(e) => set("thumbnailUrl", e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Media URL (audio / video / image)</label>
-              <input type="url" className={inputClass} placeholder="https://..." value={formData.mediaUrl} onChange={(e) => set("mediaUrl", e.target.value)} />
+              <label htmlFor="mediaUrl" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Media URL (audio / video / image)</label>
+              <input id="mediaUrl" type="url" className={inputClass} placeholder="https://..." value={formData.mediaUrl} onChange={(e) => set("mediaUrl", e.target.value)} />
             </div>
             <div className="pt-6">
               <button type="button" onClick={() => setStep(2)} className="btn-primary w-full py-4 text-sm">
@@ -149,12 +149,20 @@ export default function EditContentForm({ post, canSubmit }: { post: Post; canSu
         {step === 2 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Short Description</label>
-              <textarea rows={3} className={inputClass} placeholder="Brief summary for previews..." value={formData.description} onChange={(e) => set("description", e.target.value)} />
+              <label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Short Description</label>
+              <textarea id="description" rows={3} className={inputClass} placeholder="Brief summary for previews..." value={formData.description} onChange={(e) => set("description", e.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Main Content Body</label>
-              <textarea rows={10} className={`${inputClass} font-inter`} placeholder="Write your full content here..." value={formData.content} onChange={(e) => set("content", e.target.value)} />
+              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                Main Content Body
+                <span className="ml-2 text-[10px] font-normal normal-case text-slate-400">Markdown supported</span>
+              </label>
+              <MarkdownEditor
+                value={formData.content}
+                onChange={(v) => set("content", v)}
+                placeholder="Write your full content here. Use **bold**, *italic*, ## headings, - lists, etc."
+                minRows={14}
+              />
             </div>
             <div className="flex gap-4 pt-6">
               <button type="button" onClick={() => setStep(1)} className="glass py-4 px-8 rounded-full font-bold text-sm">Go Back</button>
@@ -167,21 +175,21 @@ export default function EditContentForm({ post, canSubmit }: { post: Post; canSu
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Target Country</label>
-                <select className={inputClass} value={formData.country} onChange={(e) => set("country", e.target.value)}>
-                  {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+                <label htmlFor="country" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Target Country</label>
+                <select id="country" title="Target Country" className={inputClass} value={formData.country} onChange={(e) => set("country", e.target.value)}>
+                  {AFRICAN_COUNTRIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Issue Category</label>
-                <select className={inputClass} value={formData.issueCategory} onChange={(e) => set("issueCategory", e.target.value)}>
-                  {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                <label htmlFor="issueCategory" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Issue Category</label>
+                <select id="issueCategory" title="Issue Category" className={inputClass} value={formData.issueCategory} onChange={(e) => set("issueCategory", e.target.value)}>
+                  {ISSUE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Specific Region / County</label>
-              <input type="text" required className={inputClass} placeholder="e.g., Nairobi, Addis Ababa, North Kivu..." value={formData.region} onChange={(e) => set("region", e.target.value)} />
+              <label htmlFor="region" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Specific Region / County</label>
+              <input id="region" type="text" required className={inputClass} placeholder="e.g., Nairobi, Addis Ababa, North Kivu..." value={formData.region} onChange={(e) => set("region", e.target.value)} />
             </div>
 
             <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 mt-4 space-y-4">

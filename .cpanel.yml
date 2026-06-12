@@ -1,0 +1,18 @@
+---
+# cPanel Git Version Control — automated deployment tasks
+# These commands run on the cPanel server after every git push.
+#
+# IMPORTANT: Before your FIRST deployment, do these once via SSH or cPanel terminal:
+#   1. Create the MySQL database via cPanel → MySQL Databases
+#   2. Import the schema: mysql -u user -p dbname < prisma/mysql-init.sql
+#   3. Set environment variables in cPanel → Node.js App Manager
+#
+# On every subsequent git push, cPanel runs the tasks below automatically.
+
+deployment:
+  tasks:
+    # Install / update Node.js dependencies (also runs postinstall → prisma generate)
+    - npm install
+
+    # Compile the Next.js production build and copy static assets to standalone/
+    - npm run build
