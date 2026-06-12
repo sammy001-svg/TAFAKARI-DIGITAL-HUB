@@ -13,7 +13,7 @@ try {
 
 $pageTitle = 'Conflict Monitoring Dashboard | Tafakari Digital Hub';
 $pageDesc  = 'Real-time conflict intensity mapping and issue tracking across African nations experiencing fragility, displacement, and humanitarian crises.';
-$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">';
+$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col" style="background:#F8F8F0;font-family:'Inter',sans-serif">
@@ -381,8 +381,8 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 <?php include __DIR__ . '/includes/footer.php'; ?>
 
 <!-- Leaflet + heat plugin -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 
 <script>
 /* ── Map data ─────────────────────────────────────────────────────── */
@@ -615,6 +615,12 @@ function applyFilters() {
       markers.push(m);
     });
   } else {
+    if (typeof L.heatLayer !== 'function') {
+      /* leaflet-heat plugin not loaded — fall back to marker view */
+      viewMode = 'markers';
+      document.getElementById('mode-markers').click();
+      return;
+    }
     var pts = visible.map(function(d){ return [d.lat, d.lng, d.intensity/10]; });
     if (pts.length) {
       heatLayer = L.heatLayer(pts, {
@@ -787,8 +793,13 @@ document.addEventListener('keydown', function(e) {
 });
 
 /* ── Init ─────────────────────────────────────────────────────────── */
-setCountry('ALL');
-applyFilters();
+try {
+  setCountry('ALL');
+  applyFilters();
+} catch (e) {
+  console.error('[Heatmap] Init failed:', e);
+  document.getElementById('active-count').textContent = 'Map error — check console';
+}
 </script>
 
 </body>
