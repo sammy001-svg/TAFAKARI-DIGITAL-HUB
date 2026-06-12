@@ -1,4 +1,4 @@
-﻿<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
+<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
   <div class="flex items-center justify-between max-w-7xl mx-auto w-full">
 
     <!-- Logo -->

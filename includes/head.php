@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // ── Compute canonical URL + OG values from page variables ─────────────────────
 $_proto    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $_host     = $_SERVER['HTTP_HOST'] ?? 'tafakaridigitalhub.com';

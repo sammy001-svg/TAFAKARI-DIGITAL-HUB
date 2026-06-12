@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $_u       = current_user();
 $_role    = $_u['role'] ?? '';
 $_name    = $_u['name'] ?? $_u['username'] ?? 'User';

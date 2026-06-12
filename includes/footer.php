@@ -1,4 +1,4 @@
-﻿<footer class="text-white/80 py-16 px-6 mt-20 border-t border-yellow-800/30" style="background:#2A0515">
+<footer class="text-white/80 py-16 px-6 mt-20 border-t border-yellow-800/30" style="background:#2A0515">
   <div class="max-w-7xl mx-auto">
 
     <!-- Top row: logo + columns -->
