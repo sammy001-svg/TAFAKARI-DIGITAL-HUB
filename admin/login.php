@@ -6,12 +6,18 @@ require_once dirname(__DIR__) . '/includes/functions.php';
 
 if (is_logged_in()) { header('Location: /admin/dashboard'); exit; }
 
+// Constant tells login.php to skip its own POST handling block
+define('_LOGIN_HANDLED', true);
+
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (auth_login(trim($_POST['username'] ?? ''), trim($_POST['password'] ?? ''))) {
         header('Location: /admin/dashboard'); exit;
     }
-    $error = 'Invalid username or password.';
+    $error = !empty($GLOBALS['auth_db_error'])
+        ? 'Database connection failed — please contact the site administrator.'
+        : 'Invalid username or password.';
 }
-// Reuse the public login page template
+
+// Delegate rendering to the shared login template
 require_once dirname(__DIR__) . '/login.php';

@@ -10,15 +10,20 @@ if (is_logged_in()) {
     exit;
 }
 
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = trim($_POST['password'] ?? '');
-    if (auth_login($username, $password)) {
-        header('Location: /admin/dashboard');
-        exit;
+// Guard prevents double-execution when included via admin/login.php
+if (!defined('_LOGIN_HANDLED')) {
+    $error = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $username = trim($_POST['username'] ?? '');
+        $password = trim($_POST['password'] ?? '');
+        if (auth_login($username, $password)) {
+            header('Location: /admin/dashboard');
+            exit;
+        }
+        $error = !empty($GLOBALS['auth_db_error'])
+            ? 'Database connection failed — please contact the site administrator.'
+            : 'Invalid username or password.';
     }
-    $error = 'Invalid username or password.';
 }
 
 $pageTitle = 'Login | Tafakari Digital Hub';

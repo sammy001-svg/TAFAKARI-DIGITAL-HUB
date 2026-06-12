@@ -33,14 +33,21 @@ function require_super_admin(): array {
 }
 
 function auth_login(string $username, string $password): bool {
-    $stmt = db()->prepare('SELECT id, name, email, username, password, role FROM User WHERE username = ? LIMIT 1');
-    $stmt->execute([$username]);
-    $user = $stmt->fetch();
-    if (!$user || !password_verify($password, $user['password'])) return false;
-    unset($user['password']);
-    $_SESSION['user'] = $user;
-    session_regenerate_id(true);
-    return true;
+    $GLOBALS['auth_db_error'] = false;
+    try {
+        $stmt = db()->prepare('SELECT id, name, email, username, password, role FROM User WHERE username = ? LIMIT 1');
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+        if (!$user || !password_verify($password, $user['password'])) return false;
+        unset($user['password']);
+        $_SESSION['user'] = $user;
+        session_regenerate_id(true);
+        return true;
+    } catch (\PDOException $e) {
+        $GLOBALS['auth_db_error'] = true;
+        error_log('[Tafakari] auth_login DB error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 function auth_logout(): void {

@@ -38,11 +38,19 @@ $demoAccounts = [
 
 $dbOk = false;
 $tableExists = false;
+$accountStatus = []; // username => bool (exists in DB)
 try {
     $pdo = new PDO(DB_DSN, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     $dbOk = true;
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
     $tableExists = in_array('User', $tables);
+    if ($tableExists) {
+        foreach ($demoAccounts as $acc) {
+            $chk = $pdo->prepare('SELECT id FROM User WHERE username=? LIMIT 1');
+            $chk->execute([$acc['username']]);
+            $accountStatus[$acc['username']] = (bool) $chk->fetch();
+        }
+    }
 } catch (PDOException $e) {
     $errors[] = 'Database connection failed: ' . $e->getMessage();
 }
@@ -68,6 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['seed']) && $dbOk && $
         }
     }
     $seeded = true;
+    // Refresh account status after seeding
+    if ($tableExists) {
+        foreach ($demoAccounts as $acc) {
+            $chk = $pdo->prepare('SELECT id FROM User WHERE username=? LIMIT 1');
+            $chk->execute([$acc['username']]);
+            $accountStatus[$acc['username']] = (bool) $chk->fetch();
+        }
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
@@ -167,6 +183,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
     <?php endif; ?>
   </div>
 
+  <!-- Action prompt: clearly tell user what to do next -->
+  <?php if ($dbOk && $tableExists && !$seeded): ?>
+    <?php $allExist = !empty($accountStatus) && !in_array(false, $accountStatus, true); ?>
+    <?php if (!$allExist): ?>
+      <div class="rounded-2xl p-5 border" style="background:#EFF6FF;border-color:#BFDBFE">
+        <p class="font-bold text-[13px] text-blue-800">
+          Action required: Click <strong>"Seed Demo Accounts"</strong> below to create the login accounts.
+        </p>
+        <p class="text-[11px] text-blue-700 mt-1">
+          The login credentials shown on the login page won't work until you seed them here.
+        </p>
+      </div>
+    <?php else: ?>
+      <div class="rounded-2xl p-5 border" style="background:#F0FDF4;border-color:#BBF7D0">
+        <p class="font-bold text-[13px] text-emerald-800">
+          Both accounts exist in the database. You can log in now.
+        </p>
+        <p class="text-[11px] text-emerald-700 mt-1">
+          If login still fails, click <strong>"Reset Passwords to Defaults"</strong> to restore the original passwords.
+        </p>
+      </div>
+    <?php endif; ?>
+  <?php endif; ?>
+
   <!-- Credentials Preview -->
   <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
     <div class="px-6 py-4 border-b border-slate-100">
@@ -174,7 +214,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
       <p class="text-[11px] text-slate-400 mt-0.5">These will be created (or already exist if previously seeded).</p>
     </div>
     <div class="divide-y divide-slate-50">
-      <?php foreach ($demoAccounts as $acc): ?>
+      <?php foreach ($demoAccounts as $acc):
+          $exists = $accountStatus[$acc['username']] ?? false; ?>
         <div class="px-6 py-5">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -189,6 +230,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset'])) {
                 </span>
               </div>
             </div>
+            <?php if ($tableExists): ?>
+              <?php if ($exists): ?>
+                <span class="flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 shrink-0">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Account exists
+                </span>
+              <?php else: ?>
+                <span class="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 shrink-0">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span> Not created yet
+                </span>
+              <?php endif; ?>
+            <?php endif; ?>
           </div>
           <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-slate-50 rounded-xl px-4 py-3">
