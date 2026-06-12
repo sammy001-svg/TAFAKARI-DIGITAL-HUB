@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/functions.php';
@@ -97,7 +97,7 @@ $pageTitle = 'Login | Tafakari Digital Hub';
       <!-- Logo -->
       <div class="mb-10 flex flex-col items-center gap-4">
         <div class="bg-white rounded-2xl px-5 py-3 shadow-xl">
-          <img src="/public/crtp-logo.png"
+          <img src="/public/crtp-logo.jpg"
                alt="Centre For Research Training and Publications — CRTP"
                class="h-12 w-auto object-contain block"
                onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-xl text-[#750B25] tracking-tight px-2\'>CRTP</span>'">

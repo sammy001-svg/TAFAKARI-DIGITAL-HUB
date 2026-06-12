@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // ── Compute canonical URL + OG values from page variables ─────────────────────
 $_proto    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $_host     = $_SERVER['HTTP_HOST'] ?? 'tafakaridigitalhub.com';
@@ -37,7 +37,7 @@ if ($_type === 'article') {
         'publisher'       => [
             '@type' => 'Organization',
             'name'  => 'Tafakari Digital Hub',
-            'logo'  => ['@type' => 'ImageObject', 'url' => $_siteRoot . '/public/crtp-logo.png'],
+            'logo'  => ['@type' => 'ImageObject', 'url' => $_siteRoot . '/public/crtp-logo.jpg'],
         ],
         'mainEntityOfPage'=> ['@type' => 'WebPage', '@id' => $_canonical],
     ];
@@ -101,9 +101,9 @@ $_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON
   <meta name="twitter:image"       content="<?= htmlspecialchars($_image, ENT_QUOTES, 'UTF-8') ?>">
 
   <!-- ── Favicons ──────────────────────────────────────────────────────────── -->
-  <link rel="icon"             href="/public/crtp-logo.png" type="image/png">
-  <link rel="shortcut icon"    href="/public/crtp-logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="/public/crtp-logo.png">
+  <link rel="icon"             href="/public/crtp-logo.jpg" type="image/png">
+  <link rel="shortcut icon"    href="/public/crtp-logo.jpg" type="image/png">
+  <link rel="apple-touch-icon" href="/public/crtp-logo.jpg">
 
   <!-- ── JSON-LD Structured Data ──────────────────────────────────────────── -->
   <script type="application/ld+json"><?= $_schemaJson ?></script>

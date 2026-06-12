@@ -1,10 +1,10 @@
-<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
+﻿<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
   <div class="flex items-center justify-between max-w-7xl mx-auto w-full">
 
     <!-- Logo -->
     <a href="/" class="flex items-center no-underline group" aria-label="CRTP — Centre For Research Training and Publications">
       <div class="bg-white rounded-xl px-3 py-1.5 shadow-md group-hover:shadow-lg transition-shadow duration-200">
-        <img src="/public/crtp-logo.png"
+        <img src="/public/crtp-logo.jpg"
              alt="Centre For Research Training and Publications — CRTP"
              class="h-10 md:h-11 w-auto object-contain block"
              onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-lg text-[#750B25] tracking-tight px-1\'>CRTP</span>'">

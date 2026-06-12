@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $_u       = current_user();
 $_role    = $_u['role'] ?? '';
 $_name    = $_u['name'] ?? $_u['username'] ?? 'User';
@@ -78,7 +78,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
   <div class="flex items-center justify-between px-4 h-[64px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
     <a href="/" aria-label="CRTP — Home" class="flex items-center">
       <div class="bg-white rounded-lg px-2 py-1.5 shadow-sm">
-        <img src="/public/crtp-logo.png"
+        <img src="/public/crtp-logo.jpg"
              alt="CRTP"
              class="h-7 w-auto object-contain block"
              onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-sm text-[#750B25] px-0.5\'>CRTP</span>'">
