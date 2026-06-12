@@ -45,7 +45,7 @@ try {
     transition: border-color .2s, transform .22s, box-shadow .22s;
   }
   .pillar-card:hover {
-    border-left-color: #9A1415;
+    border-left-color: #D99F51;
     transform: translateY(-5px);
     box-shadow: 0 24px 60px rgba(0,0,0,.09);
   }
@@ -78,21 +78,21 @@ try {
   .eyebrow-left {
     display: inline-flex; align-items: center; gap: 10px;
     font-size: .65rem; font-weight: 800; letter-spacing: .14em;
-    text-transform: uppercase; color: #9A1415; margin-bottom: 1rem;
+    text-transform: uppercase; color: #D99F51; margin-bottom: 1rem;
   }
   .eyebrow-left::before {
     content: ''; display: block;
-    width: 30px; height: 2px; background: #9A1415; flex-shrink: 0;
+    width: 30px; height: 2px; background: #D99F51; flex-shrink: 0;
   }
   .eyebrow-center {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     font-size: .65rem; font-weight: 800; letter-spacing: .14em;
-    text-transform: uppercase; color: #9A1415; margin-bottom: 1rem;
+    text-transform: uppercase; color: #D99F51; margin-bottom: 1rem;
   }
   .eyebrow-center::before,
   .eyebrow-center::after {
     content: ''; display: block;
-    width: 28px; height: 2px; background: #9A1415;
+    width: 28px; height: 2px; background: #D99F51;
   }
 
   /* Mission drop-cap quote mark */
@@ -101,7 +101,7 @@ try {
     content: '\201C';
     position: absolute; top: -2.5rem; left: -1rem;
     font-size: 9rem; line-height: 1; font-family: 'Outfit', sans-serif;
-    font-weight: 900; color: #9A1415; opacity: .1;
+    font-weight: 900; color: #D99F51; opacity: .15;
     pointer-events: none; user-select: none;
   }
 
@@ -184,7 +184,7 @@ try {
 
           <!-- CTAs -->
           <div class="flex flex-wrap items-center gap-5">
-            <a href="/heatmap" class="btn-primary" style="padding:.75rem 1.75rem">Explore Heatmap</a>
+            <a href="/heatmap" class="btn-gold" style="padding:.75rem 1.75rem">Explore Heatmap</a>
             <a href="/about" class="inline-flex items-center gap-2 text-sm font-bold text-white/75 hover:text-white transition-colors">
               Our Mission
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -244,7 +244,7 @@ try {
       foreach ($impactStats as $j => $st): ?>
         <div class="stat-item text-center py-10 px-4">
           <div class="font-outfit font-black text-4xl md:text-5xl leading-none mb-2.5">
-            <span style="color:#D99F51"><?= h($st['num']) ?></span><span style="color:#9A1415"><?= h($st['suf']) ?></span>
+            <span style="color:#D99F51"><?= h($st['num']) ?></span><span style="color:#EAD2AC"><?= h($st['suf']) ?></span>
           </div>
           <div class="text-white/45 text-[11px] font-semibold uppercase tracking-widest"><?= h($st['label']) ?></div>
         </div>
@@ -274,7 +274,7 @@ try {
       <p class="text-slate-500 text-[15px] leading-[1.85] mb-10">
         From interactive regional heatmaps to curated document libraries and community dialogue boards &mdash; every tool on this platform is designed to inform, connect, and empower.
       </p>
-      <a href="/about" class="btn-primary" style="padding:.75rem 1.75rem">Discover Our Mission</a>
+      <a href="/about" class="btn-gold" style="padding:.75rem 1.75rem">Discover Our Mission</a>
     </div>
   </section>
 
@@ -294,28 +294,28 @@ try {
         <?php
         $pillars = [
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#9A1415" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>',
             'title' => 'Media Broadcasting',
             'desc'  => 'Photo galleries, podcasts, and video libraries documenting field activities and regional oral histories across three nations.',
             'href'  => '/gallery',
             'cta'   => 'View Gallery',
           ],
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#9A1415" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>',
             'title' => 'Knowledge Repository',
             'desc'  => 'A structured library of research reports, policy briefs, and actionable datasets made freely accessible for public and academic use.',
             'href'  => '/documents',
             'cta'   => 'Browse Documents',
           ],
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#9A1415" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>',
             'title' => 'Community Engagement',
             'desc'  => 'Moderated public comment systems and contact infrastructure ensuring safe, constructive, and inclusive community dialogue.',
             'href'  => '/contact',
             'cta'   => 'Get Involved',
           ],
           [
-            'svg'  => '<svg width="26" height="26" fill="none" stroke="#9A1415" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>',
+            'svg'  => '<svg width="26" height="26" fill="none" stroke="#D99F51" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>',
             'title' => 'Interactive Data Maps',
             'desc'  => 'Visual heatmaps displaying issue intensity by geography and category, enabling pattern recognition across regions and time periods.',
             'href'  => '/heatmap',
@@ -324,13 +324,13 @@ try {
         ];
         foreach ($pillars as $p): ?>
           <div class="pillar-card bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:rgba(154,20,21,.06)">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:rgba(217,159,81,.10)">
               <?= $p['svg'] ?>
             </div>
             <h3 class="font-outfit font-bold text-[1.1rem] text-slate-900 mb-3 leading-snug"><?= h($p['title']) ?></h3>
             <p class="text-slate-500 text-sm leading-relaxed mb-6"><?= h($p['desc']) ?></p>
             <a href="<?= h($p['href']) ?>"
-               class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-2.5" style="color:#9A1415">
+               class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-2.5" style="color:#B07D2A">
               <?= h($p['cta']) ?>
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
@@ -351,7 +351,7 @@ try {
         <span class="eyebrow-left">Latest from the Region</span>
         <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Recent Articles</h2>
       </div>
-      <a href="/news" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#9A1415">
+      <a href="/news" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#B07D2A">
         View All Articles
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
@@ -368,14 +368,14 @@ try {
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
             <?php else: ?>
               <div class="w-full h-full flex items-center justify-center"
-                   style="background:linear-gradient(135deg,#2a0304 0%,#9A1415 100%)">
+                   style="background:linear-gradient(135deg,#1a1200 0%,#7a5718 100%)">
                 <svg width="42" height="42" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.4" viewBox="0 0 24 24">
                   <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
                 </svg>
               </div>
             <?php endif; ?>
             <div class="absolute top-4 left-4">
-              <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-white" style="background:#9A1415">
+              <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-slate-900" style="background:#D99F51">
                 <?= h($art['country']) ?>
               </span>
             </div>
@@ -411,7 +411,7 @@ try {
     </div>
 
     <div class="mt-10 md:hidden text-center">
-      <a href="/news" class="btn-primary">View All Articles</a>
+      <a href="/news" class="btn-gold">View All Articles</a>
     </div>
   </section>
   <?php endif; ?>

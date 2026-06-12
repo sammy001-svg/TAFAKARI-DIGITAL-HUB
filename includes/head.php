@@ -78,6 +78,39 @@
       transition: transform .15s;
     }
     .btn-secondary:hover { transform: scale(1.04); }
+    /* Gold button — for public content pages */
+    .btn-gold {
+      display: inline-flex;
+      align-items: center;
+      background: #D99F51;
+      color: #0D0102;
+      padding: 0.65rem 1.4rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-gold:hover  { transform: scale(1.04); box-shadow: 0 8px 24px rgba(217,159,81,.4); }
+    .btn-gold:active { transform: scale(.97); }
+    /* Cream/ivory outlined button */
+    .btn-cream {
+      display: inline-flex;
+      align-items: center;
+      background: #FBF5E6;
+      color: #3B0708;
+      padding: 0.65rem 1.4rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      text-decoration: none;
+      border: 1.5px solid #D99F51;
+      cursor: pointer;
+      transition: transform .15s, background .15s;
+    }
+    .btn-cream:hover { background: #F5E9C8; transform: scale(1.03); }
     .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
     .line-clamp-3 { display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
     .premium-gradient { background: #9A1415; }

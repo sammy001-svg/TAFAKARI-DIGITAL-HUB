@@ -1,14 +1,23 @@
-<nav class="sticky top-0 z-50 bg-primary/95 backdrop-blur-md text-white shadow-xl px-6 md:px-12 py-5 border-b border-secondary/20" style="background:rgba(154,20,21,.96)">
+<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-secondary/20" style="background:rgba(154,20,21,.97)">
   <div class="flex items-center justify-between max-w-7xl mx-auto w-full">
 
-    <!-- Logo -->
-    <a href="/" class="flex items-center gap-2 no-underline text-white">
-      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg border border-white/10" style="background:#9A1415">T</div>
-      <span class="font-outfit font-bold text-xl tracking-tight hidden md:block">Tafakari Hub</span>
+    <!-- Logo: CRTP logo image, falls back to styled wordmark -->
+    <a href="/" class="flex items-center gap-3 no-underline text-white">
+      <img src="/public/crtp-logo.png" alt="CRTP Logo"
+           class="h-11 w-auto object-contain"
+           onerror="this.style.display='none';document.getElementById('nav-logo-fallback').style.display='flex'">
+      <div id="nav-logo-fallback" class="items-center gap-2" style="display:none">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg border border-white/20" style="background:rgba(255,255,255,.1)">C</div>
+        <span class="font-outfit font-bold text-xl tracking-tight hidden md:block">CRTP</span>
+      </div>
+      <div class="hidden md:flex flex-col leading-tight ml-1">
+        <span class="font-outfit font-bold text-[1.1rem] tracking-tight leading-none">Tafakari Hub</span>
+        <span class="text-[9px] uppercase tracking-[.15em] text-white/50 font-semibold mt-0.5">CRTP Knowledge Platform</span>
+      </div>
     </a>
 
     <!-- Desktop Links -->
-    <div class="hidden md:flex items-center gap-8 font-medium text-sm">
+    <div class="hidden md:flex items-center gap-7 font-semibold text-base">
       <?php
       $navLinks = [
         ['/', 'Home'], ['/heatmap', 'Heatmap'], ['/gallery', 'Gallery'],
@@ -18,18 +27,20 @@
       foreach ($navLinks as [$href, $label]):
         $active = ($currentPath === $href);
       ?>
-        <a href="<?= h($href) ?>" class="transition-colors <?= $active ? 'text-secondary font-bold' : 'hover:text-secondary' ?>">
+        <a href="<?= h($href) ?>" class="transition-colors tracking-wide <?= $active ? 'text-secondary font-bold border-b-2 border-secondary/70 pb-0.5' : 'hover:text-secondary' ?>">
           <?= h($label) ?>
         </a>
       <?php endforeach; ?>
     </div>
 
     <!-- Desktop CTA -->
-    <div class="hidden md:flex items-center gap-4">
-      <a href="/admin/login" class="text-xs font-bold text-white px-4 py-2 rounded-lg transition-colors" style="background:rgba(217,159,81,.8)">
+    <div class="hidden md:flex items-center gap-3">
+      <a href="/admin/login" class="text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full transition-all hover:brightness-110" style="background:#D99F51">
         Login
       </a>
-      <a href="/contact" class="btn-primary py-2 px-5 text-sm">Get Involved</a>
+      <a href="/contact" class="text-sm font-bold text-white px-5 py-2.5 rounded-full border-2 border-white/40 hover:border-white/80 hover:bg-white/10 transition-all">
+        Get Involved
+      </a>
     </div>
 
     <!-- Hamburger (mobile) -->
@@ -43,11 +54,11 @@
   <!-- Mobile menu -->
   <div id="nav-mobile" class="md:hidden hidden mt-4 border-t border-white/20 pt-4 flex-col gap-3 pb-4">
     <?php foreach ($navLinks as [$href, $label]): ?>
-      <a href="<?= h($href) ?>" class="text-sm font-medium hover:text-secondary transition-colors py-1 block"><?= h($label) ?></a>
+      <a href="<?= h($href) ?>" class="text-base font-semibold hover:text-secondary transition-colors py-1.5 block"><?= h($label) ?></a>
     <?php endforeach; ?>
-    <div class="flex gap-3 mt-2 pt-3 border-t border-white/20">
-      <a href="/admin/login" class="flex-1 text-center text-xs font-bold text-white px-4 py-2 rounded-lg" style="background:rgba(217,159,81,.8)">Login</a>
-      <a href="/contact" class="flex-1 text-center btn-primary py-2 px-4 text-xs">Get Involved</a>
+    <div class="flex gap-3 mt-3 pt-3 border-t border-white/20">
+      <a href="/admin/login" class="flex-1 text-center text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full" style="background:#D99F51">Login</a>
+      <a href="/contact" class="flex-1 text-center text-sm font-bold text-white px-4 py-2.5 rounded-full border-2 border-white/40">Get Involved</a>
     </div>
   </div>
 </nav>
