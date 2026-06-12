@@ -11,20 +11,23 @@ $pdo = db();
 $messages    = $pdo->query("SELECT * FROM ContactMessage ORDER BY isRead ASC, createdAt DESC")->fetchAll();
 $unreadCount = (int)$pdo->query("SELECT COUNT(*) FROM ContactMessage WHERE isRead=0")->fetchColumn();
 
-$pageTitle = 'Contact Inbox | Tafakari Admin';
+$pageTitle      = 'Contact Inbox | Tafakari Admin';
+$adminPageTitle = 'Contact Inbox';
+$adminPageSub   = count($messages) . ' total · ' . $unreadCount . ' unread';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased bg-slate-100 font-inter">
+<body class="antialiased font-inter" style="background:#F4F6F8">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
-<div class="flex-1 overflow-y-auto p-10">
-  <div class="flex items-center gap-4 mb-10">
-    <h1 class="font-outfit text-3xl font-bold text-slate-900">Contact Inbox</h1>
+<div class="flex-1 flex flex-col overflow-hidden min-w-0">
+<?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
+
+<main class="flex-1 overflow-y-auto p-6 md:p-8">
+  <div class="flex items-center gap-3 mb-6">
     <?php if ($unreadCount > 0): ?>
-      <span class="px-3 py-1 rounded-full text-sm font-black bg-amber-100 text-amber-700"><?= $unreadCount ?> unread</span>
+      <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-700 border border-amber-200"><?= $unreadCount ?> unread</span>
     <?php endif; ?>
-    <span class="px-3 py-1 rounded-full text-sm font-black bg-slate-100 text-slate-600"><?= count($messages) ?> total</span>
   </div>
 
   <?php if (empty($messages)): ?>
@@ -82,6 +85,8 @@ $pageTitle = 'Contact Inbox | Tafakari Admin';
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
+
+</main>
 </div>
 </div>
 

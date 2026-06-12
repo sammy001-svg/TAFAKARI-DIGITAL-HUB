@@ -61,20 +61,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Pre-populate form from DB or POST
 $f = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $post;
-$pageTitle = 'Edit Content | Tafakari Admin';
+$pageTitle      = 'Edit Content | Tafakari Admin';
+$adminPageTitle = 'Edit Content';
+$adminPageSub   = h($post['title'] ?? '');
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased bg-slate-100 font-inter">
+<body class="antialiased font-inter" style="background:#F4F6F8">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
-<div class="flex-1 overflow-y-auto p-10">
-  <div class="mb-8">
-    <a href="/admin/content" class="text-xs font-bold text-slate-400 hover:text-primary mb-4 inline-block">&larr; Back to Content</a>
-    <div class="flex items-center gap-4">
-      <h1 class="font-outfit text-3xl font-bold text-slate-900">Edit Content</h1>
-      <?= status_badge($post['status']) ?>
-    </div>
+<div class="flex-1 flex flex-col overflow-hidden min-w-0">
+<?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
+
+<main class="flex-1 overflow-y-auto p-6 md:p-8">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="/admin/content" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-primary transition-colors">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </a>
+    <?= status_badge($post['status']) ?>
   </div>
 
   <?php if (!empty($post['rejectionNotes']) && $post['status'] === 'REJECTED'): ?>
@@ -172,14 +177,16 @@ $pageTitle = 'Edit Content | Tafakari Admin';
       </div>
     </div>
 
-    <div class="flex gap-4 flex-wrap">
-      <button type="submit" name="save_draft" class="btn-primary px-8 py-4">Save as Draft</button>
+    <div class="flex gap-3 flex-wrap">
+      <button type="submit" name="save_draft" class="btn-primary" style="padding:.7rem 1.75rem">Save Changes</button>
       <?php if ($canSubmit && !$isSuper): ?>
-        <button type="submit" name="save_submit" class="btn-secondary px-8 py-4">Save & Submit for Approval</button>
+        <button type="submit" name="save_submit" class="btn-secondary" style="padding:.7rem 1.75rem">Save & Submit for Approval</button>
       <?php endif; ?>
-      <a href="/admin/content" class="px-8 py-4 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>
+      <a href="/admin/content" class="inline-flex items-center px-6 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>
     </div>
   </form>
+
+</main>
 </div>
 </div>
 

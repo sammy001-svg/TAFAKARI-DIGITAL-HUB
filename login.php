@@ -94,9 +94,29 @@ $pageTitle = 'Login | Tafakari Digital Hub';
         <button type="submit" class="btn-primary w-full py-4 text-base mt-2">Sign In</button>
       </form>
 
-      <p class="text-center text-xs text-slate-600 mt-8">
-        <a href="/" class="hover:text-white transition-colors">&larr; Back to public site</a>
-      </p>
+      <div class="mt-8 space-y-3">
+        <p class="text-center text-xs text-slate-600">
+          <a href="/" class="hover:text-white transition-colors">&larr; Back to public site</a>
+        </p>
+        <!-- Demo credentials hint (remove this block in production) -->
+        <div class="rounded-xl p-4 border" style="background:rgba(217,159,81,.06);border-color:rgba(217,159,81,.25)">
+          <p class="text-[9px] font-black uppercase tracking-[.14em] mb-2.5" style="color:rgba(217,159,81,.7)">Demo Login Credentials</p>
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] text-slate-400 font-medium">Super Admin</span>
+              <code class="text-[10px] font-bold text-white/70">superadmin / Admin@Tafakari2024</code>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] text-slate-400 font-medium">Editor</span>
+              <code class="text-[10px] font-bold text-white/70">editor / Editor@Tafakari2024</code>
+            </div>
+          </div>
+          <p class="text-[9px] text-slate-600 mt-2.5">
+            Run <a href="/seed.php" class="underline" style="color:rgba(217,159,81,.8)">seed.php</a> first to create these accounts.
+            Change passwords in <a href="/admin/profile" class="underline" style="color:rgba(217,159,81,.8)">Admin &rsaquo; Profile</a>.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </div>

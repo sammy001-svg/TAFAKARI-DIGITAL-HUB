@@ -19,17 +19,21 @@ $totalComments     = (int)$pdo->query("SELECT COUNT(*) FROM Comment")->fetchColu
 $flaggedCount      = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isFlagged=1")->fetchColumn();
 $moderatedCount    = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isModerated=1")->fetchColumn();
 
-$pageTitle = 'Comment Moderation | Tafakari Admin';
+$pageTitle      = 'Comment Moderation | Tafakari Admin';
+$adminPageTitle = 'Comment Moderation';
+$adminPageSub   = $flaggedCount . ' flagged · ' . $totalComments . ' total comments';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased bg-slate-100 font-inter">
+<body class="antialiased font-inter" style="background:#F4F6F8">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
-<div class="flex-1 overflow-y-auto p-10">
-  <div class="flex items-center gap-4 mb-10">
-    <h1 class="font-outfit text-3xl font-bold text-slate-900">Comment Moderation</h1>
-    <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700">Auto-Moderation Active</span>
+<div class="flex-1 flex flex-col overflow-hidden min-w-0">
+<?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
+
+<main class="flex-1 overflow-y-auto p-6 md:p-8">
+  <div class="flex items-center gap-3 mb-6">
+    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">Active Moderation</span>
   </div>
 
   <?php if (empty($flagged)): ?>
@@ -77,7 +81,7 @@ $pageTitle = 'Comment Moderation | Tafakari Admin';
   <?php endif; ?>
 
   <!-- Stats -->
-  <div class="grid grid-cols-3 gap-4 max-w-3xl">
+  <div class="grid grid-cols-3 gap-4 max-w-3xl mt-8">
     <?php
     $stats = [
       ['label'=>'Total Comments',   'value'=>$totalComments,  'cls'=>'bg-slate-50 border-slate-200 text-slate-700'],
@@ -85,12 +89,14 @@ $pageTitle = 'Comment Moderation | Tafakari Admin';
       ['label'=>'Currently Flagged','value'=>$flaggedCount,   'cls'=>'bg-amber-50 border-amber-200 text-amber-700'],
     ];
     foreach ($stats as $s): ?>
-      <div class="p-5 rounded-2xl border text-center <?= $s['cls'] ?>">
+      <div class="p-5 rounded-2xl border text-center bg-white <?= $s['cls'] ?>">
         <div class="text-2xl font-black"><?= $s['value'] ?></div>
         <div class="text-[10px] font-black uppercase tracking-widest mt-1"><?= h($s['label']) ?></div>
       </div>
     <?php endforeach; ?>
   </div>
+
+</main>
 </div>
 </div>
 

@@ -15,20 +15,22 @@ $users = $pdo->query(
      GROUP BY u.id ORDER BY u.createdAt DESC"
 )->fetchAll();
 
-$pageTitle = 'User Management | Tafakari Admin';
+$pageTitle      = 'User Management | Tafakari Admin';
+$adminPageTitle = 'User Management';
+$adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') . ' total';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased bg-slate-100 font-inter">
+<body class="antialiased font-inter" style="background:#F4F6F8">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
-<div class="flex-1 overflow-y-auto p-10">
-  <div class="flex justify-between items-center mb-10">
-    <div>
-      <h1 class="font-outfit text-3xl font-bold text-slate-900">User Management</h1>
-      <p class="text-slate-500 mt-1"><?= count($users) ?> account<?= count($users) !== 1 ? 's' : '' ?> total</p>
-    </div>
-    <button onclick="openModal('create')" class="btn-primary">+ Add User</button>
+<div class="flex-1 flex flex-col overflow-hidden min-w-0">
+<?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
+
+<main class="flex-1 overflow-y-auto p-6 md:p-8">
+  <div class="flex justify-between items-center mb-6">
+    <div></div>
+    <button onclick="openModal('create')" class="btn-primary" style="padding:.6rem 1.25rem">+ Add User</button>
   </div>
 
   <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
@@ -82,6 +84,7 @@ $pageTitle = 'User Management | Tafakari Admin';
       </tbody>
     </table>
   </div>
+</main>
 </div>
 </div>
 

@@ -41,31 +41,25 @@ function pageHref(string $status, int $p): string {
 }
 
 $tabs = ['ALL','DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
-$pageTitle = 'Content | Tafakari Admin';
+$pageTitle    = ($isSuper ? 'All Content' : 'My Content') . ' | Tafakari Admin';
+$adminPageTitle = $isSuper ? 'All Content' : 'My Content';
+$adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter !== 'ALL' ? ' · ' . strtolower($statusFilter) : '');
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased bg-slate-100 font-inter">
+<body class="antialiased font-inter" style="background:#F4F6F8">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
-<div class="flex-1 overflow-y-auto p-10">
-  <div class="flex justify-between items-start mb-8">
-    <div>
-      <h1 class="font-outfit text-3xl font-bold text-slate-900"><?= $isSuper ? 'All Content' : 'My Content' ?></h1>
-      <p class="text-slate-500 mt-1 italic">
-        <?= $total ?> item<?= $total !== 1 ? 's' : '' ?>
-        <?= $statusFilter !== 'ALL' ? ' · ' . strtolower($statusFilter) : '' ?>
-        <?= $totalPages > 1 ? ' · page ' . $page . ' of ' . $totalPages : '' ?>
-      </p>
-    </div>
-    <a href="/admin/content/new" class="btn-primary">+ Create New</a>
-  </div>
+<div class="flex-1 flex flex-col overflow-hidden min-w-0">
+<?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
+
+<main class="flex-1 overflow-y-auto p-6 md:p-8">
 
   <!-- Status Tabs -->
-  <div class="flex gap-1 p-1 bg-white/60 rounded-xl w-fit flex-wrap mb-8 border border-slate-200 shadow-sm">
+  <div class="flex items-center gap-1 p-1 bg-white rounded-xl border border-slate-100 shadow-sm w-fit flex-wrap mb-6">
     <?php foreach ($tabs as $tab): ?>
       <a href="<?= h(pageHref($tab, 1)) ?>"
-         class="px-4 py-2 rounded-lg text-xs font-bold transition-colors <?= $statusFilter === $tab ? 'text-white shadow-lg' : 'text-slate-500 hover:text-slate-900 hover:bg-white' ?>"
+         class="px-3.5 py-2 rounded-lg text-[11px] font-bold transition-all <?= $statusFilter === $tab ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50' ?>"
          <?= $statusFilter === $tab ? 'style="background:#9A1415"' : '' ?>>
         <?= ucfirst(strtolower($tab)) ?>
       </a>
@@ -73,66 +67,92 @@ $pageTitle = 'Content | Tafakari Admin';
   </div>
 
   <?php if (empty($posts)): ?>
-    <div class="bg-white rounded-4xl p-16 shadow-sm border border-slate-100 text-center">
-      <div class="text-4xl mb-4">📭</div>
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-16 text-center">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:rgba(154,20,21,.06)">
+        <svg width="24" height="24" fill="none" stroke="#9A1415" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+        </svg>
+      </div>
       <h3 class="font-outfit font-bold text-xl text-slate-900">No content found</h3>
-      <p class="text-slate-500 mt-2 text-sm"><?= $statusFilter !== 'ALL' ? 'No ' . strtolower($statusFilter) . ' posts.' : 'Start by creating new content.' ?></p>
-      <a href="/admin/content/new" class="btn-primary inline-block mt-6 px-6 py-3 text-sm">Create Content</a>
+      <p class="text-slate-500 mt-2 text-sm mb-6">
+        <?= $statusFilter !== 'ALL' ? 'No ' . strtolower($statusFilter) . ' posts.' : 'Start by creating your first piece of content.' ?>
+      </p>
+      <a href="/admin/content/new" class="btn-primary" style="padding:.65rem 1.5rem">Create Content</a>
     </div>
+
   <?php else: ?>
-    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mb-6">
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-5">
       <table class="w-full">
         <thead>
-          <tr class="border-b border-slate-100">
-            <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Content</th>
-            <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Status</th>
-            <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Region</th>
-            <th class="text-left px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Updated</th>
-            <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+          <tr style="background:#FAFBFC;border-bottom:1px solid rgba(0,0,0,.06)">
+            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">Title</th>
+            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400 hidden md:table-cell">Status</th>
+            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400 hidden lg:table-cell">Region</th>
+            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400 hidden lg:table-cell">Updated</th>
+            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400 text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <?php foreach ($posts as $p):
-            $isOwner   = ($p['authorId'] === $uid);
-            $canDelete = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
-            $canSubmit = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
+          <?php
+          $typeIcons = [
+            'ARTICLE'       => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+            'GALLERY_IMAGE' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
+            'PODCAST'       => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z',
+            'VIDEO'         => 'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z',
+            'DOCUMENT'      => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+          ];
+          foreach ($posts as $p):
+            $isOwner    = ($p['authorId'] === $uid);
+            $canDelete  = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
+            $canSubmit  = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
             $canArchive = $isSuper && in_array($p['status'], ['PUBLISHED','ARCHIVED']);
+            $svg        = $typeIcons[$p['type']] ?? $typeIcons['ARTICLE'];
           ?>
-            <tr class="hover:bg-slate-50/50 transition-colors">
-              <td class="px-8 py-5">
-                <?= type_badge($p['type']) ?>
-                <p class="text-sm font-bold text-slate-900 mt-1 line-clamp-1"><?= h($p['title']) ?></p>
-                <?php if ($isSuper): ?>
-                  <p class="text-[10px] text-slate-400 mt-0.5">by <?= h($p['authorName'] ?? $p['authorUsername'] ?? '—') ?></p>
-                <?php endif; ?>
+            <tr class="hover:bg-slate-50/70 transition-colors group">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:rgba(154,20,21,.06)">
+                    <svg width="14" height="14" fill="none" stroke="#9A1415" stroke-width="1.8"
+                         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                      <path d="<?= $svg ?>"/>
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-[13px] font-semibold text-slate-900 truncate max-w-xs"><?= h($p['title']) ?></p>
+                    <?php if ($isSuper): ?>
+                      <p class="text-[10px] text-slate-400 mt-0.5">by <?= h($p['authorName'] ?? $p['authorUsername'] ?? '—') ?></p>
+                    <?php endif; ?>
+                  </div>
+                </div>
               </td>
-              <td class="px-8 py-5 hidden md:table-cell"><?= status_badge($p['status']) ?></td>
-              <td class="px-8 py-5 hidden lg:table-cell">
-                <span class="text-xs font-bold text-slate-700"><?= h($p['country']) ?></span>
-                <span class="text-xs text-slate-400 ml-1">&bull; <?= h($p['region']) ?></span>
+              <td class="px-6 py-4 hidden md:table-cell"><?= status_badge($p['status']) ?></td>
+              <td class="px-6 py-4 hidden lg:table-cell">
+                <span class="text-[12px] font-semibold text-slate-700"><?= h($p['country']) ?></span>
+                <span class="text-[11px] text-slate-400 ml-1">&bull; <?= h($p['region']) ?></span>
               </td>
-              <td class="px-8 py-5 text-xs text-slate-400 hidden lg:table-cell"><?= format_relative_time($p['updatedAt']) ?></td>
-              <td class="px-8 py-5">
-                <div class="flex items-center justify-end gap-2 flex-wrap">
+              <td class="px-6 py-4 text-[11px] text-slate-400 hidden lg:table-cell"><?= format_relative_time($p['updatedAt']) ?></td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-1.5">
                   <a href="/admin/content/<?= h($p['id']) ?>/edit"
-                     class="px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors">
+                     class="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     Edit
                   </a>
                   <?php if ($canSubmit): ?>
                     <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/submit','POST',this,'Submit for review?')"
-                            class="px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 rounded-xl hover:bg-amber-200 transition-colors">
+                            class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">
                       Submit
                     </button>
                   <?php endif; ?>
                   <?php if ($canArchive): ?>
                     <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/archive','POST',this,null)"
-                            class="px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors">
+                            class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
                       <?= $p['status'] === 'PUBLISHED' ? 'Archive' : 'Restore' ?>
                     </button>
                   <?php endif; ?>
                   <?php if ($canDelete): ?>
                     <button onclick="postAction('/api/posts/<?= h($p['id']) ?>','DELETE',this,'Delete this post? This cannot be undone.')"
-                            class="px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-rose-100 text-rose-700 rounded-xl hover:bg-rose-200 transition-colors">
+                            class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors">
                       Delete
                     </button>
                   <?php endif; ?>
@@ -146,38 +166,44 @@ $pageTitle = 'Content | Tafakari Admin';
 
     <!-- Pagination -->
     <?php if ($totalPages > 1): ?>
-      <div class="flex items-center justify-between px-2">
-        <p class="text-xs text-slate-400">Showing <?= $skip+1 ?>–<?= min($skip+$pageSize,$total) ?> of <?= $total ?></p>
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] text-slate-400">Showing <?= $skip+1 ?>–<?= min($skip+$pageSize,$total) ?> of <?= $total ?></p>
         <div class="flex items-center gap-2">
           <?php if ($page > 1): ?>
             <a href="<?= h(pageHref($statusFilter, $page-1)) ?>"
-               class="px-4 py-2 text-xs font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">&larr; Previous</a>
+               class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">&larr; Prev</a>
           <?php else: ?>
-            <span class="px-4 py-2 text-xs font-bold rounded-xl text-slate-300 cursor-not-allowed">&larr; Previous</span>
+            <span class="px-3 py-2 text-[11px] font-bold rounded-xl text-slate-300">&larr; Prev</span>
           <?php endif; ?>
-          <span class="px-4 py-2 text-xs font-bold text-slate-500"><?= $page ?> / <?= $totalPages ?></span>
+          <span class="px-3 py-2 text-[11px] font-bold text-slate-500"><?= $page ?> / <?= $totalPages ?></span>
           <?php if ($page < $totalPages): ?>
             <a href="<?= h(pageHref($statusFilter, $page+1)) ?>"
-               class="px-4 py-2 text-xs font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">Next &rarr;</a>
+               class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Next &rarr;</a>
           <?php else: ?>
-            <span class="px-4 py-2 text-xs font-bold rounded-xl text-slate-300 cursor-not-allowed">Next &rarr;</span>
+            <span class="px-3 py-2 text-[11px] font-bold rounded-xl text-slate-300">Next &rarr;</span>
           <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>
   <?php endif; ?>
+
+</main>
 </div>
 </div>
 
 <script>
 function postAction(url, method, btn, confirmMsg) {
   if (confirmMsg && !confirm(confirmMsg)) return;
+  var origText = btn.textContent;
   btn.disabled = true;
   btn.textContent = '…';
   fetch(url, { method: method, headers: { 'Content-Type': 'application/json' } })
     .then(function(r){ return r.json(); })
-    .then(function(d){ if (d.error) { alert(d.error); btn.disabled=false; btn.textContent=btn.textContent; } else { location.reload(); } })
-    .catch(function(){ alert('Request failed'); btn.disabled=false; });
+    .then(function(d){
+      if (d.error) { alert(d.error); btn.disabled=false; btn.textContent=origText; }
+      else { location.reload(); }
+    })
+    .catch(function(){ alert('Request failed'); btn.disabled=false; btn.textContent=origText; });
 }
 </script>
 </body>
