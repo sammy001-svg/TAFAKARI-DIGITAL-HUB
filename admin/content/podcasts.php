@@ -9,6 +9,32 @@ $user    = require_auth();
 $isSuper = is_super_admin();
 $uid     = $user['id'];
 
+$createError = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'create') {
+    $c_title         = trim($_POST['title']         ?? '');
+    $c_description   = trim($_POST['description']   ?? '');
+    $c_content       = trim($_POST['content']       ?? '');
+    $c_thumbnailUrl  = trim($_POST['thumbnailUrl']  ?? '');
+    $c_mediaUrl      = trim($_POST['mediaUrl']      ?? '');
+    $c_country       = trim($_POST['country']       ?? '');
+    $c_region        = trim($_POST['region']        ?? '');
+    $c_issueCategory = trim($_POST['issueCategory'] ?? '');
+    if (!$c_title)             $createError = 'Episode title is required.';
+    elseif (!$c_mediaUrl)      $createError = 'Audio file URL is required.';
+    elseif (!$c_country)       $createError = 'Country is required.';
+    elseif (!$c_region)        $createError = 'Region is required.';
+    elseif (!$c_issueCategory) $createError = 'Issue category is required.';
+    else {
+        $id = generate_id();
+        db()->prepare(
+            'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
+        )->execute([$id,$c_title,'PODCAST',$c_description,$c_content,$c_thumbnailUrl,$c_mediaUrl,$c_country,$c_region,$c_issueCategory,'DRAFT',$uid]);
+        header('Location: /admin/content/podcasts?created=1');
+        exit;
+    }
+}
+
 $statusFilter = $_GET['status'] ?? 'ALL';
 $search       = trim($_GET['q'] ?? '');
 $page         = max(1, (int)($_GET['page'] ?? 1));
@@ -78,12 +104,12 @@ $adminPageSub   = $total . ' episode' . ($total !== 1 ? 's' : '') . ($statusFilt
       </div>
       <h1 class="font-outfit font-black text-2xl text-slate-900">Podcast Episodes</h1>
     </div>
-    <a href="/admin/content/new?type=PODCAST"
-       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold shadow-sm transition-opacity hover:opacity-90"
-       style="background:#750B25;color:#fff">
+    <button type="button" onclick="openCreateDrawer()"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold shadow-sm transition-opacity hover:opacity-90"
+            style="background:#750B25;color:#fff;border:none;cursor:pointer">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
       New Episode
-    </a>
+    </button>
   </div>
 
   <!-- Stats -->
@@ -140,7 +166,7 @@ $adminPageSub   = $total . ' episode' . ($total !== 1 ? 's' : '') . ($statusFilt
       </div>
       <h3 class="font-outfit font-bold text-xl text-slate-900">No episodes yet</h3>
       <p class="text-slate-500 mt-2 text-sm mb-6"><?= $search !== '' ? 'No results for "' . h($search) . '".' : 'Record and publish your first podcast episode.' ?></p>
-      <a href="/admin/content/new?type=PODCAST" class="btn-primary" style="padding:.65rem 1.5rem">New Episode</a>
+      <button type="button" onclick="openCreateDrawer()" class="btn-primary" style="padding:.65rem 1.5rem;border:none;cursor:pointer">New Episode</button>
     </div>
   <?php else: ?>
     <div class="space-y-3 mb-5">
@@ -242,6 +268,134 @@ function postAction(url, method, btn, confirmMsg) {
       else{location.reload();}
     }).catch(function(){alert('Request failed');btn.disabled=false;btn.textContent=t;});
 }
+</script>
+
+<!-- ── Create Podcast Drawer ──────────────────────────────────────── -->
+<div id="create-backdrop" onclick="closeCreateDrawer()"
+     style="position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s"></div>
+
+<div id="create-drawer"
+     style="position:fixed;top:0;right:0;bottom:0;z-index:500;width:min(540px,100vw);
+            background:#fff;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+            overflow-y:auto;display:flex;flex-direction:column;box-shadow:-8px 0 48px rgba(0,0,0,.14)">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #f1f5f9;flex-shrink:0;position:sticky;top:0;background:#fff;z-index:1">
+    <div>
+      <p style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#750B25;margin:0 0 3px">New Episode</p>
+      <p style="font-size:13px;font-weight:600;color:#0f172a;margin:0">Saved as draft — publish after review</p>
+    </div>
+    <button onclick="closeCreateDrawer()" style="width:36px;height:36px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:20px;line-height:1">&times;</button>
+  </div>
+
+  <?php if ($createError): ?>
+    <div style="margin:16px 24px 0;padding:12px 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;color:#dc2626;font-size:13px;font-weight:500"><?= h($createError) ?></div>
+  <?php endif; ?>
+
+  <form method="POST" action="/admin/content/podcasts" style="flex:1;padding:24px;display:flex;flex-direction:column;gap:18px">
+    <input type="hidden" name="_action" value="create">
+
+    <div>
+      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Episode Title *</label>
+      <input type="text" name="title" required value="<?= h(($createError ? $_POST['title'] : '') ?? '') ?>"
+             style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit"
+             placeholder="Episode title">
+    </div>
+
+    <div>
+      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Short Description</label>
+      <textarea name="description" rows="2"
+                style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;resize:none;font-family:inherit"
+                placeholder="Episode summary shown in listings"><?= h(($createError ? $_POST['description'] : '') ?? '') ?></textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Artwork / Cover URL</label>
+        <input type="url" name="thumbnailUrl" value="<?= h(($createError ? $_POST['thumbnailUrl'] : '') ?? '') ?>"
+               style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit"
+               placeholder="https://…">
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Audio File URL *</label>
+        <input type="url" name="mediaUrl" required value="<?= h(($createError ? $_POST['mediaUrl'] : '') ?? '') ?>"
+               style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit"
+               placeholder="https://…/episode.mp3">
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Episode Notes</label>
+      <textarea name="content" rows="6"
+                style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;resize:vertical;font-family:inherit"
+                placeholder="Show notes, timestamps, or transcript…"><?= h(($createError ? $_POST['content'] : '') ?? '') ?></textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div>
+        <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Country *</label>
+        <select name="country" required style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit">
+          <option value="">Select</option>
+          <?php foreach (african_countries() as $c): ?>
+            <option value="<?= h($c) ?>" <?= (($_POST['country'] ?? '') === $c && $createError) ? 'selected' : '' ?>><?= h($c) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Region *</label>
+        <input type="text" name="region" required value="<?= h(($createError ? $_POST['region'] : '') ?? '') ?>"
+               style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit"
+               placeholder="e.g. Nairobi">
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Issue Category *</label>
+      <select name="issueCategory" required style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit">
+        <option value="">Select category</option>
+        <?php foreach (issue_categories() as $c): ?>
+          <option value="<?= h($c) ?>" <?= (($_POST['issueCategory'] ?? '') === $c && $createError) ? 'selected' : '' ?>><?= h($c) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:12px;padding-top:4px;padding-bottom:8px">
+      <button type="submit"
+              style="flex:1;padding:13px;border:none;border-radius:12px;background:#750B25;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
+              onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+        Save as Draft
+      </button>
+      <button type="button" onclick="closeCreateDrawer()"
+              style="padding:13px 20px;border:1.5px solid #e2e8f0;border-radius:12px;background:#fff;color:#64748b;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+function openCreateDrawer() {
+  document.getElementById('create-drawer').style.transform = 'translateX(0)';
+  var bd = document.getElementById('create-backdrop');
+  bd.style.opacity = '1'; bd.style.pointerEvents = 'auto';
+  document.body.style.overflow = 'hidden';
+}
+function closeCreateDrawer() {
+  document.getElementById('create-drawer').style.transform = 'translateX(100%)';
+  var bd = document.getElementById('create-backdrop');
+  bd.style.opacity = '0'; bd.style.pointerEvents = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeCreateDrawer(); });
+<?php if ($createError): ?>document.addEventListener('DOMContentLoaded', openCreateDrawer);<?php endif; ?>
+<?php if (isset($_GET['created'])): ?>
+document.addEventListener('DOMContentLoaded', function(){
+  var b = document.createElement('div');
+  b.textContent = 'Episode saved as draft.';
+  b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2)';
+  document.body.appendChild(b);
+  setTimeout(function(){ b.remove(); }, 3500);
+});
+<?php endif; ?>
 </script>
 </body>
 </html>
