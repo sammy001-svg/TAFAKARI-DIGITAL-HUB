@@ -5,11 +5,21 @@ $_name    = $_u['name'] ?? $_u['username'] ?? 'User';
 $_initial = strtoupper(substr($_name, 0, 1));
 $_path    = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
 
+$_contentModulePaths = ['/admin/content/articles','/admin/content/gallery','/admin/content/podcasts','/admin/content/videos','/admin/content/documents'];
+
 $_navCore = [
   ['href' => '/admin/dashboard',   'label' => 'Overview',   'svg' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
   ['href' => '/admin/content',     'label' => 'My Content', 'svg' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
   ['href' => '/admin/content/new', 'label' => 'Create New', 'svg' => 'M12 4v16m8-8H4'],
   ['href' => '/admin/profile',     'label' => 'My Profile', 'svg' => 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+];
+
+$_navModules = [
+  ['href' => '/admin/content/articles',  'label' => 'Articles',  'svg' => 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h2'],
+  ['href' => '/admin/content/gallery',   'label' => 'Gallery',   'svg' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
+  ['href' => '/admin/content/podcasts',  'label' => 'Podcasts',  'svg' => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z'],
+  ['href' => '/admin/content/videos',    'label' => 'Videos',    'svg' => 'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z'],
+  ['href' => '/admin/content/documents', 'label' => 'Documents', 'svg' => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'],
 ];
 
 $_navSuper = [
@@ -27,10 +37,12 @@ if ($_role === 'SUPER_ADMIN') {
 }
 
 function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
+    global $_contentModulePaths;
     $isActive = ($currentPath === $item['href']) ||
                 ($item['href'] === '/admin/content'
                     && str_starts_with($currentPath, '/admin/content')
-                    && $currentPath !== '/admin/content/new');
+                    && $currentPath !== '/admin/content/new'
+                    && !in_array($currentPath, $_contentModulePaths ?? []));
     ?>
     <a href="<?= h($item['href']) ?>"
        class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all"
@@ -96,6 +108,15 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
       </p>
       <div class="space-y-0.5">
         <?php foreach ($_navCore as $item): _sidebarItem($item, $_path); endforeach; ?>
+      </div>
+    </div>
+
+    <div>
+      <p class="px-3 mb-2 text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(255,255,255,.22)">
+        Content Modules
+      </p>
+      <div class="space-y-0.5">
+        <?php foreach ($_navModules as $item): _sidebarItem($item, $_path); endforeach; ?>
       </div>
     </div>
 

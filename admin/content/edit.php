@@ -54,13 +54,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($andSubmit && $canSubmit) {
             $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
         }
-        header('Location: /admin/content');
+        $redirect = match($type) {
+            'ARTICLE'       => '/admin/content/articles',
+            'GALLERY_IMAGE' => '/admin/content/gallery',
+            'PODCAST'       => '/admin/content/podcasts',
+            'VIDEO'         => '/admin/content/videos',
+            'DOCUMENT'      => '/admin/content/documents',
+            default         => '/admin/content',
+        };
+        header('Location: ' . $redirect);
         exit;
     }
 }
 
 // Pre-populate form from DB or POST
 $f = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $post;
+
+$moduleBack = match($post['type'] ?? 'ARTICLE') {
+    'ARTICLE'       => ['/admin/content/articles',  'Articles'],
+    'GALLERY_IMAGE' => ['/admin/content/gallery',   'Gallery'],
+    'PODCAST'       => ['/admin/content/podcasts',  'Podcasts'],
+    'VIDEO'         => ['/admin/content/videos',    'Videos'],
+    'DOCUMENT'      => ['/admin/content/documents', 'Documents'],
+    default         => ['/admin/content',           'Content'],
+};
+
 $pageTitle      = 'Edit Content | Tafakari Admin';
 $adminPageTitle = 'Edit Content';
 $adminPageSub   = h($post['title'] ?? '');
@@ -75,10 +93,13 @@ $adminPageSub   = h($post['title'] ?? '');
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
   <div class="flex items-center gap-3 mb-6">
-    <a href="/admin/content" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-primary transition-colors">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back
-    </a>
+    <div class="flex items-center gap-2 text-[11px] font-bold">
+      <a href="/admin/content" class="text-slate-400 hover:text-primary transition-colors">All Content</a>
+      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      <a href="<?= h($moduleBack[0]) ?>" class="text-slate-400 hover:text-primary transition-colors"><?= h($moduleBack[1]) ?></a>
+      <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      <span class="text-slate-600">Edit</span>
+    </div>
     <?= status_badge($post['status']) ?>
   </div>
 
@@ -182,7 +203,7 @@ $adminPageSub   = h($post['title'] ?? '');
       <?php if ($canSubmit && !$isSuper): ?>
         <button type="submit" name="save_submit" class="btn-secondary" style="padding:.7rem 1.75rem">Save & Submit for Approval</button>
       <?php endif; ?>
-      <a href="/admin/content" class="inline-flex items-center px-6 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>
+      <a href="<?= h($moduleBack[0]) ?>" class="inline-flex items-center px-6 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>
     </div>
   </form>
 

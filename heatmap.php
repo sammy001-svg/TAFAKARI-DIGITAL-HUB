@@ -101,44 +101,85 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
   background: #E7952A; border: 2px solid #fff; cursor: pointer; border:none;
 }
 
-/* ── Detail panel & mobile ────────────────────────────────────────── */
+/* ── Detail panel (desktop) ───────────────────────────────────────── */
 #detail-panel { transition: transform .32s cubic-bezier(.4,0,.2,1); }
 #detail-panel.panel-hidden { transform: translateX(100%); }
 #detail-panel.panel-open   { transform: translateX(0); }
 
+/* ── Mobile filter toggle (hidden on desktop) ─────────────────────── */
 #ctrl-toggle { display: none; }
+
+/* ── Ctrl-panel backdrop (mobile only) ───────────────────────────── */
+#ctrl-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.5); z-index: 999;
+  display: none;
+  backdrop-filter: blur(1px);
+}
+
+/* ── Mobile overrides ─────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  #ctrl-toggle  { display: flex; }
-  #ctrl-panel   { transform: translateX(-100%); transition: transform .3s; }
+  /* Show the filter toggle button */
+  #ctrl-toggle { display: flex; }
+
+  /* Map height — leave room for browser chrome */
+  #map-wrapper { height: 380px !important; }
+
+  /* Full-width sliding filter panel */
+  #ctrl-panel {
+    width: 100% !important;
+    transform: translateX(-100%);
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    z-index: 1500 !important;
+  }
   #ctrl-panel.ctrl-open { transform: translateX(0); }
-  #map-wrapper  { height: 430px !important; }
-  #detail-panel { width: 100% !important; top: auto !important; height: 62%; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 32px rgba(0,0,0,.18) !important; }
+
+  /* Detail panel becomes a bottom sheet */
+  #detail-panel {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 65%;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 48px rgba(0,0,0,.28) !important;
+  }
   #detail-panel.panel-hidden { transform: translateY(100%); }
   #detail-panel.panel-open   { transform: translateY(0); }
+
+  /* Larger tap targets on toolbar buttons */
+  #map-wrapper .absolute.top-3.right-3 button { width: 40px !important; height: 40px !important; }
+
+  /* Zoom controls bigger on touch */
+  .leaflet-control-zoom a { width: 36px !important; height: 36px !important; line-height: 36px !important; font-size: 18px !important; }
+
+  /* Active count pill — avoid gesture-bar overlap */
+  #active-count { font-size: 11px; }
 }
 </style>
 
 <main class="flex-grow">
 
   <!-- ── Page header ───────────────────────────────────────────────── -->
-  <div style="background:#750B25" class="text-white px-6 py-8">
-    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-end gap-6">
+  <div style="background:#750B25" class="text-white px-4 md:px-6 py-6 md:py-8">
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-end gap-4 md:gap-6">
 
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-2.5">
-          <span class="relative flex h-2.5 w-2.5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="relative flex h-2 w-2">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background:#E7952A"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5" style="background:#E7952A"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2" style="background:#E7952A"></span>
           </span>
-          <span class="text-[10px] font-black uppercase tracking-[.16em]" style="color:rgba(231,149,42,.85)">Live Conflict Monitoring</span>
+          <span class="text-[10px] font-black uppercase tracking-[.14em]" style="color:rgba(231,149,42,.85)">Live Conflict Monitoring</span>
         </div>
-        <h1 class="font-outfit font-black text-3xl md:text-4xl leading-tight">Regional Conflict Dashboard</h1>
-        <p class="mt-2 text-sm leading-relaxed max-w-2xl" style="color:rgba(248,248,240,.58)">
-          Mapping conflict intensity, displacement, and humanitarian crises across 14 African nations. Click any marker for detailed intelligence. Toggle to heatmap view for density analysis.
+        <h1 class="font-outfit font-black text-2xl md:text-4xl leading-tight">Regional Conflict Dashboard</h1>
+        <p class="mt-1.5 text-xs md:text-sm leading-relaxed max-w-2xl hidden sm:block" style="color:rgba(248,248,240,.55)">
+          Mapping conflict intensity, displacement, and humanitarian crises across 14 African nations. Click any marker for detailed intelligence.
         </p>
       </div>
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 shrink-0">
         <?php
         $kpis = [
           [format_number($totalReports),   'Total Reports',    '#E7952A'],
@@ -147,9 +188,9 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
           ['14',                           'Countries',        '#E7952A'],
         ];
         foreach ($kpis as $i => [$val, $lbl, $col]): ?>
-          <div class="rounded-2xl px-4 py-3 text-center" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
-            <div class="font-outfit font-black text-2xl<?= $i===2?' text-red-400':'' ?>" id="<?= $i===2?'kpi-hotspots':'' ?>"><?= $val ?></div>
-            <div class="text-[10px] font-bold uppercase tracking-widest mt-0.5" style="color:<?= $col ?>;opacity:.8"><?= $lbl ?></div>
+          <div class="rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-center" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
+            <div class="font-outfit font-black text-xl md:text-2xl<?= $i===2?' text-red-400':'' ?>" id="<?= $i===2?'kpi-hotspots':'' ?>"><?= $val ?></div>
+            <div class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-0.5" style="color:<?= $col ?>;opacity:.8"><?= $lbl ?></div>
           </div>
         <?php endforeach; ?>
       </div>
@@ -162,19 +203,30 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 
     <!-- Mobile filter toggle -->
     <button id="ctrl-toggle"
-            onclick="document.getElementById('ctrl-panel').classList.toggle('ctrl-open')"
-            class="absolute top-3 left-3 z-[1100] items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
-            style="background:rgba(10,2,4,.85);border:1px solid rgba(255,255,255,.12)">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24">
+            onclick="_ctrlOpen()"
+            class="absolute top-3 left-3 z-[1100] items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-white"
+            style="background:rgba(10,2,4,.88);border:1px solid rgba(255,255,255,.14);min-height:40px">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24">
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
       Filters
     </button>
 
+    <!-- Ctrl-panel mobile backdrop -->
+    <div id="ctrl-backdrop" onclick="_ctrlClose()"></div>
+
     <!-- ── Left control panel ───────────────────────────────────────── -->
     <div id="ctrl-panel"
          class="absolute top-0 left-0 bottom-0 z-[1000] overflow-y-auto"
          style="width:248px;background:rgba(10,2,4,.93);backdrop-filter:blur(12px);border-right:1px solid rgba(255,255,255,.07)">
+
+      <!-- Mobile-only header with close button -->
+      <div class="md:hidden flex items-center justify-between px-4 py-3.5" style="border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
+        <span class="text-xs font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.8)">Map Filters</span>
+        <button onclick="_ctrlClose()"
+                style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>
+      </div>
+
       <div class="p-4 space-y-5">
 
         <!-- Search -->
@@ -564,6 +616,10 @@ function setCountry(code) {
     b.style.fontWeight  = active ? '700' : '500';
   });
   applyFilters();
+  /* Auto-close filter panel after country select on mobile */
+  if (window.innerWidth < 768 && code !== 'ALL') {
+    setTimeout(function(){ _ctrlClose(); }, 250);
+  }
 }
 
 /* ── Category toggle ──────────────────────────────────────────────── */
@@ -787,10 +843,22 @@ function closeDetail() {
   document.getElementById('detail-panel').classList.add('panel-hidden');
 }
 
-/* ── Keyboard: Escape closes panel ───────────────────────────────── */
+/* ── Keyboard shortcuts ───────────────────────────────────────────── */
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeDetail();
+  if (e.key === 'Escape') { closeDetail(); _ctrlClose(); }
 });
+
+/* ── Ctrl-panel open/close (with mobile backdrop) ─────────────────── */
+function _ctrlOpen() {
+  document.getElementById('ctrl-panel').classList.add('ctrl-open');
+  if (window.innerWidth < 768) {
+    document.getElementById('ctrl-backdrop').style.display = 'block';
+  }
+}
+function _ctrlClose() {
+  document.getElementById('ctrl-panel').classList.remove('ctrl-open');
+  document.getElementById('ctrl-backdrop').style.display = 'none';
+}
 
 /* ── Init ─────────────────────────────────────────────────────────── */
 try {

@@ -1,85 +1,205 @@
-<nav class="sticky top-0 z-50 text-white shadow-xl px-6 md:px-12 py-4 border-b border-white/10" style="background:#750B25">
-  <div class="flex items-center justify-between max-w-7xl mx-auto w-full">
+<?php
+$_navLinks = [
+  ['/', 'Home', '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>'],
+  ['/heatmap',   'Heatmap',   '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'],
+  ['/gallery',   'Gallery',   '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>'],
+  ['/news',      'News',      '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>'],
+  ['/podcasts',  'Podcasts',  '<path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>'],
+  ['/videos',    'Videos',    '<polygon points="23,7 16,12 23,17"/><rect x="1" y="5" width="15" height="14" rx="2"/>'],
+  ['/documents', 'Documents', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'],
+];
+$_currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
+?>
+
+<!-- ── Navbar ──────────────────────────────────────────────────────── -->
+<nav class="sticky top-0 z-[500] text-white shadow-xl" style="background:#750B25;border-bottom:1px solid rgba(255,255,255,.08)">
+  <div class="px-4 md:px-10 py-3 max-w-7xl mx-auto flex items-center justify-between">
 
     <!-- Logo -->
-    <a href="/" class="flex items-center no-underline group" aria-label="CRTP — Centre For Research Training and Publications">
-      <div class="bg-white rounded-xl px-3 py-1.5 shadow-md group-hover:shadow-lg transition-shadow duration-200">
-        <img src="/public/crtp-logo.jpg"
-             alt="Centre For Research Training and Publications — CRTP"
-             class="h-10 md:h-11 w-auto object-contain block"
-             onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-lg text-[#750B25] tracking-tight px-1\'>CRTP</span>'">
+    <a href="/" class="flex items-center no-underline group shrink-0" aria-label="CRTP — Centre For Research Training and Publications">
+      <div class="bg-white rounded-xl px-3 py-1.5 shadow-md group-hover:shadow-lg transition-shadow">
+        <img src="/public/crtp-logo.jpg" alt="CRTP"
+             class="h-9 md:h-10 w-auto object-contain block"
+             onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-base text-[#750B25] tracking-tight px-1\'>CRTP</span>'">
       </div>
     </a>
 
-    <!-- Desktop Links -->
-    <div class="hidden md:flex items-center gap-7 font-semibold text-base">
-      <?php
-      $navLinks = [
-        ['/', 'Home'], ['/heatmap', 'Heatmap'], ['/gallery', 'Gallery'],
-        ['/news', 'News'], ['/podcasts', 'Podcasts'], ['/videos', 'Videos'], ['/documents', 'Documents'],
-      ];
-      $currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
-      foreach ($navLinks as [$href, $label]):
-        $active = ($currentPath === $href);
-      ?>
+    <!-- Desktop links -->
+    <div class="hidden md:flex items-center gap-5 font-semibold text-sm">
+      <?php foreach ($_navLinks as [$href, $label]):
+        $active = ($_currentPath === $href); ?>
         <a href="<?= h($href) ?>"
-           class="transition-colors tracking-wide <?= $active ? 'font-bold pb-1' : 'hover:text-secondary' ?>"
-           <?= $active ? 'style="color:#ED1C24;border-bottom:2px solid #ED1C24"' : '' ?>>
+           class="relative pb-0.5 transition-colors whitespace-nowrap <?= $active ? 'font-bold' : 'text-white/80 hover:text-white' ?>"
+           <?= $active ? 'style="color:#E7952A"' : '' ?>>
           <?= h($label) ?>
+          <?php if ($active): ?><span class="absolute -bottom-3.5 left-0 right-0 h-0.5 rounded-full" style="background:#E7952A"></span><?php endif; ?>
         </a>
       <?php endforeach; ?>
     </div>
 
     <!-- Desktop CTA -->
-    <div class="hidden md:flex items-center gap-3">
-      <!-- Search icon button -->
-      <a href="/search" aria-label="Search" class="w-9 h-9 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all" title="Search">
-        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <div class="hidden md:flex items-center gap-3 shrink-0">
+      <a href="/search" aria-label="Search"
+         class="w-9 h-9 flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-all">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </a>
-      <a href="/admin/login" class="text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full transition-all hover:brightness-110" style="background:#E7952A">
-        Login
-      </a>
-      <a href="/contact" class="text-sm font-bold text-white px-5 py-2.5 rounded-full border-2 border-white/40 hover:border-white/80 hover:bg-white/10 transition-all">
+      <a href="/admin/login"
+         class="text-sm font-bold text-slate-900 px-5 py-2.5 rounded-full hover:brightness-110 transition-all no-underline"
+         style="background:#E7952A">Login</a>
+      <a href="/contact"
+         class="text-sm font-bold text-white px-5 py-2.5 rounded-full border-2 border-white/35 hover:border-white/65 hover:bg-white/10 transition-all no-underline">
         Get Involved
       </a>
     </div>
 
-    <!-- Hamburger (mobile) -->
-    <button id="nav-toggle" class="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-white/10 transition-colors" aria-label="Toggle menu">
-      <span class="block w-6 h-0.5 bg-white transition-all duration-300" id="hb1"></span>
-      <span class="block w-6 h-0.5 bg-white transition-all duration-300" id="hb2"></span>
-      <span class="block w-6 h-0.5 bg-white transition-all duration-300" id="hb3"></span>
+    <!-- Mobile hamburger -->
+    <button id="nav-hamburger" onclick="_navOpen()"
+            class="md:hidden w-11 h-11 flex flex-col items-center justify-center gap-[5px] rounded-xl hover:bg-white/10 transition-colors"
+            aria-label="Open navigation" aria-expanded="false">
+      <span class="w-5 h-[2px] bg-white rounded-full transition-all duration-300" id="hb1"></span>
+      <span class="w-5 h-[2px] bg-white rounded-full transition-all duration-300" id="hb2"></span>
+      <span class="w-3 h-[2px] bg-white/70 rounded-full self-start ml-[5px] transition-all duration-300" id="hb3"></span>
     </button>
-  </div>
 
-  <!-- Mobile menu -->
-  <div id="nav-mobile" class="md:hidden hidden mt-4 border-t border-white/20 pt-4 flex-col gap-3 pb-4">
-    <?php foreach ($navLinks as [$href, $label]): ?>
-      <a href="<?= h($href) ?>" class="text-base font-semibold hover:text-secondary transition-colors py-1.5 block"><?= h($label) ?></a>
-    <?php endforeach; ?>
-    <a href="/search" class="text-base font-semibold hover:text-secondary transition-colors py-1.5 flex items-center gap-2">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      Search
-    </a>
-    <div class="flex gap-3 mt-3 pt-3 border-t border-white/20">
-      <a href="/admin/login" class="flex-1 text-center text-sm font-bold text-slate-900 px-4 py-2.5 rounded-full" style="background:#E7952A">Login</a>
-      <a href="/contact" class="flex-1 text-center text-sm font-bold text-white px-4 py-2.5 rounded-full border-2 border-white/40">Get Involved</a>
-    </div>
   </div>
 </nav>
+
+<!-- Mobile: dim backdrop -->
+<div id="nav-backdrop"
+     onclick="_navClose()"
+     style="position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)">
+</div>
+
+<!-- Mobile: right-side drawer -->
+<div id="nav-drawer"
+     role="dialog" aria-modal="true" aria-label="Navigation menu"
+     style="position:fixed;top:0;right:0;bottom:0;z-index:900;
+            width:min(320px,90vw);background:#750B25;
+            transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
+            box-shadow:-8px 0 48px rgba(0,0,0,.4);overflow-y:auto;display:flex;flex-direction:column">
+
+  <!-- Drawer header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
+    <div style="background:#fff;border-radius:12px;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+      <img src="/public/crtp-logo.jpg" alt="CRTP"
+           style="height:32px;width:auto;object-fit:contain;display:block"
+           onerror="this.parentElement.innerHTML='<span style=\'font-family:Outfit,sans-serif;font-weight:900;font-size:14px;color:#750B25;padding:0 4px\'>CRTP</span>'">
+    </div>
+    <button onclick="_navClose()"
+            aria-label="Close menu"
+            style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.1);
+                   color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+                   transition:background .15s"
+            onmouseover="this.style.background='rgba(255,255,255,.18)'"
+            onmouseout="this.style.background='rgba(255,255,255,.1)'">&times;</button>
+  </div>
+
+  <!-- Drawer nav links -->
+  <div style="padding:12px;flex:1">
+    <?php foreach ($_navLinks as [$href, $label, $iconPath]):
+      $active = ($_currentPath === $href);
+      $style  = $active
+        ? 'background:rgba(231,149,42,.16);color:#E7952A;border:1px solid rgba(231,149,42,.28)'
+        : 'color:rgba(255,255,255,.78);border:1px solid transparent';
+    ?>
+      <a href="<?= h($href) ?>"
+         onclick="_navClose()"
+         style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:16px;
+                text-decoration:none;font-size:15px;font-weight:600;margin-bottom:4px;
+                transition:background .15s,color .15s;<?= $style ?>"
+         onmouseover="if(!<?= $active?'true':'false' ?>){this.style.background='rgba(255,255,255,.07)'}"
+         onmouseout="if(!<?= $active?'true':'false' ?>){this.style.background='transparent'}">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"
+             style="flex-shrink:0;opacity:<?= $active?'1':'.7' ?>"><?= $iconPath ?></svg>
+        <span style="flex:1"><?= h($label) ?></span>
+        <?php if ($active): ?>
+          <svg width="14" height="14" fill="none" stroke="#E7952A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        <?php endif; ?>
+      </a>
+    <?php endforeach; ?>
+
+    <!-- Search -->
+    <a href="/search" onclick="_navClose()"
+       style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:16px;
+              text-decoration:none;font-size:15px;font-weight:600;color:rgba(255,255,255,.78);
+              border:1px solid transparent;transition:background .15s;margin-top:4px;
+              border-top:1px solid rgba(255,255,255,.1);padding-top:17px;margin-top:8px"
+       onmouseover="this.style.background='rgba(255,255,255,.07)'"
+       onmouseout="this.style.background='transparent'">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0;opacity:.7"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Search</span>
+    </a>
+  </div>
+
+  <!-- Drawer CTA buttons -->
+  <div style="padding:16px;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0">
+    <a href="/admin/login" onclick="_navClose()"
+       style="display:block;text-align:center;text-decoration:none;font-size:14px;font-weight:700;
+              color:#0D0102;background:#E7952A;padding:14px 16px;border-radius:16px;margin-bottom:10px;
+              transition:opacity .15s"
+       onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+      Login to Dashboard
+    </a>
+    <a href="/contact" onclick="_navClose()"
+       style="display:block;text-align:center;text-decoration:none;font-size:14px;font-weight:700;
+              color:#fff;padding:13px 16px;border-radius:16px;
+              border:2px solid rgba(255,255,255,.3);transition:border-color .15s"
+       onmouseover="this.style.borderColor='rgba(255,255,255,.55)'" onmouseout="this.style.borderColor='rgba(255,255,255,.3)'">
+      Get Involved
+    </a>
+  </div>
+
+  <!-- Drawer footer -->
+  <div style="padding:16px 20px 24px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0">
+    <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(231,149,42,.5);margin:0 0 4px">Tafakari Digital Hub</p>
+    <p style="font-size:10px;color:rgba(255,255,255,.22);margin:0">Centre For Research Training and Publications</p>
+  </div>
+
+</div><!-- /#nav-drawer -->
+
 <script>
 (function(){
-  var btn=document.getElementById('nav-toggle');
-  var menu=document.getElementById('nav-mobile');
-  var h1=document.getElementById('hb1'),h2=document.getElementById('hb2'),h3=document.getElementById('hb3');
-  var open=false;
-  btn.addEventListener('click',function(){
-    open=!open;
-    menu.classList.toggle('hidden',!open);
-    menu.classList.toggle('flex',open);
-    h1.style.transform=open?'rotate(45deg) translateY(8px)':'';
-    h2.style.opacity=open?'0':'1';
-    h3.style.transform=open?'rotate(-45deg) translateY(-8px)':'';
-  });
+  var _open = false;
+
+  window._navOpen = function() {
+    _open = true;
+    var drawer   = document.getElementById('nav-drawer');
+    var backdrop = document.getElementById('nav-backdrop');
+    var btn      = document.getElementById('nav-hamburger');
+    drawer.style.transform   = 'translateX(0)';
+    backdrop.style.opacity   = '1';
+    backdrop.style.pointerEvents = 'auto';
+    document.body.style.overflow = 'hidden';
+    btn.setAttribute('aria-expanded','true');
+    /* Animate hamburger → X */
+    var h1 = document.getElementById('hb1'), h2 = document.getElementById('hb2'), h3 = document.getElementById('hb3');
+    h1.style.transform = 'rotate(45deg) translateY(7px)';
+    h2.style.opacity   = '0';
+    h3.style.transform = 'rotate(-45deg) translateY(-7px)';
+    h3.style.width     = '20px'; h3.style.opacity = '1'; h3.style.marginLeft = '0';
+  };
+
+  window._navClose = function() {
+    _open = false;
+    var drawer   = document.getElementById('nav-drawer');
+    var backdrop = document.getElementById('nav-backdrop');
+    var btn      = document.getElementById('nav-hamburger');
+    drawer.style.transform       = 'translateX(100%)';
+    backdrop.style.opacity       = '0';
+    backdrop.style.pointerEvents = 'none';
+    document.body.style.overflow = '';
+    btn.setAttribute('aria-expanded','false');
+    /* Reset hamburger */
+    var h1 = document.getElementById('hb1'), h2 = document.getElementById('hb2'), h3 = document.getElementById('hb3');
+    h1.style.transform = ''; h2.style.opacity = '1';
+    h3.style.transform = ''; h3.style.width = '12px'; h3.style.opacity = '';  h3.style.marginLeft = '5px';
+  };
+
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && _open) window._navClose(); });
+
+  /* Prevent drawer-internal scroll from closing */
+  var drawer = document.getElementById('nav-drawer');
+  if (drawer) drawer.addEventListener('touchmove', function(e){ e.stopPropagation(); }, { passive:true });
 })();
 </script>
