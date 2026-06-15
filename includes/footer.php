@@ -95,7 +95,7 @@
         <!-- Hekima University College -->
         <div class="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
           <div class="bg-white rounded-xl p-1.5 shadow-sm">
-            <img src="/public/hekima-logo.png" alt="Hekima University College"
+            <img src="/public/hekima-logo.jpg" alt="Hekima University College"
                  class="h-12 w-auto object-contain block"
                  onerror="this.style.display='none';document.getElementById('hekima-fallback').style.display='flex'">
             <div id="hekima-fallback" class="items-center justify-center" style="display:none;width:48px;height:48px">
