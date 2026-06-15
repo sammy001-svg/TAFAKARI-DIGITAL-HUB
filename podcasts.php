@@ -69,14 +69,14 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
 
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-14 px-6">
-  <div class="max-w-4xl mx-auto">
+  <div class="max-w-7xl mx-auto">
     <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">Audio Stories</span>
     <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">Podcast Library</h1>
     <p class="text-white/60 max-w-xl">Interviews, field discussions, and community voices from researchers, policymakers, and local experts.</p>
   </div>
 </div>
 
-<main class="flex-grow max-w-4xl mx-auto px-6 py-12 w-full">
+<main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
 
   <!-- ── Filter bar ───────────────────────────────────────────────────────── -->
   <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 mb-8">
