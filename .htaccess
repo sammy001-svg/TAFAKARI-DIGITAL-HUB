@@ -25,6 +25,7 @@ RewriteRule ^api/users/?$                 api/users.php              [L,QSA]
 RewriteRule ^api/stats/?$                 api/stats.php              [L,QSA]
 RewriteRule ^api/setup/init-db/?$         api/setup-init.php         [L,QSA]
 RewriteRule ^api/setup/?$                 api/setup-check.php        [L,QSA]
+RewriteRule ^api/upload/?$                api/upload.php             [L,QSA]
 
 # ── Public pages ─────────────────────────────────────────────────
 RewriteRule ^about/?$                     about.php            [L]

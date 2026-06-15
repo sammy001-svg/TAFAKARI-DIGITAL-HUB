@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 
 $user    = require_auth();
 $isSuper = is_super_admin();
@@ -346,7 +347,7 @@ function postAction(url, method, btn, confirmMsg) {
     <div style="margin:16px 24px 0;padding:12px 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;color:#dc2626;font-size:13px;font-weight:500"><?= h($createError) ?></div>
   <?php endif; ?>
 
-  <form method="POST" action="/admin/content/documents" style="flex:1;padding:24px;display:flex;flex-direction:column;gap:18px">
+  <form method="POST" action="/admin/content/documents" onsubmit="return uwCheckRequired(this)" style="flex:1;padding:24px;display:flex;flex-direction:column;gap:18px">
     <input type="hidden" name="_action" value="create">
 
     <div>
@@ -363,20 +364,8 @@ function postAction(url, method, btn, confirmMsg) {
                 placeholder="Brief description shown in listings"><?= h(($createError ? $_POST['description'] : '') ?? '') ?></textarea>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      <div>
-        <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Cover Image URL</label>
-        <input type="url" name="thumbnailUrl" value="<?= h(($createError ? $_POST['thumbnailUrl'] : '') ?? '') ?>"
-               style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit"
-               placeholder="https://…">
-      </div>
-      <div>
-        <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Document URL *</label>
-        <input type="url" name="mediaUrl" required value="<?= h(($createError ? $_POST['mediaUrl'] : '') ?? '') ?>"
-               style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit"
-               placeholder="https://…/report.pdf">
-      </div>
-    </div>
+    <?php uw_img('doc-thumb','thumbnailUrl','Cover Image','Document cover shown in listings (optional)',($createError ? ($_POST['thumbnailUrl'] ?? '') : '')); ?>
+    <?php uw_media('doc-media','mediaUrl','Document File *','document','.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx','PDF, DOCX, XLS, PPT · max 50 MB','Link to PDF, Word doc, or other file','https://…/report.pdf',($createError ? ($_POST['mediaUrl'] ?? '') : ''),true); ?>
 
     <div>
       <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Abstract / Summary</label>
@@ -427,6 +416,7 @@ function postAction(url, method, btn, confirmMsg) {
   </form>
 </div>
 
+<?php uw_scripts(); ?>
 <script>
 function openCreateDrawer() {
   document.getElementById('create-drawer').style.transform = 'translateX(0)';

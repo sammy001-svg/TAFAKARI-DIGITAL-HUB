@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 
 $user    = require_auth();
 $isSuper = is_super_admin();
@@ -169,7 +170,7 @@ $adminPageSub   = $cfg['sub'];
     <div class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm font-medium"><?= h($error) ?></div>
   <?php endif; ?>
 
-  <form method="POST" id="content-form" class="max-w-3xl space-y-6">
+  <form method="POST" id="content-form" class="max-w-3xl space-y-6" onsubmit="return uwCheckRequired(this)">
 
     <!-- Step 1: Type + Basic Info -->
     <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
@@ -229,19 +230,22 @@ $adminPageSub   = $cfg['sub'];
         <!-- Thumbnail (all types) -->
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2" id="label-thumbnail"><?= h($cfg['thumbLabel']) ?></label>
-          <input type="url" name="thumbnailUrl" value="<?= h($_POST['thumbnailUrl'] ?? '') ?>"
-                 class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none"
-                 id="input-thumbnail" placeholder="https://…">
+          <?php uw_img('new-thumb', 'thumbnailUrl', '', '', $_POST['thumbnailUrl'] ?? ''); ?>
           <p class="text-[11px] text-slate-400 mt-1" id="hint-thumbnail"><?= h($cfg['thumbHint']) ?></p>
         </div>
 
-        <!-- Media URL (GALLERY, PODCAST, VIDEO, DOCUMENT) -->
-        <div id="media-url-section" style="<?= $defaultType === 'ARTICLE' ? 'display:none' : '' ?>">
+        <!-- Media (GALLERY, PODCAST, VIDEO, DOCUMENT) -->
+        <?php
+          $mFt  = match($defaultType) { 'PODCAST'=>'audio', 'VIDEO'=>'video', 'DOCUMENT'=>'document', default=>'image' };
+          $mAcc = match($defaultType) { 'PODCAST'=>'audio/*', 'VIDEO'=>'video/mp4,video/webm,video/ogg', 'DOCUMENT'=>'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx', default=>'image/*' };
+          $mDH  = match($defaultType) { 'PODCAST'=>'MP3, OGG, WAV, M4A · max 150 MB', 'VIDEO'=>'MP4, WebM · max 500 MB', 'DOCUMENT'=>'PDF, DOCX, XLS · max 50 MB', default=>'JPG, PNG, WebP · max 8 MB' };
+          $mUH  = match($defaultType) { 'PODCAST'=>'MP3 link or podcast episode URL', 'VIDEO'=>'YouTube / Vimeo link, or direct video URL', 'DOCUMENT'=>'Link to PDF or other document file', default=>'Direct image URL' };
+          $mPh  = match($defaultType) { 'PODCAST'=>'https://…/episode.mp3', 'VIDEO'=>'https://www.youtube.com/watch?v=…', 'DOCUMENT'=>'https://…/report.pdf', default=>'https://…' };
+          $mReq = $cfg['mediaReq'] && $defaultType !== 'ARTICLE';
+        ?>
+        <div id="media-url-section" data-uw-section style="<?= $defaultType === 'ARTICLE' ? 'display:none' : '' ?>">
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2" id="label-media"><?= h($cfg['mediaLabel']) ?></label>
-          <input type="url" name="mediaUrl" value="<?= h($_POST['mediaUrl'] ?? '') ?>"
-                 class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none"
-                 id="input-media" placeholder="https://…"
-                 <?= $cfg['mediaReq'] && $defaultType !== 'ARTICLE' ? 'required' : '' ?>>
+          <?php uw_media('new-media', 'mediaUrl', '', $mFt, $mAcc, $mDH, $mUH, $mPh, $_POST['mediaUrl'] ?? '', $mReq, 'input-media'); ?>
           <p class="text-[11px] text-slate-400 mt-1" id="hint-media"><?= h($cfg['mediaHint']) ?></p>
         </div>
       </div>
@@ -321,41 +325,51 @@ $adminPageSub   = $cfg['sub'];
 </div>
 </div>
 
+<?php uw_scripts(); ?>
 <script>
 var _typeConfig = {
   ARTICLE: {
     heading:'Write Article', backHref:'/admin/content/articles', backLabel:'Articles',
-    thumbLabel:'Featured Image URL', thumbHint:'Hero image displayed in listings',
+    thumbLabel:'Featured Image', thumbHint:'Hero image displayed in listings',
     mediaLabel:'', mediaHint:'', mediaReq:false, hasBody:true,
     bodyLabel:'Article Body', bodyHint:'Supports Markdown formatting',
-    titlePlaceholder:'Article headline', mediaSectionTitle:'Media', isArticle:true
+    titlePlaceholder:'Article headline', mediaSectionTitle:'Media', isArticle:true,
+    mediaFileType:null, mediaAccept:'', mediaDropHint:'', mediaUrlHint:'', mediaUpLabel:''
   },
   GALLERY_IMAGE: {
     heading:'Upload Gallery Image', backHref:'/admin/content/gallery', backLabel:'Gallery',
-    thumbLabel:'Thumbnail / Preview URL', thumbHint:'Smaller version for grid listings (optional)',
-    mediaLabel:'Image URL *', mediaHint:'Full-size image URL (required)', mediaReq:true, hasBody:false,
-    bodyLabel:'', bodyHint:'', titlePlaceholder:'Image caption', mediaSectionTitle:'Image File', isArticle:false
+    thumbLabel:'Thumbnail / Preview', thumbHint:'Smaller version for grid listings (optional)',
+    mediaLabel:'Full-Size Image *', mediaHint:'Full-size image (required)', mediaReq:true, hasBody:false,
+    bodyLabel:'', bodyHint:'', titlePlaceholder:'Image caption', mediaSectionTitle:'Image File', isArticle:false,
+    mediaFileType:'image', mediaAccept:'image/*', mediaDropHint:'JPG, PNG, WebP, GIF · max 8 MB',
+    mediaUrlHint:'Direct image URL', mediaUpLabel:'Upload Image'
   },
   PODCAST: {
     heading:'New Podcast Episode', backHref:'/admin/content/podcasts', backLabel:'Podcasts',
-    thumbLabel:'Artwork / Cover Image URL', thumbHint:'Square artwork shown in players and listings',
-    mediaLabel:'Audio File URL *', mediaHint:'Direct link to MP3, OGG, or WAV file (required)', mediaReq:true, hasBody:true,
+    thumbLabel:'Artwork / Cover Image', thumbHint:'Square artwork shown in players and listings',
+    mediaLabel:'Audio File *', mediaHint:'MP3, OGG, or WAV file (required)', mediaReq:true, hasBody:true,
     bodyLabel:'Episode Notes', bodyHint:'Show notes, transcript, or episode summary',
-    titlePlaceholder:'Episode title', mediaSectionTitle:'Audio & Artwork', isArticle:false
+    titlePlaceholder:'Episode title', mediaSectionTitle:'Audio & Artwork', isArticle:false,
+    mediaFileType:'audio', mediaAccept:'audio/*', mediaDropHint:'MP3, OGG, WAV, M4A · max 150 MB',
+    mediaUrlHint:'MP3 link or podcast episode URL', mediaUpLabel:'Upload Audio'
   },
   VIDEO: {
     heading:'Add Video', backHref:'/admin/content/videos', backLabel:'Videos',
-    thumbLabel:'Thumbnail URL', thumbHint:'Preview image shown before playback',
-    mediaLabel:'Video URL *', mediaHint:'YouTube link, Vimeo link, or direct video file (required)', mediaReq:true, hasBody:true,
+    thumbLabel:'Thumbnail', thumbHint:'Preview image shown before playback',
+    mediaLabel:'Video URL *', mediaHint:'YouTube / Vimeo link, or direct video file (required)', mediaReq:true, hasBody:true,
     bodyLabel:'Video Description', bodyHint:'Full description or transcript',
-    titlePlaceholder:'Video title', mediaSectionTitle:'Video & Thumbnail', isArticle:false
+    titlePlaceholder:'Video title', mediaSectionTitle:'Video & Thumbnail', isArticle:false,
+    mediaFileType:'video', mediaAccept:'video/mp4,video/webm,video/ogg',
+    mediaDropHint:'MP4, WebM · max 500 MB', mediaUrlHint:'YouTube / Vimeo link, or direct video URL', mediaUpLabel:'Upload Video'
   },
   DOCUMENT: {
     heading:'Upload Document', backHref:'/admin/content/documents', backLabel:'Documents',
-    thumbLabel:'Cover Image URL', thumbHint:'Document cover shown in listings (optional)',
-    mediaLabel:'Document URL *', mediaHint:'Direct link to PDF, DOCX, or other file (required)', mediaReq:true, hasBody:true,
+    thumbLabel:'Cover Image', thumbHint:'Document cover shown in listings (optional)',
+    mediaLabel:'Document File *', mediaHint:'PDF, DOCX, or other file (required)', mediaReq:true, hasBody:true,
     bodyLabel:'Abstract / Summary', bodyHint:'Brief description of the document contents',
-    titlePlaceholder:'Document title', mediaSectionTitle:'File & Cover', isArticle:false
+    titlePlaceholder:'Document title', mediaSectionTitle:'File & Cover', isArticle:false,
+    mediaFileType:'document', mediaAccept:'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',
+    mediaDropHint:'PDF, DOCX, XLS, PPT · max 50 MB', mediaUrlHint:'Link to PDF or other document file', mediaUpLabel:'Upload File'
   }
 };
 
@@ -401,19 +415,26 @@ function setType(type) {
 
   // Media section
   var mediaSection = document.getElementById('media-url-section');
+  var mediaInput   = document.getElementById('input-media');
   if (cfg.mediaLabel) {
     mediaSection.style.display = '';
     document.getElementById('label-media').textContent = cfg.mediaLabel;
     document.getElementById('hint-media').textContent  = cfg.mediaHint;
-    var mediaInput = document.getElementById('input-media');
     if (cfg.mediaReq) {
-      mediaInput.setAttribute('required', '');
+      mediaInput.dataset.uwReq   = 'new-media';
+      mediaInput.dataset.uwMedia = '1';
     } else {
-      mediaInput.removeAttribute('required');
+      delete mediaInput.dataset.uwReq;
+      delete mediaInput.dataset.uwMedia;
+    }
+    // Update the upload widget for the new type
+    if (cfg.mediaFileType) {
+      uwmSetType('new-media', cfg.mediaFileType, cfg.mediaAccept, cfg.mediaDropHint, cfg.mediaUrlHint, cfg.mediaUpLabel);
     }
   } else {
     mediaSection.style.display = 'none';
-    document.getElementById('input-media').removeAttribute('required');
+    delete mediaInput.dataset.uwReq;
+    delete mediaInput.dataset.uwMedia;
   }
 
   // Media section title
