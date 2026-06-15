@@ -4,33 +4,50 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
+$page    = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 16;
 $country = trim($_GET['country'] ?? '');
 
 $images         = [];
 $countryOptions = [];
+$total          = 0;
+$pages          = 1;
+
+$where  = ["type = 'GALLERY_IMAGE'", "status = 'PUBLISHED'"];
+$params = [];
+if ($country !== '') {
+    $where[]  = 'country = ?';
+    $params[] = $country;
+}
+$whereStr = implode(' AND ', $where);
 
 try {
-    // Distinct countries for filter
     $cs = db()->query(
         "SELECT DISTINCT country FROM Post WHERE type='GALLERY_IMAGE' AND status='PUBLISHED' AND country IS NOT NULL AND country != '' ORDER BY country"
     );
     $countryOptions = $cs->fetchAll(PDO::FETCH_COLUMN);
 
-    // Fetch images
-    $where  = ["type = 'GALLERY_IMAGE'", "status = 'PUBLISHED'"];
-    $params = [];
-    if ($country !== '') {
-        $where[]  = 'country = ?';
-        $params[] = $country;
-    }
-    $whereStr = implode(' AND ', $where);
+    $countStmt = db()->prepare("SELECT COUNT(*) FROM Post WHERE $whereStr");
+    $countStmt->execute($params);
+    $total = (int) $countStmt->fetchColumn();
+    $pages = max(1, (int) ceil($total / $perPage));
+    $page  = min($page, $pages);
+    $off   = ($page - 1) * $perPage;
+
     $stmt = db()->prepare(
         "SELECT id, title, description, thumbnailUrl, country, region, createdAt
-         FROM Post WHERE $whereStr ORDER BY createdAt DESC LIMIT 60"
+         FROM Post WHERE $whereStr ORDER BY createdAt DESC
+         LIMIT $perPage OFFSET $off"
     );
     $stmt->execute($params);
     $images = $stmt->fetchAll();
 } catch (Exception $e) { /* ignore */ }
+
+function gallery_url(int $n, string $country): string {
+    $p = array_filter(['country' => $country, 'page' => $n > 1 ? $n : ''],
+        fn($v) => $v !== '' && $v !== null);
+    return '/gallery' . ($p ? '?' . http_build_query($p) : '');
+}
 
 $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
 ?>
@@ -68,11 +85,16 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
   <?php endif; ?>
 
   <!-- ── Results count ────────────────────────────────────────────────────── -->
-  <?php if (!empty($images)): ?>
-    <p class="text-sm text-slate-500 mb-6">
-      <?= count($images) ?> photo<?= count($images) !== 1 ? 's' : '' ?>
-      <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : ' across all countries' ?>
-    </p>
+  <?php if ($total > 0): ?>
+    <div class="flex items-center justify-between mb-6">
+      <p class="text-sm text-slate-500">
+        Showing <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> of <strong class="text-slate-800"><?= $total ?></strong> photo<?= $total !== 1 ? 's' : '' ?>
+        <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : ' across all countries' ?>
+      </p>
+      <?php if ($pages > 1): ?>
+        <span class="text-xs text-slate-400">Page <?= $page ?> of <?= $pages ?></span>
+      <?php endif; ?>
+    </div>
   <?php endif; ?>
 
   <!-- ── Photo grid ───────────────────────────────────────────────────────── -->
@@ -103,7 +125,7 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
           <?php endif; ?>
 
           <!-- Hover overlay -->
-          <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+          <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3" style="background:linear-gradient(to top, rgba(13,1,2,.85) 0%, transparent 60%)">
             <p class="text-white font-bold text-xs leading-snug line-clamp-2"><?= h($img['title']) ?></p>
             <p class="text-white/60 text-[10px] mt-1"><?= h($img['region'] ?? $img['country']) ?></p>
           </div>
@@ -117,6 +139,46 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
         </div>
       <?php endforeach; ?>
     </div>
+
+    <!-- ── Pagination ──────────────────────────────────────────────────────── -->
+    <?php if ($pages > 1): ?>
+      <nav class="flex items-center justify-center gap-2 mt-12" aria-label="Pagination">
+        <?php if ($page > 1): ?>
+          <a href="<?= h(gallery_url($page - 1, $country)) ?>"
+             class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-amber-50 transition-colors text-lg font-light">&#8249;</a>
+        <?php else: ?>
+          <span class="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 text-lg cursor-not-allowed">&#8249;</span>
+        <?php endif; ?>
+
+        <?php
+        $start = max(1, $page - 2);
+        $end   = min($pages, $page + 2);
+        if ($start > 1): ?>
+          <a href="<?= h(gallery_url(1, $country)) ?>" class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-600 hover:bg-amber-50 transition-colors">1</a>
+          <?php if ($start > 2): ?><span class="text-slate-400 px-1">…</span><?php endif; ?>
+        <?php endif; ?>
+
+        <?php for ($i = $start; $i <= $end; $i++): ?>
+          <a href="<?= h(gallery_url($i, $country)) ?>"
+             class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-colors <?= $i === $page ? 'text-slate-900 border-2' : 'border border-slate-200 bg-white text-slate-600 hover:bg-amber-50' ?>"
+             style="<?= $i === $page ? 'border-color:#E7952A;background:#F8F8F0' : '' ?>">
+            <?= $i ?>
+          </a>
+        <?php endfor; ?>
+
+        <?php if ($end < $pages): ?>
+          <?php if ($end < $pages - 1): ?><span class="text-slate-400 px-1">…</span><?php endif; ?>
+          <a href="<?= h(gallery_url($pages, $country)) ?>" class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-600 hover:bg-amber-50 transition-colors"><?= $pages ?></a>
+        <?php endif; ?>
+
+        <?php if ($page < $pages): ?>
+          <a href="<?= h(gallery_url($page + 1, $country)) ?>"
+             class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-amber-50 transition-colors text-lg font-light">&#8250;</a>
+        <?php else: ?>
+          <span class="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 text-lg cursor-not-allowed">&#8250;</span>
+        <?php endif; ?>
+      </nav>
+    <?php endif; ?>
   <?php endif; ?>
 
 </main>
@@ -124,7 +186,6 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
 <!-- ── Lightbox ──────────────────────────────────────────────────────────────── -->
 <?php if (!empty($images)): ?>
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(5,1,1,.95)">
-  <!-- Controls -->
   <button onclick="closeLightbox()" class="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all z-10 text-xl">&times;</button>
   <button onclick="prevImg()" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all z-10 text-2xl select-none">&#8249;</button>
   <button onclick="nextImg()" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all z-10 text-2xl select-none">&#8250;</button>
@@ -136,7 +197,6 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
       <p id="lb-desc"  class="text-white/50 text-sm mt-1 max-w-xl"></p>
       <p id="lb-count" class="text-white/30 text-xs mt-2"></p>
     </div>
-    <!-- Thumbnail strip -->
     <div class="flex gap-2 mt-5 overflow-x-auto max-w-full pb-2 px-2" style="scrollbar-width:thin;scrollbar-color:#E7952A transparent">
       <?php foreach ($images as $idx => $img): ?>
         <img src="<?= h($img['thumbnailUrl'] ?? '') ?>" alt=""

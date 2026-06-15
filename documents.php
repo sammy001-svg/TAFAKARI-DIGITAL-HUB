@@ -9,6 +9,10 @@ $q       = trim($_GET['q']       ?? '');
 $country = trim($_GET['country'] ?? '');
 $cat     = trim($_GET['cat']     ?? '');
 
+$page    = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 12;
+$pages   = 1;
+
 $docs           = [];
 $countryOptions = [];
 $total          = 0;
@@ -40,14 +44,23 @@ try {
     $countStmt = db()->prepare("SELECT COUNT(*) FROM Post WHERE $whereStr");
     $countStmt->execute($params);
     $total = (int) $countStmt->fetchColumn();
+    $pages = max(1, (int) ceil($total / $perPage));
+    $page  = min($page, $pages);
+    $off   = ($page - 1) * $perPage;
 
     $stmt = db()->prepare(
         "SELECT id, title, description, mediaUrl, country, region, issueCategory, downloadCount, createdAt
-         FROM Post WHERE $whereStr ORDER BY createdAt DESC LIMIT 60"
+         FROM Post WHERE $whereStr ORDER BY createdAt DESC LIMIT $perPage OFFSET $off"
     );
     $stmt->execute($params);
     $docs = $stmt->fetchAll();
 } catch (Exception $e) { /* DB not ready */ }
+
+function doc_url(int $n, string $q, string $country, string $cat): string {
+    $p = array_filter(['q' => $q, 'country' => $country, 'cat' => $cat, 'page' => $n > 1 ? $n : ''],
+        fn($v) => $v !== '' && $v !== null);
+    return '/documents' . ($p ? '?' . http_build_query($p) : '');
+}
 
 $hasFilter = $q !== '' || $country !== '' || $cat !== '';
 $pageTitle = 'Document Library | Tafakari Digital Hub';
@@ -127,7 +140,7 @@ function doc_icon_color(string $ext): string {
   </div>
 
   <!-- ── Results meta ──────────────────────────────────────────────────────── -->
-  <div class="mb-6">
+  <div class="flex items-center justify-between mb-6">
     <p class="text-sm text-slate-500">
       <?php if ($total === 0): ?>
         No documents found<?= $hasFilter ? ' — try different filters' : '' ?>.
@@ -135,9 +148,12 @@ function doc_icon_color(string $ext): string {
         <strong class="text-slate-800"><?= $total ?></strong> document<?= $total !== 1 ? 's' : '' ?> found
         <?php if ($q): ?> for "<em><?= h($q) ?></em>"<?php endif; ?>
       <?php else: ?>
-        <strong class="text-slate-800"><?= $total ?></strong> document<?= $total !== 1 ? 's' : '' ?> available
+        Showing <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> of <strong class="text-slate-800"><?= $total ?></strong> document<?= $total !== 1 ? 's' : '' ?>
       <?php endif; ?>
     </p>
+    <?php if ($pages > 1): ?>
+      <span class="text-xs text-slate-400">Page <?= $page ?> of <?= $pages ?></span>
+    <?php endif; ?>
   </div>
 
   <!-- ── Document cards ───────────────────────────────────────────────────── -->
@@ -221,8 +237,44 @@ function doc_icon_color(string $ext): string {
       <?php endforeach; ?>
     </div>
 
-    <?php if ($total > 60): ?>
-      <p class="text-center text-xs text-slate-400 mt-8">Showing 60 of <?= $total ?> documents. Use search to narrow results.</p>
+    <!-- ── Pagination ────────────────────────────────────────────────────── -->
+    <?php if ($pages > 1): ?>
+      <nav class="flex items-center justify-center gap-2 mt-10" aria-label="Pagination">
+        <?php if ($page > 1): ?>
+          <a href="<?= h(doc_url($page - 1, $q, $country, $cat)) ?>"
+             class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-amber-50 transition-colors text-lg font-light">&#8249;</a>
+        <?php else: ?>
+          <span class="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 text-lg cursor-not-allowed">&#8249;</span>
+        <?php endif; ?>
+
+        <?php
+        $start = max(1, $page - 2);
+        $end   = min($pages, $page + 2);
+        if ($start > 1): ?>
+          <a href="<?= h(doc_url(1, $q, $country, $cat)) ?>" class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-600 hover:bg-amber-50 transition-colors">1</a>
+          <?php if ($start > 2): ?><span class="text-slate-400 px-1">…</span><?php endif; ?>
+        <?php endif; ?>
+
+        <?php for ($i = $start; $i <= $end; $i++): ?>
+          <a href="<?= h(doc_url($i, $q, $country, $cat)) ?>"
+             class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-colors <?= $i === $page ? 'text-slate-900 border-2' : 'border border-slate-200 bg-white text-slate-600 hover:bg-amber-50' ?>"
+             style="<?= $i === $page ? 'border-color:#E7952A;background:#F8F8F0' : '' ?>">
+            <?= $i ?>
+          </a>
+        <?php endfor; ?>
+
+        <?php if ($end < $pages): ?>
+          <?php if ($end < $pages - 1): ?><span class="text-slate-400 px-1">…</span><?php endif; ?>
+          <a href="<?= h(doc_url($pages, $q, $country, $cat)) ?>" class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-600 hover:bg-amber-50 transition-colors"><?= $pages ?></a>
+        <?php endif; ?>
+
+        <?php if ($page < $pages): ?>
+          <a href="<?= h(doc_url($page + 1, $q, $country, $cat)) ?>"
+             class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-amber-50 transition-colors text-lg font-light">&#8250;</a>
+        <?php else: ?>
+          <span class="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 text-lg cursor-not-allowed">&#8250;</span>
+        <?php endif; ?>
+      </nav>
     <?php endif; ?>
   <?php endif; ?>
 

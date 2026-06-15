@@ -4,12 +4,15 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-// ── Filter params ──────────────────────────────────────────────────────────────
+$page    = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 10;
 $country = trim($_GET['country'] ?? '');
 $cat     = trim($_GET['cat']     ?? '');
 
 $podcasts       = [];
 $countryOptions = [];
+$total          = 0;
+$pages          = 1;
 
 $where  = ["type = 'PODCAST'", "status = 'PUBLISHED'"];
 $params = [];
@@ -29,19 +32,32 @@ try {
     );
     $countryOptions = $cs->fetchAll(PDO::FETCH_COLUMN);
 
+    $countStmt = db()->prepare("SELECT COUNT(*) FROM Post WHERE $whereStr");
+    $countStmt->execute($params);
+    $total = (int) $countStmt->fetchColumn();
+    $pages = max(1, (int) ceil($total / $perPage));
+    $page  = min($page, $pages);
+    $off   = ($page - 1) * $perPage;
+
     $stmt = db()->prepare(
         "SELECT id, title, description, thumbnailUrl, mediaUrl, country, issueCategory, createdAt
-         FROM Post WHERE $whereStr ORDER BY createdAt DESC LIMIT 40"
+         FROM Post WHERE $whereStr ORDER BY createdAt DESC
+         LIMIT $perPage OFFSET $off"
     );
     $stmt->execute($params);
     $podcasts = $stmt->fetchAll();
 } catch (Exception $e) { /* DB not ready */ }
 
-// ── Detect if a URL points to a streamable audio file ─────────────────────────
 function is_audio_file(string $url): bool {
     $path = parse_url($url, PHP_URL_PATH) ?? '';
     $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
     return in_array($ext, ['mp3', 'ogg', 'wav', 'm4a', 'aac', 'opus', 'flac']);
+}
+
+function podcast_url(int $n, string $country, string $cat): string {
+    $p = array_filter(['country' => $country, 'cat' => $cat, 'page' => $n > 1 ? $n : ''],
+        fn($v) => $v !== '' && $v !== null);
+    return '/podcasts' . ($p ? '?' . http_build_query($p) : '');
 }
 
 $hasFilter = $country !== '' || $cat !== '';
@@ -93,13 +109,18 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
     </form>
   </div>
 
-  <!-- ── Results count ────────────────────────────────────────────────────── -->
-  <?php if (!empty($podcasts)): ?>
-    <p class="text-sm text-slate-500 mb-6">
-      <strong class="text-slate-800"><?= count($podcasts) ?></strong> episode<?= count($podcasts) !== 1 ? 's' : '' ?>
-      <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : '' ?>
-      <?= $cat ? ($country ? ' · ' : ' ') . '<strong class="text-slate-700">' . h($cat) . '</strong>' : '' ?>
-    </p>
+  <!-- ── Results meta ─────────────────────────────────────────────────────── -->
+  <?php if ($total > 0): ?>
+    <div class="flex items-center justify-between mb-6">
+      <p class="text-sm text-slate-500">
+        Showing <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> of <strong class="text-slate-800"><?= $total ?></strong> episode<?= $total !== 1 ? 's' : '' ?>
+        <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : '' ?>
+        <?= $cat ? ($country ? ' · ' : ' ') . '<strong class="text-slate-700">' . h($cat) . '</strong>' : '' ?>
+      </p>
+      <?php if ($pages > 1): ?>
+        <span class="text-xs text-slate-400">Page <?= $page ?> of <?= $pages ?></span>
+      <?php endif; ?>
+    </div>
   <?php endif; ?>
 
   <!-- ── Episode list ──────────────────────────────────────────────────────── -->
@@ -115,19 +136,19 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
       <?php endif; ?>
     </div>
   <?php else: ?>
-    <div class="space-y-5 mb-16" id="episode-list">
+    <div class="space-y-5" id="episode-list">
       <?php foreach ($podcasts as $idx => $ep):
-        $hasAudio  = !empty($ep['mediaUrl']) && is_audio_file($ep['mediaUrl']);
-        $hasLink   = !empty($ep['mediaUrl']) && !$hasAudio;
-        $playerId  = 'player-' . $idx;
-        $audioId   = 'audio-' . $idx;
+        $hasAudio = !empty($ep['mediaUrl']) && is_audio_file($ep['mediaUrl']);
+        $hasLink  = !empty($ep['mediaUrl']) && !$hasAudio;
+        $playerId = 'player-' . $idx;
+        $audioId  = 'audio-' . $idx;
       ?>
         <div class="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md hover:border-amber-200">
 
           <!-- Top section: cover + info + controls -->
           <div class="flex items-start gap-5 p-6">
 
-            <!-- Cover / play button -->
+            <!-- Cover -->
             <div class="shrink-0">
               <?php if (!empty($ep['thumbnailUrl'])): ?>
                 <div class="w-16 h-16 rounded-2xl overflow-hidden shadow-sm">
@@ -154,7 +175,6 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
               <?php endif; ?>
               <div class="flex items-center gap-4">
                 <span class="text-xs text-slate-400"><?= format_date($ep['createdAt']) ?></span>
-
                 <?php if ($hasAudio): ?>
                   <button onclick="togglePlayer('<?= $playerId ?>', '<?= $audioId ?>')"
                           id="<?= $playerId ?>-btn"
@@ -193,7 +213,7 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
             <?php endif; ?>
           </div>
 
-          <!-- Expandable HTML5 audio player (only for direct audio files) -->
+          <!-- Expandable HTML5 audio player -->
           <?php if ($hasAudio): ?>
             <div id="<?= $audioId ?>" class="hidden border-t border-amber-50 px-6 py-4" style="background:#FFFBF2">
               <audio id="<?= $audioId ?>-el" controls preload="none"
@@ -210,10 +230,50 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
         </div>
       <?php endforeach; ?>
     </div>
+
+    <!-- ── Pagination ────────────────────────────────────────────────────── -->
+    <?php if ($pages > 1): ?>
+      <nav class="flex items-center justify-center gap-2 mt-10 mb-10" aria-label="Pagination">
+        <?php if ($page > 1): ?>
+          <a href="<?= h(podcast_url($page - 1, $country, $cat)) ?>"
+             class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-amber-50 transition-colors text-lg font-light">&#8249;</a>
+        <?php else: ?>
+          <span class="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 text-lg cursor-not-allowed">&#8249;</span>
+        <?php endif; ?>
+
+        <?php
+        $start = max(1, $page - 2);
+        $end   = min($pages, $page + 2);
+        if ($start > 1): ?>
+          <a href="<?= h(podcast_url(1, $country, $cat)) ?>" class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-600 hover:bg-amber-50 transition-colors">1</a>
+          <?php if ($start > 2): ?><span class="text-slate-400 px-1">…</span><?php endif; ?>
+        <?php endif; ?>
+
+        <?php for ($i = $start; $i <= $end; $i++): ?>
+          <a href="<?= h(podcast_url($i, $country, $cat)) ?>"
+             class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-colors <?= $i === $page ? 'text-slate-900 border-2' : 'border border-slate-200 bg-white text-slate-600 hover:bg-amber-50' ?>"
+             style="<?= $i === $page ? 'border-color:#E7952A;background:#F8F8F0' : '' ?>">
+            <?= $i ?>
+          </a>
+        <?php endfor; ?>
+
+        <?php if ($end < $pages): ?>
+          <?php if ($end < $pages - 1): ?><span class="text-slate-400 px-1">…</span><?php endif; ?>
+          <a href="<?= h(podcast_url($pages, $country, $cat)) ?>" class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-sm font-bold text-slate-600 hover:bg-amber-50 transition-colors"><?= $pages ?></a>
+        <?php endif; ?>
+
+        <?php if ($page < $pages): ?>
+          <a href="<?= h(podcast_url($page + 1, $country, $cat)) ?>"
+             class="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-amber-50 transition-colors text-lg font-light">&#8250;</a>
+        <?php else: ?>
+          <span class="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 text-lg cursor-not-allowed">&#8250;</span>
+        <?php endif; ?>
+      </nav>
+    <?php endif; ?>
   <?php endif; ?>
 
   <!-- ── Subscribe section ────────────────────────────────────────────────── -->
-  <div class="bg-white rounded-3xl border border-amber-100 p-8 text-center shadow-sm">
+  <div class="bg-white rounded-3xl border border-amber-100 p-8 text-center shadow-sm mt-8">
     <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:#0D0102">
       <svg width="28" height="28" fill="none" stroke="#E7952A" stroke-width="1.5" viewBox="0 0 24 24">
         <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
@@ -223,10 +283,10 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
     <p class="text-slate-500 text-sm mb-6 max-w-sm mx-auto">Follow our podcast on your favourite platform for the latest conversations on peace, conflict, and community.</p>
     <div class="flex flex-wrap justify-center gap-3">
       <?php foreach ([
-          ['name' => 'Spotify', 'icon' => '#1DB954'],
-          ['name' => 'Apple Podcasts', 'icon' => '#FF2D55'],
-          ['name' => 'Google Podcasts', 'icon' => '#4285F4'],
-          ['name' => 'RSS Feed', 'icon' => '#F26522'],
+          ['name' => 'Spotify'],
+          ['name' => 'Apple Podcasts'],
+          ['name' => 'Google Podcasts'],
+          ['name' => 'RSS Feed'],
       ] as $platform): ?>
         <span class="px-5 py-2.5 rounded-xl border border-amber-100 text-sm font-bold text-slate-500 cursor-not-allowed hover:bg-amber-50 transition-colors">
           <?= h($platform['name']) ?>
@@ -241,14 +301,12 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
 <?php include __DIR__ . '/includes/footer.php'; ?>
 
 <script>
-var openPlayers = {};
-
 function togglePlayer(playerId, audioId) {
-    var panel = document.getElementById(audioId);
+    var panel   = document.getElementById(audioId);
     var audioEl = document.getElementById(audioId + '-el');
-    var label = document.getElementById(playerId + '-label');
-    var icon  = document.getElementById(playerId + '-icon');
-    var icon2 = document.getElementById(playerId + '-icon2');
+    var label   = document.getElementById(playerId + '-label');
+    var icon    = document.getElementById(playerId + '-icon');
+    var icon2   = document.getElementById(playerId + '-icon2');
 
     var isOpen = !panel.classList.contains('hidden');
 
@@ -256,15 +314,14 @@ function togglePlayer(playerId, audioId) {
         panel.classList.add('hidden');
         if (audioEl) audioEl.pause();
         if (label) label.textContent = 'Play Episode';
-        if (icon) icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        if (icon)  icon.innerHTML  = '<path d="M8 5v14l11-7z"/>';
         if (icon2) icon2.innerHTML = '<path d="M8 5v14l11-7z"/>';
     } else {
         panel.classList.remove('hidden');
         if (audioEl) audioEl.play().catch(function(){});
         if (label) label.textContent = 'Pause';
-        if (icon) icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+        if (icon)  icon.innerHTML  = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
         if (icon2) icon2.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-        // scroll to player
         panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
