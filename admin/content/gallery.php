@@ -165,10 +165,11 @@ $adminPageSub   = $total . ' image' . ($total !== 1 ? 's' : '') . ($statusFilter
     <!-- Grid View -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-5">
       <?php foreach ($posts as $p):
-        $imgSrc = $p['mediaUrl'] ?: $p['thumbnailUrl'];
-        $isOwner   = ($p['authorId'] === $uid);
-        $canDelete = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
-        $canSubmit = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
+        $imgSrc     = $p['mediaUrl'] ?: $p['thumbnailUrl'];
+        $isOwner    = ($p['authorId'] === $uid);
+        $canDelete  = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
+        $canSubmit  = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
+        $canPublish = $isSuper && in_array($p['status'], ['DRAFT','PENDING','REJECTED']);
       ?>
       <div class="group relative bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
         <!-- Image -->
@@ -194,6 +195,10 @@ $adminPageSub   = $total . ' image' . ($total !== 1 ? 's' : '') . ($statusFilter
         <div class="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-200 bg-white border-t border-slate-100 p-2 flex items-center justify-between gap-1">
           <a href="/admin/content/<?= h($p['id']) ?>/edit"
              class="flex-1 text-center px-2 py-1.5 text-[10px] font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Edit</a>
+          <?php if ($canPublish): ?>
+            <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/publish','POST',this,null)"
+                    class="flex-1 px-2 py-1.5 text-[10px] font-bold rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors">Pub</button>
+          <?php endif; ?>
           <?php if ($canSubmit): ?>
             <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/submit','POST',this,'Submit for review?')"
                     class="flex-1 px-2 py-1.5 text-[10px] font-bold rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">Submit</button>
@@ -222,11 +227,12 @@ $adminPageSub   = $total . ' image' . ($total !== 1 ? 's' : '') . ($statusFilter
         </thead>
         <tbody class="divide-y divide-slate-50">
           <?php foreach ($posts as $p):
-            $imgSrc = $p['mediaUrl'] ?: $p['thumbnailUrl'];
-            $isOwner   = ($p['authorId'] === $uid);
-            $canDelete = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
-            $canSubmit = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
-            $canArch   = $isSuper && in_array($p['status'], ['PUBLISHED','ARCHIVED']);
+            $imgSrc     = $p['mediaUrl'] ?: $p['thumbnailUrl'];
+            $isOwner    = ($p['authorId'] === $uid);
+            $canDelete  = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
+            $canSubmit  = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
+            $canPublish = $isSuper && in_array($p['status'], ['DRAFT','PENDING','REJECTED']);
+            $canArch    = $isSuper && in_array($p['status'], ['PUBLISHED','ARCHIVED']);
           ?>
           <tr class="hover:bg-slate-50/70 transition-colors">
             <td class="px-6 py-4">
@@ -251,6 +257,10 @@ $adminPageSub   = $total . ' image' . ($total !== 1 ? 's' : '') . ($statusFilter
               <div class="flex items-center justify-end gap-1.5">
                 <a href="/admin/content/<?= h($p['id']) ?>/edit"
                    class="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">Edit</a>
+                <?php if ($canPublish): ?>
+                  <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/publish','POST',this,null)"
+                          class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors">Publish</button>
+                <?php endif; ?>
                 <?php if ($canSubmit): ?>
                   <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/submit','POST',this,'Submit for review?')"
                           class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">Submit</button>

@@ -37,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($type === 'VIDEO'         && !$mediaUrl) $error = 'Video URL is required for videos.';
     elseif ($type === 'DOCUMENT'      && !$mediaUrl) $error = 'Document URL is required for documents.';
     else {
-        $id = generate_id();
+        $id     = generate_id();
+        $status = ($isSuper && isset($_POST['_publish'])) ? 'PUBLISHED' : 'DRAFT';
         db()->prepare(
             'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
-        )->execute([$id,$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,'DRAFT',$uid]);
+        )->execute([$id,$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$status,$uid]);
 
-        // Redirect back to the appropriate module page
         $redirect = match($type) {
             'ARTICLE'      => '/admin/content/articles',
             'GALLERY_IMAGE'=> '/admin/content/gallery',
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'DOCUMENT'     => '/admin/content/documents',
             default        => '/admin/content',
         };
-        header('Location: ' . $redirect);
+        header('Location: ' . $redirect . '?created=' . ($status === 'PUBLISHED' ? 'pub' : '1'));
         exit;
     }
     $defaultType = $_POST['type'] ?? $defaultType;
@@ -315,6 +315,11 @@ $adminPageSub   = $cfg['sub'];
     </div>
 
     <div class="flex gap-4 pb-8">
+      <?php if ($isSuper): ?>
+        <button type="submit" name="_publish" value="1"
+                class="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
+                style="background:#16a34a">Publish Now</button>
+      <?php endif; ?>
       <button type="submit" class="btn-primary" id="submit-btn" style="padding:.7rem 1.75rem">Save as Draft</button>
       <a href="<?= h($cfg['backHref']) ?>" id="cancel-link"
          class="inline-flex items-center px-6 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>

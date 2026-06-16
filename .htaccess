@@ -11,9 +11,10 @@ RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
 # ── API routes ──────────────────────────────────────────────────
-RewriteRule ^api/posts/([^/]+)/approve/?$ api/post-approve.php?id=$1 [L,QSA]
-RewriteRule ^api/posts/([^/]+)/submit/?$  api/post-submit.php?id=$1  [L,QSA]
-RewriteRule ^api/posts/([^/]+)/archive/?$ api/post-archive.php?id=$1 [L,QSA]
+RewriteRule ^api/posts/([^/]+)/approve/?$  api/post-approve.php?id=$1  [L,QSA]
+RewriteRule ^api/posts/([^/]+)/publish/?$  api/post-publish.php?id=$1  [L,QSA]
+RewriteRule ^api/posts/([^/]+)/submit/?$   api/post-submit.php?id=$1   [L,QSA]
+RewriteRule ^api/posts/([^/]+)/archive/?$  api/post-archive.php?id=$1  [L,QSA]
 RewriteRule ^api/posts/([^/]+)/?$         api/post.php?id=$1         [L,QSA]
 RewriteRule ^api/posts/?$                 api/posts.php              [L,QSA]
 RewriteRule ^api/comments/([^/]+)/?$      api/comment.php?id=$1      [L,QSA]

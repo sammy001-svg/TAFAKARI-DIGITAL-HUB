@@ -151,6 +151,7 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
             $isOwner    = ($p['authorId'] === $uid);
             $canDelete  = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
             $canSubmit  = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
+            $canPublish = $isSuper && in_array($p['status'], ['DRAFT','PENDING','REJECTED']);
             $canArchive = $isSuper && in_array($p['status'], ['PUBLISHED','ARCHIVED']);
             $svg        = $typeIcons[$p['type']] ?? $typeIcons['ARTICLE'];
           ?>
@@ -185,6 +186,12 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
                     <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     Edit
                   </a>
+                  <?php if ($canPublish): ?>
+                    <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/publish','POST',this,null)"
+                            class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
+                      Publish
+                    </button>
+                  <?php endif; ?>
                   <?php if ($canSubmit): ?>
                     <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/submit','POST',this,'Submit for review?')"
                             class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">

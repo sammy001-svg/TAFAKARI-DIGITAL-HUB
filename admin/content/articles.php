@@ -24,12 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'crea
     elseif (!$c_region)        $createError = 'Region is required.';
     elseif (!$c_issueCategory) $createError = 'Issue category is required.';
     else {
-        $id = generate_id();
+        $id     = generate_id();
+        $status = ($isSuper && isset($_POST['_publish'])) ? 'PUBLISHED' : 'DRAFT';
         db()->prepare(
             'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
-        )->execute([$id,$c_title,'ARTICLE',$c_description,$c_content,$c_thumbnailUrl,'',$c_country,$c_region,$c_issueCategory,'DRAFT',$uid]);
-        header('Location: /admin/content/articles?created=1');
+        )->execute([$id,$c_title,'ARTICLE',$c_description,$c_content,$c_thumbnailUrl,'',$c_country,$c_region,$c_issueCategory,$status,$uid]);
+        header('Location: /admin/content/articles?created=' . ($status === 'PUBLISHED' ? 'pub' : '1'));
         exit;
     }
 }
@@ -184,9 +185,10 @@ $adminPageSub   = $total . ' article' . ($total !== 1 ? 's' : '') . ($statusFilt
         <tbody class="divide-y divide-slate-50">
           <?php foreach ($posts as $p):
             $isOwner   = ($p['authorId'] === $uid);
-            $canDelete = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
-            $canSubmit = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
-            $canArch   = $isSuper && in_array($p['status'], ['PUBLISHED','ARCHIVED']);
+            $canDelete  = $isSuper || ($isOwner && in_array($p['status'], ['DRAFT','REJECTED']));
+            $canSubmit  = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
+            $canPublish = $isSuper && in_array($p['status'], ['DRAFT','PENDING','REJECTED']);
+            $canArch    = $isSuper && in_array($p['status'], ['PUBLISHED','ARCHIVED']);
           ?>
           <tr class="hover:bg-slate-50/70 transition-colors group">
             <td class="px-6 py-4">
@@ -229,6 +231,10 @@ $adminPageSub   = $total . ' article' . ($total !== 1 ? 's' : '') . ($statusFilt
                   <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   Edit
                 </a>
+                <?php if ($canPublish): ?>
+                  <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/publish','POST',this,null)"
+                          class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors">Publish</button>
+                <?php endif; ?>
                 <?php if ($canSubmit): ?>
                   <button onclick="postAction('/api/posts/<?= h($p['id']) ?>/submit','POST',this,'Submit for review?')"
                           class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors">Submit</button>
@@ -363,11 +369,24 @@ function postAction(url, method, btn, confirmMsg) {
     </div>
 
     <div style="display:flex;gap:12px;padding-top:4px;padding-bottom:8px">
-      <button type="submit"
-              style="flex:1;padding:13px;border:none;border-radius:12px;background:#750B25;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
-              onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-        Save as Draft
-      </button>
+      <?php if ($isSuper): ?>
+        <button type="submit" name="_publish" value="1"
+                style="flex:1;padding:13px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
+                onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Publish Now
+        </button>
+        <button type="submit"
+                style="padding:13px 18px;border:none;border-radius:12px;background:#750B25;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
+                onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Save as Draft
+        </button>
+      <?php else: ?>
+        <button type="submit"
+                style="flex:1;padding:13px;border:none;border-radius:12px;background:#750B25;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
+                onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Save as Draft
+        </button>
+      <?php endif; ?>
       <button type="button" onclick="closeCreateDrawer()"
               style="padding:13px 20px;border:1.5px solid #e2e8f0;border-radius:12px;background:#fff;color:#64748b;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
         Cancel
@@ -394,9 +413,10 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeCrea
 <?php if ($createError): ?>document.addEventListener('DOMContentLoaded', openCreateDrawer);<?php endif; ?>
 <?php if (isset($_GET['created'])): ?>
 document.addEventListener('DOMContentLoaded', function(){
+  var isPub = <?= json_encode($_GET['created'] === 'pub') ?>;
   var b = document.createElement('div');
-  b.textContent = 'Article saved as draft.';
-  b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;background:#0f172a;color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2)';
+  b.textContent = isPub ? 'Article published successfully.' : 'Article saved as draft.';
+  b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);color:#fff;background:' + (isPub ? '#16a34a' : '#0f172a');
   document.body.appendChild(b);
   setTimeout(function(){ b.remove(); }, 3500);
 });
