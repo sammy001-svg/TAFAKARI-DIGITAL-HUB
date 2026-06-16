@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 
 $user    = require_auth();
 $isSuper = is_super_admin();
@@ -39,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $region        = trim($_POST['region']        ?? '');
     $issueCategory = trim($_POST['issueCategory'] ?? '');
     $andSubmit     = isset($_POST['save_submit']);
+    $andPublish    = $isSuper && isset($_POST['save_publish']);
 
     if (!$title)             $error = 'Title is required.';
     elseif (!$country)       $error = 'Country is required.';
@@ -51,7 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,updatedAt=NOW(3) WHERE id=?'
         )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$id]);
 
-        if ($andSubmit && $canSubmit) {
+        if ($andPublish) {
+            $pdo->prepare("UPDATE Post SET status='PUBLISHED',approverId=?,updatedAt=NOW(3) WHERE id=?")->execute([$uid, $id]);
+        } elseif ($andSubmit && $canSubmit) {
             $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
         }
         $redirect = match($type) {
@@ -69,6 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Pre-populate form from DB or POST
 $f = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $post;
+
+// Upload widget config based on current post type
+$editType = $f['type'] ?? $post['type'] ?? 'ARTICLE';
+$mFt  = match($editType) { 'PODCAST'=>'audio', 'VIDEO'=>'video', 'DOCUMENT'=>'document', default=>'image' };
+$mAcc = match($mFt) { 'audio'=>'audio/*', 'video'=>'video/mp4,video/webm,video/ogg', 'document'=>'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx', default=>'image/*' };
+$mDH  = match($mFt) { 'audio'=>'MP3, OGG, WAV, M4A · max 150 MB', 'video'=>'MP4, WebM · max 500 MB', 'document'=>'PDF, DOCX, XLS, PPT · max 50 MB', default=>'JPG, PNG, WebP · max 8 MB' };
+$mUH  = match($mFt) { 'audio'=>'MP3 link or podcast episode URL', 'video'=>'YouTube / Vimeo link, or direct video URL', 'document'=>'Link to PDF, Word doc, or other file', default=>'Direct image URL' };
+$mPh  = match($mFt) { 'audio'=>'https://…/episode.mp3', 'video'=>'https://www.youtube.com/watch?v=…', 'document'=>'https://…/report.pdf', default=>'https://…/image.jpg' };
+$mLabel = match($editType) { 'PODCAST'=>'Audio File', 'VIDEO'=>'Video URL', 'DOCUMENT'=>'Document File', 'GALLERY_IMAGE'=>'Gallery Image', default=>'' };
 
 $moduleBack = match($post['type'] ?? 'ARTICLE') {
     'ARTICLE'       => ['/admin/content/articles',  'Articles'],
@@ -137,18 +150,10 @@ $adminPageSub   = h($post['title'] ?? '');
           <textarea name="description" rows="3"
                     class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none resize-none"><?= h($f['description'] ?? '') ?></textarea>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Thumbnail URL</label>
-            <input type="url" name="thumbnailUrl" value="<?= h($f['thumbnailUrl'] ?? '') ?>"
-                   class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Media URL</label>
-            <input type="url" name="mediaUrl" value="<?= h($f['mediaUrl'] ?? '') ?>"
-                   class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
-          </div>
-        </div>
+        <?php uw_img('edit-thumb','thumbnailUrl','Thumbnail / Cover Image','Optional preview image or cover',($f['thumbnailUrl'] ?? '')); ?>
+        <?php if ($mLabel !== ''): ?>
+          <?php uw_media('edit-media','mediaUrl',$mLabel,$mFt,$mAcc,$mDH,$mUH,$mPh,($f['mediaUrl'] ?? '')); ?>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -200,6 +205,11 @@ $adminPageSub   = h($post['title'] ?? '');
 
     <div class="flex gap-3 flex-wrap">
       <button type="submit" name="save_draft" class="btn-primary" style="padding:.7rem 1.75rem">Save Changes</button>
+      <?php if ($isSuper && in_array($post['status'], ['DRAFT','PENDING','REJECTED'])): ?>
+        <button type="submit" name="save_publish"
+                class="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
+                style="background:#16a34a">Save & Publish</button>
+      <?php endif; ?>
       <?php if ($canSubmit && !$isSuper): ?>
         <button type="submit" name="save_submit" class="btn-secondary" style="padding:.7rem 1.75rem">Save & Submit for Approval</button>
       <?php endif; ?>
@@ -211,6 +221,7 @@ $adminPageSub   = h($post['title'] ?? '');
 </div>
 </div>
 
+<?php uw_scripts(); ?>
 <script>
 function switchTab(tab) {
   var write   = document.getElementById('write-panel');
