@@ -136,6 +136,86 @@ VALUES
 );
 
 -- =============================================================
+-- TABLE: HeatmapCountry
+-- =============================================================
+CREATE TABLE IF NOT EXISTS `HeatmapCountry` (
+  `id`        VARCHAR(191) NOT NULL,
+  `name`      VARCHAR(191) NOT NULL,
+  `code`      VARCHAR(10)  NOT NULL,
+  `centerLat` DOUBLE       NOT NULL,
+  `centerLng` DOUBLE       NOT NULL,
+  `zoom`      INT          NOT NULL DEFAULT 6,
+  `isActive`  TINYINT(1)   NOT NULL DEFAULT 1,
+  `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `HeatmapCountry_code_key` (`code`),
+  INDEX `HeatmapCountry_isActive_idx` (`isActive`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================
+-- TABLE: HeatmapCategory
+-- =============================================================
+CREATE TABLE IF NOT EXISTS `HeatmapCategory` (
+  `id`        VARCHAR(191) NOT NULL,
+  `name`      VARCHAR(191) NOT NULL,
+  `isActive`  TINYINT(1)   NOT NULL DEFAULT 1,
+  `createdAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `HeatmapCategory_name_key` (`name`),
+  INDEX `HeatmapCategory_isActive_idx` (`isActive`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================
+-- SEED: Default Heatmap Countries (18 African nations)
+-- =============================================================
+INSERT IGNORE INTO `HeatmapCountry`
+  (`id`, `name`, `code`, `centerLat`, `centerLng`, `zoom`, `createdAt`, `updatedAt`)
+VALUES
+  ('hc_ke', 'Kenya',        'KE',  0.0236,   37.9062,  6, NOW(3), NOW(3)),
+  ('hc_et', 'Ethiopia',     'ET',  9.1450,   40.4897,  6, NOW(3), NOW(3)),
+  ('hc_cd', 'DR Congo',     'CD', -4.0383,   21.7587,  5, NOW(3), NOW(3)),
+  ('hc_ug', 'Uganda',       'UG',  1.3733,   32.2903,  7, NOW(3), NOW(3)),
+  ('hc_tz', 'Tanzania',     'TZ', -6.3690,   34.8888,  6, NOW(3), NOW(3)),
+  ('hc_rw', 'Rwanda',       'RW', -1.9403,   29.8739,  8, NOW(3), NOW(3)),
+  ('hc_bi', 'Burundi',      'BI', -3.3731,   29.9189,  8, NOW(3), NOW(3)),
+  ('hc_ss', 'South Sudan',  'SS',  6.8770,   31.3070,  6, NOW(3), NOW(3)),
+  ('hc_so', 'Somalia',      'SO',  5.1521,   46.1996,  6, NOW(3), NOW(3)),
+  ('hc_ng', 'Nigeria',      'NG',  9.0820,    8.6753,  6, NOW(3), NOW(3)),
+  ('hc_gh', 'Ghana',        'GH',  7.9465,   -1.0232,  7, NOW(3), NOW(3)),
+  ('hc_za', 'South Africa', 'ZA',-30.5595,   22.9375,  5, NOW(3), NOW(3)),
+  ('hc_eg', 'Egypt',        'EG', 26.8206,   30.8025,  6, NOW(3), NOW(3)),
+  ('hc_cm', 'Cameroon',     'CM',  3.8480,   11.5021,  6, NOW(3), NOW(3)),
+  ('hc_sd', 'Sudan',        'SD', 12.8628,   30.2176,  5, NOW(3), NOW(3)),
+  ('hc_zm', 'Zambia',       'ZM',-13.1339,   27.8493,  6, NOW(3), NOW(3)),
+  ('hc_mz', 'Mozambique',   'MZ',-18.6657,   35.5296,  6, NOW(3), NOW(3)),
+  ('hc_zw', 'Zimbabwe',     'ZW',-19.0154,   29.1549,  6, NOW(3), NOW(3));
+
+-- =============================================================
+-- SEED: Default Heatmap Categories (12 issue areas)
+-- =============================================================
+INSERT IGNORE INTO `HeatmapCategory`
+  (`id`, `name`, `createdAt`, `updatedAt`)
+VALUES
+  ('cat_health',      'Health',                      NOW(3), NOW(3)),
+  ('cat_education',   'Education',                   NOW(3), NOW(3)),
+  ('cat_security',    'Security & Conflict',         NOW(3), NOW(3)),
+  ('cat_climate',     'Climate & Environment',       NOW(3), NOW(3)),
+  ('cat_economic',    'Economic Development',        NOW(3), NOW(3)),
+  ('cat_policy',      'Policy & Governance',         NOW(3), NOW(3)),
+  ('cat_humanrights', 'Human Rights',                NOW(3), NOW(3)),
+  ('cat_migration',   'Migration & Refugees',        NOW(3), NOW(3)),
+  ('cat_agriculture', 'Agriculture & Food Security', NOW(3), NOW(3)),
+  ('cat_infra',       'Infrastructure & Energy',     NOW(3), NOW(3)),
+  ('cat_tech',        'Technology & Innovation',     NOW(3), NOW(3)),
+  ('cat_gender',      'Gender & Social Affairs',     NOW(3), NOW(3));
+
+-- =============================================================
 -- Verify the import was successful:
 -- SELECT id, username, role, email FROM User;
+-- SELECT code, name FROM HeatmapCountry ORDER BY name;
+-- SELECT name FROM HeatmapCategory ORDER BY name;
 -- =============================================================

@@ -21,6 +21,7 @@ export default function AdminSidebar() {
     { name: "Comment Moderation", href: "/admin/super/moderation", icon: "🛡️" },
     { name: "Contact Inbox", href: "/admin/super/messages", icon: "📬" },
     { name: "User Management", href: "/admin/super/users", icon: "👥" },
+    { name: "Heatmap Config", href: "/admin/super/heatmap", icon: "🗺️" },
   ];
 
   return (
