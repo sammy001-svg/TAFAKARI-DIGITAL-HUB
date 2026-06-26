@@ -43,10 +43,9 @@ export default function Footer() {
           <h4 className="font-outfit font-bold text-white mb-6">Contact Us</h4>
           <p className="text-sm mb-4 italic text-slate-300">Reflecting on our shared future.</p>
           <div className="flex gap-4">
-            {/* Social Icons Placeholder */}
-            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-secondary hover:text-black transition-colors cursor-pointer">f</div>
-            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-secondary hover:text-black transition-colors cursor-pointer">t</div>
-            <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-secondary hover:text-black transition-colors cursor-pointer">y</div>
+            <a href="#" aria-label="Facebook" className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-secondary hover:text-black transition-colors text-sm font-bold">f</a>
+            <a href="#" aria-label="X / Twitter" className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-secondary hover:text-black transition-colors text-sm font-bold">𝕏</a>
+            <a href="https://www.youtube.com/@CRTPHUC" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors text-sm font-bold">▶</a>
           </div>
         </div>
       </div>
