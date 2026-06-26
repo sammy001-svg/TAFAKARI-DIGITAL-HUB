@@ -16,3 +16,6 @@ deployment:
 
     # Compile the Next.js production build and copy static assets to standalone/
     - npm run build
+
+    # Signal Passenger to reload the Node.js app on next request
+    - mkdir -p tmp && touch tmp/restart.txt
