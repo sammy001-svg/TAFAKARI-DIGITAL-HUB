@@ -294,7 +294,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     </div>
     <!-- Featured partner -->
     <div class="max-w-sm mx-auto rounded-2xl border border-amber-100 p-8 text-center mb-8" style="background:#F8F8F0">
-      <img src="/public/hekima-logo.png" alt="Hekima University College"
+      <img src="/public/hekima-logo.jpg" alt="Hekima University College"
            class="h-16 object-contain mx-auto mb-4"
            onerror="this.parentElement.querySelector('.hekima-fb').style.display='flex';this.style.display='none'">
       <div class="hekima-fb w-16 h-16 rounded-2xl mx-auto mb-4 items-center justify-center font-outfit font-black text-2xl text-white hidden" style="background:#750B25">H</div>

@@ -7,7 +7,14 @@ require_once __DIR__ . '/includes/functions.php';
 $pageTitle = 'Tafakari Digital Hub | Knowledge, Media & Community Platform for East & Central Africa';
 $pageDesc  = 'A centralized knowledge repository, media broadcasting center, and community engagement hub serving Kenya, Ethiopia, and the Democratic Republic of Congo.';
 
-$latestArticles = [];
+$latestArticles  = [];
+$latestPodcasts  = [];
+$latestVideos    = [];
+$latestDocuments = [];
+$publishedCount  = 0;
+$totalViews      = 0;
+$typeCounts      = [];
+
 try {
     $stmt = db()->query("
         SELECT id, title, description, thumbnailUrl, country, issueCategory, viewCount, createdAt
@@ -17,12 +24,50 @@ try {
     $latestArticles = $stmt->fetchAll();
 } catch (Exception $e) {}
 
-$publishedCount = 0;
-$totalViews     = 0;
 try {
-    $row = db()->query("SELECT COUNT(*) AS c, COALESCE(SUM(viewCount),0) AS v FROM Post WHERE status='PUBLISHED'")->fetch();
-    $publishedCount = (int)$row['c'];
-    $totalViews     = (int)$row['v'];
+    $stmt = db()->query("
+        SELECT id, title, description, thumbnailUrl, country, issueCategory, createdAt
+        FROM Post WHERE type='PODCAST' AND status='PUBLISHED'
+        ORDER BY createdAt DESC LIMIT 3
+    ");
+    $latestPodcasts = $stmt->fetchAll();
+} catch (Exception $e) {}
+
+try {
+    $stmt = db()->query("
+        SELECT id, title, description, thumbnailUrl, country, issueCategory, viewCount, createdAt
+        FROM Post WHERE type='VIDEO' AND status='PUBLISHED'
+        ORDER BY createdAt DESC LIMIT 3
+    ");
+    $latestVideos = $stmt->fetchAll();
+} catch (Exception $e) {}
+
+try {
+    $stmt = db()->query("
+        SELECT id, title, description, mediaUrl, country, issueCategory, downloadCount, createdAt
+        FROM Post WHERE type='DOCUMENT' AND status='PUBLISHED'
+        ORDER BY createdAt DESC LIMIT 3
+    ");
+    $latestDocuments = $stmt->fetchAll();
+} catch (Exception $e) {}
+
+try {
+    $row = db()->query("
+        SELECT
+            COUNT(*) AS total,
+            COALESCE(SUM(viewCount),0) AS views,
+            COUNT(CASE WHEN type='ARTICLE'       THEN 1 END) AS articles,
+            COUNT(CASE WHEN type='PODCAST'       THEN 1 END) AS podcasts,
+            COUNT(CASE WHEN type='VIDEO'         THEN 1 END) AS videos,
+            COUNT(CASE WHEN type='DOCUMENT'      THEN 1 END) AS documents,
+            COUNT(CASE WHEN type='GALLERY_IMAGE' THEN 1 END) AS images
+        FROM Post WHERE status='PUBLISHED'
+    ")->fetch();
+    if ($row) {
+        $publishedCount = (int)$row['total'];
+        $totalViews     = (int)$row['views'];
+        $typeCounts     = $row;
+    }
 } catch (Exception $e) {}
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
@@ -416,6 +461,209 @@ try {
   </section>
   <?php endif; ?>
 
+  <!-- ══════════════════════════════════════════
+       5b. LATEST PODCASTS (conditional)
+  ══════════════════════════════════════════ -->
+  <?php if (!empty($latestPodcasts)): ?>
+  <section class="border-t border-slate-100 py-24 px-6" style="background:#F8F8F0">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-end justify-between mb-14">
+        <div>
+          <span class="eyebrow-left">Listen &amp; Learn</span>
+          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Latest Podcasts</h2>
+        </div>
+        <a href="/podcasts" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
+          All Episodes
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <?php foreach ($latestPodcasts as $i => $pod): ?>
+          <div class="flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+            <!-- Artwork -->
+            <div class="relative h-48 shrink-0 overflow-hidden" style="background:#0D0102">
+              <?php if (!empty($pod['thumbnailUrl'])): ?>
+                <img src="<?= h($pod['thumbnailUrl']) ?>" alt="<?= h($pod['title']) ?>"
+                     class="w-full h-full object-cover opacity-70"
+                     onerror="this.style.display='none'">
+              <?php endif; ?>
+              <div class="absolute inset-0 flex flex-col items-center justify-center" style="background:rgba(13,1,2,.5)">
+                <div class="w-14 h-14 rounded-full flex items-center justify-center border-2 border-white/30 mb-2" style="background:rgba(231,149,42,.9)">
+                  <svg width="22" height="22" fill="white" viewBox="0 0 24 24" style="margin-left:3px"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <span class="text-[9px] font-black uppercase tracking-widest" style="color:rgba(255,255,255,.5)">Episode <?= $i + 1 ?></span>
+              </div>
+              <?php if (!empty($pod['country'])): ?>
+                <div class="absolute top-4 left-4">
+                  <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-slate-900" style="background:#E7952A">
+                    <?= h($pod['country']) ?>
+                  </span>
+                </div>
+              <?php endif; ?>
+            </div>
+            <!-- Info -->
+            <div class="flex flex-col flex-grow p-6">
+              <?php if (!empty($pod['issueCategory'])): ?>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($pod['issueCategory']) ?></span>
+              <?php endif; ?>
+              <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2">
+                <?= h($pod['title']) ?>
+              </h3>
+              <?php if (!empty($pod['description'])): ?>
+                <p class="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 flex-grow"><?= h($pod['description']) ?></p>
+              <?php endif; ?>
+              <div class="flex items-center justify-between pt-4 mt-auto border-t border-slate-100">
+                <span class="text-[11px] text-slate-400"><?= format_date($pod['createdAt']) ?></span>
+                <a href="/podcasts" class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all" style="color:#C47C1A">
+                  Listen
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+      <div class="mt-10 md:hidden text-center">
+        <a href="/podcasts" class="btn-gold">All Episodes</a>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
+
+  <!-- ══════════════════════════════════════════
+       5c. LATEST VIDEOS (conditional)
+  ══════════════════════════════════════════ -->
+  <?php if (!empty($latestVideos)): ?>
+  <section class="border-t border-slate-100 py-24 px-6 bg-white">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-end justify-between mb-14">
+        <div>
+          <span class="eyebrow-left">Watch</span>
+          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Latest Videos</h2>
+        </div>
+        <a href="/videos" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
+          All Videos
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <?php foreach ($latestVideos as $vid): ?>
+          <a href="/videos" class="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+            <!-- Thumbnail -->
+            <div class="relative h-48 shrink-0 overflow-hidden" style="background:#0D0102">
+              <?php if (!empty($vid['thumbnailUrl'])): ?>
+                <img src="<?= h($vid['thumbnailUrl']) ?>" alt="<?= h($vid['title']) ?>"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                     onerror="this.style.display='none'">
+              <?php endif; ?>
+              <div class="absolute inset-0 flex items-center justify-center" style="background:rgba(0,0,0,.38)">
+                <div class="w-14 h-14 rounded-full flex items-center justify-center border-2 border-white/50 group-hover:scale-110 transition-transform duration-300" style="background:rgba(117,11,37,.85)">
+                  <svg width="20" height="20" fill="white" viewBox="0 0 24 24" style="margin-left:3px"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+              <?php if (!empty($vid['country'])): ?>
+                <div class="absolute top-4 left-4">
+                  <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full text-slate-900" style="background:#E7952A">
+                    <?= h($vid['country']) ?>
+                  </span>
+                </div>
+              <?php endif; ?>
+              <?php if (($vid['viewCount'] ?? 0) > 0): ?>
+                <div class="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-white" style="background:rgba(0,0,0,.6)">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <?= format_number((int)$vid['viewCount']) ?>
+                </div>
+              <?php endif; ?>
+            </div>
+            <!-- Info -->
+            <div class="flex flex-col flex-grow p-6">
+              <?php if (!empty($vid['issueCategory'])): ?>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($vid['issueCategory']) ?></span>
+              <?php endif; ?>
+              <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                <?= h($vid['title']) ?>
+              </h3>
+              <?php if (!empty($vid['description'])): ?>
+                <p class="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 flex-grow"><?= h($vid['description']) ?></p>
+              <?php endif; ?>
+              <div class="flex items-center pt-4 mt-auto border-t border-slate-100">
+                <span class="text-[11px] text-slate-400"><?= format_date($vid['createdAt']) ?></span>
+              </div>
+            </div>
+          </a>
+        <?php endforeach; ?>
+      </div>
+      <div class="mt-10 md:hidden text-center">
+        <a href="/videos" class="btn-gold">All Videos</a>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
+
+  <!-- ══════════════════════════════════════════
+       5d. LATEST DOCUMENTS (conditional)
+  ══════════════════════════════════════════ -->
+  <?php if (!empty($latestDocuments)): ?>
+  <section class="border-t border-slate-100 py-24 px-6" style="background:#F8F8F0">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-end justify-between mb-14">
+        <div>
+          <span class="eyebrow-left">Research Library</span>
+          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Recent Documents</h2>
+        </div>
+        <a href="/documents" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
+          Full Library
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <?php foreach ($latestDocuments as $doc):
+          $ext   = strtolower(pathinfo(parse_url((string)($doc['mediaUrl'] ?? ''), PHP_URL_PATH), PATHINFO_EXTENSION));
+          $ftype = match(true) { $ext==='pdf'=>'PDF', in_array($ext,['doc','docx'])=>'DOC', in_array($ext,['xls','xlsx'])=>'XLS', in_array($ext,['ppt','pptx'])=>'PPT', default=>'DOC' };
+          $fcol  = match($ftype) { 'PDF'=>'#dc2626', 'XLS'=>'#16a34a', 'PPT'=>'#ea580c', default=>'#2563eb' };
+        ?>
+          <a href="/documents" class="group flex items-start gap-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+            <!-- File icon -->
+            <div class="w-14 h-16 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm"
+                 style="background:<?= $fcol ?>15;border:1px solid <?= $fcol ?>30">
+              <svg width="18" height="18" fill="none" stroke="<?= $fcol ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              <span class="text-[9px] font-black mt-1" style="color:<?= $fcol ?>"><?= $ftype ?></span>
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <?php if (!empty($doc['issueCategory'])): ?>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-1.5 block" style="color:#E7952A"><?= h($doc['issueCategory']) ?></span>
+              <?php endif; ?>
+              <h3 class="font-outfit font-bold text-[0.95rem] text-slate-900 leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                <?= h($doc['title']) ?>
+              </h3>
+              <?php if (!empty($doc['description'])): ?>
+                <p class="text-slate-500 text-[12px] leading-relaxed line-clamp-2 mb-3"><?= h($doc['description']) ?></p>
+              <?php endif; ?>
+              <div class="flex items-center gap-3 flex-wrap">
+                <span class="text-[10px] text-slate-400"><?= format_date($doc['createdAt']) ?></span>
+                <?php if (!empty($doc['country'])): ?>
+                  <span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full text-slate-900" style="background:#E7952A"><?= h($doc['country']) ?></span>
+                <?php endif; ?>
+                <?php if (($doc['downloadCount'] ?? 0) > 0): ?>
+                  <span class="flex items-center gap-1 text-[10px] text-slate-400">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <?= number_format((int)$doc['downloadCount']) ?>
+                  </span>
+                <?php endif; ?>
+              </div>
+            </div>
+          </a>
+        <?php endforeach; ?>
+      </div>
+      <div class="mt-10 md:hidden text-center">
+        <a href="/documents" class="btn-gold">Full Document Library</a>
+      </div>
+    </div>
+  </section>
+  <?php endif; ?>
 
   <!-- ══════════════════════════════════════════
        6. TARGET GEOGRAPHIES
