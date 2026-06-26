@@ -58,8 +58,7 @@ export default function HomeCarousel() {
             index === current ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 pointer-events-none z-0"
           }`}
         >
-          {/* Solid Dark Overlay (No Gradients) */}
-          <div className="absolute inset-0 bg-black/60 z-10" />
+          <div className="absolute inset-0 bg-black/20 z-10" />
           
           <Image
             src={slide.image}

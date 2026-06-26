@@ -14,6 +14,28 @@ export default async function HeatmapPage() {
     }),
   ]);
 
+  let heatmapCountries: { id: string; name: string; code: string; centerLat: number; centerLng: number; zoom: number }[] = [];
+  let heatmapCategories: string[] = [];
+
+  try {
+    const [countries, categories] = await prisma.$transaction([
+      prisma.heatmapCountry.findMany({
+        where: { isActive: true },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, code: true, centerLat: true, centerLng: true, zoom: true },
+      }),
+      prisma.heatmapCategory.findMany({
+        where: { isActive: true },
+        orderBy: { name: "asc" },
+        select: { name: true },
+      }),
+    ]);
+    heatmapCountries = countries;
+    heatmapCategories = categories.map((c) => c.name);
+  } catch {
+    // Tables not yet initialized — HeatmapInteractive will use its built-in fallbacks
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-12">
@@ -29,7 +51,10 @@ export default async function HeatmapPage() {
         </div>
       </div>
 
-      <HeatmapInteractive />
+      <HeatmapInteractive
+        initialCountries={heatmapCountries}
+        initialCategories={heatmapCategories}
+      />
 
       <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="flex flex-col gap-2 border-l-4 border-primary pl-6">

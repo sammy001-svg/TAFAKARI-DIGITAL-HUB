@@ -91,6 +91,36 @@ const DDL_STATEMENTS: { table: string; sql: string }[] = [
       INDEX \`ContactMessage_isRead_idx\` (\`isRead\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
   },
+  {
+    table: "HeatmapCountry",
+    sql: `CREATE TABLE IF NOT EXISTS \`HeatmapCountry\` (
+      \`id\`        VARCHAR(191) NOT NULL,
+      \`name\`      VARCHAR(191) NOT NULL,
+      \`code\`      VARCHAR(10)  NOT NULL,
+      \`centerLat\` DOUBLE       NOT NULL,
+      \`centerLng\` DOUBLE       NOT NULL,
+      \`zoom\`      INT          NOT NULL DEFAULT 6,
+      \`isActive\`  TINYINT(1)   NOT NULL DEFAULT 1,
+      \`createdAt\` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      \`updatedAt\` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`HeatmapCountry_code_key\` (\`code\`),
+      INDEX \`HeatmapCountry_isActive_idx\` (\`isActive\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  },
+  {
+    table: "HeatmapCategory",
+    sql: `CREATE TABLE IF NOT EXISTS \`HeatmapCategory\` (
+      \`id\`        VARCHAR(191) NOT NULL,
+      \`name\`      VARCHAR(191) NOT NULL,
+      \`isActive\`  TINYINT(1)   NOT NULL DEFAULT 1,
+      \`createdAt\` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      \`updatedAt\` DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`HeatmapCategory_name_key\` (\`name\`),
+      INDEX \`HeatmapCategory_isActive_idx\` (\`isActive\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  },
 ];
 
 export async function POST() {

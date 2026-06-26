@@ -21,21 +21,41 @@ const GeoJSON = dynamic(
 
 import { type GeoData, type GeoFeature, MOCK_GEO_JSON } from "@/data/mapData";
 
-interface RegionalMapProps {
-  country: "KE" | "ET" | "CD" | "ALL";
-  categories?: string[];
+interface CountryView {
+  id: string;
+  name: string;
+  code: string;
+  centerLat: number;
+  centerLng: number;
+  zoom: number;
 }
 
+interface RegionalMapProps {
+  country: string;
+  categories?: string[];
+  countryViews?: CountryView[];
+}
 
-
-const COUNTRY_VIEWS: Record<string, { center: [number, number], zoom: number, title: string }> = {
+const STATIC_COUNTRY_VIEWS: Record<string, { center: [number, number]; zoom: number; title: string }> = {
   ALL: { center: [1.2921, 36.8219], zoom: 4, title: "Regional Overview" },
-  KE: { center: [0.0236, 37.9062], zoom: 6, title: "Kenya Hub" },
-  ET: { center: [9.145, 40.4897], zoom: 6, title: "Ethiopia Hub" },
-  CD: { center: [-4.0383, 21.7587], zoom: 5, title: "DRC Hub" }
+  KE:  { center: [0.0236, 37.9062], zoom: 6, title: "Kenya Hub" },
+  ET:  { center: [9.145,  40.4897], zoom: 6, title: "Ethiopia Hub" },
+  CD:  { center: [-4.0383, 21.7587], zoom: 5, title: "DRC Hub" },
 };
 
-export default function RegionalMap({ country, categories = [] }: RegionalMapProps) {
+export default function RegionalMap({ country, categories = [], countryViews }: RegionalMapProps) {
+  const COUNTRY_VIEWS: Record<string, { center: [number, number]; zoom: number; title: string }> =
+    countryViews && countryViews.length > 0
+      ? {
+          ALL: { center: [1.2921, 36.8219], zoom: 4, title: "Regional Overview" },
+          ...Object.fromEntries(
+            countryViews.map((cv) => [
+              cv.code,
+              { center: [cv.centerLat, cv.centerLng] as [number, number], zoom: cv.zoom, title: `${cv.name} Hub` },
+            ])
+          ),
+        }
+      : STATIC_COUNTRY_VIEWS;
   const [geoData, setGeoData] = useState<GeoData>(MOCK_GEO_JSON);
   const [isLoading, setIsLoading] = useState(true);
   const [L, setL] = useState<typeof import("leaflet") | null>(null); // Leaflet instance

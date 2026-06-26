@@ -141,8 +141,6 @@ $pageTitle = 'Login | Tafakari Digital Hub';
 
       <p class="text-center text-xs text-slate-600 mt-8">
         <a href="/" class="hover:text-white transition-colors">&larr; Back to public site</a>
-        &nbsp;&nbsp;·&nbsp;&nbsp;
-        <a href="/reset-admin" class="hover:text-white transition-colors" style="color:rgba(231,149,42,.6)">Account Setup</a>
       </p>
     </div>
   </div>
