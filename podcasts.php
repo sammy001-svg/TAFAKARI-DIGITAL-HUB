@@ -169,7 +169,9 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#E7952A"><?= h($ep['country']) ?></span>
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($ep['issueCategory']) ?></span>
               </div>
-              <h3 class="font-outfit font-bold text-lg text-slate-900 leading-snug mb-1"><?= h($ep['title']) ?></h3>
+              <h3 class="font-outfit font-bold text-lg text-slate-900 leading-snug mb-1">
+                <a href="/podcasts/<?= h($ep['id']) ?>" class="hover:text-primary transition-colors"><?= h($ep['title']) ?></a>
+              </h3>
               <?php if (!empty($ep['description'])): ?>
                 <p class="text-sm text-slate-500 line-clamp-2 mb-3"><?= h($ep['description']) ?></p>
               <?php endif; ?>

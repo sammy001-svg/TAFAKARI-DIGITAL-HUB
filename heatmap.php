@@ -4,10 +4,162 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$totalReports   = 0;
+// ── Country centre coordinates ─────────────────────────────────────────
+$countryCoords = [
+    'Kenya'                        => [  0.023,  37.906, 'KE'],
+    'Ethiopia'                     => [  9.145,  40.489, 'ET'],
+    'DR Congo'                     => [ -4.038,  21.759, 'CD'],
+    'Democratic Republic of Congo' => [ -4.038,  21.759, 'CD'],
+    'South Sudan'                  => [  6.877,  31.307, 'SS'],
+    'Sudan'                        => [ 12.862,  30.218, 'SD'],
+    'Uganda'                       => [  1.373,  32.290, 'UG'],
+    'Tanzania'                     => [ -6.369,  34.889, 'TZ'],
+    'Rwanda'                       => [ -1.940,  29.874, 'RW'],
+    'Burundi'                      => [ -3.373,  29.918, 'BI'],
+    'Somalia'                      => [  5.152,  46.200, 'SO'],
+    'Mozambique'                   => [-18.665,  35.530, 'MZ'],
+    'Burkina Faso'                 => [ 12.364,  -1.534, 'BF'],
+    'Mali'                         => [ 17.570,  -3.996, 'ML'],
+    'Niger'                        => [ 17.608,   8.082, 'NE'],
+    'Nigeria'                      => [  9.082,   8.675, 'NG'],
+    'Chad'                         => [ 15.454,  18.732, 'TD'],
+    'Central African Republic'     => [  6.611,  20.939, 'CF'],
+    'Cameroon'                     => [  3.848,  11.502, 'CM'],
+    'South Africa'                 => [-30.559,  22.938, 'ZA'],
+    'Ghana'                        => [  7.946,  -1.024, 'GH'],
+    'Senegal'                      => [ 14.497, -14.452, 'SN'],
+    'Egypt'                        => [ 26.820,  30.802, 'EG'],
+    'Morocco'                      => [ 31.792,  -7.092, 'MA'],
+    'Algeria'                      => [ 28.034,   1.659, 'DZ'],
+    'Angola'                       => [-11.203,  17.874, 'AO'],
+    'Zambia'                       => [-13.134,  27.849, 'ZM'],
+    'Zimbabwe'                     => [-19.015,  29.154, 'ZW'],
+    'Malawi'                       => [-13.254,  34.302, 'MW'],
+    'Madagascar'                   => [-18.767,  46.869, 'MG'],
+    'Liberia'                      => [  6.428, -10.785, 'LR'],
+    'Sierra Leone'                 => [  8.460, -11.780, 'SL'],
+    'Guinea'                       => [ 11.805, -11.805, 'GN'],
+];
+
+// ── Region/city coordinates ────────────────────────────────────────────
+$regionCoords = [
+    // Kenya
+    'Nairobi'       => [ -1.286,  36.820], 'Mombasa'   => [ -4.043,  39.668],
+    'Kisumu'        => [ -0.102,  34.761], 'Nakuru'    => [ -0.303,  36.080],
+    'Eldoret'       => [  0.517,  35.270], 'Turkana'   => [  3.119,  35.597],
+    'Mandera'       => [  3.936,  41.855], 'Garissa'   => [ -0.456,  39.646],
+    'Rift Valley'   => [  0.517,  35.270], 'Nyanza'    => [ -0.670,  34.779],
+    'Western Kenya' => [  0.283,  34.752], 'Central'   => [ -0.700,  36.870],
+    'North Eastern' => [  1.500,  40.000], 'Coast'     => [ -3.200,  40.120],
+    // Ethiopia
+    'Addis Ababa'   => [  9.025,  38.747], 'Tigray'    => [ 14.032,  38.316],
+    'Mekelle'       => [ 13.496,  39.477], 'Amhara'    => [ 11.340,  37.983],
+    'Oromia'        => [  7.547,  39.647], 'SNNPR'     => [  6.875,  37.810],
+    'Afar'          => [ 11.756,  41.173], 'Dire Dawa' => [  9.593,  41.867],
+    'Bahir Dar'     => [ 11.593,  37.391], 'Harar'     => [  9.313,  42.118],
+    'Jimma'         => [  7.678,  36.832], 'Jijiga'    => [  9.350,  42.795],
+    // DRC
+    'Kinshasa'      => [ -4.322,  15.322], 'Goma'      => [ -1.678,  29.217],
+    'Bukavu'        => [ -2.508,  28.860], 'North Kivu'=> [ -0.786,  29.089],
+    'South Kivu'    => [ -3.381,  29.361], 'Ituri'     => [  1.583,  29.872],
+    'Kisangani'     => [  0.518,  25.196], 'Lubumbashi'=> [-11.663,  27.479],
+    'Beni'          => [  0.491,  29.473], 'Katanga'   => [-10.000,  27.000],
+    'Kasai'         => [ -5.000,  22.500], 'Maniema'   => [ -3.000,  26.500],
+    'Bandundu'      => [ -4.500,  18.000],
+    // Others
+    'Juba'          => [  4.859,  31.571], 'Khartoum'  => [ 15.551,  32.532],
+    'Mogadishu'     => [  2.046,  45.341], 'Kampala'   => [  0.347,  32.583],
+    'Dar es Salaam' => [ -6.792,  39.208], 'Kigali'    => [ -1.944,  30.061],
+    'Bamako'        => [ 12.650,  -8.000], 'Niamey'    => [ 13.513,   2.113],
+    'Bangui'        => [  4.361,  18.555], "N'Djamena" => [ 12.105,  15.044],
+    'Harare'        => [-17.828,  31.053], 'Lusaka'    => [-15.416,  28.283],
+];
+
+// ── Issue category → heatmap category mapping ──────────────────────────
+$issueToCat = [
+    'Security & Conflict'         => 'Security',
+    'Human Rights'                => 'Human Rights',
+    'Health'                      => 'Health',
+    'Policy & Governance'         => 'Policy',
+    'Climate & Environment'       => 'Climate',
+    'Education'                   => 'Education',
+    'Agriculture & Food Security' => 'Agriculture',
+    'Migration & Refugees'        => 'Displacement',
+    'Economic Development'        => 'Policy',
+    'Technology & Innovation'     => 'Policy',
+    'Gender & Social Affairs'     => 'Human Rights',
+    'Infrastructure & Energy'     => 'Policy',
+];
+
+$postTypeUrl = [
+    'ARTICLE'       => '/news/',
+    'PODCAST'       => '/podcasts/',
+    'VIDEO'         => '/videos/',
+    'DOCUMENT'      => '/documents/',
+    'GALLERY_IMAGE' => '/gallery',
+];
+
+// ── Resolve coordinates for published posts ────────────────────────────
+$postMarkers = [];
+try {
+    $posts = db()->query("
+        SELECT id, title, type, description, country, region, issueCategory, createdAt, thumbnailUrl
+        FROM Post WHERE status='PUBLISHED' AND country IS NOT NULL AND country != ''
+        ORDER BY createdAt DESC LIMIT 300
+    ")->fetchAll();
+
+    foreach ($posts as $p) {
+        $lat = $lng = null;
+        $region = trim($p['region'] ?? '');
+
+        // Try region string against lookup keys
+        if ($region !== '') {
+            foreach ($regionCoords as $rKey => [$rlat, $rlng]) {
+                if (stripos($region, $rKey) !== false || stripos($rKey, $region) !== false) {
+                    $lat = $rlat; $lng = $rlng; break;
+                }
+            }
+        }
+
+        // Fall back to country centre
+        if ($lat === null) {
+            $cn = $p['country'];
+            if (isset($countryCoords[$cn])) {
+                [$lat, $lng] = $countryCoords[$cn];
+            }
+        }
+
+        if ($lat === null) continue;
+
+        // Deterministic sub-degree jitter so stacked pins spread out
+        $h    = crc32($p['id']);
+        $lat += (($h % 200) - 100) / 800.0;
+        $lng += ((($h >> 8) % 200) - 100) / 800.0;
+
+        $url = ($postTypeUrl[$p['type']] ?? '/news/') . $p['id'];
+        if (($p['type'] ?? '') === 'GALLERY_IMAGE') $url = '/gallery';
+
+        $postMarkers[] = [
+            'id'       => $p['id'],
+            'title'    => $p['title'],
+            'type'     => $p['type'] ?? 'ARTICLE',
+            'desc'     => mb_substr($p['description'] ?? '', 0, 150),
+            'country'  => $p['country'],
+            'region'   => $region,
+            'category' => $issueToCat[$p['issueCategory'] ?? ''] ?? 'Policy',
+            'date'     => format_date($p['createdAt']),
+            'thumb'    => $p['thumbnailUrl'] ?? '',
+            'url'      => $url,
+            'lat'      => round($lat, 5),
+            'lng'      => round($lng, 5),
+        ];
+    }
+} catch (Exception $e) {}
+
+// ── Summary stats ──────────────────────────────────────────────────────
+$totalReports   = count($postMarkers);
 $monthlyReports = 0;
 try {
-    $totalReports   = (int) db()->query("SELECT COUNT(*) FROM Post WHERE status='PUBLISHED'")->fetchColumn();
     $monthlyReports = (int) db()->query("SELECT COUNT(*) FROM Post WHERE status='PUBLISHED' AND createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
 } catch (Exception $e) { /* ignore */ }
 
@@ -359,6 +511,37 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
           </div>
         </div>
 
+        <!-- Published Reports toggle -->
+        <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(99,102,241,.85)">Published Reports</p>
+            <button id="reports-toggle-btn" onclick="toggleReports()"
+                    class="text-[10px] font-black px-2.5 py-1 rounded-lg transition-all"
+                    style="background:rgba(99,102,241,.25);color:#818CF8;border:1px solid rgba(99,102,241,.35)">
+              ON
+            </button>
+          </div>
+          <p class="text-[10px] mb-3" style="color:rgba(255,255,255,.28)"><?= count($postMarkers) ?> report<?= count($postMarkers) !== 1 ? 's' : '' ?> from the database</p>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#750B25;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Article</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#E7952A;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Podcast</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#ED1C24;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Video</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#6366F1;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Document</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div><!-- /#ctrl-panel -->
 
@@ -536,6 +719,9 @@ var CNAME = {
   CF:'Cent. African Rep.',TD:'Chad',NG:'Nigeria (NE)',CM:'Cameroon'
 };
 
+/* ── Published post markers from DB ──────────────────────────────── */
+var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
 /* ── Map initialisation ───────────────────────────────────────────── */
 var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -585,12 +771,47 @@ function wrap(dot, col, dur, delay) {
        + ';animation:pulse-ring '+dur+' ease-out '+delay+' infinite;"></div></div>';
 }
 
+/* ── Post marker icon factory ─────────────────────────────────────── */
+var POST_TYPE_COLORS = {
+  ARTICLE:'#750B25', PODCAST:'#E7952A', VIDEO:'#ED1C24',
+  DOCUMENT:'#6366F1', GALLERY_IMAGE:'#10B981'
+};
+function makePostIcon(d) {
+  var col = POST_TYPE_COLORS[d.type] || '#750B25';
+  return L.divIcon({
+    className: '',
+    iconSize:  [22, 22],
+    iconAnchor:[11, 11],
+    tooltipAnchor: [14, 0],
+    html: '<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center">'
+        + '<div style="width:13px;height:13px;background:'+col
+        + ';border:2px solid rgba(255,255,255,.75);border-radius:3px;'
+        + 'box-shadow:0 2px 10px rgba(0,0,0,.45);cursor:pointer"></div>'
+        + '</div>',
+  });
+}
+
+/* ── Toggle published reports layer ──────────────────────────────── */
+function toggleReports() {
+  showReports = !showReports;
+  var btn = document.getElementById('reports-toggle-btn');
+  if (btn) {
+    btn.textContent = showReports ? 'ON' : 'OFF';
+    btn.style.background    = showReports ? 'rgba(99,102,241,.25)' : 'rgba(255,255,255,.06)';
+    btn.style.color         = showReports ? '#818CF8' : 'rgba(255,255,255,.35)';
+    btn.style.borderColor   = showReports ? 'rgba(99,102,241,.35)' : 'rgba(255,255,255,.1)';
+  }
+  applyFilters();
+}
+
 /* ── State ────────────────────────────────────────────────────────── */
-var markers   = [];
-var heatLayer = null;
-var viewMode  = 'markers';
-var selCtry   = 'ALL';
-var allCatsOn = true;
+var markers      = [];
+var postMarkers  = [];  // Leaflet markers for DB posts
+var heatLayer    = null;
+var viewMode     = 'markers';
+var selCtry      = 'ALL';
+var allCatsOn    = true;
+var showReports  = true;
 
 /* ── HTML escape ──────────────────────────────────────────────────── */
 function esc(s) {
@@ -635,10 +856,13 @@ function applyFilters() {
   var minInt = parseInt(document.getElementById('int-slider').value, 10);
   var cats   = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
 
-  // Remove existing markers & heat
+  // Remove existing conflict markers & heat
   markers.forEach(function(m){ map.removeLayer(m); });
   markers = [];
   if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+  // Remove existing post markers
+  postMarkers.forEach(function(m){ map.removeLayer(m); });
+  postMarkers = [];
 
   var catCounts = {};
   var visible   = [];
@@ -661,7 +885,7 @@ function applyFilters() {
     el.textContent = n > 0 ? n : '';
   });
 
-  // Render markers or heatmap
+  // Render conflict markers or heatmap
   if (viewMode === 'markers') {
     visible.forEach(function(d) {
       var m = L.marker([d.lat, d.lng], { icon: makeIcon(d) })
@@ -686,10 +910,38 @@ function applyFilters() {
     }
   }
 
+  // Render post pins (always on top of heat or markers layer)
+  var visiblePosts = 0;
+  if (showReports && postData && postData.length) {
+    postData.forEach(function(d) {
+      // Country filter: map code → name for comparison
+      if (selCtry !== 'ALL' && CNAME[selCtry] !== d.country) return;
+      // Category filter
+      if (cats.indexOf(d.category) === -1) return;
+      // Search filter
+      if (q) {
+        var haystack = d.title.toLowerCase() + ' ' + d.country.toLowerCase() + ' ' + (d.region || '').toLowerCase() + ' ' + d.category.toLowerCase() + ' ' + d.type.toLowerCase();
+        if (haystack.indexOf(q) === -1) return;
+      }
+      visiblePosts++;
+      var m = L.marker([d.lat, d.lng], {
+        icon: makePostIcon(d),
+        zIndexOffset: 500
+      }).bindTooltip(
+        '<strong>' + esc(d.title) + '</strong><br><small>' + esc(d.type) + ' · ' + esc(d.country) + '</small>',
+        { direction: 'right', opacity: 1 }
+      );
+      m.on('click', function() { openPostDetail(d); });
+      m.addTo(map);
+      postMarkers.push(m);
+    });
+  }
+
   // Active count pill
   var critical = visible.filter(function(d){ return d.intensity >= 8; }).length;
-  document.getElementById('active-count').textContent =
-    visible.length + ' location' + (visible.length !== 1 ? 's' : '') + ' · ' + critical + ' critical';
+  var pill = visible.length + ' location' + (visible.length !== 1 ? 's' : '') + ' · ' + critical + ' critical';
+  if (visiblePosts > 0) pill += ' · ' + visiblePosts + ' report' + (visiblePosts !== 1 ? 's' : '');
+  document.getElementById('active-count').textContent = pill;
 
   // KPI hotspots (always from full dataset)
   var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
@@ -841,6 +1093,59 @@ function openDetail(d) {
 function closeDetail() {
   document.getElementById('detail-panel').classList.remove('panel-open');
   document.getElementById('detail-panel').classList.add('panel-hidden');
+}
+
+/* ── Post detail panel ────────────────────────────────────────────── */
+function openPostDetail(d) {
+  var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
+  var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery'};
+  var col    = POST_TYPE_COLORS[d.type] || '#750B25';
+  var label  = TYPE_LABEL[d.type]  || 'Report';
+  var action = TYPE_ACTION[d.type] || 'Read More';
+  var catC   = CAT_COLORS[d.category] || '#64748b';
+
+  if (window.innerWidth < 768) {
+    document.getElementById('ctrl-panel').classList.remove('ctrl-open');
+  }
+
+  document.getElementById('detail-content').innerHTML =
+    '<div style="height:4px;background:'+col+'"></div>'
+    + '<div style="padding:18px 18px 28px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
+    + '<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:'+col+'">'
+    + esc(label)+'</span>'
+    + '<button onclick="closeDetail()" style="width:28px;height:28px;border-radius:50%;border:none;'
+    + 'background:#f1f5f9;color:#64748b;cursor:pointer;font-size:18px;line-height:1;'
+    + 'display:flex;align-items:center;justify-content:center">&times;</button>'
+    + '</div>'
+    + (d.thumb
+       ? '<img src="'+esc(d.thumb)+'" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:14px" onerror="this.style.display=\'none\'">'
+       : '')
+    + '<h3 style="font-family:Outfit,sans-serif;font-weight:900;font-size:18px;color:#0f172a;margin:0 0 10px;line-height:1.35">'
+    + esc(d.title)+'</h3>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'
+    + '<span style="background:#f1f5f9;color:#64748b;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
+    + '📍 '+esc(d.country)+(d.region ? ', '+esc(d.region) : '')+'</span>'
+    + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'38;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
+    + esc(d.category)+'</span>'
+    + '</div>'
+    + (d.desc
+       ? '<div style="margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:10px;border-left:3px solid '+col+'">'
+         + '<p style="font-size:13px;color:#374151;line-height:1.7;margin:0">'+esc(d.desc)+(d.desc.length >= 150 ? '…' : '')+'</p>'
+         + '</div>'
+       : '')
+    + '<p style="font-size:11px;color:#94a3b8;margin:0 0 18px">Published '+esc(d.date)+'</p>'
+    + '<a href="'+esc(d.url)+'"'
+    + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;'
+    + 'padding:12px 16px;border-radius:12px;background:'+col+';color:#fff;'
+    + 'font-size:13px;font-weight:700;justify-content:center">'
+    + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">'
+    + '<path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>'
+    + '</svg>'+action+'</a>'
+    + '</div>';
+
+  document.getElementById('detail-panel').classList.add('panel-open');
+  document.getElementById('detail-panel').classList.remove('panel-hidden');
 }
 
 /* ── Keyboard shortcuts ───────────────────────────────────────────── */

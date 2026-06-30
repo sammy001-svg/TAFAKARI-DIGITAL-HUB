@@ -514,7 +514,7 @@ try {
               <?php endif; ?>
               <div class="flex items-center justify-between pt-4 mt-auto border-t border-slate-100">
                 <span class="text-[11px] text-slate-400"><?= format_date($pod['createdAt']) ?></span>
-                <a href="/podcasts" class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all" style="color:#C47C1A">
+                <a href="/podcasts/<?= h($pod['id']) ?>" class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all" style="color:#C47C1A">
                   Listen
                   <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
@@ -548,7 +548,7 @@ try {
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <?php foreach ($latestVideos as $vid): ?>
-          <a href="/videos" class="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+          <a href="/videos/<?= h($vid['id']) ?>" class="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             <!-- Thumbnail -->
             <div class="relative h-48 shrink-0 overflow-hidden" style="background:#0D0102">
               <?php if (!empty($vid['thumbnailUrl'])): ?>
@@ -622,7 +622,7 @@ try {
           $ftype = match(true) { $ext==='pdf'=>'PDF', in_array($ext,['doc','docx'])=>'DOC', in_array($ext,['xls','xlsx'])=>'XLS', in_array($ext,['ppt','pptx'])=>'PPT', default=>'DOC' };
           $fcol  = match($ftype) { 'PDF'=>'#dc2626', 'XLS'=>'#16a34a', 'PPT'=>'#ea580c', default=>'#2563eb' };
         ?>
-          <a href="/documents" class="group flex items-start gap-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+          <a href="/documents/<?= h($doc['id']) ?>" class="group flex items-start gap-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             <!-- File icon -->
             <div class="w-14 h-16 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm"
                  style="background:<?= $fcol ?>15;border:1px solid <?= $fcol ?>30">
