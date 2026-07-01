@@ -106,10 +106,15 @@ $twitterUrl  = 'https://twitter.com/intent/tweet?url=' . rawurlencode($shareUrl)
 $facebookUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . rawurlencode($shareUrl);
 $linkedinUrl = 'https://www.linkedin.com/sharing/share-offsite/?url=' . rawurlencode($shareUrl);
 
-$pageTitle    = strip_tags($post['title']) . ' | Tafakari Digital Hub';
-$pageDesc     = $post['description'] ?? '';
-$pageImage    = $post['thumbnailUrl'] ?? '';
-$pageAuthor   = $authorDisplay;
+$pageTitle     = strip_tags($post['title']) . ' | Tafakari Digital Hub';
+$pageDesc      = $post['description'] ?? '';
+$pageImage     = $post['thumbnailUrl'] ?? '';
+$pageType      = 'document';
+$pageAuthor    = $authorDisplay;
+$pagePublished = $post['createdAt'] ?? '';
+$pageModified  = $post['updatedAt'] ?? $post['createdAt'] ?? '';
+$pageMediaUrl  = $mediaUrl;
+$pageUrl       = $shareUrl;
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">

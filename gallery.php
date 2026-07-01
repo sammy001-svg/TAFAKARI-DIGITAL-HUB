@@ -35,7 +35,7 @@ try {
     $off   = ($page - 1) * $perPage;
 
     $stmt = db()->prepare(
-        "SELECT id, title, description, thumbnailUrl, country, region, createdAt
+        "SELECT id, title, description, thumbnailUrl, mediaUrl, country, region, createdAt
          FROM Post WHERE $whereStr ORDER BY createdAt DESC
          LIMIT $perPage OFFSET $off"
     );
@@ -185,23 +185,98 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
 
 <!-- ── Lightbox ──────────────────────────────────────────────────────────────── -->
 <?php if (!empty($images)): ?>
-<div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(5,1,1,.95)">
-  <button onclick="closeLightbox()" class="absolute top-5 right-5 w-10 h-10 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all z-10 text-xl">&times;</button>
-  <button onclick="prevImg()" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all z-10 text-2xl select-none">&#8249;</button>
-  <button onclick="nextImg()" class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all z-10 text-2xl select-none">&#8250;</button>
+<style>
+#lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(5,1,1,.96);
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s ease;
+}
+#lightbox.lb-open { opacity: 1; pointer-events: all; }
+#lb-inner {
+  display: flex; flex-direction: column; align-items: center;
+  max-width: 900px; width: 100%; padding: 4rem 4.5rem 1.5rem;
+  transform: scale(.96);
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+#lightbox.lb-open #lb-inner { transform: scale(1); }
+#lb-img-wrap {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 120px;
+}
+#lb-img {
+  max-height: 62vh; max-width: 100%;
+  border-radius: 16px; object-fit: contain;
+  box-shadow: 0 32px 80px rgba(0,0,0,.6);
+  transition: opacity .2s;
+}
+#lb-spinner {
+  position: absolute;
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,255,255,.12);
+  border-top-color: #E7952A;
+  border-radius: 50%;
+  animation: lb-spin .7s linear infinite;
+  display: none;
+}
+@keyframes lb-spin { to { transform: rotate(360deg); } }
+</style>
 
-  <div class="flex flex-col items-center max-w-5xl w-full px-16 py-8">
-    <img id="lb-img" src="" alt="" class="max-h-[65vh] max-w-full rounded-2xl object-contain shadow-2xl">
-    <div class="mt-5 text-center">
-      <p id="lb-title" class="text-white font-outfit font-bold text-lg"></p>
-      <p id="lb-desc"  class="text-white/50 text-sm mt-1 max-w-xl"></p>
-      <p id="lb-count" class="text-white/30 text-xs mt-2"></p>
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <!-- Backdrop click closes -->
+  <div id="lb-backdrop" style="position:absolute;inset:0;cursor:zoom-out" onclick="closeLightbox()"></div>
+
+  <!-- Close -->
+  <button onclick="closeLightbox()" title="Close (Esc)"
+          style="position:absolute;top:16px;right:16px;z-index:10;width:38px;height:38px;border-radius:50%;border:none;
+                 background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);cursor:pointer;font-size:20px;line-height:1;
+                 display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s"
+          onmouseover="this.style.background='rgba(255,255,255,.16)';this.style.color='#fff'"
+          onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.65)'">&times;</button>
+
+  <!-- Prev -->
+  <button onclick="prevImg()" title="Previous (←)"
+          style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:10;
+                 width:46px;height:46px;border-radius:50%;border:none;
+                 background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);cursor:pointer;font-size:26px;line-height:1;
+                 display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;user-select:none"
+          onmouseover="this.style.background='rgba(255,255,255,.16)';this.style.color='#fff'"
+          onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.65)'">&#8249;</button>
+
+  <!-- Next -->
+  <button onclick="nextImg()" title="Next (→)"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:10;
+                 width:46px;height:46px;border-radius:50%;border:none;
+                 background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);cursor:pointer;font-size:26px;line-height:1;
+                 display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;user-select:none"
+          onmouseover="this.style.background='rgba(255,255,255,.16)';this.style.color='#fff'"
+          onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.65)'">&#8250;</button>
+
+  <div id="lb-inner">
+    <!-- Main image -->
+    <div id="lb-img-wrap">
+      <div id="lb-spinner"></div>
+      <img id="lb-img" src="" alt="" style="opacity:0">
     </div>
-    <div class="flex gap-2 mt-5 overflow-x-auto max-w-full pb-2 px-2" style="scrollbar-width:thin;scrollbar-color:#E7952A transparent">
+
+    <!-- Caption -->
+    <div style="margin-top:18px;text-align:center;width:100%">
+      <p id="lb-title" style="font-family:Outfit,sans-serif;font-weight:800;font-size:17px;color:#fff;margin:0 0 5px;line-height:1.3"></p>
+      <p id="lb-desc"  style="font-size:13px;color:rgba(255,255,255,.45);margin:0 0 6px;max-width:560px;margin-inline:auto;line-height:1.6"></p>
+      <p id="lb-count" style="font-size:11px;color:rgba(255,255,255,.25);margin:0"></p>
+    </div>
+
+    <!-- Thumbnail strip -->
+    <div style="display:flex;gap:8px;margin-top:18px;overflow-x:auto;max-width:100%;padding-bottom:6px;
+                scrollbar-width:thin;scrollbar-color:#E7952A transparent">
       <?php foreach ($images as $idx => $img): ?>
-        <img src="<?= h($img['thumbnailUrl'] ?? '') ?>" alt=""
-             class="lb-thumb w-14 h-14 object-cover rounded-xl cursor-pointer border-2 border-transparent hover:border-amber-400 transition-all shrink-0 opacity-60 hover:opacity-100"
-             data-index="<?= $idx ?>" onclick="goLightbox(<?= $idx ?>)">
+        <img src="<?= h($img['thumbnailUrl'] ?? '') ?>" alt="<?= h($img['title']) ?>"
+             class="lb-thumb"
+             data-index="<?= $idx ?>" onclick="goLightbox(<?= $idx ?>)"
+             style="width:56px;height:56px;object-fit:cover;border-radius:10px;cursor:pointer;
+                    border:2px solid transparent;flex-shrink:0;opacity:.5;
+                    transition:border-color .15s,opacity .15s">
       <?php endforeach; ?>
     </div>
   </div>
@@ -211,50 +286,94 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
 var galleryData = <?= json_encode(array_values(array_map(fn($i) => [
     'title' => $i['title'],
     'desc'  => $i['description'] ?? '',
-    'src'   => $i['thumbnailUrl'] ?? '',
-    'meta'  => ($i['region'] ?? $i['country']) . ' · ' . date('M Y', strtotime($i['createdAt'])),
-], $images))) ?>;
+    'src'   => $i['mediaUrl'] ?: ($i['thumbnailUrl'] ?? ''),
+    'thumb' => $i['thumbnailUrl'] ?? '',
+    'meta'  => trim(($i['region'] ? $i['region'] . ', ' : '') . $i['country'])
+               . ' · ' . date('M Y', strtotime($i['createdAt'])),
+], $images)), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
 var curIdx = 0;
+var lbOpen = false;
+var touchStartX = 0;
 
 function openLightbox(idx) {
-    curIdx = idx;
-    document.getElementById('lightbox').classList.remove('hidden');
-    document.getElementById('lightbox').classList.add('flex');
+    curIdx  = idx;
+    lbOpen  = true;
+    var lb  = document.getElementById('lightbox');
+    lb.classList.add('lb-open');
     document.body.style.overflow = 'hidden';
     updateLightbox();
 }
+
 function closeLightbox() {
-    document.getElementById('lightbox').classList.add('hidden');
-    document.getElementById('lightbox').classList.remove('flex');
+    lbOpen = false;
+    document.getElementById('lightbox').classList.remove('lb-open');
     document.body.style.overflow = '';
 }
-function goLightbox(idx) { curIdx = idx; updateLightbox(); }
+
+function goLightbox(idx) {
+    if (idx === curIdx) return;
+    curIdx = idx;
+    updateLightbox();
+}
+
 function prevImg() { curIdx = (curIdx - 1 + galleryData.length) % galleryData.length; updateLightbox(); }
-function nextImg() { curIdx = (curIdx + 1) % galleryData.length; updateLightbox(); }
+function nextImg() { curIdx = (curIdx + 1)                      % galleryData.length; updateLightbox(); }
 
 function updateLightbox() {
-    var d = galleryData[curIdx];
-    var img = document.getElementById('lb-img');
-    img.src = d.src;
-    img.alt = d.title;
+    var d      = galleryData[curIdx];
+    var img    = document.getElementById('lb-img');
+    var spin   = document.getElementById('lb-spinner');
+
+    // Show spinner, hide image while loading
+    img.style.opacity = '0';
+    spin.style.display = 'block';
+
+    var tmp    = new Image();
+    tmp.onload = function() {
+        img.src           = d.src;
+        img.alt           = d.title;
+        img.style.opacity = '1';
+        spin.style.display = 'none';
+    };
+    tmp.onerror = function() {
+        img.src           = d.thumb;
+        img.alt           = d.title;
+        img.style.opacity = '1';
+        spin.style.display = 'none';
+    };
+    tmp.src = d.src;
+
     document.getElementById('lb-title').textContent = d.title;
     document.getElementById('lb-desc').textContent  = d.desc;
-    document.getElementById('lb-count').textContent = (curIdx + 1) + ' / ' + galleryData.length + ' · ' + d.meta;
+    document.getElementById('lb-count').textContent = (curIdx + 1) + ' of ' + galleryData.length + ' · ' + d.meta;
+
     document.querySelectorAll('.lb-thumb').forEach(function(t, i) {
-        t.style.borderColor = i === curIdx ? '#E7952A' : 'transparent';
-        t.style.opacity     = i === curIdx ? '1' : '0.6';
-        if (i === curIdx) t.scrollIntoView({ block: 'nearest', inline: 'center' });
+        var active = (i === curIdx);
+        t.style.borderColor = active ? '#E7952A' : 'transparent';
+        t.style.opacity     = active ? '1' : '0.5';
+        if (active) t.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
     });
 }
 
+/* Keyboard */
 document.addEventListener('keydown', function(e) {
-    var lb = document.getElementById('lightbox');
-    if (lb.classList.contains('hidden')) return;
-    if (e.key === 'ArrowLeft')  prevImg();
-    if (e.key === 'ArrowRight') nextImg();
-    if (e.key === 'Escape')     closeLightbox();
+    if (!lbOpen) return;
+    if (e.key === 'ArrowLeft'  || e.key === 'a') prevImg();
+    if (e.key === 'ArrowRight' || e.key === 'd') nextImg();
+    if (e.key === 'Escape')                       closeLightbox();
 });
+
+/* Touch swipe */
+document.getElementById('lightbox').addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.getElementById('lightbox').addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+        if (dx < 0) nextImg(); else prevImg();
+    }
+}, { passive: true });
 </script>
 <?php endif; ?>
 

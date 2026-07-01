@@ -7,6 +7,38 @@ require_once __DIR__ . '/includes/functions.php';
 $pageTitle = 'Tafakari Digital Hub | Knowledge, Media & Community Platform for East & Central Africa';
 $pageDesc  = 'A centralized knowledge repository, media broadcasting center, and community engagement hub serving Kenya, Ethiopia, and the Democratic Republic of Congo.';
 
+// ── Site settings ──────────────────────────────────────────────────────────
+$announcementActive = get_setting('announcement_active', '0');
+$announcementText   = get_setting('announcement_text',   '');
+$announcementUrl    = get_setting('announcement_url',    '');
+$announcementColor  = get_setting('announcement_color',  'crimson');
+$featuredId         = get_setting('featured_article_id', '');
+$carouselJson       = get_setting('carousel_slides',     '[]');
+$showPodcasts       = get_setting('show_podcasts',  '1') !== '0';
+$showVideos         = get_setting('show_videos',    '1') !== '0';
+$showDocuments      = get_setting('show_documents', '1') !== '0';
+
+$dbSlides = json_decode($carouselJson, true);
+$useDbCarousel = is_array($dbSlides) && count($dbSlides) > 0;
+
+// Featured article
+$featuredPost = null;
+if ($featuredId) {
+    try {
+        $s = db()->prepare("SELECT id,title,description,thumbnailUrl,country,issueCategory,createdAt FROM Post WHERE id=? AND type='ARTICLE' AND status='PUBLISHED' LIMIT 1");
+        $s->execute([$featuredId]);
+        $featuredPost = $s->fetch() ?: null;
+    } catch (Exception $e) {}
+}
+
+// Banner color map
+$bannerBg = match($announcementColor) {
+    'amber'  => '#E7952A',
+    'green'  => '#059669',
+    'slate'  => '#334155',
+    default  => '#750B25',
+};
+
 $latestArticles  = [];
 $latestPodcasts  = [];
 $latestVideos    = [];
@@ -169,6 +201,19 @@ try {
 </style>
 
 <body class="antialiased min-h-screen flex flex-col bg-white font-inter">
+
+<?php if ($announcementActive === '1' && $announcementText !== ''): ?>
+<div id="site-banner" style="background:<?= h($bannerBg) ?>;color:#fff;font-size:13px;font-weight:600;text-align:center;padding:9px 48px;position:relative;line-height:1.4">
+  <?php if ($announcementUrl): ?>
+    <a href="<?= h($announcementUrl) ?>" style="color:inherit;text-decoration:underline;text-underline-offset:2px"><?= h($announcementText) ?></a>
+  <?php else: ?>
+    <?= h($announcementText) ?>
+  <?php endif; ?>
+  <button onclick="this.parentElement.remove()" title="Dismiss"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
+</div>
+<?php endif; ?>
+
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
 <main class="flex-grow flex flex-col">
@@ -179,29 +224,15 @@ try {
   <section class="relative w-full overflow-hidden" style="height:93vh;min-height:580px">
 
     <?php
-    $slides = [
-      [
-        'img'    => '/public/nairobi_sunset_hero.png',
-        'region' => 'Kenya',
-        'title'  => 'Tracking What Matters Across All 47 Counties',
-        'sub'    => 'Real-time issue mapping and data-driven insights powering better decisions across Kenya.',
-        'badge'  => '47 Counties Covered',
-      ],
-      [
-        'img'    => '/public/ethiopia_community_hero.png',
-        'region' => 'Ethiopia',
-        'title'  => 'Community Knowledge from the Horn of Africa',
-        'sub'    => 'Field reports, research briefs and oral histories from 11 regional states documented for public access.',
-        'badge'  => '11 Regional States',
-      ],
-      [
-        'img'    => '/public/drc_nature_hero.png',
-        'region' => 'DR Congo',
-        'title'  => 'Amplifying Voices from the Congo Basin',
-        'sub'    => 'Documenting resilience, community narratives, and structural change across 26 provinces.',
-        'badge'  => '26 Provinces',
-      ],
+    $defaultSlides = [
+      ['img'=>'/public/nairobi_sunset_hero.png',     'region'=>'Kenya',    'title'=>'Tracking What Matters Across All 47 Counties',      'sub'=>'Real-time issue mapping and data-driven insights powering better decisions across Kenya.',                                      'badge'=>'47 Counties Covered', 'url'=>''],
+      ['img'=>'/public/ethiopia_community_hero.png', 'region'=>'Ethiopia', 'title'=>'Community Knowledge from the Horn of Africa',        'sub'=>'Field reports, research briefs and oral histories from 11 regional states documented for public access.',                    'badge'=>'11 Regional States',  'url'=>''],
+      ['img'=>'/public/drc_nature_hero.png',         'region'=>'DR Congo', 'title'=>'Amplifying Voices from the Congo Basin',            'sub'=>'Documenting resilience, community narratives, and structural change across 26 provinces.',                                   'badge'=>'26 Provinces',        'url'=>''],
     ];
+    $slides = $useDbCarousel ? $dbSlides : $defaultSlides;
+    // filter out slides with no image or title
+    $slides = array_values(array_filter($slides, fn($s) => !empty($s['img']) && !empty($s['title'])));
+    if (empty($slides)) $slides = $defaultSlides;
     foreach ($slides as $i => $s): ?>
       <div class="hero-slide <?= $i === 0 ? 'opacity-100' : 'opacity-0' ?>" data-index="<?= $i ?>">
         <img src="<?= h($s['img']) ?>" alt="<?= h($s['title']) ?>"
@@ -387,6 +418,41 @@ try {
 
 
   <!-- ══════════════════════════════════════════
+       5a. EDITOR'S PICK (featured article, if pinned)
+  ══════════════════════════════════════════ -->
+  <?php if ($featuredPost): ?>
+  <section class="max-w-7xl mx-auto px-6 pt-16 pb-0">
+    <div class="eyebrow-left">Editor's Pick</div>
+    <a href="/news/<?= h($featuredPost['id']) ?>"
+       class="flex flex-col md:flex-row gap-6 bg-white rounded-3xl overflow-hidden border border-amber-200 shadow-md hover:shadow-xl transition-shadow group"
+       style="border-left:5px solid #E7952A">
+      <?php if ($featuredPost['thumbnailUrl']): ?>
+        <div class="md:w-80 shrink-0 overflow-hidden" style="background:#0D0102">
+          <img src="<?= h($featuredPost['thumbnailUrl']) ?>" alt="<?= h($featuredPost['title']) ?>"
+               class="w-full h-56 md:h-full object-cover group-hover:scale-105 transition-transform duration-500">
+        </div>
+      <?php endif; ?>
+      <div class="flex flex-col justify-center p-7">
+        <div class="flex flex-wrap gap-2 mb-3">
+          <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full" style="background:#E7952A22;color:#92400E">Featured Report</span>
+          <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-slate-100 text-slate-500"><?= h($featuredPost['country']) ?></span>
+        </div>
+        <h2 class="font-outfit font-black text-2xl md:text-3xl text-slate-900 leading-tight mb-3 group-hover:text-[#750B25] transition-colors">
+          <?= h($featuredPost['title']) ?>
+        </h2>
+        <?php if ($featuredPost['description']): ?>
+          <p class="text-slate-500 text-sm leading-relaxed mb-4 line-clamp-3"><?= h($featuredPost['description']) ?></p>
+        <?php endif; ?>
+        <div class="flex items-center gap-2 text-xs font-bold" style="color:#E7952A">
+          Read Full Report
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
+      </div>
+    </a>
+  </section>
+  <?php endif; ?>
+
+  <!-- ══════════════════════════════════════════
        5. LATEST ARTICLES (conditional)
   ══════════════════════════════════════════ -->
   <?php if (!empty($latestArticles)): ?>
@@ -464,7 +530,7 @@ try {
   <!-- ══════════════════════════════════════════
        5b. LATEST PODCASTS (conditional)
   ══════════════════════════════════════════ -->
-  <?php if (!empty($latestPodcasts)): ?>
+  <?php if ($showPodcasts && !empty($latestPodcasts)): ?>
   <section class="border-t border-slate-100 py-24 px-6" style="background:#F8F8F0">
     <div class="max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-14">
@@ -533,7 +599,7 @@ try {
   <!-- ══════════════════════════════════════════
        5c. LATEST VIDEOS (conditional)
   ══════════════════════════════════════════ -->
-  <?php if (!empty($latestVideos)): ?>
+  <?php if ($showVideos && !empty($latestVideos)): ?>
   <section class="border-t border-slate-100 py-24 px-6 bg-white">
     <div class="max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-14">
@@ -603,7 +669,7 @@ try {
   <!-- ══════════════════════════════════════════
        5d. LATEST DOCUMENTS (conditional)
   ══════════════════════════════════════════ -->
-  <?php if (!empty($latestDocuments)): ?>
+  <?php if ($showDocuments && !empty($latestDocuments)): ?>
   <section class="border-t border-slate-100 py-24 px-6" style="background:#F8F8F0">
     <div class="max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-14">

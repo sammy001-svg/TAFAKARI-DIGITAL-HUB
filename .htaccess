@@ -27,6 +27,10 @@ RewriteRule ^api/stats/?$                 api/stats.php              [L,QSA]
 RewriteRule ^api/setup/init-db/?$         api/setup-init.php         [L,QSA]
 RewriteRule ^api/setup/?$                 api/setup-check.php        [L,QSA]
 RewriteRule ^api/upload/?$                api/upload.php             [L,QSA]
+RewriteRule ^api/settings/?$             api/settings.php           [L,QSA]
+
+# ── SEO / system ─────────────────────────────────────────────────
+RewriteRule ^sitemap\.xml$                sitemap.php          [L]
 
 # ── Public pages ─────────────────────────────────────────────────
 RewriteRule ^about/?$                     about.php            [L]
@@ -77,3 +81,4 @@ RewriteRule ^admin/super/approvals/?$     admin/super/approvals.php    [L]
 RewriteRule ^admin/super/moderation/?$    admin/super/moderation.php   [L]
 RewriteRule ^admin/super/users/?$         admin/super/users.php        [L]
 RewriteRule ^admin/super/messages/?$      admin/super/messages.php     [L]
+RewriteRule ^admin/super/settings/?$      admin/super/settings.php     [L,QSA]

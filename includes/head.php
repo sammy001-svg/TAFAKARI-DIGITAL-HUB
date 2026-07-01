@@ -17,29 +17,78 @@ $_published = $pagePublished ?? '';
 $_modified  = $pageModified  ?? $pagePublished ?? '';
 $_keywords  = $pageKeywords  ?? 'Africa, conflict, peace, research, Kenya, Ethiopia, DR Congo, policy, governance';
 $_siteName  = 'Tafakari Digital Hub — CRTP';
+$_mediaUrl  = $pageMediaUrl  ?? '';
 
 // Absolute image URL
 if ($_image && !str_starts_with($_image, 'http')) {
     $_image = $_siteRoot . $_image;
 }
+// Absolute media URL
+if ($_mediaUrl && !str_starts_with($_mediaUrl, 'http')) {
+    $_mediaUrl = $_siteRoot . $_mediaUrl;
+}
 
-// JSON-LD schema
+$_pub = $_published ? date('c', strtotime($_published)) : null;
+$_mod = $_modified  ? date('c', strtotime($_modified))  : null;
+$_org = [
+    '@type' => 'Organization',
+    'name'  => 'Tafakari Digital Hub',
+    'logo'  => ['@type' => 'ImageObject', 'url' => $_siteRoot . '/public/crtp-logo.jpg'],
+];
+
+// JSON-LD schema — type-specific
 if ($_type === 'article') {
     $_schema = [
-        '@context'        => 'https://schema.org',
-        '@type'           => 'Article',
-        'headline'        => $_title,
-        'description'     => $_desc,
-        'image'           => $_image ?: null,
-        'datePublished'   => $_published ? date('c', strtotime($_published)) : null,
-        'dateModified'    => $_modified  ? date('c', strtotime($_modified))  : null,
-        'author'          => ['@type' => 'Person', 'name' => $_author],
-        'publisher'       => [
-            '@type' => 'Organization',
-            'name'  => 'Tafakari Digital Hub',
-            'logo'  => ['@type' => 'ImageObject', 'url' => $_siteRoot . '/public/crtp-logo.jpg'],
-        ],
-        'mainEntityOfPage'=> ['@type' => 'WebPage', '@id' => $_canonical],
+        '@context'         => 'https://schema.org',
+        '@type'            => 'NewsArticle',
+        'headline'         => $_title,
+        'description'      => $_desc,
+        'image'            => $_image ?: null,
+        'datePublished'    => $_pub,
+        'dateModified'     => $_mod,
+        'author'           => ['@type' => 'Person', 'name' => $_author],
+        'publisher'        => $_org,
+        'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $_canonical],
+    ];
+} elseif ($_type === 'podcast') {
+    $_schema = [
+        '@context'      => 'https://schema.org',
+        '@type'         => 'PodcastEpisode',
+        'name'          => $_title,
+        'description'   => $_desc,
+        'datePublished' => $_pub,
+        'image'         => $_image ?: null,
+        'url'           => $_canonical,
+        'audio'         => $_mediaUrl ? ['@type' => 'AudioObject', 'contentUrl' => $_mediaUrl] : null,
+        'partOfSeries'  => ['@type' => 'PodcastSeries', 'name' => 'Tafakari Digital Hub Podcast', 'url' => $_siteRoot . '/podcasts'],
+        'author'        => ['@type' => 'Person', 'name' => $_author],
+        'publisher'     => $_org,
+    ];
+} elseif ($_type === 'video') {
+    $_schema = [
+        '@context'     => 'https://schema.org',
+        '@type'        => 'VideoObject',
+        'name'         => $_title,
+        'description'  => $_desc,
+        'thumbnailUrl' => $_image ?: null,
+        'uploadDate'   => $_pub,
+        'contentUrl'   => $_mediaUrl ?: null,
+        'url'          => $_canonical,
+        'author'       => ['@type' => 'Person', 'name' => $_author],
+        'publisher'    => $_org,
+    ];
+} elseif ($_type === 'document') {
+    $_schema = [
+        '@context'      => 'https://schema.org',
+        '@type'         => 'DigitalDocument',
+        'name'          => $_title,
+        'description'   => $_desc,
+        'datePublished' => $_pub,
+        'dateModified'  => $_mod,
+        'image'         => $_image ?: null,
+        'url'           => $_canonical,
+        'author'        => ['@type' => 'Person', 'name' => $_author],
+        'publisher'     => $_org,
     ];
 } else {
     $_schema = [
@@ -55,7 +104,7 @@ if ($_type === 'article') {
         ],
     ];
 }
-$_schemaJson = json_encode(array_filter($_schema), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+$_schemaJson = json_encode(array_filter($_schema, fn($v) => $v !== null), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 ?>
 <!DOCTYPE html>
 <html lang="en" prefix="og: https://ogp.me/ns#">

@@ -137,6 +137,37 @@ function doc_file_type(string $url): string {
     return match($ext) { 'pdf'=>'PDF', 'doc','docx'=>'Word', 'xls','xlsx'=>'Excel', 'ppt','pptx'=>'PowerPoint', default=>strtoupper($ext) ?: 'File' };
 }
 
+// ── Site settings helpers ─────────────────────────────────────────
+function get_setting(string $key, string $default = ''): string {
+    static $cache = [];
+    if (array_key_exists($key, $cache)) return $cache[$key];
+    try {
+        $stmt = db()->prepare('SELECT `value` FROM SiteSetting WHERE `key` = ? LIMIT 1');
+        $stmt->execute([$key]);
+        $row = $stmt->fetch();
+        return $cache[$key] = ($row !== false ? (string)($row['value'] ?? '') : $default);
+    } catch (Exception $e) { return $cache[$key] = $default; }
+}
+
+function set_setting(string $key, string $value, string $updatedBy = ''): void {
+    try {
+        db()->prepare(
+            'INSERT INTO SiteSetting (`key`,`value`,`updatedAt`,`updatedBy`) VALUES (?,?,NOW(3),?)
+             ON DUPLICATE KEY UPDATE `value`=VALUES(`value`),`updatedAt`=NOW(3),`updatedBy`=VALUES(`updatedBy`)'
+        )->execute([$key, $value, $updatedBy ?: null]);
+    } catch (Exception $e) { /* table may not exist yet */ }
+}
+
+function ensure_settings_table(): void {
+    try {
+        db()->exec("CREATE TABLE IF NOT EXISTS `SiteSetting` (
+          `key` VARCHAR(100) NOT NULL, `value` TEXT NULL,
+          `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          `updatedBy` VARCHAR(191) NULL, PRIMARY KEY (`key`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    } catch (Exception $e) {}
+}
+
 // ── JSON API helpers ─────────────────────────────────────────────
 
 function json_response(mixed $data, int $status = 200): never {
