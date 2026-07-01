@@ -4,42 +4,59 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-// ── Country centre coordinates ─────────────────────────────────────────
-$countryCoords = [
-    'Kenya'                        => [  0.023,  37.906, 'KE'],
-    'Ethiopia'                     => [  9.145,  40.489, 'ET'],
-    'DR Congo'                     => [ -4.038,  21.759, 'CD'],
-    'Democratic Republic of Congo' => [ -4.038,  21.759, 'CD'],
-    'South Sudan'                  => [  6.877,  31.307, 'SS'],
-    'Sudan'                        => [ 12.862,  30.218, 'SD'],
-    'Uganda'                       => [  1.373,  32.290, 'UG'],
-    'Tanzania'                     => [ -6.369,  34.889, 'TZ'],
-    'Rwanda'                       => [ -1.940,  29.874, 'RW'],
-    'Burundi'                      => [ -3.373,  29.918, 'BI'],
-    'Somalia'                      => [  5.152,  46.200, 'SO'],
-    'Mozambique'                   => [-18.665,  35.530, 'MZ'],
-    'Burkina Faso'                 => [ 12.364,  -1.534, 'BF'],
-    'Mali'                         => [ 17.570,  -3.996, 'ML'],
-    'Niger'                        => [ 17.608,   8.082, 'NE'],
-    'Nigeria'                      => [  9.082,   8.675, 'NG'],
-    'Chad'                         => [ 15.454,  18.732, 'TD'],
-    'Central African Republic'     => [  6.611,  20.939, 'CF'],
-    'Cameroon'                     => [  3.848,  11.502, 'CM'],
-    'South Africa'                 => [-30.559,  22.938, 'ZA'],
-    'Ghana'                        => [  7.946,  -1.024, 'GH'],
-    'Senegal'                      => [ 14.497, -14.452, 'SN'],
-    'Egypt'                        => [ 26.820,  30.802, 'EG'],
-    'Morocco'                      => [ 31.792,  -7.092, 'MA'],
-    'Algeria'                      => [ 28.034,   1.659, 'DZ'],
-    'Angola'                       => [-11.203,  17.874, 'AO'],
-    'Zambia'                       => [-13.134,  27.849, 'ZM'],
-    'Zimbabwe'                     => [-19.015,  29.154, 'ZW'],
-    'Malawi'                       => [-13.254,  34.302, 'MW'],
-    'Madagascar'                   => [-18.767,  46.869, 'MG'],
-    'Liberia'                      => [  6.428, -10.785, 'LR'],
-    'Sierra Leone'                 => [  8.460, -11.780, 'SL'],
-    'Guinea'                       => [ 11.805, -11.805, 'GN'],
+// ── Country data (master list — overridable via Admin › Heatmap Config) ───
+$_defaultCountriesData = [
+    ['name'=>'Kenya',                    'code'=>'KE','flag'=>'🇰🇪','lat'=>0.023,  'lng'=>37.906],
+    ['name'=>'Ethiopia',                 'code'=>'ET','flag'=>'🇪🇹','lat'=>9.145,  'lng'=>40.489],
+    ['name'=>'DR Congo',                 'code'=>'CD','flag'=>'🇨🇩','lat'=>-4.038, 'lng'=>21.759],
+    ['name'=>'South Sudan',              'code'=>'SS','flag'=>'🇸🇸','lat'=>6.877,  'lng'=>31.307],
+    ['name'=>'Sudan',                    'code'=>'SD','flag'=>'🇸🇩','lat'=>12.862, 'lng'=>30.218],
+    ['name'=>'Uganda',                   'code'=>'UG','flag'=>'🇺🇬','lat'=>1.373,  'lng'=>32.290],
+    ['name'=>'Tanzania',                 'code'=>'TZ','flag'=>'🇹🇿','lat'=>-6.369, 'lng'=>34.889],
+    ['name'=>'Rwanda',                   'code'=>'RW','flag'=>'🇷🇼','lat'=>-1.940, 'lng'=>29.874],
+    ['name'=>'Burundi',                  'code'=>'BI','flag'=>'🇧🇮','lat'=>-3.373, 'lng'=>29.918],
+    ['name'=>'Somalia',                  'code'=>'SO','flag'=>'🇸🇴','lat'=>5.152,  'lng'=>46.200],
+    ['name'=>'Mozambique',               'code'=>'MZ','flag'=>'🇲🇿','lat'=>-18.665,'lng'=>35.530],
+    ['name'=>'Burkina Faso',             'code'=>'BF','flag'=>'🇧🇫','lat'=>12.364, 'lng'=>-1.534],
+    ['name'=>'Mali',                     'code'=>'ML','flag'=>'🇲🇱','lat'=>17.570, 'lng'=>-3.996],
+    ['name'=>'Niger',                    'code'=>'NE','flag'=>'🇳🇪','lat'=>17.608, 'lng'=>8.082],
+    ['name'=>'Nigeria',                  'code'=>'NG','flag'=>'🇳🇬','lat'=>9.082,  'lng'=>8.675],
+    ['name'=>'Chad',                     'code'=>'TD','flag'=>'🇹🇩','lat'=>15.454, 'lng'=>18.732],
+    ['name'=>'Central African Republic', 'code'=>'CF','flag'=>'🇨🇫','lat'=>6.611,  'lng'=>20.939],
+    ['name'=>'Cameroon',                 'code'=>'CM','flag'=>'🇨🇲','lat'=>3.848,  'lng'=>11.502],
+    ['name'=>'South Africa',             'code'=>'ZA','flag'=>'🇿🇦','lat'=>-30.559,'lng'=>22.938],
+    ['name'=>'Ghana',                    'code'=>'GH','flag'=>'🇬🇭','lat'=>7.946,  'lng'=>-1.024],
+    ['name'=>'Senegal',                  'code'=>'SN','flag'=>'🇸🇳','lat'=>14.497, 'lng'=>-14.452],
+    ['name'=>'Egypt',                    'code'=>'EG','flag'=>'🇪🇬','lat'=>26.820, 'lng'=>30.802],
+    ['name'=>'Morocco',                  'code'=>'MA','flag'=>'🇲🇦','lat'=>31.792, 'lng'=>-7.092],
+    ['name'=>'Algeria',                  'code'=>'DZ','flag'=>'🇩🇿','lat'=>28.034, 'lng'=>1.659],
+    ['name'=>'Angola',                   'code'=>'AO','flag'=>'🇦🇴','lat'=>-11.203,'lng'=>17.874],
+    ['name'=>'Zambia',                   'code'=>'ZM','flag'=>'🇿🇲','lat'=>-13.134,'lng'=>27.849],
+    ['name'=>'Zimbabwe',                 'code'=>'ZW','flag'=>'🇿🇼','lat'=>-19.015,'lng'=>29.154],
+    ['name'=>'Malawi',                   'code'=>'MW','flag'=>'🇲🇼','lat'=>-13.254,'lng'=>34.302],
+    ['name'=>'Madagascar',               'code'=>'MG','flag'=>'🇲🇬','lat'=>-18.767,'lng'=>46.869],
+    ['name'=>'Liberia',                  'code'=>'LR','flag'=>'🇱🇷','lat'=>6.428,  'lng'=>-10.785],
+    ['name'=>'Sierra Leone',             'code'=>'SL','flag'=>'🇸🇱','lat'=>8.460,  'lng'=>-11.780],
+    ['name'=>'Guinea',                   'code'=>'GN','flag'=>'🇬🇳','lat'=>11.805, 'lng'=>-11.805],
 ];
+$_dbCountries = json_decode(get_setting('heatmap_countries', ''), true);
+$_countriesData = (is_array($_dbCountries) && count($_dbCountries) > 0) ? $_dbCountries : $_defaultCountriesData;
+
+// Derive lookup tables from master list
+$countryCoords = [];
+$ctryList      = ['ALL' => ['All Countries', '🌍']];
+$flagMap       = [];
+$cnameMap      = [];
+foreach ($_countriesData as $_c) {
+    $countryCoords[$_c['name']] = [(float)$_c['lat'], (float)$_c['lng'], $_c['code']];
+    $ctryList[$_c['code']]      = [$_c['name'], $_c['flag'] ?? '🏳'];
+    $flagMap[$_c['code']]       = $_c['flag'] ?? '🏳';
+    $cnameMap[$_c['code']]      = $_c['name'];
+}
+// Handle common alternate spellings
+if (isset($countryCoords['DR Congo'])) {
+    $countryCoords['Democratic Republic of Congo'] = $countryCoords['DR Congo'];
+}
 
 // ── Region/city coordinates ────────────────────────────────────────────
 $regionCoords = [
@@ -74,6 +91,13 @@ $regionCoords = [
     'Bangui'        => [  4.361,  18.555], "N'Djamena" => [ 12.105,  15.044],
     'Harare'        => [-17.828,  31.053], 'Lusaka'    => [-15.416,  28.283],
 ];
+$_dbRegions = json_decode(get_setting('heatmap_regions', ''), true);
+if (is_array($_dbRegions) && count($_dbRegions) > 0) {
+    $regionCoords = [];
+    foreach ($_dbRegions as $_r) {
+        $regionCoords[$_r['name']] = [(float)$_r['lat'], (float)$_r['lng']];
+    }
+}
 
 // ── Issue category → heatmap category mapping ──────────────────────────
 $issueToCat = [
@@ -90,6 +114,37 @@ $issueToCat = [
     'Gender & Social Affairs'     => 'Human Rights',
     'Infrastructure & Energy'     => 'Policy',
 ];
+$_dbIssueMap = json_decode(get_setting('heatmap_issue_map', ''), true);
+if (is_array($_dbIssueMap) && count($_dbIssueMap) > 0) {
+    $issueToCat = [];
+    $first = reset($_dbIssueMap);
+    if (is_array($first) && isset($first['from'])) {
+        foreach ($_dbIssueMap as $_m) {
+            if (!empty($_m['from']) && !empty($_m['to'])) $issueToCat[$_m['from']] = $_m['to'];
+        }
+    } else {
+        $issueToCat = $_dbIssueMap;
+    }
+}
+
+// ── Conflict categories (with display colors) ──────────────────────────
+$cats = [
+    'Security'     => '#ED1C24',
+    'Displacement' => '#E7952A',
+    'Human Rights' => '#F59E0B',
+    'Health'       => '#10B981',
+    'Policy'       => '#8B5CF6',
+    'Climate'      => '#3B82F6',
+    'Education'    => '#6366F1',
+    'Agriculture'  => '#84CC16',
+];
+$_dbCategories = json_decode(get_setting('heatmap_categories', ''), true);
+if (is_array($_dbCategories) && count($_dbCategories) > 0) {
+    $cats = [];
+    foreach ($_dbCategories as $_cat) {
+        $cats[$_cat['name']] = $_cat['color'];
+    }
+}
 
 $postTypeUrl = [
     'ARTICLE'       => '/news/',
@@ -418,25 +473,7 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <button onclick="setCountry('ALL')" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)">Reset</button>
           </div>
           <div class="space-y-px max-h-44 overflow-y-auto pr-0.5" style="scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent">
-            <?php
-            $ctryList = [
-              'ALL' => ['All Countries',        '🌍'],
-              'KE'  => ['Kenya',                '🇰🇪'],
-              'ET'  => ['Ethiopia',             '🇪🇹'],
-              'CD'  => ['DR Congo',             '🇨🇩'],
-              'SS'  => ['South Sudan',          '🇸🇸'],
-              'SD'  => ['Sudan',                '🇸🇩'],
-              'MZ'  => ['Mozambique',           '🇲🇿'],
-              'BF'  => ['Burkina Faso',         '🇧🇫'],
-              'SO'  => ['Somalia',              '🇸🇴'],
-              'ML'  => ['Mali',                 '🇲🇱'],
-              'NE'  => ['Niger',                '🇳🇪'],
-              'CF'  => ['C. African Rep.',      '🇨🇫'],
-              'TD'  => ['Chad',                 '🇹🇩'],
-              'NG'  => ['Nigeria (NE)',          '🇳🇬'],
-              'CM'  => ['Cameroon',             '🇨🇲'],
-            ];
-            foreach ($ctryList as $code => [$name, $flag]): ?>
+            <?php foreach ($ctryList as $code => [$name, $flag]): ?>
               <button onclick="setCountry('<?= $code ?>')" data-ctry="<?= $code ?>"
                       class="ctry-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-all"
                       style="color:rgba(255,255,255,.55)">
@@ -453,18 +490,7 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)">Category</p>
             <button onclick="toggleAllCats()" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)">Toggle All</button>
           </div>
-          <?php
-          $cats = [
-            'Security'     => '#ED1C24',
-            'Displacement' => '#E7952A',
-            'Human Rights' => '#F59E0B',
-            'Health'       => '#10B981',
-            'Policy'       => '#8B5CF6',
-            'Climate'      => '#3B82F6',
-            'Education'    => '#6366F1',
-            'Agriculture'  => '#84CC16',
-          ];
-          foreach ($cats as $cat => $col):
+          <?php foreach ($cats as $cat => $col):
             $id = 'cat-' . str_replace(' ', '_', $cat); ?>
             <div>
               <input type="checkbox" class="cat-check" id="<?= $id ?>" value="<?= h($cat) ?>" checked onchange="applyFilters()">
@@ -704,20 +730,9 @@ var mapData = [
 ];
 
 /* ── Lookup maps ──────────────────────────────────────────────────── */
-var CAT_COLORS = {
-  Security:'#ED1C24', Displacement:'#E7952A', 'Human Rights':'#F59E0B',
-  Health:'#10B981', Policy:'#8B5CF6', Climate:'#3B82F6',
-  Education:'#6366F1', Agriculture:'#84CC16'
-};
-var FLAG = {
-  KE:'🇰🇪',ET:'🇪🇹',CD:'🇨🇩',SS:'🇸🇸',SD:'🇸🇩',MZ:'🇲🇿',
-  BF:'🇧🇫',SO:'🇸🇴',ML:'🇲🇱',NE:'🇳🇪',CF:'🇨🇫',TD:'🇹🇩',NG:'🇳🇬',CM:'🇨🇲'
-};
-var CNAME = {
-  KE:'Kenya',ET:'Ethiopia',CD:'DR Congo',SS:'South Sudan',SD:'Sudan',
-  MZ:'Mozambique',BF:'Burkina Faso',SO:'Somalia',ML:'Mali',NE:'Niger',
-  CF:'Cent. African Rep.',TD:'Chad',NG:'Nigeria (NE)',CM:'Cameroon'
-};
+var CAT_COLORS = <?= json_encode($cats,    JSON_UNESCAPED_UNICODE) ?>;
+var FLAG       = <?= json_encode($flagMap,  JSON_UNESCAPED_UNICODE) ?>;
+var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
 
 /* ── Published post markers from DB ──────────────────────────────── */
 var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
