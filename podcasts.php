@@ -113,12 +113,12 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
   <?php if ($total > 0): ?>
     <div class="flex items-center justify-between mb-6">
       <p class="text-sm text-slate-500">
-        Showing <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> of <strong class="text-slate-800"><?= $total ?></strong> episode<?= $total !== 1 ? 's' : '' ?>
-        <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : '' ?>
+        <span data-i18n="galleryPage.showing">Showing</span> <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> <span data-i18n="galleryPage.of">of</span> <strong class="text-slate-800"><?= $total ?></strong> <span data-i18n="podcastsPage.episodes">episodes</span>
+        <?= $country ? ' <span data-i18n="galleryPage.from">from</span> <strong class="text-slate-700">' . h($country) . '</strong>' : '' ?>
         <?= $cat ? ($country ? ' · ' : ' ') . '<strong class="text-slate-700">' . h($cat) . '</strong>' : '' ?>
       </p>
       <?php if ($pages > 1): ?>
-        <span class="text-xs text-slate-400">Page <?= $page ?> of <?= $pages ?></span>
+        <span class="text-xs text-slate-400"><span data-i18n="galleryPage.page">Page</span> <?= $page ?> <span data-i18n="galleryPage.of">of</span> <?= $pages ?></span>
       <?php endif; ?>
     </div>
   <?php endif; ?>
@@ -127,12 +127,12 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
   <?php if (empty($podcasts)): ?>
     <div class="text-center py-24 bg-white rounded-3xl border border-amber-100">
       <div class="text-6xl mb-4">🎧</div>
-      <h3 class="font-outfit font-bold text-xl text-slate-900">No episodes found</h3>
-      <p class="text-slate-400 mt-2 text-sm mb-6">
+      <h3 class="font-outfit font-bold text-xl text-slate-900" data-i18n="podcastsPage.noEpisodesFound">No episodes found</h3>
+      <p class="text-slate-400 mt-2 text-sm mb-6" data-i18n="<?= $hasFilter ? 'listPage.tryDifferentFilters' : 'podcastsPage.willAppear' ?>">
         <?= $hasFilter ? 'Try different filter options.' : 'Podcast episodes will appear here once published.' ?>
       </p>
       <?php if ($hasFilter): ?>
-        <a href="/podcasts" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">View All Episodes</a>
+        <a href="/podcasts" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102" data-i18n="podcastsPage.viewAllEpisodes">View All Episodes</a>
       <?php endif; ?>
     </div>
   <?php else: ?>
@@ -189,7 +189,7 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
                   <a href="<?= h($ep['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
                      class="flex items-center gap-1.5 text-xs font-bold transition-colors" style="color:#C47C1A">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    Listen &rarr;
+                    <span data-i18n="home.listen">Listen</span> &rarr;
                   </a>
                 <?php endif; ?>
               </div>
@@ -221,11 +221,11 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
               <audio id="<?= $audioId ?>-el" controls preload="none"
                      class="w-full rounded-xl" style="height:44px;accent-color:#E7952A">
                 <source src="<?= h($ep['mediaUrl']) ?>">
-                Your browser does not support audio playback.
+                <span data-i18n="podcastsPage.noAudioSupport">Your browser does not support audio playback.</span>
               </audio>
               <p class="text-xs text-slate-400 mt-2">
-                Direct file — plays in your browser. Having trouble?
-                <a href="<?= h($ep['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer" class="font-bold underline" style="color:#C47C1A">Open file directly</a>
+                <span data-i18n="podcastsPage.directFileNote">Direct file — plays in your browser. Having trouble?</span>
+                <a href="<?= h($ep['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer" class="font-bold underline" style="color:#C47C1A" data-i18n="podcastsPage.openFileDirectly">Open file directly</a>
               </p>
             </div>
           <?php endif; ?>
@@ -281,8 +281,8 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
         <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
       </svg>
     </div>
-    <h3 class="font-outfit font-bold text-xl mb-2 text-slate-900">Subscribe &amp; Never Miss an Episode</h3>
-    <p class="text-slate-500 text-sm mb-6 max-w-sm mx-auto">Follow our podcast on your favourite platform for the latest conversations on peace, conflict, and community.</p>
+    <h3 class="font-outfit font-bold text-xl mb-2 text-slate-900" data-i18n="podcastsPage.subscribeTitle">Subscribe &amp; Never Miss an Episode</h3>
+    <p class="text-slate-500 text-sm mb-6 max-w-sm mx-auto" data-i18n="podcastsPage.subscribeDesc">Follow our podcast on your favourite platform for the latest conversations on peace, conflict, and community.</p>
     <div class="flex flex-wrap justify-center gap-3">
       <?php foreach ([
           ['name' => 'Spotify'],
@@ -295,7 +295,7 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
         </span>
       <?php endforeach; ?>
     </div>
-    <p class="text-xs text-slate-400 mt-4">Platform links will be added when the podcast launches.</p>
+    <p class="text-xs text-slate-400 mt-4" data-i18n="podcastsPage.platformLinksSoon">Platform links will be added when the podcast launches.</p>
   </div>
 
 </main>

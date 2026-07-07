@@ -15,9 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message  = trim($_POST['message']  ?? '');
 
     if (!$fullName || !$email || !$message) {
-        $error = 'Full name, email, and message are required.';
+        $error = 'contactPage.errorRequired';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Please enter a valid email address.';
+        $error = 'contactPage.errorInvalidEmail';
     } else {
         try {
             $stmt = db()->prepare(
@@ -27,10 +27,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([generate_id(), $fullName, $email, $country, $interest, $message]);
             $success = true;
         } catch (Exception $e) {
-            $error = 'Could not send your message. Please try again.';
+            $error = 'contactPage.errorSendFailed';
         }
     }
 }
+
+$errorText = [
+    'contactPage.errorRequired'      => 'Full name, email, and message are required.',
+    'contactPage.errorInvalidEmail'  => 'Please enter a valid email address.',
+    'contactPage.errorSendFailed'    => 'Could not send your message. Please try again.',
+][$error] ?? '';
 
 $pageTitle = 'Contact Us | Tafakari Digital Hub';
 ?>
@@ -43,23 +49,23 @@ $pageTitle = 'Contact Us | Tafakari Digital Hub';
 
     <!-- Left: Info -->
     <div>
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-widest mb-6">Contact Us</div>
-      <h1 class="font-outfit text-4xl font-black mb-6 text-slate-900">Let's Start a Conversation</h1>
-      <p class="text-slate-500 text-base leading-relaxed mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-widest mb-6" data-i18n="footer.contact">Contact Us</div>
+      <h1 class="font-outfit text-4xl font-black mb-6 text-slate-900" data-i18n="contactPage.heading">Let's Start a Conversation</h1>
+      <p class="text-slate-500 text-base leading-relaxed mb-10" data-i18n="contactPage.desc">
         Whether you want to contribute research, partner with our network, or simply learn more about our work in Kenya, Ethiopia, and DRC — we'd love to hear from you.
       </p>
       <div class="space-y-4">
         <div class="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100">
           <span class="text-2xl">📧</span>
           <div>
-            <div class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Email</div>
+            <div class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1" data-i18n="contactPage.email">Email</div>
             <div class="font-bold text-slate-800">info@tafakari.co.ke</div>
           </div>
         </div>
         <div class="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100">
           <span class="text-2xl">🌍</span>
           <div>
-            <div class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Coverage</div>
+            <div class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1" data-i18n="contactPage.coverage">Coverage</div>
             <div class="font-bold text-slate-800">Kenya · Ethiopia · DR Congo</div>
           </div>
         </div>
@@ -71,14 +77,14 @@ $pageTitle = 'Contact Us | Tafakari Digital Hub';
       <?php if ($success): ?>
         <div class="text-center py-12">
           <div class="text-5xl mb-4">✅</div>
-          <h2 class="font-outfit font-bold text-2xl mb-2 text-slate-900">Message Sent!</h2>
-          <p class="text-slate-500 mb-8">Thank you for reaching out. We'll get back to you soon.</p>
-          <a href="/" class="btn-primary">Back to Home</a>
+          <h2 class="font-outfit font-bold text-2xl mb-2 text-slate-900" data-i18n="contactPage.messageSent">Message Sent!</h2>
+          <p class="text-slate-500 mb-8" data-i18n="contactPage.thankYou">Thank you for reaching out. We'll get back to you soon.</p>
+          <a href="/" class="btn-primary" data-i18n="contactPage.backToHome">Back to Home</a>
         </div>
       <?php else: ?>
-        <h2 class="font-outfit font-bold text-2xl mb-8 text-slate-900">Send a Message</h2>
+        <h2 class="font-outfit font-bold text-2xl mb-8 text-slate-900" data-i18n="contactPage.sendMessage">Send a Message</h2>
         <?php if ($error): ?>
-          <div class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm"><?= h($error) ?></div>
+          <div class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm" data-i18n="<?= h($error) ?>"><?= h($errorText) ?></div>
         <?php endif; ?>
         <form method="POST" class="space-y-5">
           <div>

@@ -96,9 +96,9 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-14 px-6">
   <div class="max-w-7xl mx-auto">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">Video Archive</span>
-    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">Video Library</h1>
-    <p class="text-white/60 max-w-xl">Documentaries, field reports, community stories, and conference recordings — all in one place.</p>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A" data-i18n="videosPage.badge">Video Archive</span>
+    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3" data-i18n="videosPage.title">Video Library</h1>
+    <p class="text-white/60 max-w-xl" data-i18n="videosPage.desc">Documentaries, field reports, community stories, and conference recordings — all in one place.</p>
   </div>
 </div>
 
@@ -108,29 +108,29 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
   <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 mb-8">
     <form method="GET" action="/videos" class="flex flex-wrap gap-3 items-end">
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Country</label>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="heatmapPage.country">Country</label>
         <select name="country" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none min-w-[150px]">
-          <option value="">All Countries</option>
+          <option value="" data-i18n="heatmapPage.allCountries">All Countries</option>
           <?php foreach ($countryOptions as $c): ?>
             <option value="<?= h($c) ?>" <?= $country === $c ? 'selected' : '' ?>><?= h($c) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Category</label>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="heatmapPage.category">Category</label>
         <select name="cat" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none min-w-[180px]">
-          <option value="">All Categories</option>
+          <option value="" data-i18n="listPage.allCategories">All Categories</option>
           <?php foreach (issue_categories() as $c): ?>
             <option value="<?= h($c) ?>" <?= $cat === $c ? 'selected' : '' ?>><?= h($c) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style="background:#E7952A;color:#0D0102">
+              style="background:#E7952A;color:#0D0102" data-i18n="listPage.filter">
         Filter
       </button>
       <?php if ($hasFilter): ?>
-        <a href="/videos" class="px-6 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Clear</a>
+        <a href="/videos" class="px-6 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors" data-i18n="listPage.clear">Clear</a>
       <?php endif; ?>
     </form>
   </div>
@@ -139,11 +139,11 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
   <?php if ($total > 0): ?>
     <div class="flex items-center justify-between mb-6">
       <p class="text-sm text-slate-500">
-        Showing <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> of <strong class="text-slate-800"><?= $total ?></strong> video<?= $total !== 1 ? 's' : '' ?>
-        <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : '' ?>
+        <span data-i18n="galleryPage.showing">Showing</span> <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> <span data-i18n="galleryPage.of">of</span> <strong class="text-slate-800"><?= $total ?></strong> <span data-i18n="videosPage.videos">videos</span>
+        <?= $country ? ' <span data-i18n="galleryPage.from">from</span> <strong class="text-slate-700">' . h($country) . '</strong>' : '' ?>
       </p>
       <?php if ($pages > 1): ?>
-        <span class="text-xs text-slate-400">Page <?= $page ?> of <?= $pages ?></span>
+        <span class="text-xs text-slate-400"><span data-i18n="galleryPage.page">Page</span> <?= $page ?> <span data-i18n="galleryPage.of">of</span> <?= $pages ?></span>
       <?php endif; ?>
     </div>
   <?php endif; ?>
@@ -152,12 +152,12 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
   <?php if (empty($videos)): ?>
     <div class="text-center py-24 bg-white rounded-3xl border border-amber-100">
       <div class="text-6xl mb-4">🎬</div>
-      <h3 class="font-outfit font-bold text-xl text-slate-900">No videos found</h3>
-      <p class="text-slate-400 mt-2 text-sm mb-6">
+      <h3 class="font-outfit font-bold text-xl text-slate-900" data-i18n="videosPage.noVideosFound">No videos found</h3>
+      <p class="text-slate-400 mt-2 text-sm mb-6" data-i18n="<?= $hasFilter ? 'listPage.tryDifferentFilters' : 'videosPage.willAppear' ?>">
         <?= $hasFilter ? 'Try different filter options.' : 'Video content will appear here once published.' ?>
       </p>
       <?php if ($hasFilter): ?>
-        <a href="/videos" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">View All Videos</a>
+        <a href="/videos" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102" data-i18n="videosPage.viewAllVideos">View All Videos</a>
       <?php endif; ?>
     </div>
   <?php else: ?>
@@ -228,7 +228,7 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
 
             <?php if (!empty($v['viewCount']) && (int)$v['viewCount'] > 0): ?>
               <div class="absolute bottom-3 left-3 px-2 py-0.5 rounded text-[10px] font-black text-white" style="background:rgba(0,0,0,.65)">
-                <?= format_number((int)$v['viewCount']) ?> views
+                <?= format_number((int)$v['viewCount']) ?> <span data-i18n="videosPage.views">views</span>
               </div>
             <?php endif; ?>
           </div>
@@ -251,12 +251,12 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
                 <?php if ($isEmbed): ?>
                   <button onclick="playEmbed('<?= h($v['id']) ?>')"
                           class="text-xs font-bold transition-colors" style="color:#C47C1A">
-                    Watch &rarr;
+                    <span data-i18n="videosPage.watch">Watch</span> &rarr;
                   </button>
                 <?php else: ?>
                   <a href="<?= h($v['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
                      class="text-xs font-bold transition-colors" style="color:#C47C1A">
-                    Watch &rarr;
+                    <span data-i18n="videosPage.watch">Watch</span> &rarr;
                   </a>
                 <?php endif; ?>
               <?php endif; ?>

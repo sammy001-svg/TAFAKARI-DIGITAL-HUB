@@ -79,9 +79,9 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-16 px-6">
   <div class="max-w-7xl mx-auto">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">News & Analysis</span>
-    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">News & Articles</h1>
-    <p class="text-white/60 max-w-xl">In-depth reporting and analysis from across the African continent — conflict, governance, climate, and community voices.</p>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A" data-i18n="newsPage.badge">News & Analysis</span>
+    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3" data-i18n="newsPage.title">News & Articles</h1>
+    <p class="text-white/60 max-w-xl" data-i18n="newsPage.desc">In-depth reporting and analysis from across the African continent — conflict, governance, climate, and community voices.</p>
   </div>
 </div>
 
@@ -91,40 +91,41 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
   <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 mb-8">
     <form method="GET" action="/news" class="flex flex-wrap gap-3 items-end">
       <div class="flex-1 min-w-[200px]">
-        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Search</label>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="newsPage.searchLabel">Search</label>
         <div class="relative">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="text" name="q" value="<?= h($q) ?>" placeholder="Search articles..."
+                 data-i18n-placeholder="newsPage.searchPlaceholder"
                  class="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2"
                  style="--tw-ring-color:#E7952A">
         </div>
       </div>
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Country</label>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="heatmapPage.country">Country</label>
         <select name="country" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none appearance-none pr-8"
                 style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center">
-          <option value="">All Countries</option>
+          <option value="" data-i18n="heatmapPage.allCountries">All Countries</option>
           <?php foreach ($countryOptions as $c): ?>
             <option value="<?= h($c) ?>" <?= $country === $c ? 'selected' : '' ?>><?= h($c) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Category</label>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="heatmapPage.category">Category</label>
         <select name="cat" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none appearance-none pr-8"
                 style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center">
-          <option value="">All Categories</option>
+          <option value="" data-i18n="listPage.allCategories">All Categories</option>
           <?php foreach (issue_categories() as $c): ?>
             <option value="<?= h($c) ?>" <?= $cat === $c ? 'selected' : '' ?>><?= h($c) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style="background:#E7952A;color:#0D0102">
+              style="background:#E7952A;color:#0D0102" data-i18n="newsPage.applyFilters">
         Apply Filters
       </button>
       <?php if ($hasFilter): ?>
-        <a href="/news" class="px-6 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+        <a href="/news" class="px-6 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors" data-i18n="listPage.clear">
           Clear
         </a>
       <?php endif; ?>
@@ -135,16 +136,16 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
   <div class="flex items-center justify-between mb-6">
     <p class="text-sm text-slate-500">
       <?php if ($total === 0): ?>
-        No articles found<?= $hasFilter ? ' — try different filters' : '' ?>.
+        <span data-i18n="newsPage.noArticlesFound">No articles found</span><?= $hasFilter ? ' — <span data-i18n="documentsPage.tryDifferentFilters">try different filters</span>' : '' ?>.
       <?php elseif ($hasFilter): ?>
-        <strong class="text-slate-800"><?= $total ?></strong> result<?= $total !== 1 ? 's' : '' ?> found
-        <?php if ($q): ?> for "<em><?= h($q) ?></em>"<?php endif; ?>
+        <strong class="text-slate-800"><?= $total ?></strong> <span data-i18n="newsPage.resultsFound">results found</span>
+        <?php if ($q): ?> <span data-i18n="documentsPage.forQuery">for</span> "<em><?= h($q) ?></em>"<?php endif; ?>
       <?php else: ?>
-        Showing <strong class="text-slate-800"><?= min($off + 1, $total) ?>–<?= min($off + $perPage, $total) ?></strong> of <strong class="text-slate-800"><?= $total ?></strong> articles
+        <span data-i18n="galleryPage.showing">Showing</span> <strong class="text-slate-800"><?= min($off + 1, $total) ?>–<?= min($off + $perPage, $total) ?></strong> <span data-i18n="galleryPage.of">of</span> <strong class="text-slate-800"><?= $total ?></strong> <span data-i18n="newsPage.articles">articles</span>
       <?php endif; ?>
     </p>
     <?php if ($pages > 1): ?>
-      <span class="text-xs text-slate-400">Page <?= $page ?> of <?= $pages ?></span>
+      <span class="text-xs text-slate-400"><span data-i18n="galleryPage.page">Page</span> <?= $page ?> <span data-i18n="galleryPage.of">of</span> <?= $pages ?></span>
     <?php endif; ?>
   </div>
 
@@ -152,12 +153,12 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
   <?php if (empty($posts)): ?>
     <div class="text-center py-24 bg-white rounded-3xl border border-slate-100">
       <div class="text-6xl mb-4">📰</div>
-      <h3 class="font-outfit font-bold text-xl text-slate-900">No articles found</h3>
-      <p class="text-slate-400 mt-2 text-sm mb-6">
+      <h3 class="font-outfit font-bold text-xl text-slate-900" data-i18n="newsPage.noArticlesFound">No articles found</h3>
+      <p class="text-slate-400 mt-2 text-sm mb-6" data-i18n="<?= $hasFilter ? 'documentsPage.tryBroadening' : 'newsPage.checkBackSoon' ?>">
         <?= $hasFilter ? 'Try broadening your search or clearing filters.' : 'Check back soon for the latest news.' ?>
       </p>
       <?php if ($hasFilter): ?>
-        <a href="/news" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">
+        <a href="/news" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102" data-i18n="documentsPage.clearFilters">
           Clear Filters
         </a>
       <?php endif; ?>
@@ -202,7 +203,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
             <?php endif; ?>
             <div class="flex items-center justify-between mt-auto pt-4 border-t border-amber-50">
               <span class="text-xs text-slate-400"><?= format_date($p['createdAt']) ?></span>
-              <span class="text-xs font-bold" style="color:#C47C1A">Read Full &rarr;</span>
+              <span class="text-xs font-bold" style="color:#C47C1A"><span data-i18n="newsPage.readFull">Read Full</span> &rarr;</span>
             </div>
           </div>
         </a>
