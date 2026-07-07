@@ -89,6 +89,85 @@ function markdown_to_html(string $raw): string {
     return $out;
 }
 
+// ── Media helpers ────────────────────────────────────────────────
+
+function is_audio_url(string $url): bool {
+    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+    return in_array($ext, ['mp3', 'ogg', 'wav', 'm4a', 'aac', 'opus', 'flac']);
+}
+
+function is_video_url(string $url): bool {
+    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+    return in_array($ext, ['mp4', 'webm', 'ogg', 'mov']);
+}
+
+function youtube_id(string $url): string {
+    if (preg_match('/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
+        return $m[1];
+    }
+    return '';
+}
+
+function vimeo_id(string $url): string {
+    if (preg_match('/vimeo\.com\/(\d+)/', $url, $m)) {
+        return $m[1];
+    }
+    return '';
+}
+
+function video_embed_html(string $url, string $title, string $cssClass = 'w-full h-full border-0'): string {
+    $ytId = youtube_id($url);
+    if ($ytId) {
+        $src = 'https://www.youtube.com/embed/' . $ytId . '?rel=0&modestbranding=1';
+        return '<iframe src="' . h($src) . '" title="' . h($title) . '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen class="' . $cssClass . '"></iframe>';
+    }
+    $vmId = vimeo_id($url);
+    if ($vmId) {
+        $src = 'https://player.vimeo.com/video/' . $vmId . '?title=0&byline=0&portrait=0&color=D99F51';
+        return '<iframe src="' . h($src) . '" title="' . h($title) . '" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen class="' . $cssClass . '"></iframe>';
+    }
+    if (is_video_url($url)) {
+        return '<video controls class="' . $cssClass . '"><source src="' . h($url) . '"><p class="p-4 text-slate-400">Your browser does not support HTML5 video.</p></video>';
+    }
+    return '';
+}
+
+function doc_file_type(string $url): string {
+    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+    return match($ext) { 'pdf'=>'PDF', 'doc','docx'=>'Word', 'xls','xlsx'=>'Excel', 'ppt','pptx'=>'PowerPoint', default=>strtoupper($ext) ?: 'File' };
+}
+
+// ── Site settings helpers ─────────────────────────────────────────
+function get_setting(string $key, string $default = ''): string {
+    static $cache = [];
+    if (array_key_exists($key, $cache)) return $cache[$key];
+    try {
+        $stmt = db()->prepare('SELECT `value` FROM SiteSetting WHERE `key` = ? LIMIT 1');
+        $stmt->execute([$key]);
+        $row = $stmt->fetch();
+        return $cache[$key] = ($row !== false ? (string)($row['value'] ?? '') : $default);
+    } catch (Exception $e) { return $cache[$key] = $default; }
+}
+
+function set_setting(string $key, string $value, string $updatedBy = ''): void {
+    try {
+        db()->prepare(
+            'INSERT INTO SiteSetting (`key`,`value`,`updatedAt`,`updatedBy`) VALUES (?,?,NOW(3),?)
+             ON DUPLICATE KEY UPDATE `value`=VALUES(`value`),`updatedAt`=NOW(3),`updatedBy`=VALUES(`updatedBy`)'
+        )->execute([$key, $value, $updatedBy ?: null]);
+    } catch (Exception $e) { /* table may not exist yet */ }
+}
+
+function ensure_settings_table(): void {
+    try {
+        db()->exec("CREATE TABLE IF NOT EXISTS `SiteSetting` (
+          `key` VARCHAR(100) NOT NULL, `value` TEXT NULL,
+          `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          `updatedBy` VARCHAR(191) NULL, PRIMARY KEY (`key`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    } catch (Exception $e) {}
+}
+
 // ── JSON API helpers ─────────────────────────────────────────────
 
 function json_response(mixed $data, int $status = 200): never {

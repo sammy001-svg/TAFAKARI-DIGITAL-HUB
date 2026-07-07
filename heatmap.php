@@ -4,10 +4,217 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$totalReports   = 0;
+// ── Country data (master list — overridable via Admin › Heatmap Config) ───
+$_defaultCountriesData = [
+    ['name'=>'Kenya',                    'code'=>'KE','flag'=>'🇰🇪','lat'=>0.023,  'lng'=>37.906],
+    ['name'=>'Ethiopia',                 'code'=>'ET','flag'=>'🇪🇹','lat'=>9.145,  'lng'=>40.489],
+    ['name'=>'DR Congo',                 'code'=>'CD','flag'=>'🇨🇩','lat'=>-4.038, 'lng'=>21.759],
+    ['name'=>'South Sudan',              'code'=>'SS','flag'=>'🇸🇸','lat'=>6.877,  'lng'=>31.307],
+    ['name'=>'Sudan',                    'code'=>'SD','flag'=>'🇸🇩','lat'=>12.862, 'lng'=>30.218],
+    ['name'=>'Uganda',                   'code'=>'UG','flag'=>'🇺🇬','lat'=>1.373,  'lng'=>32.290],
+    ['name'=>'Tanzania',                 'code'=>'TZ','flag'=>'🇹🇿','lat'=>-6.369, 'lng'=>34.889],
+    ['name'=>'Rwanda',                   'code'=>'RW','flag'=>'🇷🇼','lat'=>-1.940, 'lng'=>29.874],
+    ['name'=>'Burundi',                  'code'=>'BI','flag'=>'🇧🇮','lat'=>-3.373, 'lng'=>29.918],
+    ['name'=>'Somalia',                  'code'=>'SO','flag'=>'🇸🇴','lat'=>5.152,  'lng'=>46.200],
+    ['name'=>'Mozambique',               'code'=>'MZ','flag'=>'🇲🇿','lat'=>-18.665,'lng'=>35.530],
+    ['name'=>'Burkina Faso',             'code'=>'BF','flag'=>'🇧🇫','lat'=>12.364, 'lng'=>-1.534],
+    ['name'=>'Mali',                     'code'=>'ML','flag'=>'🇲🇱','lat'=>17.570, 'lng'=>-3.996],
+    ['name'=>'Niger',                    'code'=>'NE','flag'=>'🇳🇪','lat'=>17.608, 'lng'=>8.082],
+    ['name'=>'Nigeria',                  'code'=>'NG','flag'=>'🇳🇬','lat'=>9.082,  'lng'=>8.675],
+    ['name'=>'Chad',                     'code'=>'TD','flag'=>'🇹🇩','lat'=>15.454, 'lng'=>18.732],
+    ['name'=>'Central African Republic', 'code'=>'CF','flag'=>'🇨🇫','lat'=>6.611,  'lng'=>20.939],
+    ['name'=>'Cameroon',                 'code'=>'CM','flag'=>'🇨🇲','lat'=>3.848,  'lng'=>11.502],
+    ['name'=>'South Africa',             'code'=>'ZA','flag'=>'🇿🇦','lat'=>-30.559,'lng'=>22.938],
+    ['name'=>'Ghana',                    'code'=>'GH','flag'=>'🇬🇭','lat'=>7.946,  'lng'=>-1.024],
+    ['name'=>'Senegal',                  'code'=>'SN','flag'=>'🇸🇳','lat'=>14.497, 'lng'=>-14.452],
+    ['name'=>'Egypt',                    'code'=>'EG','flag'=>'🇪🇬','lat'=>26.820, 'lng'=>30.802],
+    ['name'=>'Morocco',                  'code'=>'MA','flag'=>'🇲🇦','lat'=>31.792, 'lng'=>-7.092],
+    ['name'=>'Algeria',                  'code'=>'DZ','flag'=>'🇩🇿','lat'=>28.034, 'lng'=>1.659],
+    ['name'=>'Angola',                   'code'=>'AO','flag'=>'🇦🇴','lat'=>-11.203,'lng'=>17.874],
+    ['name'=>'Zambia',                   'code'=>'ZM','flag'=>'🇿🇲','lat'=>-13.134,'lng'=>27.849],
+    ['name'=>'Zimbabwe',                 'code'=>'ZW','flag'=>'🇿🇼','lat'=>-19.015,'lng'=>29.154],
+    ['name'=>'Malawi',                   'code'=>'MW','flag'=>'🇲🇼','lat'=>-13.254,'lng'=>34.302],
+    ['name'=>'Madagascar',               'code'=>'MG','flag'=>'🇲🇬','lat'=>-18.767,'lng'=>46.869],
+    ['name'=>'Liberia',                  'code'=>'LR','flag'=>'🇱🇷','lat'=>6.428,  'lng'=>-10.785],
+    ['name'=>'Sierra Leone',             'code'=>'SL','flag'=>'🇸🇱','lat'=>8.460,  'lng'=>-11.780],
+    ['name'=>'Guinea',                   'code'=>'GN','flag'=>'🇬🇳','lat'=>11.805, 'lng'=>-11.805],
+];
+$_dbCountries = json_decode(get_setting('heatmap_countries', ''), true);
+$_countriesData = (is_array($_dbCountries) && count($_dbCountries) > 0) ? $_dbCountries : $_defaultCountriesData;
+
+// Derive lookup tables from master list
+$countryCoords = [];
+$ctryList      = ['ALL' => ['All Countries', '🌍']];
+$flagMap       = [];
+$cnameMap      = [];
+foreach ($_countriesData as $_c) {
+    $countryCoords[$_c['name']] = [(float)$_c['lat'], (float)$_c['lng'], $_c['code']];
+    $ctryList[$_c['code']]      = [$_c['name'], $_c['flag'] ?? '🏳'];
+    $flagMap[$_c['code']]       = $_c['flag'] ?? '🏳';
+    $cnameMap[$_c['code']]      = $_c['name'];
+}
+// Handle common alternate spellings
+if (isset($countryCoords['DR Congo'])) {
+    $countryCoords['Democratic Republic of Congo'] = $countryCoords['DR Congo'];
+}
+
+// ── Region/city coordinates ────────────────────────────────────────────
+$regionCoords = [
+    // Kenya
+    'Nairobi'       => [ -1.286,  36.820], 'Mombasa'   => [ -4.043,  39.668],
+    'Kisumu'        => [ -0.102,  34.761], 'Nakuru'    => [ -0.303,  36.080],
+    'Eldoret'       => [  0.517,  35.270], 'Turkana'   => [  3.119,  35.597],
+    'Mandera'       => [  3.936,  41.855], 'Garissa'   => [ -0.456,  39.646],
+    'Rift Valley'   => [  0.517,  35.270], 'Nyanza'    => [ -0.670,  34.779],
+    'Western Kenya' => [  0.283,  34.752], 'Central'   => [ -0.700,  36.870],
+    'North Eastern' => [  1.500,  40.000], 'Coast'     => [ -3.200,  40.120],
+    // Ethiopia
+    'Addis Ababa'   => [  9.025,  38.747], 'Tigray'    => [ 14.032,  38.316],
+    'Mekelle'       => [ 13.496,  39.477], 'Amhara'    => [ 11.340,  37.983],
+    'Oromia'        => [  7.547,  39.647], 'SNNPR'     => [  6.875,  37.810],
+    'Afar'          => [ 11.756,  41.173], 'Dire Dawa' => [  9.593,  41.867],
+    'Bahir Dar'     => [ 11.593,  37.391], 'Harar'     => [  9.313,  42.118],
+    'Jimma'         => [  7.678,  36.832], 'Jijiga'    => [  9.350,  42.795],
+    // DRC
+    'Kinshasa'      => [ -4.322,  15.322], 'Goma'      => [ -1.678,  29.217],
+    'Bukavu'        => [ -2.508,  28.860], 'North Kivu'=> [ -0.786,  29.089],
+    'South Kivu'    => [ -3.381,  29.361], 'Ituri'     => [  1.583,  29.872],
+    'Kisangani'     => [  0.518,  25.196], 'Lubumbashi'=> [-11.663,  27.479],
+    'Beni'          => [  0.491,  29.473], 'Katanga'   => [-10.000,  27.000],
+    'Kasai'         => [ -5.000,  22.500], 'Maniema'   => [ -3.000,  26.500],
+    'Bandundu'      => [ -4.500,  18.000],
+    // Others
+    'Juba'          => [  4.859,  31.571], 'Khartoum'  => [ 15.551,  32.532],
+    'Mogadishu'     => [  2.046,  45.341], 'Kampala'   => [  0.347,  32.583],
+    'Dar es Salaam' => [ -6.792,  39.208], 'Kigali'    => [ -1.944,  30.061],
+    'Bamako'        => [ 12.650,  -8.000], 'Niamey'    => [ 13.513,   2.113],
+    'Bangui'        => [  4.361,  18.555], "N'Djamena" => [ 12.105,  15.044],
+    'Harare'        => [-17.828,  31.053], 'Lusaka'    => [-15.416,  28.283],
+];
+$_dbRegions = json_decode(get_setting('heatmap_regions', ''), true);
+if (is_array($_dbRegions) && count($_dbRegions) > 0) {
+    $regionCoords = [];
+    foreach ($_dbRegions as $_r) {
+        $regionCoords[$_r['name']] = [(float)$_r['lat'], (float)$_r['lng']];
+    }
+}
+
+// ── Issue category → heatmap category mapping ──────────────────────────
+$issueToCat = [
+    'Security & Conflict'         => 'Security',
+    'Human Rights'                => 'Human Rights',
+    'Health'                      => 'Health',
+    'Policy & Governance'         => 'Policy',
+    'Climate & Environment'       => 'Climate',
+    'Education'                   => 'Education',
+    'Agriculture & Food Security' => 'Agriculture',
+    'Migration & Refugees'        => 'Displacement',
+    'Economic Development'        => 'Policy',
+    'Technology & Innovation'     => 'Policy',
+    'Gender & Social Affairs'     => 'Human Rights',
+    'Infrastructure & Energy'     => 'Policy',
+];
+$_dbIssueMap = json_decode(get_setting('heatmap_issue_map', ''), true);
+if (is_array($_dbIssueMap) && count($_dbIssueMap) > 0) {
+    $issueToCat = [];
+    $first = reset($_dbIssueMap);
+    if (is_array($first) && isset($first['from'])) {
+        foreach ($_dbIssueMap as $_m) {
+            if (!empty($_m['from']) && !empty($_m['to'])) $issueToCat[$_m['from']] = $_m['to'];
+        }
+    } else {
+        $issueToCat = $_dbIssueMap;
+    }
+}
+
+// ── Conflict categories (with display colors) ──────────────────────────
+$cats = [
+    'Security'     => '#ED1C24',
+    'Displacement' => '#E7952A',
+    'Human Rights' => '#F59E0B',
+    'Health'       => '#10B981',
+    'Policy'       => '#8B5CF6',
+    'Climate'      => '#3B82F6',
+    'Education'    => '#6366F1',
+    'Agriculture'  => '#84CC16',
+];
+$_dbCategories = json_decode(get_setting('heatmap_categories', ''), true);
+if (is_array($_dbCategories) && count($_dbCategories) > 0) {
+    $cats = [];
+    foreach ($_dbCategories as $_cat) {
+        $cats[$_cat['name']] = $_cat['color'];
+    }
+}
+
+$postTypeUrl = [
+    'ARTICLE'       => '/news/',
+    'PODCAST'       => '/podcasts/',
+    'VIDEO'         => '/videos/',
+    'DOCUMENT'      => '/documents/',
+    'GALLERY_IMAGE' => '/gallery',
+];
+
+// ── Resolve coordinates for published posts ────────────────────────────
+$postMarkers = [];
+try {
+    $posts = db()->query("
+        SELECT id, title, type, description, country, region, issueCategory, createdAt, thumbnailUrl
+        FROM Post WHERE status='PUBLISHED' AND country IS NOT NULL AND country != ''
+        ORDER BY createdAt DESC LIMIT 300
+    ")->fetchAll();
+
+    foreach ($posts as $p) {
+        $lat = $lng = null;
+        $region = trim($p['region'] ?? '');
+
+        // Try region string against lookup keys
+        if ($region !== '') {
+            foreach ($regionCoords as $rKey => [$rlat, $rlng]) {
+                if (stripos($region, $rKey) !== false || stripos($rKey, $region) !== false) {
+                    $lat = $rlat; $lng = $rlng; break;
+                }
+            }
+        }
+
+        // Fall back to country centre
+        if ($lat === null) {
+            $cn = $p['country'];
+            if (isset($countryCoords[$cn])) {
+                [$lat, $lng] = $countryCoords[$cn];
+            }
+        }
+
+        if ($lat === null) continue;
+
+        // Deterministic sub-degree jitter so stacked pins spread out
+        $h    = crc32($p['id']);
+        $lat += (($h % 200) - 100) / 800.0;
+        $lng += ((($h >> 8) % 200) - 100) / 800.0;
+
+        $url = ($postTypeUrl[$p['type']] ?? '/news/') . $p['id'];
+        if (($p['type'] ?? '') === 'GALLERY_IMAGE') $url = '/gallery';
+
+        $postMarkers[] = [
+            'id'       => $p['id'],
+            'title'    => $p['title'],
+            'type'     => $p['type'] ?? 'ARTICLE',
+            'desc'     => mb_substr($p['description'] ?? '', 0, 150),
+            'country'  => $p['country'],
+            'region'   => $region,
+            'category' => $issueToCat[$p['issueCategory'] ?? ''] ?? 'Policy',
+            'date'     => format_date($p['createdAt']),
+            'thumb'    => $p['thumbnailUrl'] ?? '',
+            'url'      => $url,
+            'lat'      => round($lat, 5),
+            'lng'      => round($lng, 5),
+        ];
+    }
+} catch (Exception $e) {}
+
+// ── Summary stats ──────────────────────────────────────────────────────
+$totalReports   = count($postMarkers);
 $monthlyReports = 0;
 try {
-    $totalReports   = (int) db()->query("SELECT COUNT(*) FROM Post WHERE status='PUBLISHED'")->fetchColumn();
     $monthlyReports = (int) db()->query("SELECT COUNT(*) FROM Post WHERE status='PUBLISHED' AND createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
 } catch (Exception $e) { /* ignore */ }
 
@@ -266,25 +473,7 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <button onclick="setCountry('ALL')" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)">Reset</button>
           </div>
           <div class="space-y-px max-h-44 overflow-y-auto pr-0.5" style="scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent">
-            <?php
-            $ctryList = [
-              'ALL' => ['All Countries',        '🌍'],
-              'KE'  => ['Kenya',                '🇰🇪'],
-              'ET'  => ['Ethiopia',             '🇪🇹'],
-              'CD'  => ['DR Congo',             '🇨🇩'],
-              'SS'  => ['South Sudan',          '🇸🇸'],
-              'SD'  => ['Sudan',                '🇸🇩'],
-              'MZ'  => ['Mozambique',           '🇲🇿'],
-              'BF'  => ['Burkina Faso',         '🇧🇫'],
-              'SO'  => ['Somalia',              '🇸🇴'],
-              'ML'  => ['Mali',                 '🇲🇱'],
-              'NE'  => ['Niger',                '🇳🇪'],
-              'CF'  => ['C. African Rep.',      '🇨🇫'],
-              'TD'  => ['Chad',                 '🇹🇩'],
-              'NG'  => ['Nigeria (NE)',          '🇳🇬'],
-              'CM'  => ['Cameroon',             '🇨🇲'],
-            ];
-            foreach ($ctryList as $code => [$name, $flag]): ?>
+            <?php foreach ($ctryList as $code => [$name, $flag]): ?>
               <button onclick="setCountry('<?= $code ?>')" data-ctry="<?= $code ?>"
                       class="ctry-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-all"
                       style="color:rgba(255,255,255,.55)">
@@ -301,18 +490,7 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)">Category</p>
             <button onclick="toggleAllCats()" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)">Toggle All</button>
           </div>
-          <?php
-          $cats = [
-            'Security'     => '#ED1C24',
-            'Displacement' => '#E7952A',
-            'Human Rights' => '#F59E0B',
-            'Health'       => '#10B981',
-            'Policy'       => '#8B5CF6',
-            'Climate'      => '#3B82F6',
-            'Education'    => '#6366F1',
-            'Agriculture'  => '#84CC16',
-          ];
-          foreach ($cats as $cat => $col):
+          <?php foreach ($cats as $cat => $col):
             $id = 'cat-' . str_replace(' ', '_', $cat); ?>
             <div>
               <input type="checkbox" class="cat-check" id="<?= $id ?>" value="<?= h($cat) ?>" checked onchange="applyFilters()">
@@ -355,6 +533,37 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <div class="flex items-center gap-2.5">
               <div style="width:8px;height:8px;border-radius:50%;background:#F4C87E;flex-shrink:0;margin-left:2.5px"></div>
               <span class="text-[11px]" style="color:rgba(255,255,255,.55)">1–4 · Emerging concern</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Published Reports toggle -->
+        <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(99,102,241,.85)">Published Reports</p>
+            <button id="reports-toggle-btn" onclick="toggleReports()"
+                    class="text-[10px] font-black px-2.5 py-1 rounded-lg transition-all"
+                    style="background:rgba(99,102,241,.25);color:#818CF8;border:1px solid rgba(99,102,241,.35)">
+              ON
+            </button>
+          </div>
+          <p class="text-[10px] mb-3" style="color:rgba(255,255,255,.28)"><?= count($postMarkers) ?> report<?= count($postMarkers) !== 1 ? 's' : '' ?> from the database</p>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#750B25;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Article</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#E7952A;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Podcast</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#ED1C24;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Video</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div style="width:10px;height:10px;background:#6366F1;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Document</span>
             </div>
           </div>
         </div>
@@ -521,20 +730,12 @@ var mapData = [
 ];
 
 /* ── Lookup maps ──────────────────────────────────────────────────── */
-var CAT_COLORS = {
-  Security:'#ED1C24', Displacement:'#E7952A', 'Human Rights':'#F59E0B',
-  Health:'#10B981', Policy:'#8B5CF6', Climate:'#3B82F6',
-  Education:'#6366F1', Agriculture:'#84CC16'
-};
-var FLAG = {
-  KE:'🇰🇪',ET:'🇪🇹',CD:'🇨🇩',SS:'🇸🇸',SD:'🇸🇩',MZ:'🇲🇿',
-  BF:'🇧🇫',SO:'🇸🇴',ML:'🇲🇱',NE:'🇳🇪',CF:'🇨🇫',TD:'🇹🇩',NG:'🇳🇬',CM:'🇨🇲'
-};
-var CNAME = {
-  KE:'Kenya',ET:'Ethiopia',CD:'DR Congo',SS:'South Sudan',SD:'Sudan',
-  MZ:'Mozambique',BF:'Burkina Faso',SO:'Somalia',ML:'Mali',NE:'Niger',
-  CF:'Cent. African Rep.',TD:'Chad',NG:'Nigeria (NE)',CM:'Cameroon'
-};
+var CAT_COLORS = <?= json_encode($cats,    JSON_UNESCAPED_UNICODE) ?>;
+var FLAG       = <?= json_encode($flagMap,  JSON_UNESCAPED_UNICODE) ?>;
+var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
+
+/* ── Published post markers from DB ──────────────────────────────── */
+var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
 /* ── Map initialisation ───────────────────────────────────────────── */
 var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
@@ -585,12 +786,47 @@ function wrap(dot, col, dur, delay) {
        + ';animation:pulse-ring '+dur+' ease-out '+delay+' infinite;"></div></div>';
 }
 
+/* ── Post marker icon factory ─────────────────────────────────────── */
+var POST_TYPE_COLORS = {
+  ARTICLE:'#750B25', PODCAST:'#E7952A', VIDEO:'#ED1C24',
+  DOCUMENT:'#6366F1', GALLERY_IMAGE:'#10B981'
+};
+function makePostIcon(d) {
+  var col = POST_TYPE_COLORS[d.type] || '#750B25';
+  return L.divIcon({
+    className: '',
+    iconSize:  [22, 22],
+    iconAnchor:[11, 11],
+    tooltipAnchor: [14, 0],
+    html: '<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center">'
+        + '<div style="width:13px;height:13px;background:'+col
+        + ';border:2px solid rgba(255,255,255,.75);border-radius:3px;'
+        + 'box-shadow:0 2px 10px rgba(0,0,0,.45);cursor:pointer"></div>'
+        + '</div>',
+  });
+}
+
+/* ── Toggle published reports layer ──────────────────────────────── */
+function toggleReports() {
+  showReports = !showReports;
+  var btn = document.getElementById('reports-toggle-btn');
+  if (btn) {
+    btn.textContent = showReports ? 'ON' : 'OFF';
+    btn.style.background    = showReports ? 'rgba(99,102,241,.25)' : 'rgba(255,255,255,.06)';
+    btn.style.color         = showReports ? '#818CF8' : 'rgba(255,255,255,.35)';
+    btn.style.borderColor   = showReports ? 'rgba(99,102,241,.35)' : 'rgba(255,255,255,.1)';
+  }
+  applyFilters();
+}
+
 /* ── State ────────────────────────────────────────────────────────── */
-var markers   = [];
-var heatLayer = null;
-var viewMode  = 'markers';
-var selCtry   = 'ALL';
-var allCatsOn = true;
+var markers      = [];
+var postMarkers  = [];  // Leaflet markers for DB posts
+var heatLayer    = null;
+var viewMode     = 'markers';
+var selCtry      = 'ALL';
+var allCatsOn    = true;
+var showReports  = true;
 
 /* ── HTML escape ──────────────────────────────────────────────────── */
 function esc(s) {
@@ -635,10 +871,13 @@ function applyFilters() {
   var minInt = parseInt(document.getElementById('int-slider').value, 10);
   var cats   = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
 
-  // Remove existing markers & heat
+  // Remove existing conflict markers & heat
   markers.forEach(function(m){ map.removeLayer(m); });
   markers = [];
   if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+  // Remove existing post markers
+  postMarkers.forEach(function(m){ map.removeLayer(m); });
+  postMarkers = [];
 
   var catCounts = {};
   var visible   = [];
@@ -661,7 +900,7 @@ function applyFilters() {
     el.textContent = n > 0 ? n : '';
   });
 
-  // Render markers or heatmap
+  // Render conflict markers or heatmap
   if (viewMode === 'markers') {
     visible.forEach(function(d) {
       var m = L.marker([d.lat, d.lng], { icon: makeIcon(d) })
@@ -686,10 +925,38 @@ function applyFilters() {
     }
   }
 
+  // Render post pins (always on top of heat or markers layer)
+  var visiblePosts = 0;
+  if (showReports && postData && postData.length) {
+    postData.forEach(function(d) {
+      // Country filter: map code → name for comparison
+      if (selCtry !== 'ALL' && CNAME[selCtry] !== d.country) return;
+      // Category filter
+      if (cats.indexOf(d.category) === -1) return;
+      // Search filter
+      if (q) {
+        var haystack = d.title.toLowerCase() + ' ' + d.country.toLowerCase() + ' ' + (d.region || '').toLowerCase() + ' ' + d.category.toLowerCase() + ' ' + d.type.toLowerCase();
+        if (haystack.indexOf(q) === -1) return;
+      }
+      visiblePosts++;
+      var m = L.marker([d.lat, d.lng], {
+        icon: makePostIcon(d),
+        zIndexOffset: 500
+      }).bindTooltip(
+        '<strong>' + esc(d.title) + '</strong><br><small>' + esc(d.type) + ' · ' + esc(d.country) + '</small>',
+        { direction: 'right', opacity: 1 }
+      );
+      m.on('click', function() { openPostDetail(d); });
+      m.addTo(map);
+      postMarkers.push(m);
+    });
+  }
+
   // Active count pill
   var critical = visible.filter(function(d){ return d.intensity >= 8; }).length;
-  document.getElementById('active-count').textContent =
-    visible.length + ' location' + (visible.length !== 1 ? 's' : '') + ' · ' + critical + ' critical';
+  var pill = visible.length + ' location' + (visible.length !== 1 ? 's' : '') + ' · ' + critical + ' critical';
+  if (visiblePosts > 0) pill += ' · ' + visiblePosts + ' report' + (visiblePosts !== 1 ? 's' : '');
+  document.getElementById('active-count').textContent = pill;
 
   // KPI hotspots (always from full dataset)
   var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
@@ -841,6 +1108,59 @@ function openDetail(d) {
 function closeDetail() {
   document.getElementById('detail-panel').classList.remove('panel-open');
   document.getElementById('detail-panel').classList.add('panel-hidden');
+}
+
+/* ── Post detail panel ────────────────────────────────────────────── */
+function openPostDetail(d) {
+  var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
+  var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery'};
+  var col    = POST_TYPE_COLORS[d.type] || '#750B25';
+  var label  = TYPE_LABEL[d.type]  || 'Report';
+  var action = TYPE_ACTION[d.type] || 'Read More';
+  var catC   = CAT_COLORS[d.category] || '#64748b';
+
+  if (window.innerWidth < 768) {
+    document.getElementById('ctrl-panel').classList.remove('ctrl-open');
+  }
+
+  document.getElementById('detail-content').innerHTML =
+    '<div style="height:4px;background:'+col+'"></div>'
+    + '<div style="padding:18px 18px 28px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
+    + '<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:'+col+'">'
+    + esc(label)+'</span>'
+    + '<button onclick="closeDetail()" style="width:28px;height:28px;border-radius:50%;border:none;'
+    + 'background:#f1f5f9;color:#64748b;cursor:pointer;font-size:18px;line-height:1;'
+    + 'display:flex;align-items:center;justify-content:center">&times;</button>'
+    + '</div>'
+    + (d.thumb
+       ? '<img src="'+esc(d.thumb)+'" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:14px" onerror="this.style.display=\'none\'">'
+       : '')
+    + '<h3 style="font-family:Outfit,sans-serif;font-weight:900;font-size:18px;color:#0f172a;margin:0 0 10px;line-height:1.35">'
+    + esc(d.title)+'</h3>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'
+    + '<span style="background:#f1f5f9;color:#64748b;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
+    + '📍 '+esc(d.country)+(d.region ? ', '+esc(d.region) : '')+'</span>'
+    + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'38;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
+    + esc(d.category)+'</span>'
+    + '</div>'
+    + (d.desc
+       ? '<div style="margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:10px;border-left:3px solid '+col+'">'
+         + '<p style="font-size:13px;color:#374151;line-height:1.7;margin:0">'+esc(d.desc)+(d.desc.length >= 150 ? '…' : '')+'</p>'
+         + '</div>'
+       : '')
+    + '<p style="font-size:11px;color:#94a3b8;margin:0 0 18px">Published '+esc(d.date)+'</p>'
+    + '<a href="'+esc(d.url)+'"'
+    + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;'
+    + 'padding:12px 16px;border-radius:12px;background:'+col+';color:#fff;'
+    + 'font-size:13px;font-weight:700;justify-content:center">'
+    + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">'
+    + '<path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>'
+    + '</svg>'+action+'</a>'
+    + '</div>';
+
+  document.getElementById('detail-panel').classList.add('panel-open');
+  document.getElementById('detail-panel').classList.remove('panel-hidden');
 }
 
 /* ── Keyboard shortcuts ───────────────────────────────────────────── */

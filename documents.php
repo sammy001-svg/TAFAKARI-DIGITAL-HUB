@@ -197,7 +197,9 @@ function doc_icon_color(string $ext): string {
 
           <!-- Content -->
           <div class="flex-grow min-w-0 flex flex-col">
-            <h3 class="font-outfit font-bold text-base text-slate-900 leading-snug mb-1"><?= h($doc['title']) ?></h3>
+            <h3 class="font-outfit font-bold text-base text-slate-900 leading-snug mb-1">
+              <a href="/documents/<?= h($doc['id']) ?>" class="hover:text-primary transition-colors"><?= h($doc['title']) ?></a>
+            </h3>
             <?php if (!empty($doc['description'])): ?>
               <p class="text-sm text-slate-500 line-clamp-2 mb-3"><?= h($doc['description']) ?></p>
             <?php endif; ?>

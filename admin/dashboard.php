@@ -71,6 +71,61 @@ try {
 } catch (Exception $e) {}
 $monthCounts = array_values($monthMap);
 
+// ── Top content by views ───────────────────────────────────────────────────
+$topContent = [];
+try {
+    if ($isSuper) {
+        $topContent = $pdo->query(
+            "SELECT id, title, type, country, viewCount, downloadCount
+             FROM Post WHERE status='PUBLISHED' AND (viewCount > 0 OR downloadCount > 0)
+             ORDER BY (viewCount + downloadCount) DESC LIMIT 5"
+        )->fetchAll();
+    } else {
+        $st = $pdo->prepare(
+            "SELECT id, title, type, country, viewCount, downloadCount
+             FROM Post WHERE authorId=? AND status='PUBLISHED' AND (viewCount > 0 OR downloadCount > 0)
+             ORDER BY (viewCount + downloadCount) DESC LIMIT 5"
+        );
+        $st->execute([$uid]); $topContent = $st->fetchAll();
+    }
+} catch (Exception $e) {}
+
+// ── Views by country ────────────────────────────────────────────────────────
+$viewsByCountry = [];
+$viewsByCountryMax = 1;
+try {
+    $q = $isSuper ? "1" : "authorId='$uid'";
+    $rows = $pdo->query(
+        "SELECT country, SUM(viewCount) AS tv FROM Post
+         WHERE $q AND status='PUBLISHED' AND viewCount > 0 AND country IS NOT NULL AND country != ''
+         GROUP BY country ORDER BY tv DESC LIMIT 8"
+    )->fetchAll();
+    foreach ($rows as $r) $viewsByCountry[$r['country']] = (int)$r['tv'];
+    if ($viewsByCountry) $viewsByCountryMax = max($viewsByCountry);
+} catch (Exception $e) {}
+
+// ── Recent unmoderated comments (super only) ────────────────────────────────
+$recentComments = [];
+if ($isSuper) {
+    try {
+        $recentComments = $pdo->query(
+            "SELECT c.id, c.content, c.name, c.email, c.createdAt, c.isFlagged,
+                    p.title AS postTitle, p.id AS postId
+             FROM Comment c JOIN Post p ON c.postId = p.id
+             WHERE c.isModerated = 0
+             ORDER BY c.createdAt DESC LIMIT 5"
+        )->fetchAll();
+    } catch (Exception $e) {}
+}
+
+// ── Content engagement totals ───────────────────────────────────────────────
+$totalComments    = 0;
+$pendingComments  = 0;
+try {
+    $totalComments   = (int)$pdo->query("SELECT COUNT(*) FROM Comment")->fetchColumn();
+    $pendingComments = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isModerated=0")->fetchColumn();
+} catch (Exception $e) {}
+
 // ── Real system health check ───────────────────────────────────────────────
 $dbOk = false;
 try { $pdo->query('SELECT 1'); $dbOk = true; } catch (Exception $e) {}
@@ -170,15 +225,15 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         'trendcls' => 'bg-indigo-50 text-indigo-700',
       ],
       [
-        'label'    => 'Flagged Comments',
-        'value'    => $flagged,
-        'meta'     => $flagged > 0 ? 'Needs moderation' : 'All clear',
+        'label'    => 'Comments',
+        'value'    => format_number($totalComments),
+        'meta'     => $pendingComments > 0 ? $pendingComments . ' pending moderation' : ($flagged > 0 ? $flagged . ' flagged' : 'All moderated'),
         'href'     => '/admin/super/moderation',
-        'icon'     => 'M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9',
-        'ic_bg'    => 'rgba(239,68,68,.1)',
-        'ic_col'   => '#EF4444',
-        'trend'    => $flagged > 0 ? 'Review' : 'Clean',
-        'trendcls' => $flagged > 0 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700',
+        'icon'     => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
+        'ic_bg'    => ($pendingComments > 0 || $flagged > 0) ? 'rgba(239,68,68,.1)' : 'rgba(16,185,129,.1)',
+        'ic_col'   => ($pendingComments > 0 || $flagged > 0) ? '#EF4444' : '#10B981',
+        'trend'    => $pendingComments > 0 ? '!' : ($flagged > 0 ? 'Flagged' : '✓'),
+        'trendcls' => ($pendingComments > 0 || $flagged > 0) ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700',
       ],
     ];
     foreach ($kpis as $k): ?>
@@ -409,6 +464,193 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
     </div>
 
   </div>
+
+  <!-- ── Row 2: Top Content + Views by Country ────────────────────────────── -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+
+    <!-- Top Performing Content -->
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div>
+          <h3 class="font-outfit font-bold text-[15px] text-slate-900">Top Performing Content</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Ranked by combined views + downloads</p>
+        </div>
+        <a href="/admin/content?status=PUBLISHED" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">View All &rsaquo;</a>
+      </div>
+      <?php if (empty($topContent)): ?>
+        <div class="flex flex-col items-center justify-center py-14 text-center px-6">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:rgba(99,102,241,.08)">
+            <svg width="18" height="18" fill="none" stroke="#6366F1" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24">
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <p class="text-sm text-slate-500">No views recorded yet</p>
+          <p class="text-[11px] text-slate-400 mt-1">Published content will appear here once it receives views.</p>
+        </div>
+      <?php else:
+        $maxEngagement = max(array_map(fn($r) => (int)$r['viewCount'] + (int)$r['downloadCount'], $topContent));
+        $maxEngagement = max($maxEngagement, 1);
+        $typeColors = ['ARTICLE'=>'#750B25','VIDEO'=>'#ED1C24','PODCAST'=>'#E7952A','DOCUMENT'=>'#6366F1','GALLERY_IMAGE'=>'#10B981'];
+        $typeLabels = ['ARTICLE'=>'Article','VIDEO'=>'Video','PODCAST'=>'Podcast','DOCUMENT'=>'Doc','GALLERY_IMAGE'=>'Gallery'];
+      ?>
+        <div class="divide-y divide-slate-50">
+          <?php foreach ($topContent as $rank => $tc):
+            $engagement = (int)$tc['viewCount'] + (int)$tc['downloadCount'];
+            $pct        = (int)round(($engagement / $maxEngagement) * 100);
+            $tcol       = $typeColors[$tc['type']] ?? '#750B25';
+            $tlabel     = $typeLabels[$tc['type']] ?? $tc['type'];
+          ?>
+            <div class="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/60 transition-colors">
+              <!-- Rank -->
+              <span class="w-5 text-center text-[11px] font-black text-slate-300 shrink-0"><?= $rank + 1 ?></span>
+              <!-- Type badge -->
+              <span class="text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shrink-0 text-white" style="background:<?= $tcol ?>"><?= $tlabel ?></span>
+              <!-- Title + bar -->
+              <div class="flex-1 min-w-0">
+                <p class="text-[12px] font-semibold text-slate-800 truncate mb-1.5"><?= h($tc['title']) ?></p>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-700" style="width:<?= $pct ?>%;background:<?= $tcol ?>"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Country -->
+              <span class="text-[9px] font-bold text-slate-400 shrink-0 hidden sm:block"><?= h($tc['country']) ?></span>
+              <!-- Stats -->
+              <div class="text-right shrink-0 space-y-0.5">
+                <?php if ((int)$tc['viewCount'] > 0): ?>
+                  <div class="flex items-center gap-1 justify-end text-[10px] text-slate-500">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="font-bold text-slate-700"><?= format_number((int)$tc['viewCount']) ?></span>
+                  </div>
+                <?php endif; ?>
+                <?php if ((int)$tc['downloadCount'] > 0): ?>
+                  <div class="flex items-center gap-1 justify-end text-[10px] text-slate-400">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span><?= format_number((int)$tc['downloadCount']) ?></span>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <!-- Views by Country -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <div class="mb-5">
+        <h3 class="font-outfit font-bold text-[15px] text-slate-900">Views by Country</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Published content engagement</p>
+      </div>
+      <?php if (empty($viewsByCountry)): ?>
+        <div class="flex flex-col items-center justify-center h-36 text-center">
+          <p class="text-sm text-slate-400">No view data yet</p>
+        </div>
+      <?php else: ?>
+        <div class="space-y-3">
+          <?php foreach ($viewsByCountry as $cName => $cViews):
+            $cpct = $viewsByCountryMax > 0 ? (int)round(($cViews / $viewsByCountryMax) * 100) : 0;
+          ?>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-semibold text-slate-700"><?= h($cName) ?></span>
+                <span class="text-[11px] font-black text-slate-500"><?= format_number($cViews) ?></span>
+              </div>
+              <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700" style="width:<?= $cpct ?>%;background:#750B25"></div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <div class="mt-5 pt-4 border-t border-slate-100">
+          <p class="text-[10px] text-slate-400 uppercase tracking-widest">Total views across all countries</p>
+          <p class="font-outfit font-black text-xl text-slate-900 mt-0.5"><?= format_number(array_sum($viewsByCountry)) ?></p>
+        </div>
+      <?php endif; ?>
+    </div>
+
+  </div>
+
+  <!-- ── Row 3: Engagement Stats + Recent Comments (super admin) ────────── -->
+  <?php if ($isSuper): ?>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 mb-2">
+
+    <!-- Engagement Summary Cards -->
+    <div class="grid grid-cols-1 gap-4 content-start">
+
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <h3 class="font-outfit font-bold text-[15px] text-slate-900 mb-4">Engagement Overview</h3>
+        <div class="space-y-4">
+          <?php
+          $avgViews = $publishedPosts > 0 ? round($totalViews / $publishedPosts, 1) : 0;
+          $engagementItems = [
+            ['label'=>'Avg. Views per Post',  'value'=> number_format($avgViews, 1), 'icon'=>'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z', 'col'=>'#6366F1'],
+            ['label'=>'Total Downloads',       'value'=> format_number($totalDL),    'icon'=>'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4',                                                                                                                                                                                                                                        'col'=>'#10B981'],
+            ['label'=>'Total Comments',        'value'=> format_number($totalComments),   'icon'=>'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', 'col'=>'#F59E0B'],
+            ['label'=>'Pending Moderation',    'value'=> $pendingComments,            'icon'=>'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',                                                                                                                                                                 'col'=>'#EF4444'],
+          ];
+          foreach ($engagementItems as $ei): ?>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:<?= $ei['col'] ?>15">
+                <svg width="14" height="14" fill="none" stroke="<?= $ei['col'] ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="<?= $ei['icon'] ?>"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest"><?= h($ei['label']) ?></p>
+                <p class="font-outfit font-black text-base text-slate-900"><?= h((string)$ei['value']) ?></p>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recent Comments Pending Moderation -->
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div>
+          <h3 class="font-outfit font-bold text-[15px] text-slate-900">Comments Pending Moderation</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5"><?= $pendingComments ?> awaiting review</p>
+        </div>
+        <a href="/admin/super/moderation" class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">Moderate All &rsaquo;</a>
+      </div>
+      <?php if (empty($recentComments)): ?>
+        <div class="flex flex-col items-center justify-center py-12 text-center px-6">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:rgba(16,185,129,.08)">
+            <svg width="18" height="18" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-700">All clear</p>
+          <p class="text-[11px] text-slate-400 mt-1">No comments are awaiting moderation.</p>
+        </div>
+      <?php else: ?>
+        <div class="divide-y divide-slate-50">
+          <?php foreach ($recentComments as $cm): ?>
+            <div class="px-6 py-4 hover:bg-slate-50/60 transition-colors">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="text-[11px] font-bold text-slate-800"><?= h($cm['name'] ?: 'Anonymous') ?></span>
+                    <?php if ($cm['isFlagged']): ?>
+                      <span class="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white" style="background:#EF4444">Flagged</span>
+                    <?php endif; ?>
+                    <span class="text-[10px] text-slate-400"><?= format_relative_time($cm['createdAt']) ?></span>
+                  </div>
+                  <p class="text-[12px] text-slate-600 line-clamp-2 mb-1.5"><?= h(mb_substr($cm['content'], 0, 120)) ?><?= mb_strlen($cm['content']) > 120 ? '…' : '' ?></p>
+                  <p class="text-[10px] text-slate-400 truncate">On: <span class="text-slate-500"><?= h($cm['postTitle']) ?></span></p>
+                </div>
+                <a href="/admin/super/moderation"
+                   class="shrink-0 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border hover:scale-105 transition-transform"
+                   style="color:#750B25;border-color:rgba(117,11,37,.2)">Review</a>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
+  </div>
+  <?php endif; ?>
 
 </main>
 </div>

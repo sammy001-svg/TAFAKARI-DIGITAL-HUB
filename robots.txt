@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Block admin and API from crawlers
+Disallow: /admin/
+Disallow: /api/
+Disallow: /offline
+Disallow: /?pwa=1
+Disallow: /news?pwa=1
+Disallow: /podcasts?pwa=1
+
+# Block upload directories
+Disallow: /uploads/
+Disallow: /public/uploads/
+
+Sitemap: https://tafakaridigitalhub.com/sitemap.xml

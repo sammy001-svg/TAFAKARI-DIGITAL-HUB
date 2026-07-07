@@ -53,6 +53,14 @@ $sqls = [
       `isRead` TINYINT(1) NOT NULL DEFAULT 0, `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+    'SiteSetting' => "CREATE TABLE IF NOT EXISTS `SiteSetting` (
+      `key` VARCHAR(100) NOT NULL,
+      `value` TEXT NULL,
+      `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+      `updatedBy` VARCHAR(191) NULL,
+      PRIMARY KEY (`key`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 ];
 
 $created = [];
