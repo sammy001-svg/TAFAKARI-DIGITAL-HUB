@@ -410,7 +410,7 @@ function closeCreateDrawer() {
   document.body.style.overflow = '';
 }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeCreateDrawer(); });
-<?php if ($createError): ?>document.addEventListener('DOMContentLoaded', openCreateDrawer);<?php endif; ?>
+<?php if ($createError || isset($_GET['new'])): ?>document.addEventListener('DOMContentLoaded', openCreateDrawer);<?php endif; ?>
 <?php if (isset($_GET['created'])): ?>
 document.addEventListener('DOMContentLoaded', function(){
   var isPub = <?= json_encode($_GET['created'] === 'pub') ?>;

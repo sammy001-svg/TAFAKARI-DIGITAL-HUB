@@ -353,6 +353,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         <div class="space-y-2">
           <?php
           $actions = [
+            ['href'=>'/admin/content/articles?new=1', 'label'=>'Add News',  'sub'=>'Write a new article', 'svg'=>'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h2'],
             ['href'=>'/admin/content/new', 'label'=>'Create New Content',  'sub'=>'Start drafting',     'svg'=>'M12 4v16m8-8H4'],
             ['href'=>'/admin/content',     'label'=>'Manage Content',      'sub'=>'View all posts',     'svg'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
             ['href'=>'/admin/profile',     'label'=>'Edit Profile',        'sub'=>'Update your info',   'svg'=>'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
