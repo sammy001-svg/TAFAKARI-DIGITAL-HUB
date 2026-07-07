@@ -109,10 +109,10 @@
         </div>
 
         <!-- Become a partner -->
-        <div class="flex items-center gap-2 opacity-40">
+        <a href="/contact" class="flex items-center gap-2 opacity-40 hover:opacity-80 transition-opacity">
           <div class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/40 text-xs font-bold">+</div>
           <span class="text-[11px] text-white/40" data-i18n="footer.becomePartner">Become a Partner</span>
-        </div>
+        </a>
       </div>
     </div>
 

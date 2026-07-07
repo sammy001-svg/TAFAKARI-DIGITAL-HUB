@@ -314,8 +314,8 @@ try {
       $impactStats = [
         ['num' => '3',                                                        'suf' => '',  'label' => 'Countries',              'key' => 'countries'],
         ['num' => '84',                                                       'suf' => '+', 'label' => 'Administrative Units',   'key' => 'adminUnits'],
-        ['num' => $publishedCount > 0 ? (string)$publishedCount : '50',      'suf' => '+', 'label' => 'Published Resources',    'key' => 'publishedResources'],
-        ['num' => $totalViews > 0     ? format_number($totalViews) : '10K',  'suf' => '+', 'label' => 'Community Engagements',  'key' => 'communityEngagements'],
+        ['num' => format_number($publishedCount), 'suf' => '+', 'label' => 'Published Resources',    'key' => 'publishedResources'],
+        ['num' => format_number($totalViews),     'suf' => '+', 'label' => 'Community Engagements',  'key' => 'communityEngagements'],
       ];
       foreach ($impactStats as $j => $st): ?>
         <div class="stat-item text-center py-10 px-4">

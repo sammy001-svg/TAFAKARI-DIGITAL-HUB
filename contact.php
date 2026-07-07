@@ -88,31 +88,31 @@ $pageTitle = 'Contact Us | Tafakari Digital Hub';
         <?php endif; ?>
         <form method="POST" class="space-y-5">
           <div>
-            <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Full Name *</label>
+            <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2" data-i18n="contactPage.fullName">Full Name *</label>
             <input type="text" name="fullName" required value="<?= h($_POST['fullName'] ?? '') ?>"
                    class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:border-transparent text-sm"
-                   style="--tw-ring-color:#750B25" placeholder="Your full name">
+                   style="--tw-ring-color:#750B25" placeholder="Your full name" data-i18n-placeholder="contactPage.fullNamePlaceholder">
           </div>
           <div>
-            <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Email Address *</label>
+            <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2" data-i18n="contactPage.emailAddress">Email Address *</label>
             <input type="email" name="email" required value="<?= h($_POST['email'] ?? '') ?>"
                    class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:border-transparent text-sm"
                    placeholder="you@example.com">
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Country</label>
+              <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2" data-i18n="heatmapPage.country">Country</label>
               <select name="country" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none text-sm">
-                <option value="">Select country</option>
+                <option value="" data-i18n="contactPage.selectCountry">Select country</option>
                 <?php foreach (['Kenya','Ethiopia','DR Congo','Other'] as $c): ?>
                   <option value="<?= h($c) ?>" <?= (($_POST['country'] ?? '') === $c) ? 'selected' : '' ?>><?= h($c) ?></option>
                 <?php endforeach; ?>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Interest</label>
+              <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2" data-i18n="contactPage.interest">Interest</label>
               <select name="interest" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none text-sm">
-                <option value="">Select interest</option>
+                <option value="" data-i18n="contactPage.selectInterest">Select interest</option>
                 <?php foreach (['Health','Security','Policy','Media/Press','Other'] as $i): ?>
                   <option value="<?= h($i) ?>" <?= (($_POST['interest'] ?? '') === $i) ? 'selected' : '' ?>><?= h($i) ?></option>
                 <?php endforeach; ?>
@@ -120,12 +120,12 @@ $pageTitle = 'Contact Us | Tafakari Digital Hub';
             </div>
           </div>
           <div>
-            <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Message *</label>
+            <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2" data-i18n="contactPage.message">Message *</label>
             <textarea name="message" required rows="5"
                       class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none text-sm resize-none"
-                      placeholder="Tell us about yourself or your inquiry..."><?= h($_POST['message'] ?? '') ?></textarea>
+                      placeholder="Tell us about yourself or your inquiry..." data-i18n-placeholder="contactPage.messagePlaceholder"><?= h($_POST['message'] ?? '') ?></textarea>
           </div>
-          <button type="submit" class="btn-primary w-full py-4 text-base">Send Message</button>
+          <button type="submit" class="btn-primary w-full py-4 text-base" data-i18n="contactPage.sendMessageBtn">Send Message</button>
         </form>
       <?php endif; ?>
     </div>

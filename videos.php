@@ -48,19 +48,7 @@ try {
     $videos = $stmt->fetchAll();
 } catch (Exception $e) { /* DB not ready */ }
 
-function youtube_id(string $url): string {
-    if (preg_match('/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
-        return $m[1];
-    }
-    return '';
-}
-
-function vimeo_id(string $url): string {
-    if (preg_match('/vimeo\.com\/(\d+)/', $url, $m)) {
-        return $m[1];
-    }
-    return '';
-}
+// youtube_id() and vimeo_id() are provided by includes/functions.php
 
 function embed_html(string $url, string $title): string {
     $ytId = youtube_id($url);

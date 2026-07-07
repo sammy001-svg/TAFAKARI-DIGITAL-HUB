@@ -64,16 +64,16 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
     <?php
     $impactStats = [
-        ['value' => max($stats['articles'], 0),  'label' => 'Articles',           'key' => 'about.stat.articles',   'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z'],
-        ['value' => max($stats['documents'], 0), 'label' => 'Research Docs',       'key' => 'about.stat.documents',  'icon' => 'M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 0 0-.293-.707l-5.414-5.414A1 1 0 0 0 12.586 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z'],
-        ['value' => max($stats['podcasts'], 0),  'label' => 'Podcast Episodes',    'key' => 'about.stat.podcasts',   'icon' => 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3'],
-        ['value' => max($stats['videos'], 0),    'label' => 'Video Reports',        'key' => 'about.stat.videos',    'icon' => 'M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z'],
-        ['value' => max($stats['images'], 0),    'label' => 'Gallery Photos',       'key' => 'about.stat.images',    'icon' => 'M4 16l4.586-4.586a2 2 0 0 1 2.828 0L16 16m-2-2 1.586-1.586a2 2 0 0 1 2.828 0L20 14m-6-6h.01M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z'],
-        ['value' => max((int)$stats['countries'], 15), 'label' => 'Countries Monitored', 'key' => 'about.stat.countries', 'suffix' => '+', 'icon' => 'M3.055 11H5a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2 2 2 0 0 1 2 2v2.945M8 3.935V5.5A2.5 2.5 0 0 0 10.5 8h.5a2 2 0 0 1 2 2 2 2 0 1 0 4 0 2 2 0 0 1 2-2h1.064M15 20.488V18a2 2 0 0 1 2-2h3.064'],
+        ['value' => max($stats['articles'], 0),  'label' => 'Articles',           'key' => 'about.stat.articles',   'href' => '/news',      'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z'],
+        ['value' => max($stats['documents'], 0), 'label' => 'Research Docs',       'key' => 'about.stat.documents',  'href' => '/documents', 'icon' => 'M7 21h10a2 2 0 0 0 2-2V9.414a1 1 0 0 0-.293-.707l-5.414-5.414A1 1 0 0 0 12.586 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z'],
+        ['value' => max($stats['podcasts'], 0),  'label' => 'Podcast Episodes',    'key' => 'about.stat.podcasts',   'href' => '/podcasts',  'icon' => 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3'],
+        ['value' => max($stats['videos'], 0),    'label' => 'Video Reports',        'key' => 'about.stat.videos',    'href' => '/videos',    'icon' => 'M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z'],
+        ['value' => max($stats['images'], 0),    'label' => 'Gallery Photos',       'key' => 'about.stat.images',    'href' => '/gallery',   'icon' => 'M4 16l4.586-4.586a2 2 0 0 1 2.828 0L16 16m-2-2 1.586-1.586a2 2 0 0 1 2.828 0L20 14m-6-6h.01M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z'],
+        ['value' => max((int)$stats['countries'], 15), 'label' => 'Countries Monitored', 'key' => 'about.stat.countries', 'suffix' => '+', 'href' => '#coverage', 'icon' => 'M3.055 11H5a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2 2 2 0 0 1 2 2v2.945M8 3.935V5.5A2.5 2.5 0 0 0 10.5 8h.5a2 2 0 0 1 2 2 2 2 0 1 0 4 0 2 2 0 0 1 2-2h1.064M15 20.488V18a2 2 0 0 1 2-2h3.064'],
     ];
     ?>
     <?php foreach ($impactStats as $s): ?>
-      <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 text-center hover:shadow-md hover:border-amber-200 transition-all">
+      <a href="<?= h($s['href']) ?>" class="block bg-white rounded-2xl border border-amber-100 shadow-sm p-5 text-center hover:shadow-md hover:border-amber-200 hover:-translate-y-0.5 transition-all">
         <div class="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center" style="background:#F8F8F0">
           <svg width="20" height="20" fill="none" stroke="#C47C1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="<?= $s['icon'] ?>"/>
@@ -83,7 +83,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
           <?= $s['value'] > 0 ? format_number((int)$s['value']) : '—' ?><?= $s['suffix'] ?? '' ?>
         </div>
         <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1" data-i18n="<?= h($s['key']) ?>"><?= h($s['label']) ?></div>
-      </div>
+      </a>
     <?php endforeach; ?>
   </div>
 </div>
