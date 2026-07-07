@@ -378,10 +378,10 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background:#E7952A"></span>
             <span class="relative inline-flex rounded-full h-2 w-2" style="background:#E7952A"></span>
           </span>
-          <span class="text-[10px] font-black uppercase tracking-[.14em]" style="color:rgba(231,149,42,.85)">Live Conflict Monitoring</span>
+          <span class="text-[10px] font-black uppercase tracking-[.14em]" style="color:rgba(231,149,42,.85)" data-i18n="heatmapPage.liveMonitoring">Live Conflict Monitoring</span>
         </div>
-        <h1 class="font-outfit font-black text-2xl md:text-4xl leading-tight">Regional Conflict Dashboard</h1>
-        <p class="mt-1.5 text-xs md:text-sm leading-relaxed max-w-2xl hidden sm:block" style="color:rgba(248,248,240,.55)">
+        <h1 class="font-outfit font-black text-2xl md:text-4xl leading-tight" data-i18n="heatmapPage.dashboardTitle">Regional Conflict Dashboard</h1>
+        <p class="mt-1.5 text-xs md:text-sm leading-relaxed max-w-2xl hidden sm:block" style="color:rgba(248,248,240,.55)" data-i18n="heatmapPage.dashboardDesc">
           Mapping conflict intensity, displacement, and humanitarian crises across 14 African nations. Click any marker for detailed intelligence.
         </p>
       </div>
@@ -389,15 +389,15 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 shrink-0">
         <?php
         $kpis = [
-          [format_number($totalReports),   'Total Reports',    '#E7952A'],
-          [format_number($monthlyReports), 'This Month',       '#E7952A'],
-          ['—',                            'Active Hotspots',  '#ED1C24'],
-          ['14',                           'Countries',        '#E7952A'],
+          [format_number($totalReports),   'Total Reports',    '#E7952A', 'totalReports'],
+          [format_number($monthlyReports), 'This Month',       '#E7952A', 'thisMonth'],
+          ['—',                            'Active Hotspots',  '#ED1C24', 'activeHotspots'],
+          ['14',                           'Countries',        '#E7952A', 'countriesKpi'],
         ];
-        foreach ($kpis as $i => [$val, $lbl, $col]): ?>
+        foreach ($kpis as $i => [$val, $lbl, $col, $lblKey]): ?>
           <div class="rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-center" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
             <div class="font-outfit font-black text-xl md:text-2xl<?= $i===2?' text-red-400':'' ?>" id="<?= $i===2?'kpi-hotspots':'' ?>"><?= $val ?></div>
-            <div class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-0.5" style="color:<?= $col ?>;opacity:.8"><?= $lbl ?></div>
+            <div class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-0.5" style="color:<?= $col ?>;opacity:.8" data-i18n="heatmapPage.kpi.<?= h($lblKey) ?>"><?= $lbl ?></div>
           </div>
         <?php endforeach; ?>
       </div>
@@ -416,7 +416,7 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24">
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
-      Filters
+      <span data-i18n="heatmapPage.filters">Filters</span>
     </button>
 
     <!-- Ctrl-panel mobile backdrop -->
@@ -429,7 +429,7 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 
       <!-- Mobile-only header with close button -->
       <div class="md:hidden flex items-center justify-between px-4 py-3.5" style="border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
-        <span class="text-xs font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.8)">Map Filters</span>
+        <span class="text-xs font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.8)" data-i18n="heatmapPage.mapFilters">Map Filters</span>
         <button onclick="_ctrlClose()"
                 style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>
       </div>
@@ -438,12 +438,13 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 
         <!-- Search -->
         <div>
-          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)">Search Locations</p>
+          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.searchLocations">Search Locations</p>
           <div class="relative">
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style="color:rgba(255,255,255,.3)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input id="map-search" type="search" placeholder="Location, country…" oninput="applyFilters()"
+                   data-i18n-placeholder="heatmapPage.searchPlaceholder"
                    class="w-full text-xs text-white rounded-xl border pl-8 pr-3 py-2.5 focus:outline-none focus:border-amber-400/40"
                    style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)">
           </div>
@@ -451,17 +452,17 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 
         <!-- View mode -->
         <div>
-          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)">View Mode</p>
+          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.viewMode">View Mode</p>
           <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl" style="background:rgba(255,255,255,.05)">
             <button id="mode-markers" onclick="setMode('markers')"
                     class="mode-btn text-xs font-bold py-2 rounded-lg text-white transition-all"
                     style="background:rgba(231,149,42,.22);border:1px solid rgba(231,149,42,.35)">
-              ● Markers
+              ● <span data-i18n="heatmapPage.markers">Markers</span>
             </button>
             <button id="mode-heat" onclick="setMode('heat')"
                     class="mode-btn text-xs font-bold py-2 rounded-lg transition-all"
                     style="color:rgba(255,255,255,.4);background:transparent;border:1px solid transparent">
-              ◈ Heatmap
+              ◈ <span data-i18n="heatmapPage.heatmapMode">Heatmap</span>
             </button>
           </div>
         </div>
@@ -469,8 +470,8 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
         <!-- Country filter -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)">Country</p>
-            <button onclick="setCountry('ALL')" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)">Reset</button>
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.country">Country</p>
+            <button onclick="setCountry('ALL')" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)" data-i18n="heatmapPage.reset">Reset</button>
           </div>
           <div class="space-y-px max-h-44 overflow-y-auto pr-0.5" style="scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent">
             <?php foreach ($ctryList as $code => [$name, $flag]): ?>
@@ -478,7 +479,7 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
                       class="ctry-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-all"
                       style="color:rgba(255,255,255,.55)">
                 <span style="font-size:14px;line-height:1"><?= $flag ?></span>
-                <span class="text-xs font-medium"><?= h($name) ?></span>
+                <span class="text-xs font-medium" <?= $code === 'ALL' ? 'data-i18n="heatmapPage.allCountries"' : '' ?>><?= h($name) ?></span>
               </button>
             <?php endforeach; ?>
           </div>
@@ -487,8 +488,8 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
         <!-- Category filter -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)">Category</p>
-            <button onclick="toggleAllCats()" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)">Toggle All</button>
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.category">Category</p>
+            <button onclick="toggleAllCats()" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)" data-i18n="heatmapPage.toggleAll">Toggle All</button>
           </div>
           <?php foreach ($cats as $cat => $col):
             $id = 'cat-' . str_replace(' ', '_', $cat); ?>
@@ -506,33 +507,33 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
         <!-- Intensity slider -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)">Min Intensity</p>
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.minIntensity">Min Intensity</p>
             <span id="int-val" class="text-xs font-black" style="color:#E7952A">1</span>
           </div>
           <input type="range" class="int-slider" id="int-slider" min="1" max="10" value="1"
                  oninput="updateSlider();applyFilters()"
                  style="background:linear-gradient(to right,#E7952A 0%,rgba(255,255,255,.12) 0%)">
           <div class="flex justify-between mt-1">
-            <span class="text-[9px]" style="color:rgba(255,255,255,.22)">Low</span>
-            <span class="text-[9px]" style="color:rgba(255,255,255,.22)">Critical</span>
+            <span class="text-[9px]" style="color:rgba(255,255,255,.22)" data-i18n="heatmapPage.low">Low</span>
+            <span class="text-[9px]" style="color:rgba(255,255,255,.22)" data-i18n="heatmapPage.critical">Critical</span>
           </div>
         </div>
 
         <!-- Intensity legend -->
         <div>
-          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-2.5" style="color:rgba(231,149,42,.7)">Intensity Legend</p>
+          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-2.5" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.intensityLegend">Intensity Legend</p>
           <div class="space-y-2">
             <div class="flex items-center gap-2.5">
               <div style="width:13px;height:13px;border-radius:50%;background:#ED1C24;box-shadow:0 0 8px #ED1C2499;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">8–10 · Critical / Active conflict</span>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendCritical">8–10 · Critical / Active conflict</span>
             </div>
             <div class="flex items-center gap-2.5">
               <div style="width:11px;height:11px;border-radius:50%;background:#E7952A;box-shadow:0 0 6px #E7952A77;flex-shrink:0;margin-left:1px"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">5–7 · Elevated risk</span>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendElevated">5–7 · Elevated risk</span>
             </div>
             <div class="flex items-center gap-2.5">
               <div style="width:8px;height:8px;border-radius:50%;background:#F4C87E;flex-shrink:0;margin-left:2.5px"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">1–4 · Emerging concern</span>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendEmerging">1–4 · Emerging concern</span>
             </div>
           </div>
         </div>
@@ -540,30 +541,30 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
         <!-- Published Reports toggle -->
         <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
           <div class="flex items-center justify-between mb-2">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(99,102,241,.85)">Published Reports</p>
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(99,102,241,.85)" data-i18n="heatmapPage.publishedReports">Published Reports</p>
             <button id="reports-toggle-btn" onclick="toggleReports()"
                     class="text-[10px] font-black px-2.5 py-1 rounded-lg transition-all"
                     style="background:rgba(99,102,241,.25);color:#818CF8;border:1px solid rgba(99,102,241,.35)">
               ON
             </button>
           </div>
-          <p class="text-[10px] mb-3" style="color:rgba(255,255,255,.28)"><?= count($postMarkers) ?> report<?= count($postMarkers) !== 1 ? 's' : '' ?> from the database</p>
+          <p class="text-[10px] mb-3" style="color:rgba(255,255,255,.28)"><?= count($postMarkers) ?> <span data-i18n="heatmapPage.reportsFromDb">reports from the database</span></p>
           <div class="space-y-1.5">
             <div class="flex items-center gap-2">
               <div style="width:10px;height:10px;background:#750B25;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Article</span>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendArticle">Article</span>
             </div>
             <div class="flex items-center gap-2">
               <div style="width:10px;height:10px;background:#E7952A;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Podcast</span>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendPodcast">Podcast</span>
             </div>
             <div class="flex items-center gap-2">
               <div style="width:10px;height:10px;background:#ED1C24;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Video</span>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendVideo">Video</span>
             </div>
             <div class="flex items-center gap-2">
               <div style="width:10px;height:10px;background:#6366F1;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)">Document</span>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendDocument">Document</span>
             </div>
           </div>
         </div>
@@ -576,14 +577,14 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 
     <!-- ── Map toolbar (top-right) ──────────────────────────────────── -->
     <div class="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
-      <button onclick="resetView()" title="Reset map view"
+      <button onclick="resetView()" title="Reset map view" data-i18n-title="heatmapPage.resetMapView"
               class="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:opacity-80 transition-opacity"
               style="background:rgba(10,2,4,.82);border:1px solid rgba(255,255,255,.12)">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
         </svg>
       </button>
-      <button onclick="toggleFullscreen()" title="Toggle fullscreen"
+      <button onclick="toggleFullscreen()" title="Toggle fullscreen" data-i18n-title="heatmapPage.toggleFullscreen"
               class="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:opacity-80 transition-opacity"
               style="background:rgba(10,2,4,.82);border:1px solid rgba(255,255,255,.12)">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -614,24 +615,24 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
   <div class="max-w-7xl mx-auto px-6 py-10">
     <div class="flex items-center justify-between mb-5">
       <div>
-        <h2 class="font-outfit font-black text-xl text-slate-900">Top Flashpoints</h2>
-        <p class="text-sm text-slate-400 mt-0.5">Highest-intensity locations currently visible — click any row to zoom in</p>
+        <h2 class="font-outfit font-black text-xl text-slate-900" data-i18n="heatmapPage.topFlashpoints">Top Flashpoints</h2>
+        <p class="text-sm text-slate-400 mt-0.5" data-i18n="heatmapPage.topFlashpointsDesc">Highest-intensity locations currently visible — click any row to zoom in</p>
       </div>
-      <span class="text-[10px] font-black uppercase tracking-widest text-slate-300">Sorted by severity</span>
+      <span class="text-[10px] font-black uppercase tracking-widest text-slate-300" data-i18n="heatmapPage.sortedBySeverity">Sorted by severity</span>
     </div>
     <div class="overflow-x-auto rounded-2xl border border-slate-100 shadow-sm">
       <table class="w-full text-sm">
         <thead>
           <tr style="background:#750B25;color:#fff">
             <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest w-10">#</th>
-            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest">Location</th>
-            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest hidden md:table-cell">Country</th>
-            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest hidden sm:table-cell">Category</th>
-            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest w-36">Intensity</th>
+            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest" data-i18n="heatmapPage.location">Location</th>
+            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest hidden md:table-cell" data-i18n="heatmapPage.country">Country</th>
+            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest hidden sm:table-cell" data-i18n="heatmapPage.category">Category</th>
+            <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest w-36" data-i18n="heatmapPage.intensity">Intensity</th>
           </tr>
         </thead>
         <tbody id="hotspot-tbody">
-          <tr><td colspan="5" class="text-center py-8 text-slate-300 text-sm">Loading…</td></tr>
+          <tr><td colspan="5" class="text-center py-8 text-slate-300 text-sm" data-i18n="heatmapPage.loadingEllipsis">Loading…</td></tr>
         </tbody>
       </table>
     </div>

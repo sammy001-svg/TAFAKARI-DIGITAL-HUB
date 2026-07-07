@@ -58,9 +58,9 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-14 px-6">
   <div class="max-w-7xl mx-auto">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">Visual Stories</span>
-    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">Photo Gallery</h1>
-    <p class="text-white/60 max-w-xl">Moments captured from the field — communities, landscapes, and stories from across the African continent.</p>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A" data-i18n="galleryPage.badge">Visual Stories</span>
+    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3" data-i18n="galleryPage.title">Photo Gallery</h1>
+    <p class="text-white/60 max-w-xl" data-i18n="galleryPage.desc">Moments captured from the field — communities, landscapes, and stories from across the African continent.</p>
   </div>
 </div>
 
@@ -71,7 +71,7 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
     <div class="flex items-center gap-3 mb-8 overflow-x-auto pb-2">
       <a href="/gallery"
          class="shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all <?= $country === '' ? 'text-slate-900 border-2' : 'bg-white border border-slate-200 text-slate-600 hover:bg-amber-50' ?>"
-         style="<?= $country === '' ? 'border-color:#E7952A;background:#F8F8F0' : '' ?>">
+         style="<?= $country === '' ? 'border-color:#E7952A;background:#F8F8F0' : '' ?>" data-i18n="heatmapPage.allCountries">
         All Countries
       </a>
       <?php foreach ($countryOptions as $c): ?>
@@ -88,11 +88,11 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
   <?php if ($total > 0): ?>
     <div class="flex items-center justify-between mb-6">
       <p class="text-sm text-slate-500">
-        Showing <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> of <strong class="text-slate-800"><?= $total ?></strong> photo<?= $total !== 1 ? 's' : '' ?>
-        <?= $country ? ' from <strong class="text-slate-700">' . h($country) . '</strong>' : ' across all countries' ?>
+        <span data-i18n="galleryPage.showing">Showing</span> <strong class="text-slate-800"><?= ($page - 1) * $perPage + 1 ?>–<?= min($page * $perPage, $total) ?></strong> <span data-i18n="galleryPage.of">of</span> <strong class="text-slate-800"><?= $total ?></strong> <span data-i18n="galleryPage.photos">photos</span>
+        <?= $country ? ' <span data-i18n="galleryPage.from">from</span> <strong class="text-slate-700">' . h($country) . '</strong>' : ' <span data-i18n="galleryPage.acrossAllCountries">across all countries</span>' ?>
       </p>
       <?php if ($pages > 1): ?>
-        <span class="text-xs text-slate-400">Page <?= $page ?> of <?= $pages ?></span>
+        <span class="text-xs text-slate-400"><span data-i18n="galleryPage.page">Page</span> <?= $page ?> <span data-i18n="galleryPage.of">of</span> <?= $pages ?></span>
       <?php endif; ?>
     </div>
   <?php endif; ?>
@@ -101,10 +101,10 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
   <?php if (empty($images)): ?>
     <div class="text-center py-24 bg-white rounded-3xl border border-amber-100">
       <div class="text-6xl mb-4">🖼️</div>
-      <h3 class="font-outfit font-bold text-xl text-slate-900">No photos<?= $country ? ' from ' . h($country) : '' ?> yet</h3>
-      <p class="text-slate-400 mt-2 text-sm mb-6">Images will appear here once published.</p>
+      <h3 class="font-outfit font-bold text-xl text-slate-900"><span data-i18n="galleryPage.noPhotos">No photos</span><?= $country ? ' <span data-i18n="galleryPage.from">from</span> ' . h($country) : '' ?> <span data-i18n="galleryPage.yet">yet</span></h3>
+      <p class="text-slate-400 mt-2 text-sm mb-6" data-i18n="galleryPage.imagesWillAppear">Images will appear here once published.</p>
       <?php if ($country): ?>
-        <a href="/gallery" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102">
+        <a href="/gallery" class="inline-block px-6 py-3 rounded-xl font-bold text-sm" style="background:#E7952A;color:#0D0102" data-i18n="galleryPage.viewAllCountries">
           View All Countries
         </a>
       <?php endif; ?>
@@ -228,7 +228,7 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
   <div id="lb-backdrop" style="position:absolute;inset:0;cursor:zoom-out" onclick="closeLightbox()"></div>
 
   <!-- Close -->
-  <button onclick="closeLightbox()" title="Close (Esc)"
+  <button onclick="closeLightbox()" title="Close (Esc)" data-i18n-title="galleryPage.closeEsc"
           style="position:absolute;top:16px;right:16px;z-index:10;width:38px;height:38px;border-radius:50%;border:none;
                  background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);cursor:pointer;font-size:20px;line-height:1;
                  display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s"
@@ -236,7 +236,7 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
           onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.65)'">&times;</button>
 
   <!-- Prev -->
-  <button onclick="prevImg()" title="Previous (←)"
+  <button onclick="prevImg()" title="Previous (←)" data-i18n-title="galleryPage.previousArrow"
           style="position:absolute;left:12px;top:50%;transform:translateY(-50%);z-index:10;
                  width:46px;height:46px;border-radius:50%;border:none;
                  background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);cursor:pointer;font-size:26px;line-height:1;
@@ -245,7 +245,7 @@ $pageTitle = 'Photo Gallery | Tafakari Digital Hub';
           onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.65)'">&#8249;</button>
 
   <!-- Next -->
-  <button onclick="nextImg()" title="Next (→)"
+  <button onclick="nextImg()" title="Next (→)" data-i18n-title="galleryPage.nextArrow"
           style="position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:10;
                  width:46px;height:46px;border-radius:50%;border:none;
                  background:rgba(255,255,255,.08);color:rgba(255,255,255,.65);cursor:pointer;font-size:26px;line-height:1;

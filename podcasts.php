@@ -70,9 +70,9 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
 <!-- ── Page header ──────────────────────────────────────────────────────────── -->
 <div style="background:#0D0102" class="py-14 px-6">
   <div class="max-w-7xl mx-auto">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A">Audio Stories</span>
-    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3">Podcast Library</h1>
-    <p class="text-white/60 max-w-xl">Interviews, field discussions, and community voices from researchers, policymakers, and local experts.</p>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 text-amber-900" style="background:#E7952A" data-i18n="podcastsPage.badge">Audio Stories</span>
+    <h1 class="font-outfit text-4xl md:text-5xl font-black text-white leading-tight mb-3" data-i18n="podcastsPage.title">Podcast Library</h1>
+    <p class="text-white/60 max-w-xl" data-i18n="podcastsPage.desc">Interviews, field discussions, and community voices from researchers, policymakers, and local experts.</p>
   </div>
 </div>
 
@@ -82,29 +82,29 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
   <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 mb-8">
     <form method="GET" action="/podcasts" class="flex flex-wrap gap-3 items-end">
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Country</label>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="heatmapPage.country">Country</label>
         <select name="country" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none min-w-[150px]">
-          <option value="">All Countries</option>
+          <option value="" data-i18n="heatmapPage.allCountries">All Countries</option>
           <?php foreach ($countryOptions as $c): ?>
             <option value="<?= h($c) ?>" <?= $country === $c ? 'selected' : '' ?>><?= h($c) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Topic</label>
+        <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="listPage.topic">Topic</label>
         <select name="cat" class="px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none min-w-[180px]">
-          <option value="">All Topics</option>
+          <option value="" data-i18n="listPage.allTopics">All Topics</option>
           <?php foreach (issue_categories() as $c): ?>
             <option value="<?= h($c) ?>" <?= $cat === $c ? 'selected' : '' ?>><?= h($c) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
       <button type="submit" class="px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style="background:#E7952A;color:#0D0102">
+              style="background:#E7952A;color:#0D0102" data-i18n="listPage.filter">
         Filter
       </button>
       <?php if ($hasFilter): ?>
-        <a href="/podcasts" class="px-6 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Clear</a>
+        <a href="/podcasts" class="px-6 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors" data-i18n="listPage.clear">Clear</a>
       <?php endif; ?>
     </form>
   </div>
