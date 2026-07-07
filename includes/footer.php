@@ -17,35 +17,35 @@
             </div>
           </a>
         </div>
-        <p class="text-sm leading-relaxed text-slate-300">
+        <p class="text-sm leading-relaxed text-slate-300" data-i18n="footer.tagline">
           A multi-user digital platform serving as a centralized knowledge repository,
           media broadcasting center, and community engagement tool across Kenya, Ethiopia, and DRC.
         </p>
       </div>
 
       <div>
-        <h4 class="font-outfit font-bold text-white mb-6">Quick Links</h4>
+        <h4 class="font-outfit font-bold text-white mb-6" data-i18n="footer.quickLinks">Quick Links</h4>
         <ul class="space-y-4 text-sm">
-          <li><a href="/"          class="hover:text-secondary transition-colors">Home</a></li>
-          <li><a href="/heatmap"   class="hover:text-secondary transition-colors">Regional Heatmap</a></li>
-          <li><a href="/gallery"   class="hover:text-secondary transition-colors">Photo Gallery</a></li>
-          <li><a href="/documents" class="hover:text-secondary transition-colors">Document Library</a></li>
+          <li><a href="/"          class="hover:text-secondary transition-colors" data-i18n="home">Home</a></li>
+          <li><a href="/heatmap"   class="hover:text-secondary transition-colors" data-i18n="footer.regionalHeatmap">Regional Heatmap</a></li>
+          <li><a href="/gallery"   class="hover:text-secondary transition-colors" data-i18n="footer.photoGallery">Photo Gallery</a></li>
+          <li><a href="/documents" class="hover:text-secondary transition-colors" data-i18n="footer.documentLibrary">Document Library</a></li>
         </ul>
       </div>
 
       <div>
-        <h4 class="font-outfit font-bold text-white mb-6">Resources</h4>
+        <h4 class="font-outfit font-bold text-white mb-6" data-i18n="footer.resources">Resources</h4>
         <ul class="space-y-4 text-sm">
-          <li><a href="/podcasts" class="hover:text-secondary transition-colors">Podcasts</a></li>
-          <li><a href="/videos"   class="hover:text-secondary transition-colors">Video Library</a></li>
-          <li><a href="/about"    class="hover:text-secondary transition-colors">About Us</a></li>
-          <li><a href="/contact"  class="hover:text-secondary transition-colors">Contact</a></li>
+          <li><a href="/podcasts" class="hover:text-secondary transition-colors" data-i18n="podcasts">Podcasts</a></li>
+          <li><a href="/videos"   class="hover:text-secondary transition-colors" data-i18n="footer.videoLibrary">Video Library</a></li>
+          <li><a href="/about"    class="hover:text-secondary transition-colors" data-i18n="aboutUs">About Us</a></li>
+          <li><a href="/contact"  class="hover:text-secondary transition-colors" data-i18n="footer.contact">Contact</a></li>
         </ul>
       </div>
 
       <!-- Contact column -->
       <div>
-        <h4 class="font-outfit font-bold text-white mb-6">Contact Us</h4>
+        <h4 class="font-outfit font-bold text-white mb-6" data-i18n="footer.contactUs">Contact Us</h4>
         <ul class="space-y-3 text-sm text-slate-300 mb-6">
           <li class="flex items-start gap-2.5">
             <svg class="shrink-0 mt-0.5" width="14" height="14" fill="none" stroke="#E7952A" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -89,7 +89,7 @@
 
     <!-- Partners & Network band -->
     <div class="border-t border-white/10 pt-10 pb-8">
-      <p class="text-[10px] font-black uppercase tracking-[.18em] text-white/30 mb-6 text-center">Our Partners &amp; Network Members</p>
+      <p class="text-[10px] font-black uppercase tracking-[.18em] text-white/30 mb-6 text-center" data-i18n="footer.partnersNetwork">Our Partners &amp; Network Members</p>
       <div class="flex flex-wrap items-center justify-center gap-10">
 
         <!-- Hekima University College -->
@@ -111,18 +111,20 @@
         <!-- Become a partner -->
         <div class="flex items-center gap-2 opacity-40">
           <div class="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-white/40 text-xs font-bold">+</div>
-          <span class="text-[11px] text-white/40">Become a Partner</span>
+          <span class="text-[11px] text-white/40" data-i18n="footer.becomePartner">Become a Partner</span>
         </div>
       </div>
     </div>
 
     <!-- Bottom bar -->
     <div class="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 gap-3">
-      <p>&copy; <?= date('Y') ?> Tafakari Digital Hub &mdash; A CRTP Initiative. All rights reserved.</p>
+      <p>&copy; <?= date('Y') ?> Tafakari Digital Hub &mdash; <span data-i18n="footer.rightsReserved">A CRTP Initiative. All rights reserved.</span></p>
       <div class="flex gap-8">
-        <a href="#" class="hover:text-white">Privacy Policy</a>
-        <a href="#" class="hover:text-white">Terms of Service</a>
+        <a href="#" class="hover:text-white" data-i18n="footer.privacyPolicy">Privacy Policy</a>
+        <a href="#" class="hover:text-white" data-i18n="footer.termsOfService">Terms of Service</a>
       </div>
     </div>
   </div>
 </footer>
+
+<?php include __DIR__ . '/i18n.php'; ?>

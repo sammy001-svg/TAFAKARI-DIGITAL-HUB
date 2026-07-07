@@ -225,9 +225,9 @@ try {
 
     <?php
     $defaultSlides = [
-      ['img'=>'/public/nairobi_sunset_hero.png',     'region'=>'Kenya',    'title'=>'Tracking What Matters Across All 47 Counties',      'sub'=>'Real-time issue mapping and data-driven insights powering better decisions across Kenya.',                                      'badge'=>'47 Counties Covered', 'url'=>''],
-      ['img'=>'/public/ethiopia_community_hero.png', 'region'=>'Ethiopia', 'title'=>'Community Knowledge from the Horn of Africa',        'sub'=>'Field reports, research briefs and oral histories from 11 regional states documented for public access.',                    'badge'=>'11 Regional States',  'url'=>''],
-      ['img'=>'/public/drc_nature_hero.png',         'region'=>'DR Congo', 'title'=>'Amplifying Voices from the Congo Basin',            'sub'=>'Documenting resilience, community narratives, and structural change across 26 provinces.',                                   'badge'=>'26 Provinces',        'url'=>''],
+      ['img'=>'/public/nairobi_sunset_hero.png',     'region'=>'Kenya',    'title'=>'Tracking What Matters Across All 47 Counties',      'sub'=>'Real-time issue mapping and data-driven insights powering better decisions across Kenya.',                                      'badge'=>'47 Counties Covered', 'url'=>'', 'key'=>'kenya'],
+      ['img'=>'/public/ethiopia_community_hero.png', 'region'=>'Ethiopia', 'title'=>'Community Knowledge from the Horn of Africa',        'sub'=>'Field reports, research briefs and oral histories from 11 regional states documented for public access.',                    'badge'=>'11 Regional States',  'url'=>'', 'key'=>'ethiopia'],
+      ['img'=>'/public/drc_nature_hero.png',         'region'=>'DR Congo', 'title'=>'Amplifying Voices from the Congo Basin',            'sub'=>'Documenting resilience, community narratives, and structural change across 26 provinces.',                                   'badge'=>'26 Provinces',        'url'=>'', 'key'=>'drc'],
     ];
     $slides = $useDbCarousel ? $dbSlides : $defaultSlides;
     // filter out slides with no image or title
@@ -245,24 +245,24 @@ try {
           <!-- Region eyebrow -->
           <div class="flex items-center gap-3 mb-6">
             <span class="block w-10 h-px" style="background:#E7952A"></span>
-            <span class="text-[11px] font-black uppercase tracking-[.22em]" style="color:#E7952A"><?= h($s['region']) ?></span>
+            <span class="text-[11px] font-black uppercase tracking-[.22em]" style="color:#E7952A" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.region"' : '' ?>><?= h($s['region']) ?></span>
           </div>
 
           <!-- Headline -->
-          <h1 class="font-outfit font-black text-4xl sm:text-5xl md:text-6xl text-white leading-[1.04] max-w-3xl mb-6">
+          <h1 class="font-outfit font-black text-4xl sm:text-5xl md:text-6xl text-white leading-[1.04] max-w-3xl mb-6" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.title"' : '' ?>>
             <?= h($s['title']) ?>
           </h1>
 
           <!-- Sub-headline -->
-          <p class="text-white/70 text-base md:text-lg max-w-xl mb-10 leading-relaxed">
+          <p class="text-white/70 text-base md:text-lg max-w-xl mb-10 leading-relaxed" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.sub"' : '' ?>>
             <?= h($s['sub']) ?>
           </p>
 
           <!-- CTAs -->
           <div class="flex flex-wrap items-center gap-5">
-            <a href="/heatmap" class="btn-gold" style="padding:.75rem 1.75rem">Explore Heatmap</a>
+            <a href="/heatmap" class="btn-gold" style="padding:.75rem 1.75rem" data-i18n="home.exploreHeatmap">Explore Heatmap</a>
             <a href="/about" class="inline-flex items-center gap-2 text-sm font-bold text-white/75 hover:text-white transition-colors">
-              Our Mission
+              <span data-i18n="ourMission">Our Mission</span>
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
           </div>
@@ -270,7 +270,7 @@ try {
           <!-- Coverage badge -->
           <div class="mt-10">
             <span class="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border"
-                  style="color:#E7952A;border-color:rgba(231,149,42,.45);background:rgba(231,149,42,.07)">
+                  style="color:#E7952A;border-color:rgba(231,149,42,.45);background:rgba(231,149,42,.07)" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.badge"' : '' ?>>
               <?= h($s['badge']) ?>
             </span>
           </div>
@@ -297,7 +297,7 @@ try {
 
     <!-- Scroll indicator (bottom-center) -->
     <div class="scroll-bounce absolute bottom-8 z-20 flex flex-col items-center gap-1.5" style="left:50%;transform:translateX(-50%)">
-      <span class="text-[9px] font-black uppercase tracking-[.2em] text-white/35">Scroll</span>
+      <span class="text-[9px] font-black uppercase tracking-[.2em] text-white/35" data-i18n="home.scroll">Scroll</span>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2.5">
         <path d="M12 5v14M5 12l7 7 7-7"/>
       </svg>
@@ -312,17 +312,17 @@ try {
     <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4">
       <?php
       $impactStats = [
-        ['num' => '3',                                                        'suf' => '',  'label' => 'Countries'],
-        ['num' => '84',                                                       'suf' => '+', 'label' => 'Administrative Units'],
-        ['num' => $publishedCount > 0 ? (string)$publishedCount : '50',      'suf' => '+', 'label' => 'Published Resources'],
-        ['num' => $totalViews > 0     ? format_number($totalViews) : '10K',  'suf' => '+', 'label' => 'Community Engagements'],
+        ['num' => '3',                                                        'suf' => '',  'label' => 'Countries',              'key' => 'countries'],
+        ['num' => '84',                                                       'suf' => '+', 'label' => 'Administrative Units',   'key' => 'adminUnits'],
+        ['num' => $publishedCount > 0 ? (string)$publishedCount : '50',      'suf' => '+', 'label' => 'Published Resources',    'key' => 'publishedResources'],
+        ['num' => $totalViews > 0     ? format_number($totalViews) : '10K',  'suf' => '+', 'label' => 'Community Engagements',  'key' => 'communityEngagements'],
       ];
       foreach ($impactStats as $j => $st): ?>
         <div class="stat-item text-center py-10 px-4">
           <div class="font-outfit font-black text-4xl md:text-5xl leading-none mb-2.5">
             <span style="color:#E7952A"><?= h($st['num']) ?></span><span style="color:#F4C87E"><?= h($st['suf']) ?></span>
           </div>
-          <div class="text-white/45 text-[11px] font-semibold uppercase tracking-widest"><?= h($st['label']) ?></div>
+          <div class="text-white/45 text-[11px] font-semibold uppercase tracking-widest" data-i18n="home.stat.<?= h($st['key']) ?>"><?= h($st['label']) ?></div>
         </div>
       <?php endforeach; ?>
     </div>
@@ -336,21 +336,21 @@ try {
 
     <div>
       <div class="mission-quote">
-        <p class="font-outfit font-black text-3xl md:text-[2.6rem] text-slate-900 leading-snug">
+        <p class="font-outfit font-black text-3xl md:text-[2.6rem] text-slate-900 leading-snug" data-i18n="home.missionQuote">
           Connecting communities through knowledge, media, and informed dialogue across East and Central Africa.
         </p>
       </div>
     </div>
 
     <div>
-      <span class="eyebrow-left">Our Purpose</span>
-      <p class="text-slate-500 text-[15px] leading-[1.85] mb-5">
+      <span class="eyebrow-left" data-i18n="ourPurpose">Our Purpose</span>
+      <p class="text-slate-500 text-[15px] leading-[1.85] mb-5" data-i18n="home.missionP1">
         Tafakari Digital Hub is a multi-user digital platform that bridges the information gap across Kenya, Ethiopia, and the Democratic Republic of Congo. We aggregate field research, amplify grassroots narratives, and make critical data accessible to decision-makers, journalists, and communities.
       </p>
-      <p class="text-slate-500 text-[15px] leading-[1.85] mb-10">
+      <p class="text-slate-500 text-[15px] leading-[1.85] mb-10" data-i18n="home.missionP2">
         From interactive regional heatmaps to curated document libraries and community dialogue boards &mdash; every tool on this platform is designed to inform, connect, and empower.
       </p>
-      <a href="/about" class="btn-gold" style="padding:.75rem 1.75rem">Discover Our Mission</a>
+      <a href="/about" class="btn-gold" style="padding:.75rem 1.75rem" data-i18n="home.discoverMission">Discover Our Mission</a>
     </div>
   </section>
 
@@ -362,8 +362,8 @@ try {
     <div class="max-w-7xl mx-auto">
 
       <div class="text-center mb-16">
-        <span class="eyebrow-center">What We Do</span>
-        <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Four Pillars of Impact</h2>
+        <span class="eyebrow-center" data-i18n="whatWeDo">What We Do</span>
+        <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.fourPillars">Four Pillars of Impact</h2>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -371,31 +371,31 @@ try {
         $pillars = [
           [
             'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>',
-            'title' => 'Media Broadcasting',
+            'title' => 'Media Broadcasting', 'key' => 'mediaBroadcasting',
             'desc'  => 'Photo galleries, podcasts, and video libraries documenting field activities and regional oral histories across three nations.',
             'href'  => '/gallery',
-            'cta'   => 'View Gallery',
+            'cta'   => 'View Gallery', 'ctaKey' => 'viewGallery',
           ],
           [
             'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>',
-            'title' => 'Knowledge Repository',
+            'title' => 'Knowledge Repository', 'key' => 'knowledgeRepository',
             'desc'  => 'A structured library of research reports, policy briefs, and actionable datasets made freely accessible for public and academic use.',
             'href'  => '/documents',
-            'cta'   => 'Browse Documents',
+            'cta'   => 'Browse Documents', 'ctaKey' => 'browseDocuments',
           ],
           [
             'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>',
-            'title' => 'Community Engagement',
+            'title' => 'Community Engagement', 'key' => 'communityEngagement',
             'desc'  => 'Moderated public comment systems and contact infrastructure ensuring safe, constructive, and inclusive community dialogue.',
             'href'  => '/contact',
-            'cta'   => 'Get Involved',
+            'cta'   => 'Get Involved', 'ctaKey' => 'getInvolved',
           ],
           [
             'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>',
-            'title' => 'Interactive Data Maps',
+            'title' => 'Interactive Data Maps', 'key' => 'interactiveDataMaps',
             'desc'  => 'Visual heatmaps displaying issue intensity by geography and category, enabling pattern recognition across regions and time periods.',
             'href'  => '/heatmap',
-            'cta'   => 'Open Heatmap',
+            'cta'   => 'Open Heatmap', 'ctaKey' => 'openHeatmap',
           ],
         ];
         foreach ($pillars as $p): ?>
@@ -403,11 +403,11 @@ try {
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" style="background:rgba(231,149,42,.10)">
               <?= $p['svg'] ?>
             </div>
-            <h3 class="font-outfit font-bold text-[1.1rem] text-slate-900 mb-3 leading-snug"><?= h($p['title']) ?></h3>
-            <p class="text-slate-500 text-sm leading-relaxed mb-6"><?= h($p['desc']) ?></p>
+            <h3 class="font-outfit font-bold text-[1.1rem] text-slate-900 mb-3 leading-snug" data-i18n="home.pillar.<?= h($p['key']) ?>.title"><?= h($p['title']) ?></h3>
+            <p class="text-slate-500 text-sm leading-relaxed mb-6" data-i18n="home.pillar.<?= h($p['key']) ?>.desc"><?= h($p['desc']) ?></p>
             <a href="<?= h($p['href']) ?>"
                class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-2.5" style="color:#C47C1A">
-              <?= h($p['cta']) ?>
+              <span data-i18n="home.pillarCta.<?= h($p['ctaKey']) ?>"><?= h($p['cta']) ?></span>
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
           </div>
@@ -422,7 +422,7 @@ try {
   ══════════════════════════════════════════ -->
   <?php if ($featuredPost): ?>
   <section class="max-w-7xl mx-auto px-6 pt-16 pb-0">
-    <div class="eyebrow-left">Editor's Pick</div>
+    <div class="eyebrow-left" data-i18n="home.editorsPick">Editor's Pick</div>
     <a href="/news/<?= h($featuredPost['id']) ?>"
        class="flex flex-col md:flex-row gap-6 bg-white rounded-3xl overflow-hidden border border-amber-200 shadow-md hover:shadow-xl transition-shadow group"
        style="border-left:5px solid #E7952A">
@@ -434,7 +434,7 @@ try {
       <?php endif; ?>
       <div class="flex flex-col justify-center p-7">
         <div class="flex flex-wrap gap-2 mb-3">
-          <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full" style="background:#E7952A22;color:#92400E">Featured Report</span>
+          <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full" style="background:#E7952A22;color:#92400E" data-i18n="home.featuredReport">Featured Report</span>
           <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-slate-100 text-slate-500"><?= h($featuredPost['country']) ?></span>
         </div>
         <h2 class="font-outfit font-black text-2xl md:text-3xl text-slate-900 leading-tight mb-3 group-hover:text-[#750B25] transition-colors">
@@ -444,7 +444,7 @@ try {
           <p class="text-slate-500 text-sm leading-relaxed mb-4 line-clamp-3"><?= h($featuredPost['description']) ?></p>
         <?php endif; ?>
         <div class="flex items-center gap-2 text-xs font-bold" style="color:#E7952A">
-          Read Full Report
+          <span data-i18n="home.readFullReport">Read Full Report</span>
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </div>
       </div>
@@ -459,11 +459,11 @@ try {
   <section class="max-w-7xl mx-auto px-6 py-24">
     <div class="flex items-end justify-between mb-14">
       <div>
-        <span class="eyebrow-left">Latest from the Region</span>
-        <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Recent Articles</h2>
+        <span class="eyebrow-left" data-i18n="home.latestFromRegion">Latest from the Region</span>
+        <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.recentArticles">Recent Articles</h2>
       </div>
       <a href="/news" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
-        View All Articles
+        <span data-i18n="home.viewAllArticles">View All Articles</span>
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
     </div>
@@ -535,11 +535,11 @@ try {
     <div class="max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-14">
         <div>
-          <span class="eyebrow-left">Listen &amp; Learn</span>
-          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Latest Podcasts</h2>
+          <span class="eyebrow-left" data-i18n="home.listenLearn">Listen &amp; Learn</span>
+          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.latestPodcasts">Latest Podcasts</h2>
         </div>
         <a href="/podcasts" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
-          All Episodes
+          <span data-i18n="home.allEpisodes">All Episodes</span>
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </div>
@@ -557,7 +557,7 @@ try {
                 <div class="w-14 h-14 rounded-full flex items-center justify-center border-2 border-white/30 mb-2" style="background:rgba(231,149,42,.9)">
                   <svg width="22" height="22" fill="white" viewBox="0 0 24 24" style="margin-left:3px"><path d="M8 5v14l11-7z"/></svg>
                 </div>
-                <span class="text-[9px] font-black uppercase tracking-widest" style="color:rgba(255,255,255,.5)">Episode <?= $i + 1 ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest" style="color:rgba(255,255,255,.5)"><span data-i18n="home.episode">Episode</span> <?= $i + 1 ?></span>
               </div>
               <?php if (!empty($pod['country'])): ?>
                 <div class="absolute top-4 left-4">
@@ -581,7 +581,7 @@ try {
               <div class="flex items-center justify-between pt-4 mt-auto border-t border-slate-100">
                 <span class="text-[11px] text-slate-400"><?= format_date($pod['createdAt']) ?></span>
                 <a href="/podcasts/<?= h($pod['id']) ?>" class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all" style="color:#C47C1A">
-                  Listen
+                  <span data-i18n="home.listen">Listen</span>
                   <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
               </div>
@@ -590,7 +590,7 @@ try {
         <?php endforeach; ?>
       </div>
       <div class="mt-10 md:hidden text-center">
-        <a href="/podcasts" class="btn-gold">All Episodes</a>
+        <a href="/podcasts" class="btn-gold" data-i18n="home.allEpisodes">All Episodes</a>
       </div>
     </div>
   </section>
@@ -604,11 +604,11 @@ try {
     <div class="max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-14">
         <div>
-          <span class="eyebrow-left">Watch</span>
-          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Latest Videos</h2>
+          <span class="eyebrow-left" data-i18n="home.watch">Watch</span>
+          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.latestVideos">Latest Videos</h2>
         </div>
         <a href="/videos" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
-          All Videos
+          <span data-i18n="home.allVideos">All Videos</span>
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </div>
@@ -660,7 +660,7 @@ try {
         <?php endforeach; ?>
       </div>
       <div class="mt-10 md:hidden text-center">
-        <a href="/videos" class="btn-gold">All Videos</a>
+        <a href="/videos" class="btn-gold" data-i18n="home.allVideos">All Videos</a>
       </div>
     </div>
   </section>
@@ -674,11 +674,11 @@ try {
     <div class="max-w-7xl mx-auto">
       <div class="flex items-end justify-between mb-14">
         <div>
-          <span class="eyebrow-left">Research Library</span>
-          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Recent Documents</h2>
+          <span class="eyebrow-left" data-i18n="home.researchLibrary">Research Library</span>
+          <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.recentDocuments">Recent Documents</h2>
         </div>
         <a href="/documents" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
-          Full Library
+          <span data-i18n="home.fullLibrary">Full Library</span>
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </div>
@@ -725,7 +725,7 @@ try {
         <?php endforeach; ?>
       </div>
       <div class="mt-10 md:hidden text-center">
-        <a href="/documents" class="btn-gold">Full Document Library</a>
+        <a href="/documents" class="btn-gold" data-i18n="home.fullDocumentLibrary">Full Document Library</a>
       </div>
     </div>
   </section>
@@ -738,9 +738,9 @@ try {
     <div class="max-w-7xl mx-auto">
 
       <div class="text-center mb-16">
-        <span class="eyebrow-center">Coverage Area</span>
-        <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900">Our Target Geographies</h2>
-        <p class="text-slate-500 mt-4 max-w-lg mx-auto text-[15px] leading-relaxed">
+        <span class="eyebrow-center" data-i18n="coverageArea">Coverage Area</span>
+        <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.targetGeographies">Our Target Geographies</h2>
+        <p class="text-slate-500 mt-4 max-w-lg mx-auto text-[15px] leading-relaxed" data-i18n="home.targetGeographiesDesc">
           Three strategically selected nations spanning East and Central Africa, covering some of the continent&rsquo;s most dynamic political and social landscapes.
         </p>
       </div>
@@ -751,29 +751,29 @@ try {
           [
             'img'    => '/public/nairobi_city.png',
             'flag'   => '/public/kenya_flag.png',
-            'name'   => 'Kenya',
-            'region' => 'East Africa',
-            'units'  => '47 Counties',
+            'name'   => 'Kenya', 'nameKey' => 'countryKenya',
+            'region' => 'East Africa', 'regionKey' => 'eastAfricaGeo',
+            'units'  => '47 Counties', 'unitsKey' => 'kenyaUnits',
             'cities' => 'Nairobi &middot; Mombasa &middot; Kisumu',
-            'desc'   => 'County-level tracking across governance, health, environment, and security sectors throughout Kenya.',
+            'desc'   => 'County-level tracking across governance, health, environment, and security sectors throughout Kenya.', 'descKey' => 'kenyaGeoDesc',
           ],
           [
             'img'    => '/public/addis_ababa_city.png',
             'flag'   => '/public/ethiopia_flag.png',
-            'name'   => 'Ethiopia',
-            'region' => 'Horn of Africa',
-            'units'  => '11 Regional States',
+            'name'   => 'Ethiopia', 'nameKey' => 'countryEthiopia',
+            'region' => 'Horn of Africa', 'regionKey' => 'hornOfAfricaGeo',
+            'units'  => '11 Regional States', 'unitsKey' => 'ethiopiaUnits',
             'cities' => 'Addis Ababa &middot; Dire Dawa',
-            'desc'   => 'Field reports and research briefs documenting Ethiopia\'s complex regional dynamics and development landscape.',
+            'desc'   => 'Field reports and research briefs documenting Ethiopia\'s complex regional dynamics and development landscape.', 'descKey' => 'ethiopiaGeoDesc',
           ],
           [
             'img'    => '/public/kinshasa_city.png',
             'flag'   => '/public/drc_flag.png',
-            'name'   => 'DR Congo',
-            'region' => 'Central Africa',
-            'units'  => '26 Provinces',
+            'name'   => 'DR Congo', 'nameKey' => 'countryDrc',
+            'region' => 'Central Africa', 'regionKey' => 'centralAfricaGeo',
+            'units'  => '26 Provinces', 'unitsKey' => 'drcUnits',
             'cities' => 'Kinshasa &middot; Lubumbashi &middot; Goma',
-            'desc'   => 'Documenting resilience, community narratives, and structural change across the Congo Basin.',
+            'desc'   => 'Documenting resilience, community narratives, and structural change across the Congo Basin.', 'descKey' => 'drcGeoDesc',
           ],
         ];
         foreach ($geos as $g): ?>
@@ -789,14 +789,14 @@ try {
             <!-- Content -->
             <div class="absolute inset-0 z-10 flex flex-col justify-end p-8">
               <span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border inline-block w-fit mb-3"
-                    style="color:#E7952A;border-color:rgba(231,149,42,.4)"><?= h($g['region']) ?></span>
-              <h3 class="font-outfit font-black text-[2.5rem] text-white leading-none mb-1"><?= h($g['name']) ?></h3>
-              <p class="text-white/50 text-xs mb-1"><?= h($g['units']) ?></p>
+                    style="color:#E7952A;border-color:rgba(231,149,42,.4)" data-i18n="home.geo.<?= h($g['regionKey']) ?>"><?= h($g['region']) ?></span>
+              <h3 class="font-outfit font-black text-[2.5rem] text-white leading-none mb-1" data-i18n="<?= h($g['nameKey']) ?>"><?= h($g['name']) ?></h3>
+              <p class="text-white/50 text-xs mb-1" data-i18n="home.geo.<?= h($g['unitsKey']) ?>"><?= h($g['units']) ?></p>
               <p class="text-white/40 text-[11px] italic mb-5"><?= $g['cities'] ?></p>
-              <p class="text-white/75 text-sm leading-relaxed mb-6 max-w-[260px]"><?= h($g['desc']) ?></p>
+              <p class="text-white/75 text-sm leading-relaxed mb-6 max-w-[260px]" data-i18n="home.geo.<?= h($g['descKey']) ?>"><?= h($g['desc']) ?></p>
               <a href="/heatmap"
                  class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-3" style="color:#E7952A">
-                Explore Region
+                <span data-i18n="home.exploreRegion">Explore Region</span>
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </a>
             </div>
@@ -814,19 +814,19 @@ try {
            style="background:#750B25">
     <div class="max-w-3xl mx-auto text-center">
       <span class="inline-block text-[9px] font-black uppercase tracking-[.2em] px-3.5 py-1.5 rounded-full mb-8"
-            style="background:rgba(231,149,42,.12);color:#E7952A;border:1px solid rgba(231,149,42,.3)">
+            style="background:rgba(231,149,42,.12);color:#E7952A;border:1px solid rgba(231,149,42,.3)" data-i18n="home.joinPlatform">
         Join the Platform
       </span>
-      <h2 class="font-outfit font-black text-4xl md:text-[3.25rem] text-white leading-[1.06] mb-6">
+      <h2 class="font-outfit font-black text-4xl md:text-[3.25rem] text-white leading-[1.06] mb-6" data-i18n="home.stayInformed">
         Stay Informed.<br>Make an Impact.
       </h2>
-      <p class="text-white/60 text-base md:text-lg leading-relaxed mb-12 max-w-xl mx-auto">
+      <p class="text-white/60 text-base md:text-lg leading-relaxed mb-12 max-w-xl mx-auto" data-i18n="home.ctaDesc">
         Join researchers, journalists, policy analysts, and community leaders who rely on Tafakari Digital Hub to stay connected with what matters across East and Central Africa.
       </p>
       <div class="flex flex-wrap gap-4 justify-center">
-        <a href="/news"    class="btn-secondary" style="padding:.8rem 2rem">Browse Content</a>
+        <a href="/news"    class="btn-secondary" style="padding:.8rem 2rem" data-i18n="home.browseContent">Browse Content</a>
         <a href="/contact" class="btn-ghost-white">
-          Get in Touch
+          <span data-i18n="home.getInTouch">Get in Touch</span>
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </div>
