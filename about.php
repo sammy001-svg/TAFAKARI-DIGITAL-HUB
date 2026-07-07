@@ -301,20 +301,26 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
     <?php
     $team = [
-      ['name' => 'Executive Director',          'nameKey' => 'execDirector',  'role' => 'Leadership',       'roleKey' => 'leadership',      'initials' => 'ED'],
-      ['name' => 'Head of Research',            'nameKey' => 'headResearch',  'role' => 'Research',         'roleKey' => 'research',        'initials' => 'HR'],
-      ['name' => 'Policy Analyst — East Africa','nameKey' => 'policyAnalyst', 'role' => 'Policy',           'roleKey' => 'policy',          'initials' => 'PA'],
-      ['name' => 'Field Coordinator — DRC',     'nameKey' => 'fieldCoord',    'role' => 'Field Operations', 'roleKey' => 'fieldOperations',  'initials' => 'FC'],
-      ['name' => 'Communications Manager',      'nameKey' => 'commsManager',  'role' => 'Media & Comms',    'roleKey' => 'mediaComms',       'initials' => 'CM'],
-      ['name' => 'Data & GIS Specialist',       'nameKey' => 'dataSpecialist','role' => 'Technology',       'roleKey' => 'technology',       'initials' => 'GS'],
-      ['name' => 'Training Coordinator',        'nameKey' => 'trainingCoord', 'role' => 'Capacity Building','roleKey' => 'capacityBuildingRole', 'initials' => 'TC'],
-      ['name' => 'Programme Officer — Sahel',   'nameKey' => 'programmeOfficer', 'role' => 'Field Operations', 'roleKey' => 'fieldOperations', 'initials' => 'PO'],
+      ['name' => 'Executive Director',          'nameKey' => 'execDirector',  'role' => 'Leadership',       'roleKey' => 'leadership',      'initials' => 'ED', 'photo' => '/public/team/exec-director.jpg'],
+      ['name' => 'Head of Research',            'nameKey' => 'headResearch',  'role' => 'Research',         'roleKey' => 'research',        'initials' => 'HR', 'photo' => '/public/team/head-research.jpg'],
+      ['name' => 'Policy Analyst — East Africa','nameKey' => 'policyAnalyst', 'role' => 'Policy',           'roleKey' => 'policy',          'initials' => 'PA', 'photo' => '/public/team/policy-analyst.jpg'],
+      ['name' => 'Field Coordinator — DRC',     'nameKey' => 'fieldCoord',    'role' => 'Field Operations', 'roleKey' => 'fieldOperations',  'initials' => 'FC', 'photo' => '/public/team/field-coordinator.jpg'],
+      ['name' => 'Communications Manager',      'nameKey' => 'commsManager',  'role' => 'Media & Comms',    'roleKey' => 'mediaComms',       'initials' => 'CM', 'photo' => '/public/team/comms-manager.jpg'],
+      ['name' => 'Data & GIS Specialist',       'nameKey' => 'dataSpecialist','role' => 'Technology',       'roleKey' => 'technology',       'initials' => 'GS', 'photo' => '/public/team/data-specialist.jpg'],
+      ['name' => 'Training Coordinator',        'nameKey' => 'trainingCoord', 'role' => 'Capacity Building','roleKey' => 'capacityBuildingRole', 'initials' => 'TC', 'photo' => '/public/team/training-coordinator.jpg'],
+      ['name' => 'Programme Officer — Sahel',   'nameKey' => 'programmeOfficer', 'role' => 'Field Operations', 'roleKey' => 'fieldOperations', 'initials' => 'PO', 'photo' => '/public/team/programme-officer.jpg'],
     ];
-    foreach ($team as $member): ?>
+    foreach ($team as $i => $member):
+      $fbId = 'team-fb-' . $i; ?>
       <div class="bg-white rounded-2xl border border-amber-100 p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all">
-        <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center font-outfit font-black text-xl text-white shadow-sm"
-             style="background:#750B25">
-          <?= h($member['initials']) ?>
+        <div class="relative w-16 h-16 mx-auto mb-3">
+          <img src="<?= h($member['photo']) ?>" alt="<?= h($member['name']) ?>"
+               class="w-16 h-16 rounded-2xl object-cover shadow-sm"
+               onerror="this.style.display='none';document.getElementById('<?= $fbId ?>').style.display='flex'">
+          <div id="<?= $fbId ?>" class="absolute inset-0 rounded-2xl items-center justify-center font-outfit font-black text-xl text-white shadow-sm"
+               style="background:#750B25;display:none">
+            <?= h($member['initials']) ?>
+          </div>
         </div>
         <p class="font-bold text-sm text-slate-800 leading-snug mb-1" data-i18n="about.teamMember.<?= h($member['nameKey']) ?>"><?= h($member['name']) ?></p>
         <p class="text-[10px] font-black uppercase tracking-widest text-amber-700" data-i18n="about.teamRole.<?= h($member['roleKey']) ?>"><?= h($member['role']) ?></p>

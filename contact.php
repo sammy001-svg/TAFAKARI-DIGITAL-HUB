@@ -55,19 +55,46 @@ $pageTitle = 'Contact Us | Tafakari Digital Hub';
         Whether you want to contribute research, partner with our network, or simply learn more about our work in Kenya, Ethiopia, and DRC — we'd love to hear from you.
       </p>
       <div class="space-y-4">
-        <div class="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100">
+        <a href="mailto:crtp.communications@hekima.ac.ke" class="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 hover:border-amber-200 hover:shadow-sm transition-all">
           <span class="text-2xl">📧</span>
           <div>
             <div class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1" data-i18n="contactPage.email">Email</div>
-            <div class="font-bold text-slate-800">info@tafakari.co.ke</div>
+            <div class="font-bold text-slate-800 break-all">crtp.communications@hekima.ac.ke</div>
           </div>
-        </div>
+        </a>
+        <a href="tel:+254729755905" class="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 hover:border-amber-200 hover:shadow-sm transition-all">
+          <span class="text-2xl">📞</span>
+          <div>
+            <div class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1" data-i18n="contactPage.phone">Phone</div>
+            <div class="font-bold text-slate-800">+254 729 755905</div>
+          </div>
+        </a>
         <div class="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100">
           <span class="text-2xl">🌍</span>
           <div>
             <div class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1" data-i18n="contactPage.coverage">Coverage</div>
             <div class="font-bold text-slate-800">Kenya · Ethiopia · DR Congo</div>
           </div>
+        </div>
+
+        <!-- Office map -->
+        <?php
+        $officeAddress = 'Hekima University College Institute Of Peace Studies and International Relations, Riara Rd, Nairobi';
+        $officeLatLng  = '-1.2984292,36.7712243';
+        ?>
+        <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm bg-white">
+          <iframe
+            src="https://maps.google.com/maps?q=<?= urlencode($officeAddress) ?>&z=17&output=embed"
+            width="100%" height="260" style="border:0;display:block" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="Map to our Nairobi office"></iframe>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=<?= urlencode($officeLatLng) ?>"
+             target="_blank" rel="noopener noreferrer"
+             class="flex items-center justify-center gap-2 py-3.5 text-sm font-bold text-white transition-all hover:brightness-110"
+             style="background:#750B25">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span data-i18n="contactPage.getDirections">Get Directions</span>
+          </a>
         </div>
       </div>
     </div>

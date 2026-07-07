@@ -324,6 +324,7 @@
       'contactPage.heading': "Let's Start a Conversation",
       'contactPage.desc': "Whether you want to contribute research, partner with our network, or simply learn more about our work in Kenya, Ethiopia, and DRC — we'd love to hear from you.",
       'contactPage.email': 'Email',
+      'contactPage.phone': 'Phone',
       'contactPage.coverage': 'Coverage',
       'contactPage.messageSent': 'Message Sent!',
       'contactPage.thankYou': "Thank you for reaching out. We'll get back to you soon.",
@@ -341,6 +342,7 @@
       'contactPage.message': 'Message *',
       'contactPage.messagePlaceholder': 'Tell us about yourself or your inquiry...',
       'contactPage.sendMessageBtn': 'Send Message',
+      'contactPage.getDirections': 'Get Directions',
 
       /* Country names */
       countryKenya: 'Kenya', countryEthiopia: 'Ethiopia', countryDrc: 'DR Congo',
@@ -655,6 +657,7 @@
       'contactPage.heading': 'Tuanze Mazungumzo',
       'contactPage.desc': 'Iwe unataka kuchangia utafiti, kushirikiana na mtandao wetu, au kujifunza zaidi kuhusu kazi yetu nchini Kenya, Ethiopia, na DRC — tungependa kusikia kutoka kwako.',
       'contactPage.email': 'Barua Pepe',
+      'contactPage.phone': 'Simu',
       'contactPage.coverage': 'Eneo la Huduma',
       'contactPage.messageSent': 'Ujumbe Umetumwa!',
       'contactPage.thankYou': 'Asante kwa kuwasiliana nasi. Tutakujibu hivi karibuni.',
@@ -672,6 +675,7 @@
       'contactPage.message': 'Ujumbe *',
       'contactPage.messagePlaceholder': 'Tuambie kuhusu wewe au swali lako...',
       'contactPage.sendMessageBtn': 'Tuma Ujumbe',
+      'contactPage.getDirections': 'Pata Maelekezo',
 
       countryKenya: 'Kenya', countryEthiopia: 'Ethiopia', countryDrc: 'DRC',
     },
@@ -985,6 +989,7 @@
       'contactPage.heading': 'Engageons la Conversation',
       'contactPage.desc': "Que vous souhaitiez contribuer à la recherche, vous associer à notre réseau, ou simplement en savoir plus sur notre travail au Kenya, en Éthiopie et en RDC — nous serions ravis de vous entendre.",
       'contactPage.email': 'E-mail',
+      'contactPage.phone': 'Téléphone',
       'contactPage.coverage': 'Couverture',
       'contactPage.messageSent': 'Message Envoyé !',
       'contactPage.thankYou': 'Merci de nous avoir contactés. Nous vous répondrons bientôt.',
@@ -1002,6 +1007,7 @@
       'contactPage.message': 'Message *',
       'contactPage.messagePlaceholder': 'Parlez-nous de vous ou de votre demande...',
       'contactPage.sendMessageBtn': 'Envoyer le Message',
+      'contactPage.getDirections': 'Obtenir l’Itinéraire',
 
       countryKenya: 'Kenya', countryEthiopia: 'Éthiopie', countryDrc: 'RD Congo',
     },
