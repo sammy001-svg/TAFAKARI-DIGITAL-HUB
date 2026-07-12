@@ -130,7 +130,7 @@ $adminPageSub   = count($partners) . ' partner' . (count($partners) !== 1 ? 's' 
                 <span class="font-outfit font-black text-lg text-slate-300"><?= h(strtoupper(substr($p['name'], 0, 1))) ?></span>
               <?php endif; ?>
             </div>
-            <div class="flex-grow min-w-0">
+            <div class="grow min-w-0">
               <p class="text-sm font-bold text-slate-900 leading-snug truncate"><?= h($p['name']) ?></p>
               <?php if (!empty($p['subtitle'])): ?>
                 <p class="text-[11px] text-slate-400 truncate"><?= h($p['subtitle']) ?></p>

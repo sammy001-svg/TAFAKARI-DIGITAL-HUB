@@ -29,7 +29,7 @@ if (!$post) {
     include __DIR__ . '/includes/head.php';
     echo '<body class="flex flex-col min-h-screen font-inter" style="background:#F8F8F0">';
     include __DIR__ . '/includes/navbar.php';
-    echo '<main class="flex-grow flex flex-col items-center justify-center py-24 text-center px-6">
+    echo '<main class="grow flex flex-col items-center justify-center py-24 text-center px-6">
             <div class="text-6xl mb-6">📭</div>
             <h1 class="font-outfit text-4xl font-black text-slate-900 mb-4">Article Not Found</h1>
             <p class="text-slate-500 mb-8">This article may have been removed or is not yet published.</p>
@@ -115,7 +115,7 @@ $pageAuthor    = $authorDisplay;
 <body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
-<main class="flex-grow">
+<main class="grow">
 
   <!-- ── Article hero strip ──────────────────────────────────────────────── -->
   <div style="background:#0D0102" class="py-12 px-6">
@@ -349,9 +349,9 @@ $pageAuthor    = $authorDisplay;
                   </div>
                 <?php endif; ?>
               </div>
-              <div class="p-5 flex flex-col flex-grow">
+              <div class="p-5 flex flex-col grow">
                 <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($r['issueCategory']) ?></span>
-                <h3 class="font-outfit font-bold text-sm text-white leading-snug line-clamp-2 group-hover:text-amber-300 transition-colors flex-grow"><?= h($r['title']) ?></h3>
+                <h3 class="font-outfit font-bold text-sm text-white leading-snug line-clamp-2 group-hover:text-amber-300 transition-colors grow"><?= h($r['title']) ?></h3>
                 <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
                   <span class="text-[10px] text-white/40"><?= format_date($r['createdAt']) ?></span>
                   <span class="text-[10px] font-bold" style="color:#E7952A">Read &rarr;</span>

@@ -28,7 +28,7 @@ if (!$post) {
     include __DIR__ . '/includes/head.php';
     echo '<body class="flex flex-col min-h-screen font-inter" style="background:#F8F8F0">';
     include __DIR__ . '/includes/navbar.php';
-    echo '<main class="flex-grow flex flex-col items-center justify-center py-24 text-center px-6">
+    echo '<main class="grow flex flex-col items-center justify-center py-24 text-center px-6">
             <div class="text-6xl mb-6">🎧</div>
             <h1 class="font-outfit text-4xl font-black text-slate-900 mb-4">Episode Not Found</h1>
             <p class="text-slate-500 mb-8">This episode may have been removed or is not yet published.</p>
@@ -116,7 +116,7 @@ $pageUrl       = $shareUrl;
 <body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
-<main class="flex-grow">
+<main class="grow">
 
   <!-- ── Episode hero ──────────────────────────────────────────────────── -->
   <div style="background:#0D0102" class="py-12 px-6">

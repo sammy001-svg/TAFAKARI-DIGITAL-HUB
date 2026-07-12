@@ -58,7 +58,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
           <path d="<?= h($item['svg']) ?>"/>
         </svg>
       </span>
-      <span class="flex-grow leading-none"><?= h($item['label']) ?></span>
+      <span class="grow leading-none"><?= h($item['label']) ?></span>
       <?php if ($badge > 0): ?>
         <span class="text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0"
               style="background:#E7952A;color:#0D0203"><?= min($badge, 9) ?><?= $badge > 9 ? '+' : '' ?></span>
@@ -102,7 +102,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
   </div>
 
   <!-- Navigation -->
-  <nav class="flex-grow px-2 pt-6 pb-4 overflow-y-auto space-y-5">
+  <nav class="grow px-2 pt-6 pb-4 overflow-y-auto space-y-5">
 
     <div>
       <p class="px-3 mb-2 text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(255,255,255,.22)">
@@ -126,7 +126,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
     <div>
       <div class="flex items-center gap-2 px-3 mb-2">
         <p class="text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(239,68,68,.5)">Super Authority</p>
-        <span class="h-px flex-grow" style="background:rgba(239,68,68,.12)"></span>
+        <span class="h-px grow" style="background:rgba(239,68,68,.12)"></span>
       </div>
       <div class="space-y-0.5">
         <?php foreach ($_navSuper as $item):
@@ -144,7 +144,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
     <div class="flex items-center gap-2.5 px-3 py-3 mt-3 rounded-xl" style="background:rgba(255,255,255,.04)">
       <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shrink-0"
            style="background:#750B25"><?= h($_initial) ?></div>
-      <div class="flex-grow min-w-0">
+      <div class="grow min-w-0">
         <p class="text-[12px] font-bold text-white truncate leading-none"><?= h($_name) ?></p>
         <p class="text-[9px] mt-0.5 truncate" style="color:rgba(255,255,255,.3)">
           <?= $_role === 'SUPER_ADMIN' ? 'Super Admin' : 'Editor' ?>

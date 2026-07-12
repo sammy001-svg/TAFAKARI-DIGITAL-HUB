@@ -7,7 +7,7 @@
       home: 'Home', aboutUs: 'About Us', ourPurpose: 'Our Purpose', ourMission: 'Our Mission',
       whatWeDo: 'What We Do', coverageArea: 'Coverage Area', heatmap: 'Heatmap', gallery: 'Gallery',
       news: 'News', podcasts: 'Podcasts', videos: 'Videos', documents: 'Documents',
-      login: 'Login', getInvolved: 'Get Involved', search: 'Search',
+      login: 'Login', getInvolved: 'Contact Us', search: 'Search',
 
       /* Footer */
       'footer.tagline': 'A multi-user digital platform serving as a centralized knowledge repository, media broadcasting center, and community engagement tool across Kenya, Ethiopia, and DRC.',
@@ -149,7 +149,7 @@
       'home.pillar.interactiveDataMaps.desc': 'Visual heatmaps displaying issue intensity by geography and category, enabling pattern recognition across regions and time periods.',
       'home.pillarCta.viewGallery': 'View Gallery',
       'home.pillarCta.browseDocuments': 'Browse Documents',
-      'home.pillarCta.getInvolved': 'Get Involved',
+      'home.pillarCta.getInvolved': 'Contact Us',
       'home.pillarCta.openHeatmap': 'Open Heatmap',
 
       'home.editorsPick': "Editor's Pick",
@@ -351,7 +351,7 @@
       home: 'Nyumbani', aboutUs: 'Kuhusu Sisi', ourPurpose: 'Kusudi Letu', ourMission: 'Dhamira Yetu',
       whatWeDo: 'Tunachofanya', coverageArea: 'Eneo la Huduma', heatmap: 'Ramani ya Joto', gallery: 'Picha',
       news: 'Habari', podcasts: 'Podikasti', videos: 'Video', documents: 'Nyaraka',
-      login: 'Ingia', getInvolved: 'Shiriki', search: 'Tafuta',
+      login: 'Ingia', getInvolved: 'Wasiliana Nasi', search: 'Tafuta',
 
       'footer.tagline': 'Jukwaa la kidijitali la watumiaji wengi linalotumika kama hazina kuu ya maarifa, kituo cha utangazaji wa vyombo vya habari, na chombo cha ushirikiano wa jamii katika Kenya, Ethiopia, na DRC.',
       'footer.quickLinks': 'Viungo vya Haraka',
@@ -490,7 +490,7 @@
       'home.pillar.interactiveDataMaps.desc': 'Ramani za joto zinazoonyesha ukubwa wa masuala kwa jiografia na aina, kuwezesha utambuzi wa mifumo katika maeneo na vipindi vya wakati.',
       'home.pillarCta.viewGallery': 'Tazama Picha',
       'home.pillarCta.browseDocuments': 'Vinjari Nyaraka',
-      'home.pillarCta.getInvolved': 'Shiriki',
+      'home.pillarCta.getInvolved': 'Wasiliana Nasi',
       'home.pillarCta.openHeatmap': 'Fungua Ramani ya Joto',
 
       'home.editorsPick': 'Uteuzi wa Mhariri',
@@ -683,7 +683,7 @@
       home: 'Accueil', aboutUs: 'À propos', ourPurpose: 'Notre objectif', ourMission: 'Notre mission',
       whatWeDo: 'Ce que nous faisons', coverageArea: 'Zone de couverture', heatmap: 'Carte thermique', gallery: 'Galerie',
       news: 'Actualités', podcasts: 'Podcasts', videos: 'Vidéos', documents: 'Documents',
-      login: 'Connexion', getInvolved: "S'impliquer", search: 'Rechercher',
+      login: 'Connexion', getInvolved: 'Nous Contacter', search: 'Rechercher',
 
       'footer.tagline': "Une plateforme numérique multi-utilisateurs servant de dépôt centralisé de connaissances, de centre de diffusion médiatique et d'outil d'engagement communautaire au Kenya, en Éthiopie et en RDC.",
       'footer.quickLinks': 'Liens Rapides',
@@ -822,7 +822,7 @@
       'home.pillar.interactiveDataMaps.desc': "Cartes thermiques visuelles affichant l'intensité des enjeux par géographie et catégorie, permettant la reconnaissance de tendances dans les régions et le temps.",
       'home.pillarCta.viewGallery': 'Voir la Galerie',
       'home.pillarCta.browseDocuments': 'Parcourir les Documents',
-      'home.pillarCta.getInvolved': "S'impliquer",
+      'home.pillarCta.getInvolved': 'Nous Contacter',
       'home.pillarCta.openHeatmap': 'Ouvrir la Carte Thermique',
 
       'home.editorsPick': 'Choix de la Rédaction',

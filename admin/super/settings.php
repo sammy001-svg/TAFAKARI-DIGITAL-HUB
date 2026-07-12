@@ -227,7 +227,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
               <img src="<?= h($featuredPost['thumbnailUrl']) ?>" alt=""
                    class="w-16 h-12 object-cover rounded-xl shrink-0" onerror="this.style.display='none'">
             <?php endif; ?>
-            <div class="flex-grow min-w-0">
+            <div class="grow min-w-0">
               <p class="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-0.5">Currently Featured</p>
               <p class="font-semibold text-sm text-slate-900 leading-snug line-clamp-2"><?= h($featuredPost['title']) ?></p>
               <p class="text-xs text-slate-400 mt-0.5"><?= h($featuredPost['country']) ?> · <?= h($featuredPost['issueCategory']) ?></p>
@@ -245,7 +245,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
         <!-- Search -->
         <form method="GET" class="flex gap-2 mb-4">
           <input type="text" name="q" value="<?= h($q) ?>" placeholder="Search published articles by title…"
-                 class="flex-grow px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none">
+                 class="grow px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none">
           <button type="submit" class="px-4 py-2.5 rounded-xl text-sm font-bold text-white shrink-0" style="background:#750B25">Search</button>
         </form>
 
@@ -258,7 +258,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
                 <?php if ($r['thumbnailUrl']): ?>
                   <img src="<?= h($r['thumbnailUrl']) ?>" alt="" class="w-12 h-9 object-cover rounded-lg shrink-0" onerror="this.style.display='none'">
                 <?php endif; ?>
-                <div class="flex-grow min-w-0">
+                <div class="grow min-w-0">
                   <p class="text-sm font-semibold text-slate-800 leading-snug line-clamp-1"><?= h($r['title']) ?></p>
                   <p class="text-xs text-slate-400"><?= h($r['country']) ?></p>
                 </div>

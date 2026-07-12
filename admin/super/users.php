@@ -31,7 +31,7 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
 
   <!-- Toolbar -->
   <div class="flex flex-wrap items-center gap-3 mb-6">
-    <div class="relative flex-grow max-w-sm">
+    <div class="relative grow max-w-sm">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input id="user-search" type="text" placeholder="Search by name, username or email…"
              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm"

@@ -216,7 +216,7 @@ try {
 
 <?php include __DIR__ . '/includes/navbar.php'; ?>
 
-<main class="flex-grow flex flex-col">
+<main class="grow flex flex-col">
 
   <!-- ══════════════════════════════════════════
        1. HERO CAROUSEL
@@ -388,7 +388,7 @@ try {
             'title' => 'Community Engagement', 'key' => 'communityEngagement',
             'desc'  => 'Moderated public comment systems and contact infrastructure ensuring safe, constructive, and inclusive community dialogue.',
             'href'  => '/contact',
-            'cta'   => 'Get Involved', 'ctaKey' => 'getInvolved',
+            'cta'   => 'Contact Us', 'ctaKey' => 'getInvolved',
           ],
           [
             'svg'  => '<svg width="26" height="26" fill="none" stroke="#E7952A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>',
@@ -473,7 +473,7 @@ try {
         <a href="/news/<?= h($art['id']) ?>"
            class="article-card flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 group">
 
-          <div class="h-52 relative overflow-hidden flex-shrink-0">
+          <div class="h-52 relative overflow-hidden shrink-0">
             <?php if (!empty($art['thumbnailUrl'])): ?>
               <img src="<?= h($art['thumbnailUrl']) ?>" alt="<?= h($art['title']) ?>"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
@@ -492,7 +492,7 @@ try {
             </div>
           </div>
 
-          <div class="flex flex-col flex-grow p-6">
+          <div class="flex flex-col grow p-6">
             <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A">
               <?= h($art['issueCategory']) ?>
             </span>
@@ -500,7 +500,7 @@ try {
               <?= h($art['title']) ?>
             </h3>
             <?php if (!empty($art['description'])): ?>
-              <p class="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-4 flex-grow">
+              <p class="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-4 grow">
                 <?= h($art['description']) ?>
               </p>
             <?php endif; ?>
@@ -568,7 +568,7 @@ try {
               <?php endif; ?>
             </div>
             <!-- Info -->
-            <div class="flex flex-col flex-grow p-6">
+            <div class="flex flex-col grow p-6">
               <?php if (!empty($pod['issueCategory'])): ?>
                 <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($pod['issueCategory']) ?></span>
               <?php endif; ?>
@@ -576,7 +576,7 @@ try {
                 <?= h($pod['title']) ?>
               </h3>
               <?php if (!empty($pod['description'])): ?>
-                <p class="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 flex-grow"><?= h($pod['description']) ?></p>
+                <p class="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 grow"><?= h($pod['description']) ?></p>
               <?php endif; ?>
               <div class="flex items-center justify-between pt-4 mt-auto border-t border-slate-100">
                 <span class="text-[11px] text-slate-400"><?= format_date($pod['createdAt']) ?></span>
@@ -642,7 +642,7 @@ try {
               <?php endif; ?>
             </div>
             <!-- Info -->
-            <div class="flex flex-col flex-grow p-6">
+            <div class="flex flex-col grow p-6">
               <?php if (!empty($vid['issueCategory'])): ?>
                 <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($vid['issueCategory']) ?></span>
               <?php endif; ?>
@@ -650,7 +650,7 @@ try {
                 <?= h($vid['title']) ?>
               </h3>
               <?php if (!empty($vid['description'])): ?>
-                <p class="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 flex-grow"><?= h($vid['description']) ?></p>
+                <p class="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4 grow"><?= h($vid['description']) ?></p>
               <?php endif; ?>
               <div class="flex items-center pt-4 mt-auto border-t border-slate-100">
                 <span class="text-[11px] text-slate-400"><?= format_date($vid['createdAt']) ?></span>

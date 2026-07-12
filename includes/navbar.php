@@ -24,7 +24,7 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
 ?>
 
 <!-- ── Navbar ──────────────────────────────────────────────────────── -->
-<nav class="sticky top-0 z-[500] text-white shadow-xl" style="background:#750B25;border-bottom:1px solid rgba(255,255,255,.08)">
+<nav class="sticky top-0 z-500 text-white shadow-xl" style="background:#750B25;border-bottom:1px solid rgba(255,255,255,.08)">
   <div class="px-4 md:px-10 py-3 max-w-7xl mx-auto flex items-center justify-between">
 
     <!-- Logo -->
@@ -123,7 +123,7 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
          style="background:#E7952A">Login</a>
       <a href="/contact" data-i18n="getInvolved"
          class="text-sm font-bold text-white px-5 py-2.5 rounded-full border-2 border-white/35 hover:border-white/65 hover:bg-white/10 transition-all no-underline">
-        Get Involved
+        Contact Us
       </a>
     </div>
 
@@ -290,7 +290,7 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
               color:#fff;padding:13px 16px;border-radius:16px;
               border:2px solid rgba(255,255,255,.3);transition:border-color .15s"
        onmouseover="this.style.borderColor='rgba(255,255,255,.55)'" onmouseout="this.style.borderColor='rgba(255,255,255,.3)'">
-      Get Involved
+      Contact Us
     </a>
   </div>
 
