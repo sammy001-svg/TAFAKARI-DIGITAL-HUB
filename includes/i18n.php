@@ -1017,7 +1017,7 @@
     sw: { countryKenya: '🇰🇪 Kenya', countryEthiopia: '🇪🇹 Ethiopia', countryDrc: '🇨🇩 DRC' },
     fr: { countryKenya: '🇰🇪 Kenya', countryEthiopia: '🇪🇹 Éthiopie', countryDrc: '🇨🇩 RD Congo' },
   };
-  var LOCALE_LABELS = { en: 'English', sw: 'Kiswahili', fr: 'Français' };
+  var LOCALE_LABELS = { en: 'English', sw: 'Kiswahili', fr: 'French' };
   var STORAGE_KEY = 'tafakari-locale';
 
   function applyLocale(locale) {

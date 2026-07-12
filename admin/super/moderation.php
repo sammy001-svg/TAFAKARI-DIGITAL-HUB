@@ -7,21 +7,28 @@ require_once dirname(__DIR__, 2) . '/includes/functions.php';
 
 require_super_admin();
 $pdo = db();
+ensure_comment_rating_column();
 
-$flagged   = $pdo->query(
-    "SELECT c.id, c.content, c.name, c.email, c.createdAt, p.id AS postId, p.title AS postTitle
+// All unmoderated comments need review — not just ones auto-flagged.
+// (Previously this only showed isFlagged=1, so plain new comments never
+// surfaced here and sat invisible forever — neither public nor reviewable.)
+$pending = $pdo->query(
+    "SELECT c.id, c.content, c.rating, c.name, c.email, c.isFlagged, c.createdAt, p.id AS postId, p.title AS postTitle, p.type AS postType
      FROM Comment c LEFT JOIN Post p ON c.postId = p.id
-     WHERE c.isFlagged = 1 AND c.isModerated = 0
+     WHERE c.isModerated = 0
      ORDER BY c.createdAt ASC"
 )->fetchAll();
 
-$totalComments     = (int)$pdo->query("SELECT COUNT(*) FROM Comment")->fetchColumn();
-$flaggedCount      = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isFlagged=1")->fetchColumn();
-$moderatedCount    = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isModerated=1")->fetchColumn();
+$_postTypeUrl = ['ARTICLE' => '/news/', 'PODCAST' => '/podcasts/', 'VIDEO' => '/videos/', 'DOCUMENT' => '/documents/', 'GALLERY_IMAGE' => '/gallery'];
+
+$totalComments  = (int)$pdo->query("SELECT COUNT(*) FROM Comment")->fetchColumn();
+$pendingCount   = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isModerated=0")->fetchColumn();
+$flaggedCount   = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isFlagged=1")->fetchColumn();
+$moderatedCount = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isModerated=1")->fetchColumn();
 
 $pageTitle      = 'Comment Moderation | Tafakari Admin';
 $adminPageTitle = 'Comment Moderation';
-$adminPageSub   = $flaggedCount . ' flagged · ' . $totalComments . ' total comments';
+$adminPageSub   = $pendingCount . ' pending · ' . $totalComments . ' total comments';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
 <body class="antialiased font-inter" style="background:#F4F6F8">
@@ -36,15 +43,15 @@ $adminPageSub   = $flaggedCount . ' flagged · ' . $totalComments . ' total comm
     <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">Active Moderation</span>
   </div>
 
-  <?php if (empty($flagged)): ?>
+  <?php if (empty($pending)): ?>
     <div class="bg-white rounded-4xl p-16 shadow-sm border border-slate-100 text-center">
       <div class="text-5xl mb-4">🛡️</div>
-      <h3 class="font-outfit font-bold text-xl text-slate-900">No flagged comments</h3>
-      <p class="text-slate-400 mt-2 text-sm">All comments are clean — nothing to review.</p>
+      <h3 class="font-outfit font-bold text-xl text-slate-900">No pending comments</h3>
+      <p class="text-slate-400 mt-2 text-sm">All caught up — nothing waiting for review.</p>
     </div>
   <?php else: ?>
     <div class="space-y-4 max-w-3xl mb-10">
-      <?php foreach ($flagged as $c): ?>
+      <?php foreach ($pending as $c): ?>
         <div class="bg-white rounded-3xl border border-slate-100 p-7 shadow-sm" id="comment-<?= h($c['id']) ?>">
           <div class="flex items-start gap-4 mb-4">
             <div class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
@@ -55,9 +62,17 @@ $adminPageSub   = $flaggedCount . ' flagged · ' . $totalComments . ' total comm
                 <span class="font-bold text-sm text-slate-800"><?= h($c['name'] ?: 'Anonymous') ?></span>
                 <?php if ($c['email']): ?><span class="text-xs text-slate-400"><?= h($c['email']) ?></span><?php endif; ?>
                 <span class="text-xs text-slate-400">&bull; <?= format_relative_time($c['createdAt']) ?></span>
+                <?php if ((int)$c['isFlagged'] === 1): ?>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-rose-100 text-rose-700">Flagged</span>
+                <?php endif; ?>
               </div>
+              <?php if (!empty($c['rating'])): ?>
+                <div class="flex items-center gap-0.5 mt-1" aria-label="<?= (int)$c['rating'] ?> out of 5 stars">
+                  <?php for ($i = 1; $i <= 5; $i++): ?><span class="text-xs" style="color:<?= $i <= (int)$c['rating'] ? '#E7952A' : '#e2e8f0' ?>">★</span><?php endfor; ?>
+                </div>
+              <?php endif; ?>
               <?php if ($c['postTitle']): ?>
-                <p class="text-xs text-slate-400 mt-0.5">On: <a href="/news/<?= h($c['postId']) ?>" target="_blank" class="text-primary hover:underline"><?= h($c['postTitle']) ?></a></p>
+                <p class="text-xs text-slate-400 mt-0.5">On: <a href="<?= h($_postTypeUrl[$c['postType']] ?? '/news/') . h($c['postId']) ?>" target="_blank" class="text-primary hover:underline"><?= h($c['postTitle']) ?></a></p>
               <?php endif; ?>
             </div>
           </div>
@@ -81,12 +96,13 @@ $adminPageSub   = $flaggedCount . ' flagged · ' . $totalComments . ' total comm
   <?php endif; ?>
 
   <!-- Stats -->
-  <div class="grid grid-cols-3 gap-4 max-w-3xl mt-8">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mt-8">
     <?php
     $stats = [
       ['label'=>'Total Comments',   'value'=>$totalComments,  'cls'=>'bg-slate-50 border-slate-200 text-slate-700'],
+      ['label'=>'Awaiting Review',  'value'=>$pendingCount,   'cls'=>'bg-amber-50 border-amber-200 text-amber-700'],
       ['label'=>'Manually Reviewed','value'=>$moderatedCount, 'cls'=>'bg-emerald-50 border-emerald-200 text-emerald-700'],
-      ['label'=>'Currently Flagged','value'=>$flaggedCount,   'cls'=>'bg-amber-50 border-amber-200 text-amber-700'],
+      ['label'=>'Flagged',         'value'=>$flaggedCount,   'cls'=>'bg-rose-50 border-rose-200 text-rose-700'],
     ];
     foreach ($stats as $s): ?>
       <div class="p-5 rounded-2xl border text-center bg-white <?= $s['cls'] ?>">

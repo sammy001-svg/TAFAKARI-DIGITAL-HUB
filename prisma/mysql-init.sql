@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `Post` (
 CREATE TABLE IF NOT EXISTS `Comment` (
   `id`          VARCHAR(191) NOT NULL,
   `content`     TEXT         NOT NULL,
+  `rating`      TINYINT      NULL,
   `name`        VARCHAR(191) NULL,
   `email`       VARCHAR(191) NULL,
   `isModerated` TINYINT(1)   NOT NULL DEFAULT 0,

@@ -9,11 +9,15 @@ $method = request_method();
 
 if ($method === 'POST') {
     // Public: no auth required
+    ensure_comment_rating_column();
+
     $body    = request_body();
     $content = trim(substr($body['content'] ?? '', 0, 2000));
     $name    = trim(substr($body['name']    ?? '', 0, 100));
     $email   = trim(substr($body['email']   ?? '', 0, 200));
     $postId  = trim($body['postId'] ?? '');
+    $rating  = isset($body['rating']) ? (int)$body['rating'] : 0;
+    $rating  = ($rating >= 1 && $rating <= 5) ? $rating : null;
 
     if (!$content) json_error('Content is required');
     if (!$postId)  json_error('Post ID is required');
@@ -25,8 +29,8 @@ if ($method === 'POST') {
 
     $id = generate_id();
     $pdo->prepare(
-        'INSERT INTO Comment (id,content,name,email,postId,isModerated,isFlagged,createdAt) VALUES (?,?,?,?,?,0,0,NOW(3))'
-    )->execute([$id, $content, $name ?: null, $email ?: null, $postId]);
+        'INSERT INTO Comment (id,content,rating,name,email,postId,isModerated,isFlagged,createdAt) VALUES (?,?,?,?,?,?,0,0,NOW(3))'
+    )->execute([$id, $content, $rating, $name ?: null, $email ?: null, $postId]);
 
     $stmt = $pdo->prepare('SELECT * FROM Comment WHERE id=? LIMIT 1');
     $stmt->execute([$id]);

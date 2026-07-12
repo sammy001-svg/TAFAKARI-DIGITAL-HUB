@@ -79,6 +79,7 @@ model Post {
 model Comment {
   id          String   @id @default(cuid())
   content     String   @db.Text
+  rating      Int?
   name        String?
   email       String?
   isModerated Boolean  @default(false)

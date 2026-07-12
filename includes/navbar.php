@@ -109,7 +109,7 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
           <div class="w-36 rounded-2xl shadow-2xl py-2" style="background:#750B25;border:1px solid rgba(255,255,255,.12)">
             <button type="button" onclick="setSiteLocale('en')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white transition-colors">English</button>
             <button type="button" onclick="setSiteLocale('sw')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white transition-colors">Kiswahili</button>
-            <button type="button" onclick="setSiteLocale('fr')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white transition-colors">Français</button>
+            <button type="button" onclick="setSiteLocale('fr')" class="w-full text-left px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white transition-colors">French</button>
           </div>
         </div>
       </div>
@@ -272,7 +272,7 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
     <div id="lang-sub" style="display:none;padding-bottom:8px">
       <button type="button" onclick="setSiteLocale('en')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer">English</button>
       <button type="button" onclick="setSiteLocale('sw')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer">Kiswahili</button>
-      <button type="button" onclick="setSiteLocale('fr')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer">Français</button>
+      <button type="button" onclick="setSiteLocale('fr')" style="display:block;width:100%;text-align:left;background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer">French</button>
     </div>
   </div>
 

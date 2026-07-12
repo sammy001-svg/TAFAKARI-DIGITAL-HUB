@@ -186,6 +186,21 @@ function ensure_partners_table(): void {
     } catch (Exception $e) {}
 }
 
+// Adds the `rating` column to an existing Comment table (installs that predate the
+// star-rating feature). Checks first so the ALTER only ever runs once per install.
+function ensure_comment_rating_column(): void {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $pdo = db();
+        $col = $pdo->query("SHOW COLUMNS FROM `Comment` LIKE 'rating'")->fetch();
+        if (!$col) {
+            $pdo->exec("ALTER TABLE `Comment` ADD COLUMN `rating` TINYINT NULL AFTER `content`");
+        }
+    } catch (Exception $e) {}
+}
+
 // ── JSON API helpers ─────────────────────────────────────────────
 
 function json_response(mixed $data, int $status = 200): never {

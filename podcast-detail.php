@@ -53,16 +53,19 @@ try {
 } catch (Exception $e) {}
 
 // Approved comments
+ensure_comment_rating_column();
 $comments = [];
 try {
     $stmt = db()->prepare(
-        'SELECT id, content, name, email, createdAt FROM Comment
+        'SELECT id, content, rating, name, email, createdAt FROM Comment
          WHERE postId = ? AND isModerated = 1 AND isFlagged = 0
          ORDER BY createdAt DESC'
     );
     $stmt->execute([$id]);
     $comments = $stmt->fetchAll();
 } catch (Exception $e) {}
+$ratedComments = array_filter($comments, fn($c) => !empty($c['rating']));
+$avgRating = count($ratedComments) > 0 ? array_sum(array_column($ratedComments, 'rating')) / count($ratedComments) : null;
 
 // Comment submission
 $commentError   = '';
@@ -71,14 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_content'])) {
     $content = trim(substr($_POST['comment_content'] ?? '', 0, 2000));
     $name    = trim(substr($_POST['comment_name']    ?? '', 0, 100));
     $email   = trim(substr($_POST['comment_email']   ?? '', 0, 200));
+    $rating  = (int)($_POST['comment_rating'] ?? 0);
+    $rating  = ($rating >= 1 && $rating <= 5) ? $rating : null;
     if (!$content) {
         $commentError = 'Comment text is required.';
     } else {
         try {
             db()->prepare(
-                'INSERT INTO Comment (id, content, name, email, postId, isModerated, isFlagged, createdAt)
-                 VALUES (?, ?, ?, ?, ?, 0, 0, NOW(3))'
-            )->execute([generate_id(), $content, $name ?: null, $email ?: null, $id]);
+                'INSERT INTO Comment (id, content, rating, name, email, postId, isModerated, isFlagged, createdAt)
+                 VALUES (?, ?, ?, ?, ?, ?, 0, 0, NOW(3))'
+            )->execute([generate_id(), $content, $rating, $name ?: null, $email ?: null, $id]);
             $commentSuccess = true;
         } catch (Exception $e) {
             $commentError = 'Could not submit your comment. Please try again.';
@@ -224,9 +229,15 @@ $pageUrl       = $shareUrl;
 
     <!-- Comments -->
     <section class="mt-12">
-      <h2 class="font-outfit font-bold text-2xl mb-8 text-slate-900">
+      <h2 class="font-outfit font-bold text-2xl mb-8 text-slate-900 flex flex-wrap items-center gap-3">
         Comments
-        <?php if (!empty($comments)): ?><span class="text-base font-normal text-slate-400 ml-2">(<?= count($comments) ?>)</span><?php endif; ?>
+        <?php if (!empty($comments)): ?><span class="text-base font-normal text-slate-400">(<?= count($comments) ?>)</span><?php endif; ?>
+        <?php if ($avgRating !== null): ?>
+          <span class="inline-flex items-center gap-1 text-sm font-bold" style="color:#E7952A">
+            <?php for ($i = 1; $i <= 5; $i++): ?><span style="color:<?= $i <= round($avgRating) ? '#E7952A' : '#e2e8f0' ?>">★</span><?php endfor; ?>
+            <span class="text-slate-500 font-normal text-xs ml-1"><?= number_format($avgRating, 1) ?> average (<?= count($ratedComments) ?> rating<?= count($ratedComments) !== 1 ? 's' : '' ?>)</span>
+          </span>
+        <?php endif; ?>
       </h2>
 
       <?php if ($commentSuccess): ?>
@@ -253,6 +264,17 @@ $pageUrl       = $shareUrl;
               </div>
             </div>
             <div class="mb-5">
+              <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-widest">Your Rating (optional)</label>
+              <div class="flex items-center gap-1" id="star-rating">
+                <?php $_r = (int)($_POST['comment_rating'] ?? 0); ?>
+                <?php for ($i = 1; $i <= 5; $i++): ?>
+                  <button type="button" class="star-btn text-3xl leading-none transition-colors" style="color:<?= $i <= $_r ? '#E7952A' : '#cbd5e1' ?>"
+                          data-value="<?= $i ?>" onclick="setCommentRating(<?= $i ?>)" aria-label="<?= $i ?> star<?= $i > 1 ? 's' : '' ?>">★</button>
+                <?php endfor; ?>
+              </div>
+              <input type="hidden" name="comment_rating" id="comment_rating_input" value="<?= h($_POST['comment_rating'] ?? '') ?>">
+            </div>
+            <div class="mb-5">
               <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-widest">Comment *</label>
               <textarea name="comment_content" rows="4" required maxlength="2000"
                         class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none resize-none"></textarea>
@@ -277,6 +299,11 @@ $pageUrl       = $shareUrl;
                   </div>
                 </div>
               </div>
+              <?php if (!empty($c['rating'])): ?>
+                <div class="flex items-center gap-0.5 mb-2" aria-label="<?= (int)$c['rating'] ?> out of 5 stars">
+                  <?php for ($i = 1; $i <= 5; $i++): ?><span class="text-sm" style="color:<?= $i <= (int)$c['rating'] ? '#E7952A' : '#e2e8f0' ?>">★</span><?php endfor; ?>
+                </div>
+              <?php endif; ?>
               <p class="text-sm text-slate-700 leading-relaxed"><?= nl2br(h($c['content'])) ?></p>
             </div>
           <?php endforeach; ?>
@@ -287,6 +314,15 @@ $pageUrl       = $shareUrl;
         </div>
       <?php endif; ?>
     </section>
+
+    <script>
+    function setCommentRating(val) {
+      document.getElementById('comment_rating_input').value = val;
+      document.querySelectorAll('#star-rating .star-btn').forEach(function(btn){
+        btn.style.color = parseInt(btn.dataset.value, 10) <= val ? '#E7952A' : '#cbd5e1';
+      });
+    }
+    </script>
 
     <!-- Related episodes -->
     <?php if (!empty($related)): ?>
