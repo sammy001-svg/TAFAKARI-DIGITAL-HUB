@@ -186,6 +186,23 @@ function ensure_partners_table(): void {
     } catch (Exception $e) {}
 }
 
+function ensure_team_table(): void {
+    try {
+        db()->exec("CREATE TABLE IF NOT EXISTS `TeamMember` (
+          `id` VARCHAR(191) NOT NULL,
+          `name` VARCHAR(200) NOT NULL,
+          `role` VARCHAR(200) NULL,
+          `bio` TEXT NULL,
+          `photoUrl` VARCHAR(500) NULL,
+          `sortOrder` INT NOT NULL DEFAULT 0,
+          `isActive` TINYINT(1) NOT NULL DEFAULT 1,
+          `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    } catch (Exception $e) {}
+}
+
 // Adds the `rating` column to an existing Comment table (installs that predate the
 // star-rating feature). Checks first so the ALTER only ever runs once per install.
 function ensure_comment_rating_column(): void {

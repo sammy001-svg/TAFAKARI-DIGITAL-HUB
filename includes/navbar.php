@@ -12,11 +12,6 @@ $_aboutLinks = [
   ['/about#mission',    'Our Mission', 'ourMission'],
   ['/about#what-we-do', 'What We Do',  'whatWeDo'],
 ];
-$_coverageCountries = [
-  ['/about#coverage-kenya',    '🇰🇪 Kenya',    'countryKenya'],
-  ['/about#coverage-ethiopia', '🇪🇹 Ethiopia', 'countryEthiopia'],
-  ['/about#coverage-drc',      '🇨🇩 DR Congo', 'countryDrc'],
-];
 $_currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
 $_homeActive  = ($_currentPath === '/');
 $_aboutActive = (strpos($_currentPath, '/about') === 0);
@@ -63,23 +58,6 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
                 <?= h($label) ?>
               </a>
             <?php endforeach; ?>
-
-            <!-- Coverage Area nested flyout -->
-            <div class="relative group/coverage">
-              <div class="flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-white/85 cursor-default hover:bg-white/10 hover:text-white transition-colors">
-                <span data-i18n="coverageArea">Coverage Area</span>
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-              </div>
-              <div class="absolute left-full top-0 pl-2 invisible opacity-0 translate-x-1 group-hover/coverage:visible group-hover/coverage:opacity-100 group-hover/coverage:translate-x-0 transition-all duration-150">
-                <div class="w-48 rounded-2xl shadow-2xl py-2" style="background:#750B25;border:1px solid rgba(255,255,255,.12)">
-                  <?php foreach ($_coverageCountries as [$href, $label, $i18nKey]): ?>
-                    <a href="<?= h($href) ?>" class="block px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/10 hover:text-white transition-colors">
-                      <span data-i18n-country="<?= h($i18nKey) ?>"><?= h($label) ?></span>
-                    </a>
-                  <?php endforeach; ?>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -208,21 +186,6 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
             <?= h($label) ?>
           </a>
         <?php endforeach; ?>
-        <div>
-          <button type="button" onclick="_toggleDrawerSection('coverage-sub')"
-                  style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;padding:9px 12px;font-size:14px;font-weight:600;color:rgba(255,255,255,.75);cursor:pointer">
-            <span data-i18n="coverageArea">Coverage Area</span>
-            <svg id="coverage-sub-chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="transition:transform .2s"><path d="M19 9l-7 7-7-7"/></svg>
-          </button>
-          <div id="coverage-sub" style="display:none;padding:2px 0 2px 12px;border-left:1px solid rgba(255,255,255,.1);margin-left:12px">
-            <?php foreach ($_coverageCountries as [$href, $label, $i18nKey]): ?>
-              <a href="<?= h($href) ?>" onclick="_navClose()"
-                 style="display:block;padding:8px 12px;text-decoration:none;font-size:13px;font-weight:600;color:rgba(255,255,255,.65)">
-                <span data-i18n-country="<?= h($i18nKey) ?>"><?= h($label) ?></span>
-              </a>
-            <?php endforeach; ?>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -346,7 +309,7 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
   var drawer = document.getElementById('nav-drawer');
   if (drawer) drawer.addEventListener('touchmove', function(e){ e.stopPropagation(); }, { passive:true });
 
-  /* Mobile accordion toggles (About Us / Coverage Area / Language) */
+  /* Mobile accordion toggles (About Us / Language) */
   window._toggleDrawerSection = function(id) {
     var section  = document.getElementById(id);
     var chevron  = document.getElementById(id + '-chevron');

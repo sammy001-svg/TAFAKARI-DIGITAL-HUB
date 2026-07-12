@@ -29,6 +29,15 @@ try {
     )->fetchAll();
 } catch (Exception $e) { /* DB not ready */ }
 
+// ── Live team list (falls back to default content below if empty) ──────────────
+$dbTeam = [];
+try {
+    ensure_team_table();
+    $dbTeam = db()->query(
+        "SELECT * FROM TeamMember WHERE isActive = 1 ORDER BY sortOrder ASC, createdAt ASC"
+    )->fetchAll();
+} catch (Exception $e) { /* DB not ready */ }
+
 $pageTitle    = 'About CRTP | Tafakari Digital Hub';
 $pageDesc     = 'The Centre for Research, Training and Policy (CRTP) is a research and capacity-building organization committed to peace, security, and governance across Africa.';
 $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace research, conflict analysis, Hekima, Kenya, Ethiopia, DR Congo';
@@ -78,7 +87,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
         ['value' => max($stats['podcasts'], 0),  'label' => 'Podcast Episodes',    'key' => 'about.stat.podcasts',   'href' => '/podcasts',  'icon' => 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3'],
         ['value' => max($stats['videos'], 0),    'label' => 'Video Reports',        'key' => 'about.stat.videos',    'href' => '/videos',    'icon' => 'M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z'],
         ['value' => max($stats['images'], 0),    'label' => 'Gallery Photos',       'key' => 'about.stat.images',    'href' => '/gallery',   'icon' => 'M4 16l4.586-4.586a2 2 0 0 1 2.828 0L16 16m-2-2 1.586-1.586a2 2 0 0 1 2.828 0L20 14m-6-6h.01M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z'],
-        ['value' => max((int)$stats['countries'], 15), 'label' => 'Countries Monitored', 'key' => 'about.stat.countries', 'suffix' => '+', 'href' => '#coverage', 'icon' => 'M3.055 11H5a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2 2 2 0 0 1 2 2v2.945M8 3.935V5.5A2.5 2.5 0 0 0 10.5 8h.5a2 2 0 0 1 2 2 2 2 0 1 0 4 0 2 2 0 0 1 2-2h1.064M15 20.488V18a2 2 0 0 1 2-2h3.064'],
+        ['value' => max((int)$stats['countries'], 15), 'label' => 'Countries Monitored', 'key' => 'about.stat.countries', 'suffix' => '+', 'href' => '/heatmap', 'icon' => 'M3.055 11H5a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2 2 2 0 0 1 2 2v2.945M8 3.935V5.5A2.5 2.5 0 0 0 10.5 8h.5a2 2 0 0 1 2 2 2 2 0 1 0 4 0 2 2 0 0 1 2-2h1.064M15 20.488V18a2 2 0 0 1 2-2h3.064'],
     ];
     ?>
     <?php foreach ($impactStats as $s): ?>
@@ -240,37 +249,6 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
-<!-- COVERAGE AREA (matches the interactive heatmap's live data countries)     -->
-<!-- ══════════════════════════════════════════════════════════════════════════ -->
-<div id="coverage" class="max-w-7xl mx-auto px-6 py-20 scroll-mt-24">
-  <div class="text-center max-w-2xl mx-auto mb-12">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A" data-i18n="coverageArea">Coverage Area</span>
-    <h2 class="font-outfit font-black text-4xl text-slate-900" data-i18n="about.coverageTitle">Countries on the Heatmap</h2>
-    <p class="text-slate-500 mt-3" data-i18n="about.coverageDesc">The three countries currently tracked in detail on our interactive conflict heatmap.</p>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <?php
-    $coverageCountries = [
-      ['id' => 'coverage-kenya',    'flag' => '🇰🇪', 'name' => 'Kenya',    'nameKey' => 'countryKenya',    'desc' => 'Nairobi, Mombasa, Kisumu, and 13 other monitored regions.', 'descKey' => 'about.coverage.kenyaDesc'],
-      ['id' => 'coverage-ethiopia', 'flag' => '🇪🇹', 'name' => 'Ethiopia', 'nameKey' => 'countryEthiopia', 'desc' => 'Addis Ababa, Gonder, Bahir Dar, and 13 other monitored regions.', 'descKey' => 'about.coverage.ethiopiaDesc'],
-      ['id' => 'coverage-drc',     'flag' => '🇨🇩', 'name' => 'DR Congo', 'nameKey' => 'countryDrc',      'desc' => 'Kinshasa, Goma, Lubumbashi, and 14 other monitored regions.', 'descKey' => 'about.coverage.drcDesc'],
-    ];
-    foreach ($coverageCountries as $c): ?>
-      <div id="<?= h($c['id']) ?>" class="bg-white rounded-2xl border border-amber-100 p-8 shadow-sm text-center scroll-mt-24">
-        <div class="text-4xl mb-3"><?= $c['flag'] ?></div>
-        <h3 class="font-outfit font-bold text-xl text-slate-900 mb-2" data-i18n="<?= h($c['nameKey']) ?>"><?= h($c['name']) ?></h3>
-        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="<?= h($c['descKey']) ?>"><?= h($c['desc']) ?></p>
-      </div>
-    <?php endforeach; ?>
-  </div>
-  <div class="text-center mt-10">
-    <a href="/heatmap" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all hover:brightness-110" style="background:#750B25" data-i18n="about.exploreHeatmapArrow">
-      Explore Interactive Heatmap →
-    </a>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════════ -->
 <!-- OUR VALUES                                                                -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 py-20">
@@ -308,35 +286,65 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     <p class="text-slate-500 mt-2" data-i18n="about.teamDesc">Researchers, journalists, and policy specialists committed to the long game.</p>
   </div>
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-    <?php
-    $team = [
-      ['name' => 'Executive Director',          'nameKey' => 'execDirector',  'role' => 'Leadership',       'roleKey' => 'leadership',      'initials' => 'ED', 'photo' => '/public/team/exec-director.jpg'],
-      ['name' => 'Head of Research',            'nameKey' => 'headResearch',  'role' => 'Research',         'roleKey' => 'research',        'initials' => 'HR', 'photo' => '/public/team/head-research.jpg'],
-      ['name' => 'Policy Analyst — East Africa','nameKey' => 'policyAnalyst', 'role' => 'Policy',           'roleKey' => 'policy',          'initials' => 'PA', 'photo' => '/public/team/policy-analyst.jpg'],
-      ['name' => 'Field Coordinator — DRC',     'nameKey' => 'fieldCoord',    'role' => 'Field Operations', 'roleKey' => 'fieldOperations',  'initials' => 'FC', 'photo' => '/public/team/field-coordinator.jpg'],
-      ['name' => 'Communications Manager',      'nameKey' => 'commsManager',  'role' => 'Media & Comms',    'roleKey' => 'mediaComms',       'initials' => 'CM', 'photo' => '/public/team/comms-manager.jpg'],
-      ['name' => 'Data & GIS Specialist',       'nameKey' => 'dataSpecialist','role' => 'Technology',       'roleKey' => 'technology',       'initials' => 'GS', 'photo' => '/public/team/data-specialist.jpg'],
-      ['name' => 'Training Coordinator',        'nameKey' => 'trainingCoord', 'role' => 'Capacity Building','roleKey' => 'capacityBuildingRole', 'initials' => 'TC', 'photo' => '/public/team/training-coordinator.jpg'],
-      ['name' => 'Programme Officer — Sahel',   'nameKey' => 'programmeOfficer', 'role' => 'Field Operations', 'roleKey' => 'fieldOperations', 'initials' => 'PO', 'photo' => '/public/team/programme-officer.jpg'],
-    ];
-    foreach ($team as $i => $member):
-      $fbId = 'team-fb-' . $i; ?>
-      <div class="bg-white rounded-2xl border border-amber-100 p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all">
-        <div class="relative w-16 h-16 mx-auto mb-3">
-          <img src="<?= h($member['photo']) ?>" alt="<?= h($member['name']) ?>"
-               class="w-16 h-16 rounded-2xl object-cover shadow-sm"
-               onerror="this.style.display='none';document.getElementById('<?= $fbId ?>').style.display='flex'">
-          <div id="<?= $fbId ?>" class="absolute inset-0 rounded-2xl items-center justify-center font-outfit font-black text-xl text-white shadow-sm"
-               style="background:#750B25;display:none">
-            <?= h($member['initials']) ?>
+    <?php if (!empty($dbTeam)): ?>
+      <!-- Live team members from admin/super/team -->
+      <?php foreach ($dbTeam as $i => $member):
+        $fbId = 'team-fb-' . $i; ?>
+        <div class="bg-white rounded-2xl border border-amber-100 p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all">
+          <div class="relative w-16 h-16 mx-auto mb-3">
+            <?php if (!empty($member['photoUrl'])): ?>
+              <img src="<?= h($member['photoUrl']) ?>" alt="<?= h($member['name']) ?>"
+                   class="w-16 h-16 rounded-2xl object-cover shadow-sm"
+                   onerror="this.style.display='none';document.getElementById('<?= $fbId ?>').style.display='flex'">
+            <?php endif; ?>
+            <div id="<?= $fbId ?>" class="absolute inset-0 rounded-2xl items-center justify-center font-outfit font-black text-xl text-white shadow-sm"
+                 style="background:#750B25;<?= empty($member['photoUrl']) ? '' : 'display:none' ?>">
+              <?= h(strtoupper(substr($member['name'], 0, 1))) ?>
+            </div>
           </div>
+          <p class="font-bold text-sm text-slate-800 leading-snug mb-1"><?= h($member['name']) ?></p>
+          <?php if (!empty($member['role'])): ?>
+            <p class="text-[10px] font-black uppercase tracking-widest text-amber-700"><?= h($member['role']) ?></p>
+          <?php endif; ?>
+          <?php if (!empty($member['bio'])): ?>
+            <p class="text-xs text-slate-500 mt-2 leading-relaxed"><?= h($member['bio']) ?></p>
+          <?php endif; ?>
         </div>
-        <p class="font-bold text-sm text-slate-800 leading-snug mb-1" data-i18n="about.teamMember.<?= h($member['nameKey']) ?>"><?= h($member['name']) ?></p>
-        <p class="text-[10px] font-black uppercase tracking-widest text-amber-700" data-i18n="about.teamRole.<?= h($member['roleKey']) ?>"><?= h($member['role']) ?></p>
-      </div>
-    <?php endforeach; ?>
+      <?php endforeach; ?>
+    <?php else: ?>
+      <!-- Default placeholder content until team members are added via admin/super/team -->
+      <?php
+      $team = [
+        ['name' => 'Executive Director',          'nameKey' => 'execDirector',  'role' => 'Leadership',       'roleKey' => 'leadership',      'initials' => 'ED', 'photo' => '/public/team/exec-director.jpg'],
+        ['name' => 'Head of Research',            'nameKey' => 'headResearch',  'role' => 'Research',         'roleKey' => 'research',        'initials' => 'HR', 'photo' => '/public/team/head-research.jpg'],
+        ['name' => 'Policy Analyst — East Africa','nameKey' => 'policyAnalyst', 'role' => 'Policy',           'roleKey' => 'policy',          'initials' => 'PA', 'photo' => '/public/team/policy-analyst.jpg'],
+        ['name' => 'Field Coordinator — DRC',     'nameKey' => 'fieldCoord',    'role' => 'Field Operations', 'roleKey' => 'fieldOperations',  'initials' => 'FC', 'photo' => '/public/team/field-coordinator.jpg'],
+        ['name' => 'Communications Manager',      'nameKey' => 'commsManager',  'role' => 'Media & Comms',    'roleKey' => 'mediaComms',       'initials' => 'CM', 'photo' => '/public/team/comms-manager.jpg'],
+        ['name' => 'Data & GIS Specialist',       'nameKey' => 'dataSpecialist','role' => 'Technology',       'roleKey' => 'technology',       'initials' => 'GS', 'photo' => '/public/team/data-specialist.jpg'],
+        ['name' => 'Training Coordinator',        'nameKey' => 'trainingCoord', 'role' => 'Capacity Building','roleKey' => 'capacityBuildingRole', 'initials' => 'TC', 'photo' => '/public/team/training-coordinator.jpg'],
+        ['name' => 'Programme Officer — Sahel',   'nameKey' => 'programmeOfficer', 'role' => 'Field Operations', 'roleKey' => 'fieldOperations', 'initials' => 'PO', 'photo' => '/public/team/programme-officer.jpg'],
+      ];
+      foreach ($team as $i => $member):
+        $fbId = 'team-fb-' . $i; ?>
+        <div class="bg-white rounded-2xl border border-amber-100 p-5 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all">
+          <div class="relative w-16 h-16 mx-auto mb-3">
+            <img src="<?= h($member['photo']) ?>" alt="<?= h($member['name']) ?>"
+                 class="w-16 h-16 rounded-2xl object-cover shadow-sm"
+                 onerror="this.style.display='none';document.getElementById('<?= $fbId ?>').style.display='flex'">
+            <div id="<?= $fbId ?>" class="absolute inset-0 rounded-2xl items-center justify-center font-outfit font-black text-xl text-white shadow-sm"
+                 style="background:#750B25;display:none">
+              <?= h($member['initials']) ?>
+            </div>
+          </div>
+          <p class="font-bold text-sm text-slate-800 leading-snug mb-1" data-i18n="about.teamMember.<?= h($member['nameKey']) ?>"><?= h($member['name']) ?></p>
+          <p class="text-[10px] font-black uppercase tracking-widest text-amber-700" data-i18n="about.teamRole.<?= h($member['roleKey']) ?>"><?= h($member['role']) ?></p>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
-  <p class="text-center text-xs text-slate-400 mt-6" data-i18n="about.teamComingSoon">Team profiles with photos and biographies coming soon.</p>
+  <?php if (empty($dbTeam)): ?>
+    <p class="text-center text-xs text-slate-400 mt-6" data-i18n="about.teamComingSoon">Team profiles with photos and biographies coming soon.</p>
+  <?php endif; ?>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
