@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 2) . '/config.php';
 require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
+require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 
 $me = require_super_admin();
 $uid = $me['id'];
@@ -16,7 +17,11 @@ $saveErr = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'banner') {
+    if ($action === 'branding') {
+        set_setting('site_logo_url',     trim($_POST['site_logo_url']    ?? ''), $uid);
+        set_setting('site_og_image_url', trim($_POST['site_og_image_url'] ?? ''), $uid);
+        $saved = 'branding';
+    } elseif ($action === 'banner') {
         set_setting('announcement_active', isset($_POST['announcement_active']) ? '1' : '0', $uid);
         set_setting('announcement_text',   substr(trim($_POST['announcement_text']   ?? ''), 0, 200), $uid);
         set_setting('announcement_url',    trim($_POST['announcement_url']   ?? ''), $uid);
@@ -54,6 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ── Load current settings ──────────────────────────────────────────────────
+$siteLogoUrl        = get_setting('site_logo_url',     '/public/crtp-logo.jpg');
+$siteOgImageUrl      = get_setting('site_og_image_url', '/public/crtp-og-image.png');
 $announcementActive = get_setting('announcement_active', '0');
 $announcementText   = get_setting('announcement_text',   '');
 $announcementUrl    = get_setting('announcement_url',    '');
@@ -109,7 +116,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
               padding:12px 20px;border-radius:50px;border:1px solid rgba(255,255,255,.1);
               box-shadow:0 8px 32px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px">
     <svg width="14" height="14" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-    <?= ['banner'=>'Banner saved','featured'=>'Featured article saved','carousel'=>'Carousel saved','visibility'=>'Visibility saved'][$saved] ?? 'Saved' ?>
+    <?= ['branding'=>'Site branding saved','banner'=>'Banner saved','featured'=>'Featured article saved','carousel'=>'Carousel saved','visibility'=>'Visibility saved'][$saved] ?? 'Saved' ?>
   </div>
   <script>setTimeout(function(){ var t=document.getElementById('save-toast'); if(t) t.style.opacity='0'; }, 2800);</script>
 <?php endif; ?>
@@ -121,6 +128,29 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
 
   <!-- ── LEFT COLUMN (2/3) ─────────────────────────────────────── -->
   <div class="xl:col-span-2 space-y-6">
+
+    <!-- Site Branding -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+      <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#0EA5E918">
+          <svg width="16" height="16" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <h2 class="font-outfit font-black text-base text-slate-900">Site Branding</h2>
+          <p class="text-xs text-slate-400">Logo and default social-share image used across the site</p>
+        </div>
+      </div>
+      <form method="POST" class="px-6 py-5 space-y-5" onsubmit="return uwCheckRequired(this)">
+        <input type="hidden" name="action" value="branding">
+        <?php uw_img('site-logo', 'site_logo_url', 'Site Logo', 'Shown in the navbar, footer, and structured data. A transparent PNG works best.', $siteLogoUrl); ?>
+        <?php uw_img('site-og', 'site_og_image_url', 'Default Social Share Image', 'Shown when a page is shared on Facebook, X, or LinkedIn without its own image. 1200×630 recommended.', $siteOgImageUrl); ?>
+        <div class="flex justify-end pt-1">
+          <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90" style="background:#0EA5E9">
+            Save Branding
+          </button>
+        </div>
+      </form>
+    </div>
 
     <!-- Announcement Banner -->
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
@@ -322,6 +352,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
 </div>
 </div>
 
+<?php uw_scripts(); ?>
 <script>
 /* ── Carousel editor ───────────────────────────────────────────── */
 var slides = <?= json_encode($carouselSlides, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
@@ -347,7 +378,10 @@ function renderSlides() {
       + '</div>'
       + '</div>'
       + '<div style="padding:10px 12px;display:grid;gap:6px">'
-      + '<input type="text" placeholder="Image URL *" value="'+esc(s.img)+'" onchange="slides['+i+'].img=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="text" id="slide-img-'+i+'" placeholder="Image URL *" value="'+esc(s.img)+'" onchange="slides['+i+'].img=this.value" style="flex:1;min-width:0;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
+      + '<button type="button" onclick="uploadSlideImage('+i+')" title="Upload image" style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:11px;font-weight:700;color:#750B25;flex-shrink:0">Upload</button>'
+      + '</div>'
       + '<input type="text" placeholder="Region / Country label" value="'+esc(s.region)+'" onchange="slides['+i+'].region=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '<input type="text" placeholder="Headline *" value="'+esc(s.title)+'" onchange="slides['+i+'].title=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '<input type="text" placeholder="Sub-headline" value="'+esc(s.sub)+'" onchange="slides['+i+'].sub=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
@@ -374,6 +408,33 @@ function moveSlide(i, dir) {
   if (j < 0 || j >= slides.length) return;
   var tmp = slides[i]; slides[i] = slides[j]; slides[j] = tmp;
   renderSlides();
+}
+
+var _slideFileInput = null;
+function uploadSlideImage(i) {
+  if (!_slideFileInput) {
+    _slideFileInput = document.createElement('input');
+    _slideFileInput.type = 'file';
+    _slideFileInput.accept = 'image/*';
+    _slideFileInput.style.display = 'none';
+    document.body.appendChild(_slideFileInput);
+  }
+  _slideFileInput.onchange = function() {
+    var f = _slideFileInput.files[0];
+    _slideFileInput.value = '';
+    if (!f) return;
+    var fd = new FormData();
+    fd.append('file', f);
+    fetch('/api/upload?type=image', { method: 'POST', body: fd })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.error) { alert(data.error); return; }
+        slides[i].img = data.url;
+        renderSlides();
+      })
+      .catch(function(){ alert('Upload failed — network error.'); });
+  };
+  _slideFileInput.click();
 }
 
 function serializeCarousel() {

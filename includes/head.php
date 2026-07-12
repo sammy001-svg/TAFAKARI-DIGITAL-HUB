@@ -8,9 +8,14 @@ $_siteRoot = $_proto . '://' . $_host;
 $_canonical = $pageUrl ?? ($_siteRoot . $_path);
 
 // Fallback values — override per-page by setting $pageTitle, $pageDesc, etc. before include
+// (function_exists('db') guard: head.php is also included by login.php, which loads functions.php
+// but not db.php — get_setting() exists there but would fatal when it calls db() internally)
+$_defaultOgImage = function_exists('db') ? get_setting('site_og_image_url', '/public/crtp-og-image.png') : '/public/crtp-og-image.png';
+$_siteLogoForSchema = function_exists('db') ? get_setting('site_logo_url', '/public/crtp-logo.jpg') : '/public/crtp-logo.jpg';
+
 $_title     = strip_tags($pageTitle ?? 'Tafakari Digital Hub | Knowledge & Community Platform');
 $_desc      = $pageDesc    ?? 'A centralized knowledge repository, media broadcasting center, and community engagement tool for Kenya, Ethiopia, DR Congo, and conflict zones across Africa.';
-$_image     = $pageImage   ?? '/public/crtp-og-image.png';
+$_image     = $pageImage   ?? $_defaultOgImage;
 $_type      = $pageType    ?? 'website';   // 'article' on news-detail.php
 $_author    = $pageAuthor  ?? 'Tafakari Digital Hub';
 $_published = $pagePublished ?? '';
@@ -33,7 +38,7 @@ $_mod = $_modified  ? date('c', strtotime($_modified))  : null;
 $_org = [
     '@type' => 'Organization',
     'name'  => 'Tafakari Digital Hub',
-    'logo'  => ['@type' => 'ImageObject', 'url' => $_siteRoot . '/public/crtp-logo.jpg'],
+    'logo'  => ['@type' => 'ImageObject', 'url' => $_siteRoot . $_siteLogoForSchema],
 ];
 
 // JSON-LD schema — type-specific

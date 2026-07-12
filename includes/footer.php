@@ -1,3 +1,4 @@
+<?php $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg'); ?>
 <footer class="text-white/80 py-16 px-6 mt-20 border-t border-yellow-800/30" style="background:#2A0515">
   <div class="max-w-7xl mx-auto">
 
@@ -10,7 +11,7 @@
         <div class="mb-5">
           <a href="/" aria-label="CRTP — Home">
             <div class="inline-block bg-white rounded-xl px-3 py-2 shadow-sm">
-              <img src="/public/crtp-logo.jpg"
+              <img src="<?= h($_siteLogoUrl) ?>"
                    alt="Centre For Research Training and Publications — CRTP"
                    class="h-10 w-auto object-contain block"
                    onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-lg text-[#750B25] tracking-tight px-1\'>CRTP</span>'">

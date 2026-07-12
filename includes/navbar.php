@@ -20,6 +20,7 @@ $_coverageCountries = [
 $_currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
 $_homeActive  = ($_currentPath === '/');
 $_aboutActive = (strpos($_currentPath, '/about') === 0);
+$_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
 ?>
 
 <!-- ── Navbar ──────────────────────────────────────────────────────── -->
@@ -29,7 +30,7 @@ $_aboutActive = (strpos($_currentPath, '/about') === 0);
     <!-- Logo -->
     <a href="/" class="flex items-center no-underline group shrink-0" aria-label="CRTP — Centre For Research Training and Publications">
       <div class="bg-white rounded-xl px-3 py-1.5 shadow-md group-hover:shadow-lg transition-shadow">
-        <img src="/public/crtp-logo.jpg" alt="CRTP"
+        <img src="<?= h($_siteLogoUrl) ?>" alt="CRTP"
              class="h-9 md:h-10 w-auto object-contain block"
              onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-base text-[#750B25] tracking-tight px-1\'>CRTP</span>'">
       </div>
@@ -155,7 +156,7 @@ $_aboutActive = (strpos($_currentPath, '/about') === 0);
   <!-- Drawer header -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
     <div style="background:#fff;border-radius:12px;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.2)">
-      <img src="/public/crtp-logo.jpg" alt="CRTP"
+      <img src="<?= h($_siteLogoUrl) ?>" alt="CRTP"
            style="height:32px;width:auto;object-fit:contain;display:block"
            onerror="this.parentElement.innerHTML='<span style=\'font-family:Outfit,sans-serif;font-weight:900;font-size:14px;color:#750B25;padding:0 4px\'>CRTP</span>'">
     </div>
