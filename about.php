@@ -20,6 +20,15 @@ try {
     if ($row) $stats = array_merge($stats, $row);
 } catch (Exception $e) { /* DB not ready */ }
 
+// ── Live partners list (falls back to default content below if empty) ──────────
+$dbPartners = [];
+try {
+    ensure_partners_table();
+    $dbPartners = db()->query(
+        "SELECT * FROM Partner WHERE isActive = 1 ORDER BY sortOrder ASC, createdAt ASC"
+    )->fetchAll();
+} catch (Exception $e) { /* DB not ready */ }
+
 $pageTitle    = 'About CRTP | Tafakari Digital Hub';
 $pageDesc     = 'The Centre for Research, Training and Policy (CRTP) is a research and capacity-building organization committed to peace, security, and governance across Africa.';
 $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace research, conflict analysis, Hekima, Kenya, Ethiopia, DR Congo';
@@ -343,25 +352,56 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
         to amplify our impact across the continent.
       </p>
     </div>
-    <!-- Featured partner -->
-    <div class="max-w-sm mx-auto rounded-2xl border border-amber-100 p-8 text-center mb-8" style="background:#F8F8F0">
-      <img src="/public/hekima-logo.jpg" alt="Hekima University College"
-           class="h-16 object-contain mx-auto mb-4"
-           onerror="this.parentElement.querySelector('.hekima-fb').style.display='flex';this.style.display='none'">
-      <div class="hekima-fb w-16 h-16 rounded-2xl mx-auto mb-4 items-center justify-center font-outfit font-black text-2xl text-white hidden" style="background:#750B25">H</div>
-      <h3 class="font-outfit font-bold text-lg text-slate-900 mb-1">Hekima University College</h3>
-      <p class="text-xs text-amber-800 font-bold uppercase tracking-widest mb-3" data-i18n="about.hekimaSubtitle">Jesuit Institute of Peace Studies &amp; International Relations</p>
-      <p class="text-slate-500 text-sm" data-i18n="about.hekimaDesc">A leading Jesuit institution in Nairobi, Kenya, specializing in peace studies, conflict transformation, and social justice in the African context.</p>
-    </div>
-    <!-- Partner placeholder grid -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <?php foreach ([['UN Agencies', 'unAgencies'], ['African Union', 'africanUnion'], ['Civil Society Partners', 'civilSociety'], ['Academic Institutions', 'academicInstitutions']] as [$p, $pKey]): ?>
-        <div class="rounded-xl border border-dashed border-amber-200 p-4 text-center">
-          <p class="text-xs font-bold text-slate-400" data-i18n="about.partnerType.<?= h($pKey) ?>"><?= h($p) ?></p>
-          <p class="text-[10px] text-slate-300 mt-1" data-i18n="about.logosComingSoon">Logos coming soon</p>
-        </div>
-      <?php endforeach; ?>
-    </div>
+    <?php if (!empty($dbPartners)): ?>
+      <!-- Live partners from admin/super/partners -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <?php foreach ($dbPartners as $partner): ?>
+          <div class="rounded-2xl border border-amber-100 p-6 text-center" style="background:#F8F8F0">
+            <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center overflow-hidden bg-white shadow-sm">
+              <?php if (!empty($partner['logoUrl'])): ?>
+                <img src="<?= h($partner['logoUrl']) ?>" alt="<?= h($partner['name']) ?>"
+                     class="w-full h-full object-contain p-1.5"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="hidden w-full h-full items-center justify-center font-outfit font-black text-xl text-white" style="background:#750B25"><?= h(strtoupper(substr($partner['name'], 0, 1))) ?></div>
+              <?php else: ?>
+                <div class="w-full h-full flex items-center justify-center font-outfit font-black text-xl text-white" style="background:#750B25"><?= h(strtoupper(substr($partner['name'], 0, 1))) ?></div>
+              <?php endif; ?>
+            </div>
+            <h3 class="font-outfit font-bold text-lg text-slate-900 mb-1"><?= h($partner['name']) ?></h3>
+            <?php if (!empty($partner['subtitle'])): ?>
+              <p class="text-xs text-amber-800 font-bold uppercase tracking-widest mb-3"><?= h($partner['subtitle']) ?></p>
+            <?php endif; ?>
+            <?php if (!empty($partner['description'])): ?>
+              <p class="text-slate-500 text-sm"><?= h($partner['description']) ?></p>
+            <?php endif; ?>
+            <?php if (!empty($partner['websiteUrl'])): ?>
+              <a href="<?= h($partner['websiteUrl']) ?>" target="_blank" rel="noopener noreferrer"
+                 class="inline-block mt-3 text-xs font-bold hover:underline" style="color:#750B25">Visit Website →</a>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <!-- Default content until partners are added via admin/super/partners -->
+      <div class="max-w-sm mx-auto rounded-2xl border border-amber-100 p-8 text-center mb-8" style="background:#F8F8F0">
+        <img src="/public/hekima-logo.jpg" alt="Hekima University College"
+             class="h-16 object-contain mx-auto mb-4"
+             onerror="this.parentElement.querySelector('.hekima-fb').style.display='flex';this.style.display='none'">
+        <div class="hekima-fb w-16 h-16 rounded-2xl mx-auto mb-4 items-center justify-center font-outfit font-black text-2xl text-white hidden" style="background:#750B25">H</div>
+        <h3 class="font-outfit font-bold text-lg text-slate-900 mb-1">Hekima University College</h3>
+        <p class="text-xs text-amber-800 font-bold uppercase tracking-widest mb-3" data-i18n="about.hekimaSubtitle">Jesuit Institute of Peace Studies &amp; International Relations</p>
+        <p class="text-slate-500 text-sm" data-i18n="about.hekimaDesc">A leading Jesuit institution in Nairobi, Kenya, specializing in peace studies, conflict transformation, and social justice in the African context.</p>
+      </div>
+      <!-- Partner placeholder grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <?php foreach ([['UN Agencies', 'unAgencies'], ['African Union', 'africanUnion'], ['Civil Society Partners', 'civilSociety'], ['Academic Institutions', 'academicInstitutions']] as [$p, $pKey]): ?>
+          <div class="rounded-xl border border-dashed border-amber-200 p-4 text-center">
+            <p class="text-xs font-bold text-slate-400" data-i18n="about.partnerType.<?= h($pKey) ?>"><?= h($p) ?></p>
+            <p class="text-[10px] text-slate-300 mt-1" data-i18n="about.logosComingSoon">Logos coming soon</p>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </div>
 </div>
 
