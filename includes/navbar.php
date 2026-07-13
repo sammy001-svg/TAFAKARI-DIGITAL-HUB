@@ -19,7 +19,7 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
 ?>
 
 <!-- ── Navbar ──────────────────────────────────────────────────────── -->
-<nav class="sticky top-0 z-500 text-white shadow-xl" style="background:#750B25;border-bottom:1px solid rgba(255,255,255,.08)">
+<nav class="sticky top-0 text-white shadow-xl" style="background:#750B25;border-bottom:1px solid rgba(255,255,255,.08);z-index:1000">
   <div class="px-4 md:px-10 py-3 max-w-7xl mx-auto flex items-center justify-between">
 
     <!-- Logo -->
