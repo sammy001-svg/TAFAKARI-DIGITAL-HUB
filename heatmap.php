@@ -521,8 +521,21 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 
         <!-- Intensity legend -->
         <div>
-          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-2.5" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.intensityLegend">Intensity Legend</p>
-          <div class="space-y-2">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)">Intensity Legend</p>
+            <div style="display:flex;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.12)">
+              <button id="leg-tab-esc" onclick="setLegTab('escalating')"
+                      style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px;border:none;cursor:pointer;background:rgba(237,28,36,.2);color:#ED1C24;line-height:1;white-space:nowrap">
+                ↑ Escalating
+              </button>
+              <button id="leg-tab-desc" onclick="setLegTab('deescalating')"
+                      style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,.28);line-height:1;white-space:nowrap">
+                ↓ De-escalating
+              </button>
+            </div>
+          </div>
+          <!-- Escalating legend (default) -->
+          <div id="legend-escalating" class="space-y-2">
             <div class="flex items-center gap-2.5">
               <div style="width:13px;height:13px;border-radius:50%;background:#ED1C24;box-shadow:0 0 8px #ED1C2499;flex-shrink:0"></div>
               <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendCritical">8–10 · Critical / Active conflict</span>
@@ -534,6 +547,25 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <div class="flex items-center gap-2.5">
               <div style="width:8px;height:8px;border-radius:50%;background:#F4C87E;flex-shrink:0;margin-left:2.5px"></div>
               <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendEmerging">1–4 · Emerging concern</span>
+            </div>
+          </div>
+          <!-- De-escalating legend (hidden by default) -->
+          <div id="legend-deescalating" style="display:none" class="space-y-2">
+            <div class="flex items-center gap-2.5">
+              <div style="width:16px;height:16px;border-radius:50%;background:#10B981;box-shadow:0 0 8px #10B98188;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+                <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M3 7l3 3 3-3" stroke="rgba(0,0,0,.7)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">Major improvement</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <div style="width:13px;height:13px;border-radius:50%;background:#34D399;flex-shrink:0;margin-left:1.5px;display:flex;align-items:center;justify-content:center">
+                <svg width="7" height="7" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M3 7l3 3 3-3" stroke="rgba(0,0,0,.7)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">Moderate progress</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <div style="width:9px;height:9px;border-radius:50%;background:#6EE7B7;flex-shrink:0;margin-left:3.5px"></div>
+              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">Early / fragile improvement</span>
             </div>
           </div>
         </div>
@@ -615,8 +647,8 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
   <div class="max-w-7xl mx-auto px-6 py-10">
     <div class="flex items-center justify-between mb-5">
       <div>
-        <h2 class="font-outfit font-black text-xl text-slate-900" data-i18n="heatmapPage.topFlashpoints">Top Flashpoints</h2>
-        <p class="text-sm text-slate-400 mt-0.5" data-i18n="heatmapPage.topFlashpointsDesc">Highest-intensity locations currently visible — click any row to zoom in</p>
+        <h2 id="table-title" class="font-outfit font-black text-xl text-slate-900">Top Flashpoints</h2>
+        <p id="table-sub" class="text-sm text-slate-400 mt-0.5">Highest-intensity locations currently visible — click any row to zoom in</p>
       </div>
       <span class="text-[10px] font-black uppercase tracking-widest text-slate-300" data-i18n="heatmapPage.sortedBySeverity">Sorted by severity</span>
     </div>
@@ -730,6 +762,18 @@ var mapData = [
   {lat:5.960,  lng:10.158, name:"Bamenda",         country:"CM", category:"Human Rights", intensity:9,  desc:"Ambazonia armed group atrocities and school shutdowns."},
 ];
 
+/* ── De-escalating situations data ────────────────────────────────── */
+var deescData = [
+  {lat:-1.940,  lng:29.874, name:"Rwanda",               country:"RW", category:"Policy",       deescLevel:3, desc:"Post-genocide reconciliation model — sustained governance stability and a regional leadership benchmark recognised internationally."},
+  {lat:14.032,  lng:38.316, name:"Tigray (Ceasefire)",   country:"ET", category:"Security",     deescLevel:2, desc:"2022 Pretoria Agreement cessation of hostilities; humanitarian corridors reopening and reconstruction gradually underway."},
+  {lat:-11.706, lng:40.513, name:"Cabo Delgado",         country:"MZ", category:"Security",     deescLevel:2, desc:"SAMIM and FADM joint operations have recaptured key towns; insurgent activity declining across the province since 2022."},
+  {lat:4.154,   lng:9.242,  name:"SW Cameroon (Talks)",  country:"CM", category:"Human Rights", deescLevel:1, desc:"Localised dialogue initiatives and amnesty schemes are reducing some armed group activity in Anglophone regions."},
+  {lat:8.490,   lng:30.660, name:"Lakes State (SS)",     country:"SS", category:"Displacement", deescLevel:1, desc:"Ceasefire monitoring showing reduced inter-communal cattle-raiding violence around Rumbek; IDP returns beginning."},
+  {lat:7.946,   lng:-1.024, name:"Ghana",                country:"GH", category:"Policy",       deescLevel:3, desc:"Stable democratic transfers of power — a benchmark for West African governance and institutional resilience over two decades."},
+  {lat:-15.416, lng:28.283, name:"Lusaka",               country:"ZM", category:"Policy",       deescLevel:2, desc:"Zambia debt restructuring progress improving fiscal governance; economic stabilisation reducing social tension indicators."},
+  {lat:0.347,   lng:32.583, name:"Kampala",              country:"UG", category:"Policy",       deescLevel:1, desc:"Post-election tensions cooling; civil society dialogue channels restored and media environment gradually stabilising."},
+];
+
 /* ── Lookup maps ──────────────────────────────────────────────────── */
 var CAT_COLORS = <?= json_encode($cats,    JSON_UNESCAPED_UNICODE) ?>;
 var FLAG       = <?= json_encode($flagMap,  JSON_UNESCAPED_UNICODE) ?>;
@@ -807,6 +851,140 @@ function makePostIcon(d) {
   });
 }
 
+/* ── De-escalating icon factory ───────────────────────────────────── */
+function makeDeescIcon(d) {
+  var col   = d.deescLevel >= 3 ? '#10B981' : d.deescLevel >= 2 ? '#34D399' : '#6EE7B7';
+  var size  = d.deescLevel >= 3 ? 32 : d.deescLevel >= 2 ? 24 : 18;
+  var glow  = d.deescLevel >= 3 ? '0 0 10px 3px '+col+'66' : d.deescLevel >= 2 ? '0 0 6px 2px '+col+'44' : 'none';
+  var inner = size - 6;
+  var arr   = Math.max(6, inner - 4);
+  return L.divIcon({
+    className: '',
+    iconSize:      [size, size],
+    iconAnchor:    [size/2, size/2],
+    tooltipAnchor: [size/2+3, 0],
+    html: '<div style="width:'+size+'px;height:'+size+'px;display:flex;align-items:center;justify-content:center">'
+        + '<div style="width:'+inner+'px;height:'+inner+'px;border-radius:50%;background:'+col
+        + ';border:1.5px solid rgba(255,255,255,.65);box-shadow:'+glow
+        + ';display:flex;align-items:center;justify-content:center">'
+        + '<svg width="'+arr+'" height="'+arr+'" viewBox="0 0 12 12" fill="none">'
+        + '<path d="M6 2v8M3 7l3 3 3-3" stroke="rgba(0,0,0,.65)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+        + '</svg></div></div>',
+  });
+}
+
+/* ── Legend tab switch ────────────────────────────────────────────── */
+function setLegTab(tab) {
+  legendTab = tab;
+  var isDesc = tab === 'deescalating';
+
+  var btnEsc  = document.getElementById('leg-tab-esc');
+  var btnDesc = document.getElementById('leg-tab-desc');
+  if (btnEsc) {
+    btnEsc.style.background = isDesc ? 'transparent' : 'rgba(237,28,36,.2)';
+    btnEsc.style.color      = isDesc ? 'rgba(255,255,255,.28)' : '#ED1C24';
+  }
+  if (btnDesc) {
+    btnDesc.style.background = isDesc ? 'rgba(16,185,129,.22)' : 'transparent';
+    btnDesc.style.color      = isDesc ? '#10B981' : 'rgba(255,255,255,.28)';
+  }
+  var legEsc  = document.getElementById('legend-escalating');
+  var legDesc = document.getElementById('legend-deescalating');
+  if (legEsc)  legEsc.style.display  = isDesc ? 'none' : '';
+  if (legDesc) legDesc.style.display = isDesc ? '' : 'none';
+
+  var titleEl = document.getElementById('table-title');
+  var subEl   = document.getElementById('table-sub');
+  if (titleEl) titleEl.textContent = isDesc ? 'Improving Situations' : 'Top Flashpoints';
+  if (subEl)   subEl.textContent   = isDesc
+    ? 'De-escalating situations currently visible — click any row to zoom in'
+    : 'Highest-intensity locations currently visible — click any row to zoom in';
+
+  applyFilters();
+}
+
+/* ── De-escalating detail panel ───────────────────────────────────── */
+function openDeescDetail(d) {
+  var col        = d.deescLevel >= 3 ? '#10B981' : d.deescLevel >= 2 ? '#34D399' : '#6EE7B7';
+  var levelLabel = d.deescLevel >= 3 ? 'Major Improvement' : d.deescLevel >= 2 ? 'Moderate Progress' : 'Early Progress';
+  var catC       = CAT_COLORS[d.category] || '#64748b';
+  if (window.innerWidth < 768) document.getElementById('ctrl-panel').classList.remove('ctrl-open');
+  document.getElementById('detail-content').innerHTML =
+    '<div style="height:4px;background:'+col+'"></div>'
+    + '<div style="padding:18px 18px 24px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">'
+    + '<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:'+col+'">'
+    + esc(levelLabel)+'</span>'
+    + '<button onclick="closeDetail()" style="width:28px;height:28px;border-radius:50%;border:none;'
+    + 'background:#f1f5f9;color:#64748b;cursor:pointer;font-size:18px;line-height:1;'
+    + 'display:flex;align-items:center;justify-content:center">&times;</button>'
+    + '</div>'
+    + '<div style="font-size:26px;margin-bottom:4px">'+(FLAG[d.country]||'')+'</div>'
+    + '<h3 style="font-family:Outfit,sans-serif;font-weight:900;font-size:21px;color:#0f172a;margin:0 0 3px">'
+    + esc(d.name)+'</h3>'
+    + '<p style="font-size:12px;color:#94a3b8;margin:0 0 14px;font-weight:600">'
+    + esc(CNAME[d.country]||d.country)+'</p>'
+    + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'38;border-radius:20px;'
+    + 'padding:4px 13px;font-size:11px;font-weight:700">'+esc(d.category)+'</span>'
+    + '<div style="margin-top:22px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px">'
+    + '<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em">Improvement Level</span>'
+    + '<span style="font-size:18px;font-weight:900;color:'+col+'">' + d.deescLevel
+    + '<span style="font-size:11px;font-weight:500;color:#cbd5e1">&thinsp;/&thinsp;3</span></span>'
+    + '</div>'
+    + '<div style="height:9px;background:#e2e8f0;border-radius:5px;overflow:hidden">'
+    + '<div style="width:'+(d.deescLevel/3*100).toFixed(0)+'%;height:100%;background:'+col
+    + ';border-radius:5px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="margin-top:18px;padding:14px 15px;background:#f0fdf4;border-radius:12px;border-left:3px solid '+col+'">'
+    + '<p style="font-size:13px;color:#374151;line-height:1.7;margin:0">'+esc(d.desc)+'</p>'
+    + '</div>'
+    + '<a href="/news?q='+encodeURIComponent(d.name)+'"'
+    + ' style="display:flex;align-items:center;gap:7px;margin-top:18px;text-decoration:none;'
+    + 'padding:12px 16px;border-radius:12px;background:'+col+';color:#fff;'
+    + 'font-size:13px;font-weight:700;justify-content:center">'
+    + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">'
+    + '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>'
+    + '<polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
+    + '</svg>View Related Reports</a>'
+    + '</div>';
+  document.getElementById('detail-panel').classList.add('panel-open');
+  document.getElementById('detail-panel').classList.remove('panel-hidden');
+}
+
+/* ── De-escalating table ──────────────────────────────────────────── */
+function renderDeescTable(data) {
+  var sorted = data.slice().sort(function(a,b){ return b.deescLevel - a.deescLevel; });
+  var tbody  = document.getElementById('hotspot-tbody');
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-300 text-sm">No improving situations match the current filters.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sorted.map(function(d, i) {
+    var col  = d.deescLevel >= 3 ? '#10B981' : d.deescLevel >= 2 ? '#34D399' : '#6EE7B7';
+    var catC = CAT_COLORS[d.category] || '#94a3b8';
+    var bg   = i % 2 === 0 ? '#fff' : '#fafafa';
+    var pct  = (d.deescLevel / 3 * 100).toFixed(0);
+    var lvl  = d.deescLevel >= 3 ? 'Major' : d.deescLevel >= 2 ? 'Moderate' : 'Early';
+    return '<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s"'
+      + ' onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\''+bg+'\'"'
+      + ' onclick="zoomTo('+d.lat+','+d.lng+')">'
+      + '<td class="px-4 py-3"><span style="font-family:Outfit,sans-serif;font-weight:900;font-size:14px;color:'+col+'">'+(i+1)+'</span></td>'
+      + '<td class="px-4 py-3"><span style="font-weight:600;color:#0f172a">'+esc(d.name)+'</span></td>'
+      + '<td class="px-4 py-3 hidden md:table-cell"><span style="color:#64748b;font-size:12px">'
+      + (FLAG[d.country]||'') + ' ' + esc(CNAME[d.country]||d.country) + '</span></td>'
+      + '<td class="px-4 py-3 hidden sm:table-cell">'
+      + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'35;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700">'
+      + esc(d.category)+'</span></td>'
+      + '<td class="px-4 py-3"><div style="display:flex;align-items:center;gap:8px">'
+      + '<div style="flex:1;height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden">'
+      + '<div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:3px"></div></div>'
+      + '<span style="font-size:11px;font-weight:700;color:'+col+';white-space:nowrap">'+lvl+'</span>'
+      + '</div></td></tr>';
+  }).join('');
+}
+
 /* ── Toggle published reports layer ──────────────────────────────── */
 function toggleReports() {
   showReports = !showReports;
@@ -821,13 +999,15 @@ function toggleReports() {
 }
 
 /* ── State ────────────────────────────────────────────────────────── */
-var markers      = [];
-var postMarkers  = [];  // Leaflet markers for DB posts
-var heatLayer    = null;
-var viewMode     = 'markers';
-var selCtry      = 'ALL';
-var allCatsOn    = true;
-var showReports  = true;
+var markers           = [];
+var postMarkers       = [];
+var deescMarkersLayer = [];
+var heatLayer         = null;
+var viewMode          = 'markers';
+var selCtry           = 'ALL';
+var allCatsOn         = true;
+var showReports       = true;
+var legendTab         = 'escalating';
 
 /* ── HTML escape ──────────────────────────────────────────────────── */
 function esc(s) {
@@ -872,13 +1052,14 @@ function applyFilters() {
   var minInt = parseInt(document.getElementById('int-slider').value, 10);
   var cats   = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
 
-  // Remove existing conflict markers & heat
+  // Remove all map layers
   markers.forEach(function(m){ map.removeLayer(m); });
   markers = [];
   if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
-  // Remove existing post markers
   postMarkers.forEach(function(m){ map.removeLayer(m); });
   postMarkers = [];
+  deescMarkersLayer.forEach(function(m){ map.removeLayer(m); });
+  deescMarkersLayer = [];
 
   var catCounts = {};
   var visible   = [];
@@ -900,6 +1081,33 @@ function applyFilters() {
     var n = catCounts[el.dataset.cat] || 0;
     el.textContent = n > 0 ? n : '';
   });
+
+  // De-escalating tab: render improving-situation markers, skip conflict layer
+  if (legendTab === 'deescalating') {
+    var visibleDesc = [];
+    deescData.forEach(function(d) {
+      if (selCtry !== 'ALL' && d.country !== selCtry) return;
+      if (cats.indexOf(d.category) === -1) return;
+      if (q) {
+        var hs = d.name.toLowerCase() + ' ' + (CNAME[d.country]||'').toLowerCase()
+               + ' ' + d.category.toLowerCase() + ' ' + d.desc.toLowerCase();
+        if (hs.indexOf(q) === -1) return;
+      }
+      visibleDesc.push(d);
+      var m = L.marker([d.lat, d.lng], { icon: makeDeescIcon(d) })
+        .bindTooltip(esc(d.name) + ' · Improving', { direction: 'right', opacity: 1 });
+      m.on('click', (function(dd){ return function(){ openDeescDetail(dd); }; })(d));
+      m.addTo(map);
+      deescMarkersLayer.push(m);
+    });
+    document.getElementById('active-count').textContent =
+      visibleDesc.length + ' improving situation' + (visibleDesc.length !== 1 ? 's' : '') + ' visible';
+    var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+    var kpiEl  = document.getElementById('kpi-hotspots');
+    if (kpiEl) kpiEl.textContent = allHot;
+    renderDeescTable(visibleDesc);
+    return;
+  }
 
   // Render conflict markers or heatmap
   if (viewMode === 'markers') {
@@ -1023,8 +1231,13 @@ function setMode(mode) {
 /* ── Zoom to location (from table) ───────────────────────────────── */
 function zoomTo(lat, lng) {
   map.setView([lat, lng], 8, { animate:true, duration:0.7 });
-  var d = mapData.find(function(p){ return p.lat === lat && p.lng === lng; });
-  if (d) openDetail(d);
+  if (legendTab === 'deescalating') {
+    var d = deescData.find(function(p){ return p.lat === lat && p.lng === lng; });
+    if (d) openDeescDetail(d);
+  } else {
+    var d = mapData.find(function(p){ return p.lat === lat && p.lng === lng; });
+    if (d) openDetail(d);
+  }
 }
 
 /* ── Reset view ───────────────────────────────────────────────────── */
