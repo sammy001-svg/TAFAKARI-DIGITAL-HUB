@@ -22,10 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_setting('site_og_image_url', trim($_POST['site_og_image_url'] ?? ''), $uid);
         $saved = 'branding';
     } elseif ($action === 'banner') {
-        set_setting('announcement_active', isset($_POST['announcement_active']) ? '1' : '0', $uid);
-        set_setting('announcement_text',   substr(trim($_POST['announcement_text']   ?? ''), 0, 200), $uid);
-        set_setting('announcement_url',    trim($_POST['announcement_url']   ?? ''), $uid);
-        set_setting('announcement_color',  trim($_POST['announcement_color'] ?? 'crimson'), $uid);
+        set_setting('announcement_active',    isset($_POST['announcement_active']) ? '1' : '0', $uid);
+        set_setting('announcement_text',      substr(trim($_POST['announcement_text']      ?? ''), 0, 200), $uid);
+        set_setting('announcement_url',       trim($_POST['announcement_url']      ?? ''), $uid);
+        set_setting('announcement_color',     trim($_POST['announcement_color']    ?? 'crimson'), $uid);
+        set_setting('announcement_image_url', trim($_POST['announcement_image_url'] ?? ''), $uid);
         $saved = 'banner';
     } elseif ($action === 'featured') {
         set_setting('featured_article_id', trim($_POST['featured_article_id'] ?? ''), $uid);
@@ -61,10 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ── Load current settings ──────────────────────────────────────────────────
 $siteLogoUrl        = get_setting('site_logo_url',     '/public/crtp-logo.jpg');
 $siteOgImageUrl      = get_setting('site_og_image_url', '/public/crtp-og-image.png');
-$announcementActive = get_setting('announcement_active', '0');
-$announcementText   = get_setting('announcement_text',   '');
-$announcementUrl    = get_setting('announcement_url',    '');
-$announcementColor  = get_setting('announcement_color',  'crimson');
+$announcementActive   = get_setting('announcement_active',    '0');
+$announcementText     = get_setting('announcement_text',      '');
+$announcementUrl      = get_setting('announcement_url',       '');
+$announcementColor    = get_setting('announcement_color',     'crimson');
+$announcementImageUrl = get_setting('announcement_image_url', '');
 $featuredId         = get_setting('featured_article_id', '');
 $carouselJson       = get_setting('carousel_slides',     '[]');
 $showPodcasts       = get_setting('show_podcasts',  '1');
@@ -182,6 +184,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2"
                  style="--tw-ring-color:#750B2540">
         </div>
+        <?php uw_img('banner-img', 'announcement_image_url', 'Banner Image', 'Small icon, flag, or illustration shown to the left of the banner text. PNG with transparency works best. Leave blank for text-only.', $announcementImageUrl); ?>
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-semibold text-slate-700 mb-1.5">Link URL <span class="text-slate-400 font-normal">(optional)</span></label>

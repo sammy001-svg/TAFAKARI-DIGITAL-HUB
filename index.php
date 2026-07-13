@@ -8,10 +8,11 @@ $pageTitle = 'Tafakari Digital Hub | Knowledge, Media & Community Platform for E
 $pageDesc  = 'A centralized knowledge repository, media broadcasting center, and community engagement hub serving Kenya, Ethiopia, and the Democratic Republic of Congo.';
 
 // ── Site settings ──────────────────────────────────────────────────────────
-$announcementActive = get_setting('announcement_active', '0');
-$announcementText   = get_setting('announcement_text',   '');
-$announcementUrl    = get_setting('announcement_url',    '');
-$announcementColor  = get_setting('announcement_color',  'crimson');
+$announcementActive   = get_setting('announcement_active',    '0');
+$announcementText     = get_setting('announcement_text',      '');
+$announcementUrl      = get_setting('announcement_url',       '');
+$announcementColor    = get_setting('announcement_color',     'crimson');
+$announcementImageUrl = get_setting('announcement_image_url', '');
 $featuredId         = get_setting('featured_article_id', '');
 $carouselJson       = get_setting('carousel_slides',     '[]');
 $showPodcasts       = get_setting('show_podcasts',  '1') !== '0';
@@ -203,13 +204,18 @@ try {
 <body class="antialiased min-h-screen flex flex-col bg-white font-inter">
 
 <?php if ($announcementActive === '1' && $announcementText !== ''): ?>
-<div id="site-banner" style="background:<?= h($bannerBg) ?>;color:#fff;font-size:13px;font-weight:600;text-align:center;padding:9px 48px;position:relative;line-height:1.4">
-  <?php if ($announcementUrl): ?>
-    <a href="<?= h($announcementUrl) ?>" style="color:inherit;text-decoration:underline;text-underline-offset:2px"><?= h($announcementText) ?></a>
-  <?php else: ?>
-    <?= h($announcementText) ?>
+<div id="site-banner" style="background:<?= h($bannerBg) ?>;color:#fff;font-size:13px;font-weight:600;padding:9px 48px;position:relative;line-height:1.4;display:flex;align-items:center;justify-content:center;gap:8px">
+  <?php if (!empty($announcementImageUrl)): ?>
+    <img src="<?= h($announcementImageUrl) ?>" alt="" style="height:22px;width:auto;border-radius:3px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
   <?php endif; ?>
-  <button onclick="this.parentElement.remove()" title="Dismiss"
+  <span>
+    <?php if ($announcementUrl): ?>
+      <a href="<?= h($announcementUrl) ?>" style="color:inherit;text-decoration:underline;text-underline-offset:2px"><?= h($announcementText) ?></a>
+    <?php else: ?>
+      <?= h($announcementText) ?>
+    <?php endif; ?>
+  </span>
+  <button onclick="this.closest('#site-banner').remove()" title="Dismiss"
           style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
 </div>
 <?php endif; ?>

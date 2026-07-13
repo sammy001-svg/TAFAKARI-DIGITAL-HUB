@@ -8,7 +8,7 @@ require_once dirname(__DIR__) . '/includes/functions.php';
 api_require_super_admin();
 
 $allowed = [
-    'announcement_active', 'announcement_text', 'announcement_url', 'announcement_color',
+    'announcement_active', 'announcement_text', 'announcement_url', 'announcement_color', 'announcement_image_url',
     'carousel_slides', 'featured_article_id',
     'show_podcasts', 'show_videos', 'show_documents',
 ];

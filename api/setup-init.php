@@ -61,6 +61,33 @@ $sqls = [
       `updatedBy` VARCHAR(191) NULL,
       PRIMARY KEY (`key`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+    'Partner' => "CREATE TABLE IF NOT EXISTS `Partner` (
+      `id` VARCHAR(191) NOT NULL,
+      `name` VARCHAR(200) NOT NULL,
+      `subtitle` VARCHAR(200) NULL,
+      `description` TEXT NULL,
+      `logoUrl` VARCHAR(500) NULL,
+      `websiteUrl` VARCHAR(500) NULL,
+      `sortOrder` INT NOT NULL DEFAULT 0,
+      `isActive` TINYINT(1) NOT NULL DEFAULT 1,
+      `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+    'TeamMember' => "CREATE TABLE IF NOT EXISTS `TeamMember` (
+      `id` VARCHAR(191) NOT NULL,
+      `name` VARCHAR(200) NOT NULL,
+      `role` VARCHAR(200) NULL,
+      `bio` TEXT NULL,
+      `photoUrl` VARCHAR(500) NULL,
+      `sortOrder` INT NOT NULL DEFAULT 0,
+      `isActive` TINYINT(1) NOT NULL DEFAULT 1,
+      `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 ];
 
 $created = [];
