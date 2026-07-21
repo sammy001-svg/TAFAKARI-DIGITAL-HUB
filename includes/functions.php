@@ -260,13 +260,35 @@ function african_countries(): array {
 }
 
 function issue_categories(): array {
-    return [
+    static $cached = null;
+    if ($cached !== null) return $cached;
+
+    $list = [
         'Health','Education','Security & Conflict','Climate & Environment',
         'Economic Development','Policy & Governance','Human Rights',
         'Migration & Refugees','Agriculture & Food Security',
         'Infrastructure & Energy','Technology & Innovation',
         'Gender & Social Affairs',
     ];
+
+    // Append any custom categories added via Admin › Heatmap Config
+    try {
+        $raw = get_setting('heatmap_categories', '');
+        if ($raw !== '') {
+            $dbCats = json_decode($raw, true);
+            if (is_array($dbCats)) {
+                foreach ($dbCats as $cat) {
+                    $name = trim($cat['name'] ?? '');
+                    if ($name !== '' && !in_array($name, $list, true)) {
+                        $list[] = $name;
+                    }
+                }
+            }
+        }
+    } catch (Throwable $e) {}
+
+    $cached = $list;
+    return $cached;
 }
 
 // ── Status / type badge HTML ─────────────────────────────────────
