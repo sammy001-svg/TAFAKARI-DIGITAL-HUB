@@ -84,6 +84,20 @@
              onmouseover="this.style.background='#E7952A'" onmouseout="this.style.background=''">
             <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
           </a>
+          <a href="https://www.youtube.com/@CRTPHUC"
+             target="_blank" rel="noopener noreferrer"
+             aria-label="YouTube"
+             class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-white transition-colors duration-200"
+             onmouseover="this.style.background='#E7952A'" onmouseout="this.style.background=''">
+            <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon fill="#2A0515" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+          </a>
+          <a href="https://substack.com/"
+             target="_blank" rel="noopener noreferrer"
+             aria-label="Substack"
+             class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-white transition-colors duration-200"
+             onmouseover="this.style.background='#E7952A'" onmouseout="this.style.background=''">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>
+          </a>
         </div>
       </div>
     </div>
