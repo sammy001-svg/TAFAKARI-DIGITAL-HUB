@@ -141,8 +141,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   .kpi-icon { transition: transform .2s; }
-  .kpi-card:hover .kpi-icon { transform: scale(1.08); }
-  .activity-row:hover { background: rgba(117,11,37,.025); }
+  .kpi-card:hover .kpi-icon { transform: scale(1.1) rotate(-3deg); }
+  .kpi-card { cursor: pointer; }
 </style>
 
 <body class="antialiased font-inter" style="background:#F4F6F8">
@@ -155,36 +155,57 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
 
   <!-- Welcome Banner -->
-  <div class="rounded-2xl p-6 md:p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-       style="background:#750B25">
-    <div>
-      <p class="text-[11px] font-black uppercase tracking-[.15em] mb-1" style="color:#E7952A"><?= $greeting ?></p>
-      <h2 class="font-outfit font-black text-2xl text-white leading-tight">
-        <?= h($user['name'] ?? $user['username']) ?>
-      </h2>
-      <p class="text-white/50 text-sm mt-1">
-        <?php if ($isSuper): ?>
-          You have full administrative authority over this platform.
-        <?php else: ?>
-          You have <?= $totalPosts ?> content item<?= $totalPosts !== 1 ? 's' : '' ?> in your workspace.
+  <?php $_initials = strtoupper(substr($user['name'] ?? $user['username'] ?? 'U', 0, 1)); ?>
+  <div class="rounded-2xl bg-white border border-slate-100 shadow-sm overflow-hidden mb-8">
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-5 p-6 md:p-8"
+         style="border-left:4px solid #750B25">
+      <!-- Avatar -->
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-outfit font-black text-2xl text-white shrink-0"
+           style="background:#750B25"><?= h($_initials) ?></div>
+      <!-- Text -->
+      <div class="flex-1 min-w-0">
+        <p class="text-[10px] font-black uppercase tracking-[.14em] mb-0.5" style="color:#E7952A"><?= $greeting ?></p>
+        <h2 class="font-outfit font-black text-xl text-slate-900 leading-tight">
+          <?= h($user['name'] ?? $user['username']) ?>
+        </h2>
+        <p class="text-slate-400 text-sm mt-0.5">
+          <?php if ($isSuper): ?>
+            Super Administrator &bull; <?= format_number($totalPosts) ?> total posts &bull; <?= format_number($publishedPosts) ?> published
+          <?php else: ?>
+            <?= $totalPosts ?> post<?= $totalPosts !== 1 ? 's' : '' ?> in workspace &mdash; <?= $publishedPosts ?> published<?= $pendingPosts > 0 ? ', ' . $pendingPosts . ' pending' : '' ?>
+          <?php endif; ?>
+        </p>
+      </div>
+      <!-- Actions -->
+      <div class="flex items-center gap-3 shrink-0 flex-wrap">
+        <?php if ($isSuper && $pendingPosts > 0): ?>
+          <a href="/admin/super/approvals"
+             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-bold border transition-colors hover:bg-amber-50"
+             style="color:#92400E;border-color:#FDE68A;background:rgba(254,243,199,.6)">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+            <?= $pendingPosts ?> Pending Review
+          </a>
         <?php endif; ?>
-      </p>
-    </div>
-    <div class="flex items-center gap-3">
-      <?php if ($isSuper && $pendingPosts > 0): ?>
-        <a href="/admin/super/approvals"
-           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-bold text-white border border-white/20 hover:bg-white/10 transition-colors">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-          <?= $pendingPosts ?> Pending
+        <a href="/admin/content/new"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-bold text-white transition-all hover:opacity-90 active:scale-95"
+           style="background:#750B25">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+          New Content
         </a>
-      <?php endif; ?>
-      <a href="/admin/content/new"
-         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-bold text-[#0D0102]"
-         style="background:#E7952A">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
-        Create Content
-      </a>
+      </div>
     </div>
+    <?php if ($totalPosts > 0): ?>
+    <div class="px-8 pb-5 pt-1">
+      <?php $pubPct = $totalPosts > 0 ? (int)round(($publishedPosts / $totalPosts) * 100) : 0; ?>
+      <div class="flex items-center justify-between mb-1.5">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Publication Progress</p>
+        <p class="text-[10px] font-bold text-slate-500"><?= $publishedPosts ?> / <?= $totalPosts ?> published &mdash; <?= $pubPct ?>%</p>
+      </div>
+      <div class="h-1 bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-700" style="width:<?= $pubPct ?>%;background:#750B25"></div>
+      </div>
+    </div>
+    <?php endif; ?>
   </div>
 
   <!-- KPI Cards -->
@@ -238,23 +259,24 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
     ];
     foreach ($kpis as $k): ?>
       <a href="<?= h($k['href']) ?>"
-         class="kpi-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+         class="kpi-card relative bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 overflow-hidden">
+        <div class="absolute inset-x-0 top-0 h-[3px] rounded-t-2xl" style="background:<?= $k['ic_col'] ?>"></div>
         <div class="flex items-start justify-between">
-          <div class="kpi-icon w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          <div class="kpi-icon w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
                style="background:<?= $k['ic_bg'] ?>">
-            <svg width="18" height="18" fill="none" stroke="<?= $k['ic_col'] ?>" stroke-width="1.8"
+            <svg width="20" height="20" fill="none" stroke="<?= $k['ic_col'] ?>" stroke-width="1.8"
                  stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
               <path d="<?= $k['icon'] ?>"/>
             </svg>
           </div>
-          <span class="text-[9px] font-black uppercase tracking-wide px-2 py-1 rounded-full <?= $k['trendcls'] ?>">
+          <span class="text-[9px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full <?= $k['trendcls'] ?>">
             <?= h($k['trend']) ?>
           </span>
         </div>
         <div>
-          <div class="font-outfit font-black text-3xl text-slate-900 leading-none mb-1"><?= h((string)$k['value']) ?></div>
-          <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-widest"><?= h($k['label']) ?></p>
-          <p class="text-[10px] text-slate-400 mt-0.5"><?= h($k['meta']) ?></p>
+          <div class="font-outfit font-black text-4xl text-slate-900 leading-none"><?= h((string)$k['value']) ?></div>
+          <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-2"><?= h($k['label']) ?></p>
+          <p class="text-[11px] text-slate-400 mt-0.5"><?= h($k['meta']) ?></p>
         </div>
       </a>
     <?php endforeach; ?>
@@ -308,37 +330,39 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         <div class="divide-y divide-slate-50">
           <?php
           $typeIcons = [
-            'ARTICLE'       => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-            'GALLERY_IMAGE' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
-            'PODCAST'       => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z',
-            'VIDEO'         => 'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z',
-            'DOCUMENT'      => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+            'ARTICLE'       => ['path'=>'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h2', 'ic'=>'#750B25', 'ib'=>'rgba(117,11,37,.07)'],
+            'GALLERY_IMAGE' => ['path'=>'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', 'ic'=>'#10B981', 'ib'=>'rgba(16,185,129,.07)'],
+            'PODCAST'       => ['path'=>'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', 'ic'=>'#E7952A', 'ib'=>'rgba(231,149,42,.07)'],
+            'VIDEO'         => ['path'=>'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z', 'ic'=>'#ED1C24', 'ib'=>'rgba(237,28,36,.07)'],
+            'DOCUMENT'      => ['path'=>'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', 'ic'=>'#6366F1', 'ib'=>'rgba(99,102,241,.07)'],
           ];
           foreach ($recentPosts as $p):
-            $author = $p['authorName'] ?? $p['authorUsername'] ?? '—';
-            $svg    = $typeIcons[$p['type']] ?? $typeIcons['ARTICLE'];
+            $author  = $p['authorName'] ?? $p['authorUsername'] ?? '—';
+            $typeInfo = $typeIcons[$p['type']] ?? $typeIcons['ARTICLE'];
+            // Show first category only
+            $catDisplay = explode(',', $p['issueCategory'] ?? '')[0];
           ?>
-            <div class="activity-row flex items-center gap-4 px-6 py-4 transition-colors">
+            <a href="/admin/content/edit?id=<?= h($p['id']) ?>"
+               class="activity-row flex items-center gap-4 px-6 py-4 transition-colors hover:bg-slate-50/70">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                   style="background:rgba(117,11,37,.06)">
-                <svg width="16" height="16" fill="none" stroke="#750B25" stroke-width="1.8"
+                   style="background:<?= $typeInfo['ib'] ?>">
+                <svg width="15" height="15" fill="none" stroke="<?= $typeInfo['ic'] ?>" stroke-width="1.8"
                      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                  <path d="<?= $svg ?>"/>
+                  <path d="<?= $typeInfo['path'] ?>"/>
                 </svg>
               </div>
               <div class="flex-grow min-w-0">
-                <a href="/admin/content/<?= h($p['id']) ?>/edit"
-                   class="text-[13px] font-semibold text-slate-800 truncate block hover:text-primary transition-colors">
+                <p class="text-[13px] font-semibold text-slate-800 truncate hover:text-primary transition-colors">
                   <?= h($p['title']) ?>
-                </a>
+                </p>
                 <p class="text-[10px] text-slate-400 mt-0.5 truncate">
-                  <?= h($p['country']) ?> &bull; <?= h($p['issueCategory']) ?>
+                  <?= h($p['country']) ?><?= $catDisplay ? ' &bull; ' . h($catDisplay) : '' ?>
                   <?php if ($isSuper): ?> &bull; <?= h($author) ?><?php endif; ?>
-                  &bull; <?= format_relative_time($p['updatedAt']) ?>
+                  <span class="text-slate-300">&bull;</span> <?= format_relative_time($p['updatedAt']) ?>
                 </p>
               </div>
               <?= status_badge($p['status']) ?>
-            </div>
+            </a>
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
@@ -350,76 +374,83 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
       <!-- Quick Actions -->
       <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
         <h3 class="font-outfit font-bold text-[15px] text-slate-900 mb-4">Quick Actions</h3>
-        <div class="space-y-2">
-          <?php
-          $actions = [
-            ['href'=>'/admin/content/articles?new=1', 'label'=>'Add News',  'sub'=>'Write a new article', 'svg'=>'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h2'],
-            ['href'=>'/admin/content/new', 'label'=>'Create New Content',  'sub'=>'Start drafting',     'svg'=>'M12 4v16m8-8H4'],
-            ['href'=>'/admin/content',     'label'=>'Manage Content',      'sub'=>'View all posts',     'svg'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-            ['href'=>'/admin/profile',     'label'=>'Edit Profile',        'sub'=>'Update your info',   'svg'=>'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
-          ];
-          if ($isSuper) {
-              $actions[] = ['href'=>'/admin/super/users',     'label'=>'Manage Users',    'sub'=>'Add or edit accounts','svg'=>'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'];
-              $actions[] = ['href'=>'/admin/super/approvals', 'label'=>'Approval Queue',  'sub'=>$pendingPosts . ' pending',   'svg'=>'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'];
-          }
-          foreach ($actions as $a): ?>
+        <?php
+        $actions = [
+          ['href'=>'/admin/content/new?type=ARTICLE', 'label'=>'Write Article', 'sub'=>'New article draft', 'svg'=>'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h2', 'ic'=>'#750B25', 'ib'=>'rgba(117,11,37,.08)'],
+          ['href'=>'/admin/content/new',               'label'=>'New Content',   'sub'=>'Any content type',  'svg'=>'M12 4v16m8-8H4', 'ic'=>'#ED1C24', 'ib'=>'rgba(237,28,36,.08)'],
+          ['href'=>'/admin/content',                   'label'=>'All Content',   'sub'=>'Browse & manage',   'svg'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'ic'=>'#6366F1', 'ib'=>'rgba(99,102,241,.08)'],
+          ['href'=>'/admin/profile',                   'label'=>'My Profile',    'sub'=>'Update info',       'svg'=>'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'ic'=>'#64748b', 'ib'=>'rgba(100,116,139,.08)'],
+        ];
+        if ($isSuper) {
+            $actions[] = ['href'=>'/admin/super/users',     'label'=>'Users',         'sub'=>'Manage accounts',  'svg'=>'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', 'ic'=>'#E7952A', 'ib'=>'rgba(231,149,42,.08)'];
+            $actions[] = ['href'=>'/admin/super/approvals', 'label'=>'Approvals',     'sub'=>$pendingPosts . ' waiting',  'svg'=>'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', 'ic'=>($pendingPosts > 0 ? '#EF4444' : '#10B981'), 'ib'=>($pendingPosts > 0 ? 'rgba(239,68,68,.08)' : 'rgba(16,185,129,.08)')];
+        }
+        ?>
+        <div class="grid grid-cols-2 gap-2">
+          <?php foreach ($actions as $a): ?>
             <a href="<?= h($a['href']) ?>"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:rgba(117,11,37,.06)">
-                <svg width="14" height="14" fill="none" stroke="#750B25" stroke-width="2"
+               class="group flex flex-col gap-3 p-3.5 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                   style="background:<?= $a['ib'] ?>">
+                <svg width="16" height="16" fill="none" stroke="<?= $a['ic'] ?>" stroke-width="2"
                      stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                   <path d="<?= $a['svg'] ?>"/>
                 </svg>
               </div>
-              <div class="flex-grow min-w-0">
-                <p class="text-[12px] font-semibold text-slate-800 group-hover:text-primary transition-colors"><?= h($a['label']) ?></p>
-                <p class="text-[10px] text-slate-400"><?= h($a['sub']) ?></p>
+              <div>
+                <p class="text-[12px] font-bold text-slate-800 group-hover:text-primary transition-colors leading-tight"><?= h($a['label']) ?></p>
+                <p class="text-[10px] text-slate-400 mt-0.5"><?= h($a['sub']) ?></p>
               </div>
-              <svg width="12" height="12" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
             </a>
           <?php endforeach; ?>
         </div>
       </div>
 
       <!-- System Status -->
-      <div class="rounded-2xl p-5 border" style="background:#0D0102;border-color:rgba(255,255,255,.06)">
-        <h3 class="font-outfit font-bold text-[14px] text-white mb-4">System Status</h3>
+      <div class="rounded-2xl p-5 border" style="background:#0D0102;border-color:rgba(255,255,255,.07)">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-outfit font-bold text-[14px] text-white">System Status</h3>
+          <span class="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full <?= $dbOk ? 'text-emerald-400 bg-emerald-400/10' : 'text-rose-400 bg-rose-400/10' ?>">
+            <span class="w-1.5 h-1.5 rounded-full <?= $dbOk ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400' ?>"></span>
+            <?= $dbOk ? 'All OK' : 'Error' ?>
+          </span>
+        </div>
         <div class="space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] text-white/50">Database</span>
-            <?php if ($dbOk): ?>
-              <span class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Operational
-              </span>
-            <?php else: ?>
-              <span class="flex items-center gap-1.5 text-[11px] font-semibold text-rose-400">
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>Error
-              </span>
-            <?php endif; ?>
+            <span class="text-[11px] text-white/40">Database</span>
+            <span class="text-[11px] font-semibold <?= $dbOk ? 'text-emerald-400' : 'text-rose-400' ?>"><?= $dbOk ? 'Connected' : 'Disconnected' ?></span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-[11px] text-white/50">Session</span>
-            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Active
-            </span>
+            <span class="text-[11px] text-white/40">Session</span>
+            <span class="text-[11px] font-semibold text-emerald-400">Active</span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-[11px] text-white/50">PHP</span>
-            <span class="text-[11px] font-semibold text-white/40"><?= phpversion() ?></span>
+            <span class="text-[11px] text-white/40">PHP</span>
+            <span class="text-[11px] font-mono text-white/35"><?= phpversion() ?></span>
           </div>
           <div class="flex items-center justify-between">
-            <span class="text-[11px] text-white/50">Server Time</span>
-            <span class="text-[11px] font-semibold text-white/40"><?= date('H:i') ?></span>
+            <span class="text-[11px] text-white/40">Local Time</span>
+            <span class="text-[11px] font-mono text-white/35"><?= date('H:i T') ?></span>
+          </div>
+          <div class="pt-2 border-t" style="border-color:rgba(255,255,255,.05)">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] text-white/40 uppercase tracking-widest">Published</span>
+              <span class="text-[10px] font-bold text-white/50"><?= $publishedPosts ?>/<?= $totalPosts ?></span>
+            </div>
+            <div class="h-1 rounded-full overflow-hidden" style="background:rgba(255,255,255,.06)">
+              <?php $_sp = $totalPosts > 0 ? (int)round(($publishedPosts/$totalPosts)*100) : 0; ?>
+              <div class="h-full rounded-full" style="width:<?= $_sp ?>%;background:#750B25"></div>
+            </div>
           </div>
         </div>
         <?php if ($isSuper && $pendingPosts > 0): ?>
-          <div class="mt-4 pt-4 border-t" style="border-color:rgba(255,255,255,.06)">
+          <div class="mt-4 pt-3 border-t" style="border-color:rgba(255,255,255,.06)">
             <a href="/admin/super/approvals"
                class="flex items-center gap-2 text-[11px] font-bold hover:opacity-80 transition-opacity"
                style="color:#E7952A">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span class="w-4 h-4 flex items-center justify-center rounded-full shrink-0" style="background:rgba(231,149,42,.2)">
+                <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01"/></svg>
+              </span>
               <?= $pendingPosts ?> post<?= $pendingPosts !== 1 ? 's' : '' ?> awaiting approval
             </a>
           </div>

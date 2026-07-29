@@ -18,7 +18,7 @@ if (is_super_admin()) {
     catch (Exception $e) {}
 }
 ?>
-<header class="flex items-center gap-4 px-6 h-[60px] bg-white border-b shrink-0"
+<header class="flex items-center gap-3 px-5 h-[64px] bg-white border-b shrink-0"
         style="border-color:rgba(0,0,0,.07)">
 
   <!-- Mobile: sidebar toggle -->
@@ -39,7 +39,24 @@ if (is_super_admin()) {
     <?php endif; ?>
   </div>
 
+  <!-- Centre: search -->
+  <div class="hidden md:flex flex-1 max-w-xs mx-4">
+    <div class="relative w-full">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search content…"
+             class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:border-transparent"
+             style="--tw-ring-color:rgba(117,11,37,.25)"
+             onfocus="this.style.borderColor='#750B25'" onblur="this.style.borderColor=''">
+    </div>
+  </div>
+
   <div class="flex-grow"></div>
+
+  <!-- Date chip -->
+  <div class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold text-slate-500 bg-slate-50 border border-slate-100 shrink-0">
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    <?= date('D, M j') ?>
+  </div>
 
   <!-- Right actions -->
   <div class="flex items-center gap-1.5">

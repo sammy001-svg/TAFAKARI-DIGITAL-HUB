@@ -48,20 +48,21 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
                     && !in_array($currentPath, $_contentModulePaths ?? []));
     ?>
     <a href="<?= h($item['href']) ?>"
+       data-label="<?= h($item['label']) ?>"
        class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all"
        style="<?= $isActive
            ? 'background:rgba(117,11,37,.85);color:#fff'
            : 'color:rgba(255,255,255,.45)' ?>">
-      <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+      <span class="sb-icon-wrap w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
             style="<?= $isActive ? 'background:rgba(255,255,255,.15)' : 'background:rgba(255,255,255,.05)' ?>">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="<?= h($item['svg']) ?>"/>
         </svg>
       </span>
-      <span class="grow leading-none"><?= h($item['label']) ?></span>
+      <span class="grow leading-none sb-label"><?= h($item['label']) ?></span>
       <?php if ($badge > 0): ?>
-        <span class="text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+        <span class="sb-badge text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center shrink-0"
               style="background:#E7952A;color:#0D0203"><?= min($badge, 9) ?><?= $badge > 9 ? '+' : '' ?></span>
       <?php endif; ?>
     </a>
@@ -70,18 +71,72 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
 ?>
 
 <style>
-  .sidebar-link:not([style*="background:rgba(154"]):hover {
+  #admin-sidebar {
+    z-index: 40;
+    transition: width .25s cubic-bezier(.4,0,.2,1);
+  }
+  .sidebar-link { position: relative; }
+  .sidebar-link:hover {
     background: rgba(255,255,255,.07) !important;
     color: rgba(255,255,255,.85) !important;
   }
-  #admin-sidebar { z-index: 40; }
+
+  /* Collapsed state */
+  #admin-sidebar.is-collapsed { width: 64px !important; }
+  #admin-sidebar.is-collapsed .sb-label,
+  #admin-sidebar.is-collapsed .sb-section-head,
+  #admin-sidebar.is-collapsed .sb-badge,
+  #admin-sidebar.is-collapsed .sb-user-meta,
+  #admin-sidebar.is-collapsed .sb-admin-badge,
+  #admin-sidebar.is-collapsed .sb-logo-full { display: none !important; }
+  #admin-sidebar.is-collapsed .sb-logo-collapsed { display: flex !important; }
+  #admin-sidebar.is-collapsed .sidebar-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  #admin-sidebar.is-collapsed .sb-icon-wrap { margin: 0 !important; }
+  #admin-sidebar.is-collapsed .sb-user-foot {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  #admin-sidebar.is-collapsed .sb-user-avatar { margin: 0; }
+  #admin-sidebar.is-collapsed .sb-logout { display: none !important; }
+  #admin-sidebar.is-collapsed #sb-collapse-btn { margin-left: 0; }
+  #admin-sidebar.is-collapsed #sb-toggle-icon { transform: rotate(180deg); }
+
+  /* Tooltip for collapsed items */
+  #admin-sidebar.is-collapsed .sidebar-link::after {
+    content: attr(data-label);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1e293b;
+    color: rgba(255,255,255,.9);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 11px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 200;
+    transition: opacity .15s ease;
+    border: 1px solid rgba(255,255,255,.06);
+  }
+  #admin-sidebar.is-collapsed .sidebar-link:hover::after { opacity: 1; }
+
   @media (max-width: 768px) {
     #admin-sidebar {
       position: fixed; top: 0; left: 0; height: 100vh;
       transform: translateX(-100%);
       transition: transform .25s ease;
+      width: 240px !important;
     }
     #admin-sidebar.open { transform: translateX(0); }
+    #sb-collapse-btn { display: none !important; }
   }
 </style>
 
@@ -90,23 +145,41 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
        style="background:#0D0102;border-right:1px solid rgba(255,255,255,.055)">
 
   <!-- Branding -->
-  <div class="flex items-center justify-between px-4 h-[64px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
-    <a href="/" aria-label="CRTP — Home" class="flex items-center">
-      <div class="bg-white rounded-lg px-2 py-1.5 shadow-sm">
+  <div class="flex items-center gap-2 px-3 h-[64px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
+    <!-- Logo — full -->
+    <a href="/" aria-label="CRTP — Home" class="sb-logo-full flex items-center gap-2 min-w-0">
+      <div class="bg-white rounded-lg px-2 py-1.5 shadow-sm shrink-0">
         <img src="/public/crtp-logo.jpg"
              alt="CRTP"
              class="h-7 w-auto object-contain block"
              onerror="this.parentElement.innerHTML='<span class=\'font-outfit font-black text-sm text-[#750B25] px-0.5\'>CRTP</span>'">
       </div>
+      <span class="sb-admin-badge text-[9px] font-black uppercase tracking-[.14em] leading-tight" style="color:rgba(231,149,42,.6)">Admin<br>Portal</span>
     </a>
-    <span class="text-[9px] font-black uppercase tracking-[.16em] ml-2 shrink-0" style="color:rgba(231,149,42,.55)">Admin Portal</span>
+    <!-- Logo — collapsed (icon only) -->
+    <a href="/" aria-label="CRTP — Home"
+       class="sb-logo-collapsed hidden items-center justify-center w-9 h-9 bg-white rounded-lg shadow-sm shrink-0">
+      <span class="font-outfit font-black text-sm" style="color:#750B25">C</span>
+    </a>
+    <!-- Collapse toggle (desktop only) -->
+    <button id="sb-collapse-btn" onclick="sbToggle()"
+            class="hidden md:flex items-center justify-center w-7 h-7 rounded-lg ml-auto shrink-0 transition-all"
+            style="color:rgba(255,255,255,.25);background:transparent"
+            onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.7)'"
+            onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,.25)'"
+            title="Collapse sidebar">
+      <svg id="sb-toggle-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" viewBox="0 0 24 24" style="transition:transform .25s ease">
+        <path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+      </svg>
+    </button>
   </div>
 
   <!-- Navigation -->
   <nav class="grow px-2 pt-6 pb-4 overflow-y-auto space-y-5">
 
     <div>
-      <p class="px-3 mb-2 text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(255,255,255,.22)">
+      <p class="sb-section-head px-3 mb-2 text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(255,255,255,.22)">
         Workspace
       </p>
       <div class="space-y-0.5">
@@ -115,7 +188,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
     </div>
 
     <div>
-      <p class="px-3 mb-2 text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(255,255,255,.22)">
+      <p class="sb-section-head px-3 mb-2 text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(255,255,255,.22)">
         Content Modules
       </p>
       <div class="space-y-0.5">
@@ -125,7 +198,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
 
     <?php if ($_role === 'SUPER_ADMIN'): ?>
     <div>
-      <div class="flex items-center gap-2 px-3 mb-2">
+      <div class="sb-section-head flex items-center gap-2 px-3 mb-2">
         <p class="text-[9px] font-black uppercase tracking-[.15em]" style="color:rgba(239,68,68,.5)">Super Authority</p>
         <span class="h-px grow" style="background:rgba(239,68,68,.12)"></span>
       </div>
@@ -142,17 +215,17 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
 
   <!-- User Footer -->
   <div class="px-2 pb-3 border-t shrink-0" style="border-color:rgba(255,255,255,.055)">
-    <div class="flex items-center gap-2.5 px-3 py-3 mt-3 rounded-xl" style="background:rgba(255,255,255,.04)">
-      <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shrink-0"
+    <div class="sb-user-foot flex items-center gap-2.5 px-3 py-3 mt-3 rounded-xl transition-all" style="background:rgba(255,255,255,.04)">
+      <div class="sb-user-avatar w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white shrink-0"
            style="background:#750B25"><?= h($_initial) ?></div>
-      <div class="grow min-w-0">
+      <div class="sb-user-meta grow min-w-0">
         <p class="text-[12px] font-bold text-white truncate leading-none"><?= h($_name) ?></p>
         <p class="text-[9px] mt-0.5 truncate" style="color:rgba(255,255,255,.3)">
           <?= $_role === 'SUPER_ADMIN' ? 'Super Admin' : 'Editor' ?>
         </p>
       </div>
       <a href="/admin/logout" title="Sign Out"
-         class="w-7 h-7 flex items-center justify-center rounded-lg shrink-0 transition-all"
+         class="sb-logout w-7 h-7 flex items-center justify-center rounded-lg shrink-0 transition-all"
          style="color:rgba(255,255,255,.25)"
          onmouseover="this.style.color='#fca5a5';this.style.background='rgba(239,68,68,.12)'"
          onmouseout="this.style.color='rgba(255,255,255,.25)';this.style.background='transparent'">
@@ -175,4 +248,20 @@ function toggleSidebar() {
   var open = s.classList.toggle('open');
   o.classList.toggle('hidden', !open);
 }
+
+function sbToggle() {
+  var s = document.getElementById('admin-sidebar');
+  var collapsed = s.classList.toggle('is-collapsed');
+  localStorage.setItem('sb-collapsed', collapsed ? '1' : '0');
+}
+
+(function() {
+  if (localStorage.getItem('sb-collapsed') === '1') {
+    var s = document.getElementById('admin-sidebar');
+    if (!s) return;
+    s.style.transition = 'none';
+    s.classList.add('is-collapsed');
+    requestAnimationFrame(function() { s.style.transition = ''; });
+  }
+})();
 </script>
