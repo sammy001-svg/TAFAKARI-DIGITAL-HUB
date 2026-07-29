@@ -1152,10 +1152,12 @@ function getCountryMaxIntensity(code) {
   return pts.length ? Math.max.apply(null, pts.map(function(d){ return d.intensity; })) : 0;
 }
 function getCountryCategories(code) {
-  var name = CNAME[code] || code;
+  var name    = CNAME[code] || code;
   var mapCats = mapData.filter(function(d){ return d.country === code; }).map(function(d){ return d.category; });
   var dbCats  = (COUNTRY_STATS[name] && COUNTRY_STATS[name].cats) ? COUNTRY_STATS[name].cats : [];
-  return Object.values(Object.fromEntries([...mapCats, ...dbCats].map(function(c){ return [c,c]; })));
+  var seen = {}, result = [];
+  mapCats.concat(dbCats).forEach(function(c) { if (c && !seen[c]) { seen[c] = 1; result.push(c); } });
+  return result;
 }
 function getCountryTrend(code) {
   if (deescData.some(function(d){ return d.country === code; })) return 'Decreasing';
