@@ -250,8 +250,7 @@ try {
 
 $pageTitle = 'Conflict Monitoring Dashboard | Tafakari Digital Hub';
 $pageDesc  = 'Real-time conflict intensity mapping and issue tracking across African nations experiencing fragility, displacement, and humanitarian crises.';
-$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
-           . '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>';
+$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col" style="background:#F8F8F0;font-family:'Inter',sans-serif">
@@ -1344,51 +1343,63 @@ function getChoroplethColor(code, activeCats) {
 }
 
 function loadChoropleth() {
-  if (typeof topojson === 'undefined') return;
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json')
-    .then(function(r){ return r.json(); })
-    .then(function(topo) {
-      var geojson = topojson.feature(topo, topo.objects.countries);
-      var activeCats = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
+  function _initChoropleth() {
+    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json')
+      .then(function(r){ return r.json(); })
+      .then(function(topo) {
+        var geojson = topojson.feature(topo, topo.objects.countries);
+        var activeCats = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
 
-      choroplethLayer = L.geoJSON(geojson, {
-        filter: function(f) { return !!NUM_TO_A2[f.id]; },
-        style: function(f) {
-          var code = NUM_TO_A2[f.id] || '';
-          var col  = getChoroplethColor(code, activeCats);
-          var hasData = col !== 'rgba(255,255,255,0)';
-          return {
-            fillColor:   col,
-            fillOpacity: hasData ? 0.17 : 0.04,
-            color:       'rgba(255,255,255,0.12)',
-            weight:      0.7,
-          };
-        },
-        onEachFeature: function(f, layer) {
-          var code = NUM_TO_A2[f.id] || '';
-          if (!code) return;
-          layer.on({
-            mouseover: function(e) {
-              layer.setStyle({ fillOpacity: 0.38, weight: 1.5, color: 'rgba(255,255,255,0.45)' });
-              showCountryHoverCard(e, code);
-            },
-            mousemove: function(e) {
-              showCountryHoverCard(e, code);
-            },
-            mouseout: function() {
-              if (choroplethLayer) choroplethLayer.resetStyle(layer);
-              hideCountryHoverCard();
-            },
-            click: function() {
-              openCountryPanel(code);
-              setCountry(code);
-            }
-          });
-        }
-      }).addTo(map);
-      choroplethLayer.bringToBack();
-    })
-    .catch(function(e){ console.warn('[Heatmap] Choropleth load failed:', e); });
+        choroplethLayer = L.geoJSON(geojson, {
+          filter: function(f) { return !!NUM_TO_A2[f.id]; },
+          style: function(f) {
+            var code = NUM_TO_A2[f.id] || '';
+            var col  = getChoroplethColor(code, activeCats);
+            var hasData = col !== 'rgba(255,255,255,0)';
+            return {
+              fillColor:   col,
+              fillOpacity: hasData ? 0.17 : 0.04,
+              color:       'rgba(255,255,255,0.12)',
+              weight:      0.7,
+            };
+          },
+          onEachFeature: function(f, layer) {
+            var code = NUM_TO_A2[f.id] || '';
+            if (!code) return;
+            layer.on({
+              mouseover: function(e) {
+                layer.setStyle({ fillOpacity: 0.38, weight: 1.5, color: 'rgba(255,255,255,0.45)' });
+                showCountryHoverCard(e, code);
+              },
+              mousemove: function(e) {
+                showCountryHoverCard(e, code);
+              },
+              mouseout: function() {
+                if (choroplethLayer) choroplethLayer.resetStyle(layer);
+                hideCountryHoverCard();
+              },
+              click: function() {
+                openCountryPanel(code);
+                setCountry(code);
+              }
+            });
+          }
+        }).addTo(map);
+        choroplethLayer.bringToBack();
+      })
+      .catch(function(e){ console.warn('[Heatmap] Choropleth load failed:', e); });
+  }
+
+  if (typeof topojson !== 'undefined') {
+    _initChoropleth();
+    return;
+  }
+
+  var _tjs = document.createElement('script');
+  _tjs.src = 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js';
+  _tjs.onload = _initChoropleth;
+  _tjs.onerror = function() { console.warn('[Heatmap] topojson-client failed to load — choropleth disabled'); };
+  document.head.appendChild(_tjs);
 }
 
 /* ── Refresh choropleth colors after filter change ─────────────────── */
