@@ -1146,6 +1146,284 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ── Country intensity helpers ────────────────────────────────────── */
+function getCountryMaxIntensity(code) {
+  var pts = mapData.filter(function(d){ return d.country === code; });
+  return pts.length ? Math.max.apply(null, pts.map(function(d){ return d.intensity; })) : 0;
+}
+function getCountryCategories(code) {
+  var name = CNAME[code] || code;
+  var mapCats = mapData.filter(function(d){ return d.country === code; }).map(function(d){ return d.category; });
+  var dbCats  = (COUNTRY_STATS[name] && COUNTRY_STATS[name].cats) ? COUNTRY_STATS[name].cats : [];
+  return Object.values(Object.fromEntries([...mapCats, ...dbCats].map(function(c){ return [c,c]; })));
+}
+function getCountryTrend(code) {
+  if (deescData.some(function(d){ return d.country === code; })) return 'Decreasing';
+  var mx = getCountryMaxIntensity(code);
+  if (mx >= 8) return 'Increasing';
+  if (mx >= 4) return 'Stable';
+  return 'Stable';
+}
+function intensityColor(v) {
+  if (v >= 9) return '#ED1C24';
+  if (v >= 7) return '#E7952A';
+  if (v >= 5) return '#F59E0B';
+  if (v >= 2) return '#84CC16';
+  return '#10B981';
+}
+function intensityLabel(v) {
+  if (v >= 9) return 'Very High';
+  if (v >= 7) return 'High';
+  if (v >= 5) return 'Moderate';
+  if (v >= 2) return 'Low';
+  return 'Stable';
+}
+
+/* ── Stat mini-card HTML ──────────────────────────────────────────── */
+function _stat(label, value, col) {
+  return '<div class="cstat">'
+    + '<p class="cstat-lbl">' + esc(label) + '</p>'
+    + '<p class="cstat-val" style="color:' + (col||'#0f172a') + '">' + esc(String(value)) + '</p>'
+    + '</div>';
+}
+
+/* ── Country summary panel ─────────────────────────────────────────── */
+function openCountryPanel(code) {
+  if (!code || code === 'ALL') return;
+  var name    = CNAME[code] || code;
+  var flag    = FLAG[code] || '';
+  var dbS     = COUNTRY_STATS[name] || {};
+  var reports = dbS.reports || 0;
+  var latestF = dbS.latestFmt || null;
+
+  var locations  = mapData.filter(function(d){ return d.country === code; });
+  var maxInt     = locations.length ? Math.max.apply(null, locations.map(function(d){ return d.intensity; })) : 0;
+  var avgInt     = locations.length ? (locations.reduce(function(s,d){ return s+d.intensity; },0)/locations.length).toFixed(1) : 0;
+  var allCats    = getCountryCategories(code);
+  var trend      = getCountryTrend(code);
+  var trendCol   = trend === 'Decreasing' ? '#10B981' : trend === 'Increasing' ? '#ED1C24' : '#E7952A';
+  var trendIcon  = trend === 'Decreasing' ? '↓' : trend === 'Increasing' ? '↑' : '→';
+  var intCol     = intensityColor(maxInt);
+  var intLbl     = maxInt > 0 ? intensityLabel(maxInt) : 'No data';
+
+  var topLoc = locations.length
+    ? locations.slice().sort(function(a,b){ return b.intensity - a.intensity; })[0]
+    : null;
+
+  var catHtml = allCats.map(function(c) {
+    var cc = CAT_COLORS[c] || '#94a3b8';
+    return '<span style="background:'+cc+'18;color:'+cc+';border:1px solid '+cc+'35;border-radius:20px;padding:2px 9px;font-size:9px;font-weight:700;white-space:nowrap">'
+      + esc(c) + '</span>';
+  }).join('');
+
+  // Build issue summary from top incident
+  var issueSummary = topLoc
+    ? esc(topLoc.name) + ': ' + esc(topLoc.desc)
+    : 'No specific incident data available.';
+
+  var html =
+    '<div style="height:4px;background:' + intCol + '"></div>'
+    + '<div style="padding:20px 20px 28px">'
+    // Header
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">'
+    + '<span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:'+trendCol+'">'+trendIcon+' Conflict '+esc(trend)+'</span>'
+    + '<button onclick="closeDetail()" style="width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center">&times;</button>'
+    + '</div>'
+    // Flag + name
+    + '<div style="font-size:40px;margin-bottom:6px">' + flag + '</div>'
+    + '<h3 style="font-family:Outfit,sans-serif;font-weight:900;font-size:23px;color:#0f172a;margin:0 0 4px">' + esc(name) + '</h3>'
+    + '<p style="font-size:11px;color:#94a3b8;font-weight:600;margin:0 0 18px">Country Overview</p>'
+    // Stats grid
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">'
+    + _stat('Reports', reports > 0 ? reports : locations.length, intCol)
+    + _stat('Locations', locations.length || '—', '#64748b')
+    + _stat('Peak Intensity', maxInt > 0 ? intLbl : '—', intCol)
+    + _stat('Trend', trendIcon + ' ' + trend, trendCol)
+    + '</div>'
+    // Latest date
+    + (latestF ? '<p style="font-size:11px;color:#94a3b8;margin:0 0 16px;display:flex;align-items:center;gap:5px">'
+      + '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'
+      + 'Latest report: ' + esc(latestF) + '</p>' : '')
+    // Intensity bar
+    + '<div style="margin-bottom:16px">'
+    + '<div style="display:flex;justify-content:space-between;margin-bottom:5px">'
+    + '<span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8">Intensity Indicator</span>'
+    + '<span style="font-size:15px;font-weight:900;color:'+intCol+'">'+(maxInt>0?maxInt+'/10':'—')+'</span>'
+    + '</div>'
+    + '<div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden">'
+    + '<div style="width:'+(maxInt*10)+'%;height:100%;background:'+intCol+';border-radius:4px;transition:width .6s"></div>'
+    + '</div>'
+    + '</div>'
+    // Issue summary
+    + '<div style="margin-bottom:16px;padding:13px 14px;background:#f8fafc;border-radius:12px;border-left:3px solid '+intCol+'">'
+    + '<p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 5px">Key Incident</p>'
+    + '<p style="font-size:12px;color:#374151;line-height:1.7;margin:0">' + issueSummary + '</p>'
+    + '</div>'
+    // Categories
+    + '<div style="margin-bottom:20px">'
+    + '<p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 8px">Issue Categories</p>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:5px">' + (catHtml || '<span style="font-size:11px;color:#cbd5e1">No data</span>') + '</div>'
+    + '</div>'
+    // CTA buttons
+    + '<a href="/news?country=' + encodeURIComponent(name) + '"'
+    + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:11px 16px;border-radius:12px;background:#750B25;color:#fff;font-size:13px;font-weight:700;justify-content:center;margin-bottom:8px">'
+    + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+    + 'View All Reports (' + (reports > 0 ? reports : locations.length) + ')</a>'
+    + '<a href="/heatmap?country=' + encodeURIComponent(code) + '"'
+    + ' onclick="setCountry(\'' + esc(code) + '\');return false"'
+    + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:10px 16px;border-radius:12px;border:1.5px solid #e2e8f0;color:#475569;font-size:12px;font-weight:700;justify-content:center">'
+    + 'Filter Map to ' + esc(name) + '</a>'
+    + '</div>';
+
+  if (window.innerWidth < 768) {
+    document.getElementById('ctrl-panel').classList.remove('ctrl-open');
+  }
+  document.getElementById('detail-content').innerHTML = html;
+  document.getElementById('detail-panel').classList.add('panel-open');
+  document.getElementById('detail-panel').classList.remove('panel-hidden');
+}
+
+/* ── Choropleth hover tooltip ─────────────────────────────────────── */
+function showCountryHoverCard(e, code) {
+  var card = document.getElementById('ctry-hover-card');
+  var name   = CNAME[code] || code;
+  var flag   = FLAG[code] || '';
+  var maxInt = getCountryMaxIntensity(code);
+  var col    = intensityColor(maxInt);
+  var lbl    = maxInt > 0 ? intensityLabel(maxInt) : 'No data';
+  var trend  = getCountryTrend(code);
+  var trendIcon = trend === 'Decreasing' ? '↓ ' : trend === 'Increasing' ? '↑ ' : '→ ';
+  var dbS    = COUNTRY_STATS[name] || {};
+  var rep    = dbS.reports || 0;
+  var cats   = getCountryCategories(code).slice(0,3).map(function(c){
+    var cc = CAT_COLORS[c]||'#94a3b8';
+    return '<span style="background:'+cc+'28;color:'+cc+';border-radius:20px;padding:1px 7px;font-size:9px;font-weight:700">'+esc(c)+'</span>';
+  }).join(' ');
+
+  card.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+    + '<span style="font-size:20px">' + flag + '</span>'
+    + '<div>'
+    + '<p style="font-family:Outfit,sans-serif;font-weight:900;font-size:13px;color:#fff;margin:0">' + esc(name) + '</p>'
+    + '<p style="font-size:9px;font-weight:700;color:'+col+';margin:0">' + lbl + ' · ' + trendIcon + trend + '</p>'
+    + '</div>'
+    + '</div>'
+    + (cats ? '<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:3px">' + cats + '</div>' : '')
+    + '<div style="display:flex;justify-content:space-between;align-items:center">'
+    + '<span style="font-size:9px;color:rgba(255,255,255,.4)">' + (rep > 0 ? rep + ' reports' : mapData.filter(function(d){ return d.country===code; }).length + ' locations') + '</span>'
+    + '<span style="font-size:9px;font-weight:700;color:rgba(231,149,42,.7)">Click for details →</span>'
+    + '</div>';
+
+  // Position near the mouse
+  var wrapper = document.getElementById('map-wrapper');
+  var rect    = wrapper.getBoundingClientRect();
+  var lm      = e.originalEvent || e;
+  var cx      = (lm.clientX - rect.left) + 12;
+  var cy      = (lm.clientY - rect.top)  - 10;
+  if (cx + 250 > rect.width) cx -= 260;
+  if (cy + 120 > rect.height) cy -= 130;
+  card.style.left = cx + 'px';
+  card.style.top  = cy + 'px';
+  card.classList.remove('hidden');
+}
+function hideCountryHoverCard() {
+  document.getElementById('ctry-hover-card').classList.add('hidden');
+}
+
+/* ── GeoJSON choropleth ────────────────────────────────────────────── */
+function getChoroplethColor(code, activeCats) {
+  var pts = mapData.filter(function(d){
+    return d.country === code
+      && (activeCats.length === 0 || activeCats.indexOf(d.category) !== -1);
+  });
+  if (!pts.length) return 'rgba(255,255,255,0)';
+  var mx = Math.max.apply(null, pts.map(function(d){ return d.intensity; }));
+  return intensityColor(mx);
+}
+
+function loadChoropleth() {
+  if (typeof topojson === 'undefined') return;
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json')
+    .then(function(r){ return r.json(); })
+    .then(function(topo) {
+      var geojson = topojson.feature(topo, topo.objects.countries);
+      var activeCats = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
+
+      choroplethLayer = L.geoJSON(geojson, {
+        filter: function(f) { return !!NUM_TO_A2[f.id]; },
+        style: function(f) {
+          var code = NUM_TO_A2[f.id] || '';
+          var col  = getChoroplethColor(code, activeCats);
+          var hasData = col !== 'rgba(255,255,255,0)';
+          return {
+            fillColor:   col,
+            fillOpacity: hasData ? 0.17 : 0.04,
+            color:       'rgba(255,255,255,0.12)',
+            weight:      0.7,
+          };
+        },
+        onEachFeature: function(f, layer) {
+          var code = NUM_TO_A2[f.id] || '';
+          if (!code) return;
+          layer.on({
+            mouseover: function(e) {
+              layer.setStyle({ fillOpacity: 0.38, weight: 1.5, color: 'rgba(255,255,255,0.45)' });
+              showCountryHoverCard(e, code);
+            },
+            mousemove: function(e) {
+              showCountryHoverCard(e, code);
+            },
+            mouseout: function() {
+              if (choroplethLayer) choroplethLayer.resetStyle(layer);
+              hideCountryHoverCard();
+            },
+            click: function() {
+              openCountryPanel(code);
+              setCountry(code);
+            }
+          });
+        }
+      }).addTo(map);
+      choroplethLayer.bringToBack();
+    })
+    .catch(function(e){ console.warn('[Heatmap] Choropleth load failed:', e); });
+}
+
+/* ── Refresh choropleth colors after filter change ─────────────────── */
+function refreshChoropleth(activeCats) {
+  if (!choroplethLayer) return;
+  choroplethLayer.eachLayer(function(layer) {
+    var f    = layer.feature;
+    var code = NUM_TO_A2[f.id] || '';
+    if (!code) return;
+    var col     = getChoroplethColor(code, activeCats);
+    var hasData = col !== 'rgba(255,255,255,0)';
+    layer.setStyle({
+      fillColor:   col,
+      fillOpacity: hasData ? 0.17 : 0.04,
+    });
+  });
+}
+
+/* ── Country-aggregate markers (Countries view mode) ─────────────── */
+var COUNTRY_DATA_LIST = <?= json_encode($_countriesData, JSON_UNESCAPED_UNICODE) ?>;
+
+function makeCountryIcon(code, intensity) {
+  var col  = intensity > 0 ? intensityColor(intensity) : '#475569';
+  var size = intensity >= 8 ? 44 : intensity >= 5 ? 36 : 28;
+  var flag = FLAG[code] || '';
+  return L.divIcon({
+    className: '',
+    iconSize:  [size, size],
+    iconAnchor:[size/2, size/2],
+    tooltipAnchor: [size/2+4, 0],
+    html: '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+col
+        + ';border:2px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;'
+        + 'box-shadow:0 0 '+(intensity>=8?14:8)+'px '+col+(intensity>=8?'99':'44')+';cursor:pointer;'
+        + 'font-size:'+(size-12)+'px;line-height:1">' + flag + '</div>',
+  });
+}
+
 /* ── Intensity slider update ──────────────────────────────────────── */
 function updateSlider() {
   var v = document.getElementById('int-slider').value;
@@ -1165,9 +1443,12 @@ function setCountry(code) {
     b.style.fontWeight  = active ? '700' : '500';
   });
   applyFilters();
-  /* Auto-close filter panel after country select on mobile */
   if (window.innerWidth < 768 && code !== 'ALL') {
     setTimeout(function(){ _ctrlClose(); }, 250);
+  }
+  // Show country summary panel when a specific country is selected
+  if (code !== 'ALL') {
+    openCountryPanel(code);
   }
 }
 
@@ -1180,9 +1461,11 @@ function toggleAllCats() {
 
 /* ── Apply all filters ────────────────────────────────────────────── */
 function applyFilters() {
-  var q      = (document.getElementById('map-search').value || '').toLowerCase().trim();
-  var minInt = parseInt(document.getElementById('int-slider').value, 10);
-  var cats   = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
+  var q        = (document.getElementById('map-search').value || '').toLowerCase().trim();
+  var minInt   = parseInt(document.getElementById('int-slider').value, 10);
+  var cats     = Array.from(document.querySelectorAll('.cat-check:checked')).map(function(c){ return c.value; });
+  var dateFrom = (document.getElementById('date-from') || {}).value || '';
+  var dateTo   = (document.getElementById('date-to')   || {}).value || '';
 
   // Remove all map layers
   markers.forEach(function(m){ map.removeLayer(m); });
@@ -1192,6 +1475,11 @@ function applyFilters() {
   postMarkers = [];
   deescMarkersLayer.forEach(function(m){ map.removeLayer(m); });
   deescMarkersLayer = [];
+  countryMarkers.forEach(function(m){ map.removeLayer(m); });
+  countryMarkers = [];
+
+  // Refresh choropleth colors for selected categories
+  refreshChoropleth(cats);
 
   var catCounts = {};
   var visible   = [];
@@ -1241,6 +1529,31 @@ function applyFilters() {
     return;
   }
 
+  // Countries view mode: one aggregate marker per country
+  if (viewMode === 'countries') {
+    var seenCountries = {};
+    visible.forEach(function(d) { seenCountries[d.country] = true; });
+    Object.keys(seenCountries).forEach(function(code) {
+      var pts = visible.filter(function(d){ return d.country === code; });
+      var mx  = Math.max.apply(null, pts.map(function(d){ return d.intensity; }));
+      var lat = pts.reduce(function(s,d){ return s+d.lat; },0)/pts.length;
+      var lng = pts.reduce(function(s,d){ return s+d.lng; },0)/pts.length;
+      var m = L.marker([lat, lng], { icon: makeCountryIcon(code, mx), zIndexOffset: 100 })
+        .bindTooltip(esc(CNAME[code]||code) + ' · ' + pts.length + ' locations · Peak: ' + mx + '/10',
+                     { direction: 'right', opacity: 1 });
+      m.on('click', (function(c){ return function(){ openCountryPanel(c); }; })(code));
+      m.addTo(map);
+      countryMarkers.push(m);
+    });
+    var pill = Object.keys(seenCountries).length + ' countries';
+    document.getElementById('active-count').textContent = pill;
+    var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+    var kpiEl  = document.getElementById('kpi-hotspots');
+    if (kpiEl) kpiEl.textContent = allHot;
+    renderTable(visible);
+    return;
+  }
+
   // Render conflict markers or heatmap
   if (viewMode === 'markers') {
     visible.forEach(function(d) {
@@ -1270,11 +1583,11 @@ function applyFilters() {
   var visiblePosts = 0;
   if (showReports && postData && postData.length) {
     postData.forEach(function(d) {
-      // Country filter: map code → name for comparison
       if (selCtry !== 'ALL' && CNAME[selCtry] !== d.country) return;
-      // Category filter
       if (cats.indexOf(d.category) === -1) return;
-      // Search filter
+      // Date range filter
+      if (dateFrom && d.dateRaw && d.dateRaw < dateFrom) return;
+      if (dateTo   && d.dateRaw && d.dateRaw > dateTo)   return;
       if (q) {
         var haystack = d.title.toLowerCase() + ' ' + d.country.toLowerCase() + ' ' + (d.region || '').toLowerCase() + ' ' + d.category.toLowerCase() + ' ' + d.type.toLowerCase();
         if (haystack.indexOf(q) === -1) return;
@@ -1359,6 +1672,9 @@ function setMode(mode) {
   });
   applyFilters();
 }
+/* ── Countries mode button ────────────────────────────────────────── */
+var _modeCountriesBtn = document.getElementById('mode-countries');
+if (_modeCountriesBtn) _modeCountriesBtn.style.border = '1px solid transparent';
 
 /* ── Zoom to location (from table) ───────────────────────────────── */
 function zoomTo(lat, lng) {
@@ -1530,6 +1846,8 @@ function _ctrlClose() {
 try {
   setCountry('ALL');
   applyFilters();
+  // Load choropleth layer asynchronously (non-blocking)
+  setTimeout(loadChoropleth, 600);
 } catch (e) {
   console.error('[Heatmap] Init failed:', e);
   document.getElementById('active-count').textContent = 'Map error — check console';
