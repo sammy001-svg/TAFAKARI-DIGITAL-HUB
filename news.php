@@ -24,7 +24,7 @@ if ($country !== '') {
     $params[] = $country;
 }
 if ($cat !== '') {
-    $where[]  = 'p.issueCategory = ?';
+    $where[]  = 'FIND_IN_SET(?, p.issueCategory) > 0';
     $params[] = $cat;
 }
 $whereStr = implode(' AND ', $where);

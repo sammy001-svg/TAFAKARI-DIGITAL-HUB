@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mediaUrl      = trim($_POST['mediaUrl']      ?? '');
     $country       = trim($_POST['country']       ?? '');
     $region        = trim($_POST['region']        ?? '');
-    $issueCategory = trim($_POST['issueCategory'] ?? '');
+    $rawCats = array_filter(array_map('trim', (array)($_POST['issueCategories'] ?? [])));
+    $issueCategory = implode(',', array_intersect($rawCats, issue_categories()));
 
     if (!in_array($type, $validTypes)) $type = 'ARTICLE';
 
@@ -140,6 +141,10 @@ $typeConfig = [
         'backLabel'   => 'Documents',
     ],
 ];
+
+$selectedNewCats = $_SERVER['REQUEST_METHOD'] === 'POST'
+    ? array_filter(array_map('trim', (array)($_POST['issueCategories'] ?? [])))
+    : [];
 
 $cfg = $typeConfig[$defaultType];
 
@@ -303,13 +308,31 @@ $adminPageSub   = $cfg['sub'];
                  placeholder="e.g. Nairobi, Tigray, Kinshasa">
         </div>
         <div>
-          <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Issue Category *</label>
-          <select name="issueCategory" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
-            <option value="">Select category</option>
-            <?php foreach (issue_categories() as $c): ?>
-              <option value="<?= h($c) ?>" <?= (($_POST['issueCategory'] ?? '') === $c) ? 'selected' : '' ?>><?= h($c) ?></option>
-            <?php endforeach; ?>
-          </select>
+          <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Issue Categories *</label>
+          <div class="relative" id="cat-ms-wrap">
+            <button type="button" id="cat-ms-btn" onclick="catMsToggle()"
+                    class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-left flex items-center justify-between focus:outline-none">
+              <span id="cat-ms-label" class="text-slate-400">Select categories</span>
+              <svg width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="cat-ms-dropdown" class="hidden absolute z-50 mt-1 w-full bg-white rounded-xl border border-slate-200 shadow-lg">
+              <div class="p-2 border-b border-slate-100">
+                <input type="text" placeholder="Search categories…" oninput="catMsSearch(this.value)"
+                       class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
+              </div>
+              <div class="overflow-y-auto max-h-52 p-1.5" id="cat-ms-list">
+                <?php foreach (issue_categories() as $c): ?>
+                  <label class="cat-ms-opt flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer">
+                    <input type="checkbox" name="issueCategories[]" value="<?= h($c) ?>"
+                           <?= in_array($c, $selectedNewCats, true) ? 'checked' : '' ?>
+                           onchange="catMsUpdate()"
+                           class="w-4 h-4 rounded" style="accent-color:#750B25">
+                    <span class="text-sm text-slate-700"><?= h($c) ?></span>
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -513,6 +536,43 @@ function switchTab(tab) {
     if (plain) plain.setAttribute('name', 'content');
   }
 })();
+
+function catMsToggle() {
+  var dd = document.getElementById('cat-ms-dropdown');
+  if (dd.classList.contains('hidden')) {
+    dd.classList.remove('hidden');
+    dd.querySelector('input[type=text]').focus();
+  } else {
+    dd.classList.add('hidden');
+  }
+}
+function catMsSearch(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.cat-ms-opt').forEach(function(el) {
+    el.style.display = el.querySelector('span').textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+  });
+}
+function catMsUpdate() {
+  var checked = document.querySelectorAll('input[name="issueCategories[]"]:checked');
+  var label = document.getElementById('cat-ms-label');
+  if (checked.length === 0) {
+    label.textContent = 'Select categories';
+    label.style.color = '';
+  } else if (checked.length === 1) {
+    label.textContent = checked[0].value;
+    label.style.color = '#0f172a';
+  } else {
+    label.textContent = checked.length + ' categories selected';
+    label.style.color = '#0f172a';
+  }
+}
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('cat-ms-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('cat-ms-dropdown').classList.add('hidden');
+  }
+});
+catMsUpdate();
 </script>
 </body>
 </html>

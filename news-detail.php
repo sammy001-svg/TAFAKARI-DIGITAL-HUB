@@ -62,10 +62,11 @@ try {
         "SELECT id, title, thumbnailUrl, country, issueCategory, createdAt
          FROM Post
          WHERE type='ARTICLE' AND status='PUBLISHED' AND id != ?
-           AND (country = ? OR issueCategory = ?)
+           AND (country = ? OR FIND_IN_SET(?, issueCategory) > 0)
          ORDER BY createdAt DESC LIMIT 3"
     );
-    $stmt->execute([$id, $post['country'], $post['issueCategory']]);
+    $relCat = explode(',', $post['issueCategory'] ?? '')[0];
+    $stmt->execute([$id, $post['country'], $relCat]);
     $related = $stmt->fetchAll();
 } catch (Exception $e) { /* ignore */ }
 
