@@ -791,6 +791,15 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 
 <script>
+/* ── Map + tile layer — must be first so base map always renders ─── */
+var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
 /* ── Map data ─────────────────────────────────────────────────────── */
 var mapData = [
   // ── Kenya
@@ -892,10 +901,10 @@ var FLAG       = <?= json_encode($flagMap,  JSON_UNESCAPED_UNICODE) ?>;
 var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
 
 /* ── Published post markers from DB ──────────────────────────────── */
-var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 
 /* ── Per-country DB stats (reports, latest date, categories) ─────── */
-var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE) ?>;
+var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 
 /* ── Alpha-2 → ISO 3166-1 numeric (for GeoJSON choropleth filter) ── */
 var A2_TO_NUM = {
@@ -910,16 +919,6 @@ var A2_TO_NUM = {
 /* Reverse: numeric → alpha-2 */
 var NUM_TO_A2 = {};
 Object.keys(A2_TO_NUM).forEach(function(k) { NUM_TO_A2[A2_TO_NUM[k]] = k; });
-
-/* ── Map initialisation ───────────────────────────────────────────── */
-var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
-L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  subdomains: 'abcd',
-  maxZoom: 19
-}).addTo(map);
 
 /* ── Marker icon factory ──────────────────────────────────────────── */
 function makeIcon(d) {
@@ -1419,7 +1418,7 @@ function refreshChoropleth(activeCats) {
 }
 
 /* ── Country-aggregate markers (Countries view mode) ─────────────── */
-var COUNTRY_DATA_LIST = <?= json_encode($_countriesData, JSON_UNESCAPED_UNICODE) ?>;
+var COUNTRY_DATA_LIST = <?= json_encode($_countriesData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 
 function makeCountryIcon(code, intensity) {
   var col  = intensity > 0 ? intensityColor(intensity) : '#475569';
