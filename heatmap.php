@@ -250,7 +250,7 @@ try {
 
 $pageTitle = 'Conflict Monitoring Dashboard | Tafakari Digital Hub';
 $pageDesc  = 'Real-time conflict intensity mapping and issue tracking across African nations experiencing fragility, displacement, and humanitarian crises.';
-$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">';
+$extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col" style="background:#F8F8F0;font-family:'Inter',sans-serif">
@@ -786,11 +786,22 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 
-<!-- Leaflet + heat plugin -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet + heat plugin (jsdelivr — most reliable global CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 
 <script>
+/* ── Guard: show clear error if Leaflet CDN failed to load ─────── */
+if (typeof L === 'undefined') {
+  var _me = document.getElementById('map');
+  if (_me) _me.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:rgba(10,2,4,.9);gap:14px">'
+    + '<svg width="36" height="36" fill="none" stroke="#E7952A" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/></svg>'
+    + '<p style="font-family:Inter,sans-serif;color:rgba(255,255,255,.75);font-size:13px;margin:0;text-align:center">Map library failed to load.<br>Please check your internet connection and refresh.</p>'
+    + '</div>';
+  throw new Error('[Heatmap] Leaflet.js not loaded');
+}
+
 /* ── Map + tile layer — must be first so base map always renders ─── */
 var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
