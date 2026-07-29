@@ -203,6 +203,7 @@ try {
             'region'   => $region,
             'category' => $issueToCat[$p['issueCategory'] ?? ''] ?? 'Policy',
             'date'     => format_date($p['createdAt']),
+            'dateRaw'  => date('Y-m-d', strtotime($p['createdAt'])),
             'thumb'    => $p['thumbnailUrl'] ?? '',
             'url'      => $url,
             'lat'      => round($lat, 5),
@@ -218,9 +219,39 @@ try {
     $monthlyReports = (int) db()->query("SELECT COUNT(*) FROM Post WHERE status='PUBLISHED' AND createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
 } catch (Exception $e) { /* ignore */ }
 
+// ── Per-country DB stats — powering the hover summary panels ──────────
+$countryStats = [];
+try {
+    $csRows = db()->query(
+        "SELECT country,
+                COUNT(*) AS reportCount,
+                MAX(createdAt) AS latestDate,
+                GROUP_CONCAT(DISTINCT issueCategory ORDER BY issueCategory SEPARATOR '|||') AS allCats
+         FROM Post
+         WHERE status='PUBLISHED' AND country IS NOT NULL AND country <> ''
+         GROUP BY country"
+    )->fetchAll();
+    foreach ($csRows as $cr) {
+        $cats = [];
+        foreach (explode('|||', $cr['allCats'] ?? '') as $cs) {
+            foreach (explode(',', $cs) as $c) {
+                $c = trim($c);
+                if ($c !== '') $cats[] = $c;
+            }
+        }
+        $countryStats[$cr['country']] = [
+            'reports'    => (int)$cr['reportCount'],
+            'latestDate' => $cr['latestDate'] ? date('Y-m-d', strtotime($cr['latestDate'])) : null,
+            'latestFmt'  => $cr['latestDate'] ? format_date($cr['latestDate']) : null,
+            'cats'       => array_values(array_unique($cats)),
+        ];
+    }
+} catch (\Exception $e) {}
+
 $pageTitle = 'Conflict Monitoring Dashboard | Tafakari Digital Hub';
 $pageDesc  = 'Real-time conflict intensity mapping and issue tracking across African nations experiencing fragility, displacement, and humanitarian crises.';
-$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">';
+$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">'
+           . '<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col" style="background:#F8F8F0;font-family:'Inter',sans-serif">
@@ -323,6 +354,40 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
   display: none;
   backdrop-filter: blur(1px);
 }
+
+/* ── Country hover tooltip (floating card) ─────────────────────────── */
+#ctry-hover-card {
+  position: absolute; z-index: 1200; pointer-events: none;
+  background: rgba(8,4,8,.94); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px; padding: 12px 14px; min-width: 190px; max-width: 240px;
+  backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,.45);
+  transition: opacity .15s; font-family: 'Inter', sans-serif;
+}
+#ctry-hover-card.hidden { opacity: 0; }
+
+/* ── Choropleth country polygon hover ─────────────────────────────── */
+.leaflet-interactive:focus { outline: none; }
+
+/* ── Date filter inputs ───────────────────────────────────────────── */
+.date-inp {
+  width: 100%; padding: 7px 10px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.07);
+  color: #fff; font-size: 11px; outline: none; transition: border-color .15s;
+  color-scheme: dark;
+}
+.date-inp:focus { border-color: rgba(231,149,42,.5); }
+
+/* ── Intensity legend tiers ───────────────────────────────────────── */
+.int-tier { display:flex; align-items:center; gap:10px; padding:4px 6px; border-radius:8px; transition:background .12s; }
+.int-tier:hover { background:rgba(255,255,255,.05); }
+
+/* ── Country panel stats grid ─────────────────────────────────────── */
+.cstat { background:#f8fafc; border-radius:10px; padding:9px 11px; text-align:center; }
+.cstat-lbl { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8; margin:0 0 3px; }
+.cstat-val { font-size:14px; font-weight:900; margin:0; }
+
+/* ── Detail panel wider + smooth scroll ─────────────────────────────── */
+#detail-panel { transition: transform .3s cubic-bezier(.4,0,.2,1); }
 
 /* ── Mobile overrides ─────────────────────────────────────────────── */
 @media (max-width: 767px) {
@@ -453,16 +518,21 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
         <!-- View mode -->
         <div>
           <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.viewMode">View Mode</p>
-          <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl" style="background:rgba(255,255,255,.05)">
+          <div class="grid grid-cols-3 gap-1 p-1 rounded-xl" style="background:rgba(255,255,255,.05)">
             <button id="mode-markers" onclick="setMode('markers')"
-                    class="mode-btn text-xs font-bold py-2 rounded-lg text-white transition-all"
+                    class="mode-btn text-[10px] font-bold py-2 rounded-lg text-white transition-all"
                     style="background:rgba(231,149,42,.22);border:1px solid rgba(231,149,42,.35)">
               ● <span data-i18n="heatmapPage.markers">Markers</span>
             </button>
             <button id="mode-heat" onclick="setMode('heat')"
-                    class="mode-btn text-xs font-bold py-2 rounded-lg transition-all"
+                    class="mode-btn text-[10px] font-bold py-2 rounded-lg transition-all"
                     style="color:rgba(255,255,255,.4);background:transparent;border:1px solid transparent">
-              ◈ <span data-i18n="heatmapPage.heatmapMode">Heatmap</span>
+              ◈ <span data-i18n="heatmapPage.heatmapMode">Heat</span>
+            </button>
+            <button id="mode-countries" onclick="setMode('countries')"
+                    class="mode-btn text-[10px] font-bold py-2 rounded-lg transition-all"
+                    style="color:rgba(255,255,255,.4);background:transparent;border:1px solid transparent">
+              ⬡ Countries
             </button>
           </div>
         </div>
@@ -517,6 +587,23 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
             <span class="text-[9px]" style="color:rgba(255,255,255,.22)" data-i18n="heatmapPage.low">Low</span>
             <span class="text-[9px]" style="color:rgba(255,255,255,.22)" data-i18n="heatmapPage.critical">Critical</span>
           </div>
+        </div>
+
+        <!-- Date range filter -->
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)">Date Range (Reports)</p>
+          <div class="space-y-1.5">
+            <div>
+              <label class="text-[9px]" style="color:rgba(255,255,255,.35)">From</label>
+              <input type="date" id="date-from" class="date-inp" oninput="applyFilters()">
+            </div>
+            <div>
+              <label class="text-[9px]" style="color:rgba(255,255,255,.35)">To</label>
+              <input type="date" id="date-to" class="date-inp" oninput="applyFilters()">
+            </div>
+          </div>
+          <button onclick="document.getElementById('date-from').value='';document.getElementById('date-to').value='';applyFilters()"
+                  class="mt-1.5 text-[9px] font-bold" style="color:rgba(231,149,42,.45)">Clear dates</button>
         </div>
 
         <!-- Intensity legend -->
@@ -637,9 +724,12 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
     <!-- ── Right detail panel ────────────────────────────────────────── -->
     <div id="detail-panel"
          class="absolute top-0 right-0 bottom-0 z-[1000] overflow-y-auto panel-hidden"
-         style="width:300px;background:#fff;box-shadow:-4px 0 40px rgba(0,0,0,.18)">
+         style="width:340px;background:#fff;box-shadow:-4px 0 40px rgba(0,0,0,.18)">
       <div id="detail-content"></div>
     </div>
+
+    <!-- ── Country hover card (appears near mouse over choropleth) ─── -->
+    <div id="ctry-hover-card" class="hidden" style="top:0;left:0"></div>
 
   </div><!-- /#map-wrapper -->
 

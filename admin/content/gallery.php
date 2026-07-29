@@ -94,11 +94,16 @@ $adminPageSub   = $total . ' image' . ($total !== 1 ? 's' : '') . ($statusFilter
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
         </a>
       </div>
-      <a href="/admin/content/new?type=GALLERY_IMAGE"
-         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold shadow-sm transition-opacity hover:opacity-90"
+      <a href="/admin/content/gallery-upload"
+         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold shadow-sm transition-all hover:opacity-90"
          style="background:#750B25;color:#fff">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        Batch Upload
+      </a>
+      <a href="/admin/content/new?type=GALLERY_IMAGE"
+         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
-        Upload Image
+        Single
       </a>
     </div>
   </div>
