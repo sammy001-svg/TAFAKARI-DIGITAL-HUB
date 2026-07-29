@@ -621,19 +621,42 @@ $extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/
               </button>
             </div>
           </div>
-          <!-- Escalating legend (default) -->
-          <div id="legend-escalating" class="space-y-2">
-            <div class="flex items-center gap-2.5">
-              <div style="width:13px;height:13px;border-radius:50%;background:#ED1C24;box-shadow:0 0 8px #ED1C2499;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendCritical">8–10 · Critical / Active conflict</span>
+          <!-- Escalating legend (5-tier) -->
+          <div id="legend-escalating" class="space-y-1">
+            <div class="int-tier">
+              <div style="width:14px;height:14px;border-radius:50%;background:#ED1C24;box-shadow:0 0 8px #ED1C2499;flex-shrink:0"></div>
+              <div>
+                <p style="font-size:10px;font-weight:700;color:#ED1C24;margin:0">Very High</p>
+                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">9–10 · Active conflict</p>
+              </div>
             </div>
-            <div class="flex items-center gap-2.5">
-              <div style="width:11px;height:11px;border-radius:50%;background:#E7952A;box-shadow:0 0 6px #E7952A77;flex-shrink:0;margin-left:1px"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendElevated">5–7 · Elevated risk</span>
+            <div class="int-tier">
+              <div style="width:12px;height:12px;border-radius:50%;background:#E7952A;box-shadow:0 0 6px #E7952A77;flex-shrink:0;margin-left:1px"></div>
+              <div>
+                <p style="font-size:10px;font-weight:700;color:#E7952A;margin:0">High</p>
+                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">7–8 · Elevated risk</p>
+              </div>
             </div>
-            <div class="flex items-center gap-2.5">
-              <div style="width:8px;height:8px;border-radius:50%;background:#F4C87E;flex-shrink:0;margin-left:2.5px"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)" data-i18n="heatmapPage.legendEmerging">1–4 · Emerging concern</span>
+            <div class="int-tier">
+              <div style="width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;margin-left:2px"></div>
+              <div>
+                <p style="font-size:10px;font-weight:700;color:#F59E0B;margin:0">Moderate</p>
+                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">5–6 · Significant concern</p>
+              </div>
+            </div>
+            <div class="int-tier">
+              <div style="width:8px;height:8px;border-radius:50%;background:#84CC16;flex-shrink:0;margin-left:3px"></div>
+              <div>
+                <p style="font-size:10px;font-weight:700;color:#84CC16;margin:0">Low</p>
+                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">2–4 · Emerging situation</p>
+              </div>
+            </div>
+            <div class="int-tier">
+              <div style="width:8px;height:8px;border-radius:50%;background:#10B981;flex-shrink:0;margin-left:3px"></div>
+              <div>
+                <p style="font-size:10px;font-weight:700;color:#10B981;margin:0">Stable / Peaceful</p>
+                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">1 · Minimal risk</p>
+              </div>
             </div>
           </div>
           <!-- De-escalating legend (hidden by default) -->
@@ -872,6 +895,23 @@ var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
 /* ── Published post markers from DB ──────────────────────────────── */
 var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
+/* ── Per-country DB stats (reports, latest date, categories) ─────── */
+var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE) ?>;
+
+/* ── Alpha-2 → ISO 3166-1 numeric (for GeoJSON choropleth filter) ── */
+var A2_TO_NUM = {
+  'DZ':'012','AO':'024','BI':'108','BJ':'204','BF':'854','CM':'120','CF':'140','TD':'148',
+  'KM':'174','CG':'178','CD':'180','CI':'384','DJ':'262','EG':'818','GQ':'226','ER':'232',
+  'ET':'231','GA':'266','GM':'270','GH':'288','GN':'324','KE':'404','LS':'426','LR':'430',
+  'LY':'434','MG':'450','MW':'454','ML':'466','MR':'478','MA':'504','MZ':'508','NA':'516',
+  'NE':'562','NG':'566','RW':'646','ST':'678','SN':'686','SL':'694','SO':'706','ZA':'710',
+  'SS':'728','SD':'729','TZ':'834','TG':'768','TN':'788','UG':'800','ZM':'894','ZW':'716',
+  'BW':'072','CV':'132','LI':'430','MU':'480','SC':'690','SZ':'748','ZR':'180',
+};
+/* Reverse: numeric → alpha-2 */
+var NUM_TO_A2 = {};
+Object.keys(A2_TO_NUM).forEach(function(k) { NUM_TO_A2[A2_TO_NUM[k]] = k; });
+
 /* ── Map initialisation ───────────────────────────────────────────── */
 var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -1092,7 +1132,9 @@ function toggleReports() {
 var markers           = [];
 var postMarkers       = [];
 var deescMarkersLayer = [];
+var countryMarkers    = [];
 var heatLayer         = null;
+var choroplethLayer   = null;
 var viewMode          = 'markers';
 var selCtry           = 'ALL';
 var allCatsOn         = true;
