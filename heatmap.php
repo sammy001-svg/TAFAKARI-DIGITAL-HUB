@@ -140,10 +140,16 @@ $cats = [
 ];
 $_dbCategories = json_decode(get_setting('heatmap_categories', ''), true);
 if (is_array($_dbCategories) && count($_dbCategories) > 0) {
-    $cats = [];
+    $_cleanCats = [];
     foreach ($_dbCategories as $_cat) {
-        $cats[$_cat['name']] = $_cat['color'];
+        if (!is_array($_cat)) continue;
+        $_n = trim((string)($_cat['name']  ?? ''));
+        $_c = trim((string)($_cat['color'] ?? ''));
+        if ($_n === '') continue;
+        $_cleanCats[$_n] = $_c !== '' ? $_c : '#94a3b8';
     }
+    // Keep the built-in defaults if the stored setting yields nothing usable
+    if ($_cleanCats) $cats = $_cleanCats;
 }
 
 $postTypeUrl = [
@@ -232,18 +238,19 @@ try {
          GROUP BY country"
     )->fetchAll();
     foreach ($csRows as $cr) {
-        $cats = [];
+        // NOTE: must not be named $cats — that holds the category→colour map
+        $_ccats = [];
         foreach (explode('|||', $cr['allCats'] ?? '') as $cs) {
             foreach (explode(',', $cs) as $c) {
                 $c = trim($c);
-                if ($c !== '') $cats[] = $c;
+                if ($c !== '') $_ccats[] = $c;
             }
         }
         $countryStats[$cr['country']] = [
             'reports'    => (int)$cr['reportCount'],
             'latestDate' => $cr['latestDate'] ? date('Y-m-d', strtotime($cr['latestDate'])) : null,
             'latestFmt'  => $cr['latestDate'] ? format_date($cr['latestDate']) : null,
-            'cats'       => array_values(array_unique($cats)),
+            'cats'       => array_values(array_unique($_ccats)),
         ];
     }
 } catch (\Exception $e) {}
@@ -561,7 +568,11 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
             <button onclick="toggleAllCats()" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)" data-i18n="heatmapPage.toggleAll">Toggle All</button>
           </div>
           <?php foreach ($cats as $cat => $col):
-            $id = 'cat-' . str_replace(' ', '_', $cat); ?>
+            // Cast: PHP turns numeric category names into int keys, which
+            // would fatal under strict_types in str_replace()/h()
+            $cat = (string)$cat;
+            $col = (string)$col;
+            $id  = 'cat-' . str_replace(' ', '_', $cat); ?>
             <div>
               <input type="checkbox" class="cat-check" id="<?= $id ?>" value="<?= h($cat) ?>" checked onchange="applyFilters()">
               <label for="<?= $id ?>" class="cat-label">
