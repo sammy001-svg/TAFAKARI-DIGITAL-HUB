@@ -227,7 +227,7 @@ try {
   <!-- ══════════════════════════════════════════
        1. HERO CAROUSEL
   ══════════════════════════════════════════ -->
-  <section class="relative w-full overflow-hidden" style="height:93vh;min-height:580px">
+  <section class="relative w-full overflow-hidden" style="height:84vh;max-height:820px;min-height:540px">
 
     <?php
     $defaultSlides = [
@@ -314,7 +314,7 @@ try {
   <!-- ══════════════════════════════════════════
        2. IMPACT STATISTICS
   ══════════════════════════════════════════ -->
-  <section style="background:#0C0203" class="py-14 px-6">
+  <section style="background:#0D0102" class="py-14 px-6">
     <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4">
       <?php
       $impactStats = [
@@ -326,7 +326,7 @@ try {
       foreach ($impactStats as $j => $st): ?>
         <div class="stat-item text-center py-10 px-4">
           <div class="font-outfit font-black text-4xl md:text-5xl leading-none mb-2.5">
-            <span style="color:#E7952A"><?= h($st['num']) ?></span><span style="color:#F4C87E"><?= h($st['suf']) ?></span>
+            <span style="color:#E7952A"><?= h($st['num']) ?></span><span style="color:rgba(231,149,42,.5)"><?= h($st['suf']) ?></span>
           </div>
           <div class="text-white/45 text-[11px] font-semibold uppercase tracking-widest" data-i18n="home.stat.<?= h($st['key']) ?>"><?= h($st['label']) ?></div>
         </div>
@@ -338,7 +338,7 @@ try {
   <!-- ══════════════════════════════════════════
        3. MISSION STATEMENT
   ══════════════════════════════════════════ -->
-  <section class="max-w-7xl mx-auto px-6 md:px-12 py-28 grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-28 items-center">
+  <section class="max-w-7xl mx-auto px-6 md:px-12 py-24 grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-28 items-center">
 
     <div>
       <div class="mission-quote">
@@ -412,7 +412,7 @@ try {
             <h3 class="font-outfit font-bold text-[1.1rem] text-slate-900 mb-3 leading-snug" data-i18n="home.pillar.<?= h($p['key']) ?>.title"><?= h($p['title']) ?></h3>
             <p class="text-slate-500 text-sm leading-relaxed mb-6" data-i18n="home.pillar.<?= h($p['key']) ?>.desc"><?= h($p['desc']) ?></p>
             <a href="<?= h($p['href']) ?>"
-               class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-2.5" style="color:#C47C1A">
+               class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.11em] transition-all hover:gap-2.5" style="color:#750B25">
               <span data-i18n="home.pillarCta.<?= h($p['ctaKey']) ?>"><?= h($p['cta']) ?></span>
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
@@ -430,8 +430,8 @@ try {
   <section class="max-w-7xl mx-auto px-6 pt-16 pb-0">
     <div class="eyebrow-left" data-i18n="home.editorsPick">Editor's Pick</div>
     <a href="/news/<?= h($featuredPost['id']) ?>"
-       class="flex flex-col md:flex-row gap-6 bg-white rounded-3xl overflow-hidden border border-amber-200 shadow-md hover:shadow-xl transition-shadow group"
-       style="border-left:5px solid #E7952A">
+       class="flex flex-col md:flex-row gap-6 bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-md hover:shadow-xl transition-shadow group"
+       style="border-left:5px solid #750B25">
       <?php if ($featuredPost['thumbnailUrl']): ?>
         <div class="md:w-80 shrink-0 overflow-hidden" style="background:#0D0102">
           <img src="<?= h($featuredPost['thumbnailUrl']) ?>" alt="<?= h($featuredPost['title']) ?>"
@@ -440,7 +440,7 @@ try {
       <?php endif; ?>
       <div class="flex flex-col justify-center p-7">
         <div class="flex flex-wrap gap-2 mb-3">
-          <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full" style="background:#E7952A22;color:#92400E" data-i18n="home.featuredReport">Featured Report</span>
+          <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full" style="background:rgba(117,11,37,.09);color:#750B25" data-i18n="home.featuredReport">Featured Report</span>
           <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-slate-100 text-slate-500"><?= h($featuredPost['country']) ?></span>
         </div>
         <h2 class="font-outfit font-black text-2xl md:text-3xl text-slate-900 leading-tight mb-3 group-hover:text-[#750B25] transition-colors">
@@ -449,7 +449,7 @@ try {
         <?php if ($featuredPost['description']): ?>
           <p class="text-slate-500 text-sm leading-relaxed mb-4 line-clamp-3"><?= h($featuredPost['description']) ?></p>
         <?php endif; ?>
-        <div class="flex items-center gap-2 text-xs font-bold" style="color:#E7952A">
+        <div class="flex items-center gap-2 text-xs font-bold" style="color:#750B25">
           <span data-i18n="home.readFullReport">Read Full Report</span>
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </div>
@@ -468,7 +468,7 @@ try {
         <span class="eyebrow-left" data-i18n="home.latestFromRegion">Latest from the Region</span>
         <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.recentArticles">Recent Articles</h2>
       </div>
-      <a href="/news" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
+      <a href="/news" class="hidden md:inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.11em] hover:gap-2.5 transition-all" style="color:#750B25">
         <span data-i18n="home.viewAllArticles">View All Articles</span>
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
@@ -499,7 +499,7 @@ try {
           </div>
 
           <div class="flex flex-col grow p-6">
-            <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A">
+            <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b">
               <?= h($art['issueCategory']) ?>
             </span>
             <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
@@ -544,7 +544,7 @@ try {
           <span class="eyebrow-left" data-i18n="home.listenLearn">Listen &amp; Learn</span>
           <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.latestPodcasts">Latest Podcasts</h2>
         </div>
-        <a href="/podcasts" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
+        <a href="/podcasts" class="hidden md:inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.11em] hover:gap-2.5 transition-all" style="color:#750B25">
           <span data-i18n="home.allEpisodes">All Episodes</span>
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
@@ -576,7 +576,7 @@ try {
             <!-- Info -->
             <div class="flex flex-col grow p-6">
               <?php if (!empty($pod['issueCategory'])): ?>
-                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($pod['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b"><?= h($pod['issueCategory']) ?></span>
               <?php endif; ?>
               <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2">
                 <?= h($pod['title']) ?>
@@ -586,7 +586,7 @@ try {
               <?php endif; ?>
               <div class="flex items-center justify-between pt-4 mt-auto border-t border-slate-100">
                 <span class="text-[11px] text-slate-400"><?= format_date($pod['createdAt']) ?></span>
-                <a href="/podcasts/<?= h($pod['id']) ?>" class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all" style="color:#C47C1A">
+                <a href="/podcasts/<?= h($pod['id']) ?>" class="text-[11px] font-bold uppercase tracking-[.11em] flex items-center gap-1 hover:gap-2 transition-all" style="color:#750B25">
                   <span data-i18n="home.listen">Listen</span>
                   <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </a>
@@ -613,7 +613,7 @@ try {
           <span class="eyebrow-left" data-i18n="home.watch">Watch</span>
           <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.latestVideos">Latest Videos</h2>
         </div>
-        <a href="/videos" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
+        <a href="/videos" class="hidden md:inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.11em] hover:gap-2.5 transition-all" style="color:#750B25">
           <span data-i18n="home.allVideos">All Videos</span>
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
@@ -650,7 +650,7 @@ try {
             <!-- Info -->
             <div class="flex flex-col grow p-6">
               <?php if (!empty($vid['issueCategory'])): ?>
-                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($vid['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b"><?= h($vid['issueCategory']) ?></span>
               <?php endif; ?>
               <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
                 <?= h($vid['title']) ?>
@@ -683,7 +683,7 @@ try {
           <span class="eyebrow-left" data-i18n="home.researchLibrary">Research Library</span>
           <h2 class="font-outfit font-black text-3xl md:text-4xl text-slate-900" data-i18n="home.recentDocuments">Recent Documents</h2>
         </div>
-        <a href="/documents" class="hidden md:inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest hover:gap-2.5 transition-all" style="color:#C47C1A">
+        <a href="/documents" class="hidden md:inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.11em] hover:gap-2.5 transition-all" style="color:#750B25">
           <span data-i18n="home.fullLibrary">Full Library</span>
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
@@ -706,7 +706,7 @@ try {
             <!-- Info -->
             <div class="flex-1 min-w-0">
               <?php if (!empty($doc['issueCategory'])): ?>
-                <span class="text-[9px] font-black uppercase tracking-widest mb-1.5 block" style="color:#E7952A"><?= h($doc['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-1.5 block" style="color:#64748b"><?= h($doc['issueCategory']) ?></span>
               <?php endif; ?>
               <h3 class="font-outfit font-bold text-[0.95rem] text-slate-900 leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                 <?= h($doc['title']) ?>
