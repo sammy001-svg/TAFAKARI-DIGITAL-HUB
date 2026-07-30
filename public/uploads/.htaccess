@@ -1,4 +1,11 @@
-<FilesMatch "\.(php[0-9]?|phtml|pl|py|cgi|sh)$">
+<FilesMatch "\.(php[0-9]?|phtml|phar|pl|py|cgi|sh|htaccess)$">
   Require all denied
 </FilesMatch>
-Options -Indexes
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html?|xhtml|svg|xml)$">
+    Header set Content-Disposition "attachment"
+    Header set X-Content-Type-Options "nosniff"
+  </FilesMatch>
+</IfModule>
+Options -ExecCGI -Indexes
+AddType text/plain .php .phtml .phar .pl .py .cgi .sh
