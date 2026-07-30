@@ -10,21 +10,29 @@ $isSuper = is_super_admin();
 $uid     = $user['id'];
 $pdo     = db();
 
-$whereOnly = $isSuper ? '1' : "authorId = '$uid'";
+// Bound rather than interpolated, so this stays safe if the id source ever changes
+$whereOnly   = $isSuper ? '1' : 'authorId = ?';
+$whereParams = $isSuper ? []  : [$uid];
 
-$totalPosts     = (int)$pdo->query("SELECT COUNT(*) FROM Post WHERE $whereOnly")->fetchColumn();
-$publishedPosts = (int)$pdo->query("SELECT COUNT(*) FROM Post WHERE $whereOnly AND status='PUBLISHED'")->fetchColumn();
-$pendingPosts   = (int)$pdo->query("SELECT COUNT(*) FROM Post WHERE $whereOnly AND status='PENDING'")->fetchColumn();
-$draftPosts     = (int)$pdo->query("SELECT COUNT(*) FROM Post WHERE $whereOnly AND status='DRAFT'")->fetchColumn();
+$run = function (string $sql) use ($pdo, $whereParams) {
+    $st = $pdo->prepare($sql);
+    $st->execute($whereParams);
+    return $st;
+};
 
-$viewsRow   = $pdo->query("SELECT COALESCE(SUM(viewCount),0) AS v, COALESCE(SUM(downloadCount),0) AS d FROM Post WHERE $whereOnly")->fetch();
+$totalPosts     = (int)$run("SELECT COUNT(*) FROM Post WHERE $whereOnly")->fetchColumn();
+$publishedPosts = (int)$run("SELECT COUNT(*) FROM Post WHERE $whereOnly AND status='PUBLISHED'")->fetchColumn();
+$pendingPosts   = (int)$run("SELECT COUNT(*) FROM Post WHERE $whereOnly AND status='PENDING'")->fetchColumn();
+$draftPosts     = (int)$run("SELECT COUNT(*) FROM Post WHERE $whereOnly AND status='DRAFT'")->fetchColumn();
+
+$viewsRow   = $run("SELECT COALESCE(SUM(viewCount),0) AS v, COALESCE(SUM(downloadCount),0) AS d FROM Post WHERE $whereOnly")->fetch();
 $totalViews = (int)$viewsRow['v'];
 $totalDL    = (int)$viewsRow['d'];
 
 $flagged    = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isFlagged=1")->fetchColumn();
 $totalUsers = $isSuper ? (int)$pdo->query("SELECT COUNT(*) FROM User")->fetchColumn() : 0;
 
-$recentPosts = $pdo->query(
+$recentPosts = $run(
     "SELECT p.id, p.title, p.type, p.status, p.country, p.issueCategory, p.updatedAt,
             u.name AS authorName, u.username AS authorUsername
      FROM Post p LEFT JOIN User u ON p.authorId = u.id

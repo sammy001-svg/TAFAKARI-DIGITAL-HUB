@@ -59,8 +59,9 @@ if ($method === 'PUT') {
 if ($method === 'DELETE') {
     if (!$isSuper) json_error('Forbidden', 403);
     if ($id === $me['id']) json_error('Cannot delete your own account');
-    $count = (int)$pdo->prepare('SELECT COUNT(*) FROM Post WHERE authorId=?')->execute([$id]) && (int)$pdo->query("SELECT COUNT(*) FROM Post WHERE authorId='$id'")->fetchColumn();
-    $postCount = (int)$pdo->query("SELECT COUNT(*) FROM Post WHERE authorId='$id'")->fetchColumn();
+    $stCount = $pdo->prepare('SELECT COUNT(*) FROM Post WHERE authorId = ?');
+    $stCount->execute([$id]);
+    $postCount = (int)$stCount->fetchColumn();
     if ($postCount > 0) json_error('Cannot delete user with existing posts');
     $pdo->prepare('DELETE FROM User WHERE id=?')->execute([$id]);
     json_response(['success' => true]);

@@ -18,19 +18,40 @@ if ($method === 'GET') {
     $limit    = min(100, max(1, (int)($_GET['limit'] ?? 20)));
     $skip     = ($page - 1) * $limit;
 
-    $where = $isSuper ? [] : ["p.authorId = '$uid'"];
-    if ($status)  $where[] = "p.status = '$status'";
-    if ($type)    $where[] = "p.type = '$type'";
-    if ($country) $where[] = "p.country = '$country'";
+    // Bind every user-supplied value; whitelist the enum-backed ones.
+    $where  = [];
+    $params = [];
+    if (!$isSuper) { $where[] = 'p.authorId = ?'; $params[] = $uid; }
+
+    $validStatuses = ['DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
+    $validTypes    = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT'];
+
+    if ($status !== null && in_array($status, $validStatuses, true)) {
+        $where[] = 'p.status = ?';  $params[] = $status;
+    }
+    if ($type !== null && in_array($type, $validTypes, true)) {
+        $where[] = 'p.type = ?';    $params[] = $type;
+    }
+    if ($country !== null && $country !== '') {
+        $where[] = 'p.country = ?'; $params[] = $country;
+    }
     $w = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-    $pdo   = db();
-    $total = (int)$pdo->query("SELECT COUNT(*) FROM Post p $w")->fetchColumn();
-    $posts = $pdo->query(
+    // $limit/$skip are already int-cast and clamped above, so they are safe to inline
+    // (PDO cannot bind LIMIT/OFFSET as placeholders with emulation disabled).
+    $pdo = db();
+
+    $stCount = $pdo->prepare("SELECT COUNT(*) FROM Post p $w");
+    $stCount->execute($params);
+    $total = (int)$stCount->fetchColumn();
+
+    $stPosts = $pdo->prepare(
         "SELECT p.*, u.name AS authorName, u.username AS authorUsername
          FROM Post p LEFT JOIN User u ON p.authorId = u.id
          $w ORDER BY p.createdAt DESC LIMIT $limit OFFSET $skip"
-    )->fetchAll();
+    );
+    $stPosts->execute($params);
+    $posts = $stPosts->fetchAll();
 
     json_response(['data' => ['posts' => $posts, 'total' => $total, 'page' => $page, 'limit' => $limit,
         'totalPages' => (int)ceil($total / $limit)]]);

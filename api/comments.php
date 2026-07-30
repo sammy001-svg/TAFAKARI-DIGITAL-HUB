@@ -48,14 +48,21 @@ if ($method === 'GET') {
     $limit       = min(100, max(1, (int)($_GET['limit'] ?? 20)));
     $skip        = ($page - 1) * $limit;
 
-    $where = [];
-    if ($isFlagged !== null)   $where[] = "isFlagged = $isFlagged";
-    if ($isModerated !== null) $where[] = "isModerated = $isModerated";
-    if ($postId)               $where[] = "postId = '$postId'";
+    $where  = [];
+    $params = [];
+    // isFlagged/isModerated are already int-cast; postId must be bound.
+    if ($isFlagged !== null)   { $where[] = 'isFlagged = ?';   $params[] = $isFlagged; }
+    if ($isModerated !== null) { $where[] = 'isModerated = ?'; $params[] = $isModerated; }
+    if ($postId)               { $where[] = 'postId = ?';      $params[] = $postId; }
     $w = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-    $total    = (int)$pdo->query("SELECT COUNT(*) FROM Comment $w")->fetchColumn();
-    $comments = $pdo->query("SELECT * FROM Comment $w ORDER BY createdAt DESC LIMIT $limit OFFSET $skip")->fetchAll();
+    $stCount = $pdo->prepare("SELECT COUNT(*) FROM Comment $w");
+    $stCount->execute($params);
+    $total = (int)$stCount->fetchColumn();
+
+    $stCmt = $pdo->prepare("SELECT * FROM Comment $w ORDER BY createdAt DESC LIMIT $limit OFFSET $skip");
+    $stCmt->execute($params);
+    $comments = $stCmt->fetchAll();
 
     json_response(['data' => ['comments' => $comments, 'total' => $total, 'page' => $page, 'limit' => $limit]]);
 }
