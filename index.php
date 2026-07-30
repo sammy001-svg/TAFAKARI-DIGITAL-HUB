@@ -108,14 +108,78 @@ try {
 <style>
   body { overflow-x: hidden; }
 
-  /* Hero */
+  /* ── Hero carousel ─────────────────────────────────────────── */
   .hero-slide {
     position: absolute; inset: 0;
-    transition: opacity .85s cubic-bezier(.4,0,.2,1);
+    opacity: 0; visibility: hidden;
+    transition: opacity 1s cubic-bezier(.4,0,.2,1), visibility 1s;
+  }
+  .hero-slide.is-active { opacity: 1; visibility: visible; }
+
+  /* Slow zoom-out on the active slide (Ken Burns) */
+  .hero-img {
+    width: 100%; height: 100%; object-fit: cover;
+    transform: scale(1.08);
+    transition: transform 9s linear;
+  }
+  .hero-slide.is-active .hero-img { transform: scale(1); }
+
+  /* Flat maroon veil — brand colour, no gradient */
+  .hero-veil { position: absolute; inset: 0; background: rgba(117,11,37,.62); }
+
+  /* Staggered entrance for the active slide's copy */
+  .hero-anim {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity .8s cubic-bezier(.4,0,.2,1), transform .8s cubic-bezier(.4,0,.2,1);
+  }
+  .hero-slide.is-active .hero-anim { opacity: 1; transform: none; }
+  .hero-slide.is-active .hero-anim:nth-child(1) { transition-delay: .18s; }
+  .hero-slide.is-active .hero-anim:nth-child(2) { transition-delay: .28s; }
+  .hero-slide.is-active .hero-anim:nth-child(3) { transition-delay: .38s; }
+  .hero-slide.is-active .hero-anim:nth-child(4) { transition-delay: .48s; }
+  .hero-slide.is-active .hero-anim:nth-child(5) { transition-delay: .58s; }
+
+  /* Legibility without darkening the photo further */
+  .hero-title { text-shadow: 0 2px 24px rgba(45,4,14,.45); }
+  .hero-sub   { text-shadow: 0 1px 12px rgba(45,4,14,.4); }
+
+  /* Prev / next arrows */
+  .hero-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 46px; height: 46px; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.3);
+    color: #fff; cursor: pointer; z-index: 20;
+    backdrop-filter: blur(6px);
+    transition: background .2s, border-color .2s;
+  }
+  .hero-arrow:hover { background: rgba(255,255,255,.25); border-color: rgba(255,255,255,.6); }
+  .hero-arrow-prev { left: 18px; }
+  .hero-arrow-next { right: 18px; }
+  @media (min-width: 768px) { .hero-arrow-next { right: 78px; } }
+
+  /* Mobile horizontal dots */
+  .hero-dot-m {
+    width: 22px; height: 3px; border-radius: 9999px;
+    background: rgba(255,255,255,.35); border: none; padding: 0; cursor: pointer;
+    transition: width .4s, background .4s;
+  }
+  .hero-dot-m.is-on { width: 40px; background: #E7952A; }
+
+  @media (max-width: 767px) {
+    .hero-arrow { width: 38px; height: 38px; }
   }
 
-  /* Stats bar */
-  .stat-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,.09); }
+  /* ── Impact stats bar ──────────────────────────────────────── */
+  .stat-item { position: relative; }
+  .stat-item:not(:last-child)::after {
+    content: ''; position: absolute; right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 1px; height: 52px; background: rgba(248,248,240,.18);
+  }
+  @media (max-width: 767px) {
+    .stat-item:nth-child(2)::after { display: none; }
+  }
 
   /* Pillar cards */
   .pillar-card {
@@ -227,7 +291,7 @@ try {
   <!-- ══════════════════════════════════════════
        1. HERO CAROUSEL
   ══════════════════════════════════════════ -->
-  <section class="relative w-full overflow-hidden" style="height:84vh;max-height:820px;min-height:540px">
+  <section id="hero" class="relative w-full overflow-hidden" style="height:84vh;max-height:820px;min-height:540px">
 
     <?php
     $defaultSlides = [
@@ -240,43 +304,42 @@ try {
     $slides = array_values(array_filter($slides, fn($s) => !empty($s['img']) && !empty($s['title'])));
     if (empty($slides)) $slides = $defaultSlides;
     foreach ($slides as $i => $s): ?>
-      <div class="hero-slide <?= $i === 0 ? 'opacity-100' : 'opacity-0' ?>" data-index="<?= $i ?>">
-        <img src="<?= h($s['img']) ?>" alt="<?= h($s['title']) ?>"
-             class="w-full h-full object-cover" style="filter:brightness(.7) saturate(1.1)">
-        <div class="absolute inset-0"
-             style="background:rgba(5,0,1,.72)"></div>
+      <div class="hero-slide <?= $i === 0 ? 'is-active' : '' ?>" data-index="<?= $i ?>">
+        <img src="<?= h($s['img']) ?>" alt="<?= h($s['title']) ?>" class="hero-img"
+             <?= $i === 0 ? 'fetchpriority="high"' : 'fetchpriority="low"' ?>>
+        <div class="hero-veil"></div>
 
-        <div class="absolute inset-0 flex flex-col justify-center px-8 md:px-24 pb-20">
+        <div class="absolute inset-0 flex flex-col justify-center px-8 md:px-24 pb-24 md:pb-20">
 
           <!-- Region eyebrow -->
-          <div class="flex items-center gap-3 mb-6">
+          <div class="hero-anim flex items-center gap-3 mb-6">
             <span class="block w-10 h-px" style="background:#E7952A"></span>
             <span class="text-[11px] font-black uppercase tracking-[.22em]" style="color:#E7952A" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.region"' : '' ?>><?= h($s['region']) ?></span>
           </div>
 
           <!-- Headline -->
-          <h1 class="font-outfit font-black text-4xl sm:text-5xl md:text-6xl text-white leading-[1.04] max-w-3xl mb-6" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.title"' : '' ?>>
+          <h1 class="hero-anim hero-title font-outfit font-black text-4xl sm:text-5xl md:text-6xl text-white leading-[1.04] max-w-3xl mb-6" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.title"' : '' ?>>
             <?= h($s['title']) ?>
           </h1>
 
           <!-- Sub-headline -->
-          <p class="text-white/70 text-base md:text-lg max-w-xl mb-10 leading-relaxed" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.sub"' : '' ?>>
+          <p class="hero-anim hero-sub text-white/85 text-base md:text-lg max-w-xl mb-10 leading-relaxed" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.sub"' : '' ?>>
             <?= h($s['sub']) ?>
           </p>
 
           <!-- CTAs -->
-          <div class="flex flex-wrap items-center gap-5">
-            <a href="/heatmap" class="btn-gold" style="padding:.75rem 1.75rem" data-i18n="home.exploreHeatmap">Explore Heatmap</a>
-            <a href="/about" class="inline-flex items-center gap-2 text-sm font-bold text-white/75 hover:text-white transition-colors">
+          <div class="hero-anim flex flex-wrap items-center gap-5">
+            <a href="<?= !empty($s['url']) ? h($s['url']) : '/heatmap' ?>" class="btn-gold" style="padding:.8rem 1.9rem" data-i18n="home.exploreHeatmap">Explore Heatmap</a>
+            <a href="/about" class="inline-flex items-center gap-2 text-sm font-bold text-white/85 hover:text-white transition-colors">
               <span data-i18n="ourMission">Our Mission</span>
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
           </div>
 
           <!-- Coverage badge -->
-          <div class="mt-10">
-            <span class="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border"
-                  style="color:#E7952A;border-color:rgba(231,149,42,.45);background:rgba(231,149,42,.07)" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.badge"' : '' ?>>
+          <div class="hero-anim mt-10">
+            <span class="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border"
+                  style="color:#E7952A;border-color:rgba(231,149,42,.55);background:rgba(231,149,42,.12)" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.badge"' : '' ?>>
               <?= h($s['badge']) ?>
             </span>
           </div>
@@ -294,17 +357,34 @@ try {
       <?php endforeach; ?>
     </div>
 
-    <!-- Slide counter (bottom-left) -->
-    <div class="absolute bottom-10 left-8 md:left-24 z-20 flex items-center gap-4">
+    <?php if (count($slides) > 1): ?>
+      <!-- Prev / next arrows -->
+      <button class="hero-arrow hero-arrow-prev" id="hero-prev" aria-label="Previous slide">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="hero-arrow hero-arrow-next" id="hero-next" aria-label="Next slide">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <!-- Horizontal dots (mobile) -->
+      <div class="absolute bottom-8 left-8 z-20 flex items-center gap-2 md:hidden">
+        <?php foreach ($slides as $i => $_): ?>
+          <button class="carousel-dot hero-dot-m <?= $i === 0 ? 'is-on' : '' ?>" data-index="<?= $i ?>" aria-label="Go to slide <?= $i + 1 ?>"></button>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
+    <!-- Slide counter (bottom-left, desktop) -->
+    <div class="absolute bottom-10 left-8 md:left-24 z-20 hidden md:flex items-center gap-4">
       <span id="hero-cur" class="font-outfit font-black text-3xl" style="color:#E7952A">01</span>
-      <div class="h-px w-10 bg-white/25"></div>
-      <span class="text-white/40 text-sm font-semibold">0<?= count($slides) ?></span>
+      <div class="h-px w-10" style="background:rgba(255,255,255,.35)"></div>
+      <span class="text-white/60 text-sm font-semibold"><?= str_pad((string)count($slides), 2, '0', STR_PAD_LEFT) ?></span>
     </div>
 
     <!-- Scroll indicator (bottom-center) -->
-    <div class="scroll-bounce absolute bottom-8 z-20 flex flex-col items-center gap-1.5" style="left:50%;transform:translateX(-50%)">
-      <span class="text-[9px] font-black uppercase tracking-[.2em] text-white/35" data-i18n="home.scroll">Scroll</span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2.5">
+    <div class="scroll-bounce absolute bottom-8 z-20 hidden md:flex flex-col items-center gap-1.5" style="left:50%;transform:translateX(-50%)">
+      <span class="text-[9px] font-black uppercase tracking-[.2em] text-white/55" data-i18n="home.scroll">Scroll</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2.5">
         <path d="M12 5v14M5 12l7 7 7-7"/>
       </svg>
     </div>
@@ -314,23 +394,34 @@ try {
   <!-- ══════════════════════════════════════════
        2. IMPACT STATISTICS
   ══════════════════════════════════════════ -->
-  <section style="background:#0D0102" class="py-14 px-6">
-    <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4">
-      <?php
-      $impactStats = [
-        ['num' => '3',                                                        'suf' => '',  'label' => 'Countries',              'key' => 'countries'],
-        ['num' => '84',                                                       'suf' => '+', 'label' => 'Administrative Units',   'key' => 'adminUnits'],
-        ['num' => format_number($publishedCount), 'suf' => '+', 'label' => 'Published Resources',    'key' => 'publishedResources'],
-        ['num' => format_number($totalViews),     'suf' => '+', 'label' => 'Community Engagements',  'key' => 'communityEngagements'],
-      ];
-      foreach ($impactStats as $j => $st): ?>
-        <div class="stat-item text-center py-10 px-4">
-          <div class="font-outfit font-black text-4xl md:text-5xl leading-none mb-2.5">
-            <span style="color:#E7952A"><?= h($st['num']) ?></span><span style="color:rgba(231,149,42,.5)"><?= h($st['suf']) ?></span>
+  <section style="background:#750B25" class="py-16 md:py-20 px-6">
+    <div class="max-w-7xl mx-auto">
+
+      <!-- Section label -->
+      <div class="flex items-center justify-center gap-3 mb-12">
+        <span class="block w-8 h-px" style="background:rgba(231,149,42,.7)"></span>
+        <span class="text-[10px] font-black uppercase tracking-[.2em]" style="color:#E7952A" data-i18n="home.ourReach">Our Reach</span>
+        <span class="block w-8 h-px" style="background:rgba(231,149,42,.7)"></span>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-y-12">
+        <?php
+        $impactStats = [
+          ['num' => '3',                            'suf' => '',  'label' => 'Countries',             'key' => 'countries'],
+          ['num' => '84',                           'suf' => '+', 'label' => 'Administrative Units',  'key' => 'adminUnits'],
+          ['num' => format_number($publishedCount), 'suf' => '+', 'label' => 'Published Resources',   'key' => 'publishedResources'],
+          ['num' => format_number($totalViews),     'suf' => '+', 'label' => 'Community Engagements', 'key' => 'communityEngagements'],
+        ];
+        foreach ($impactStats as $j => $st): ?>
+          <div class="stat-item text-center px-4">
+            <div class="font-outfit font-black text-4xl md:text-[3.25rem] leading-none mb-3" style="color:#E7952A">
+              <?= h($st['num']) ?><span style="color:rgba(231,149,42,.6)"><?= h($st['suf']) ?></span>
+            </div>
+            <div class="text-[11px] font-bold uppercase tracking-[.14em] leading-snug"
+                 style="color:rgba(248,248,240,.75)" data-i18n="home.stat.<?= h($st['key']) ?>"><?= h($st['label']) ?></div>
           </div>
-          <div class="text-white/45 text-[11px] font-semibold uppercase tracking-widest" data-i18n="home.stat.<?= h($st['key']) ?>"><?= h($st['label']) ?></div>
-        </div>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
+      </div>
     </div>
   </section>
 
@@ -845,38 +936,78 @@ try {
 
 <script>
 (function () {
+  var hero    = document.getElementById('hero');
   var slides  = document.querySelectorAll('.hero-slide');
   var dotBars = document.querySelectorAll('.hero-dot-bar');
+  var dotsM   = document.querySelectorAll('.hero-dot-m');
   var numEl   = document.getElementById('hero-cur');
   var cur     = 0;
   var total   = slides.length;
+  var timer   = null;
+
+  if (!total) return;
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
   function goTo(n) {
-    slides[cur].classList.remove('opacity-100');
-    slides[cur].classList.add('opacity-0');
+    var next = ((n % total) + total) % total;
+    if (next === cur) return;
+
+    slides[cur].classList.remove('is-active');
     if (dotBars[cur]) {
       dotBars[cur].style.width      = '1rem';
       dotBars[cur].style.background = 'rgba(255,255,255,.35)';
     }
+    if (dotsM[cur]) dotsM[cur].classList.remove('is-on');
 
-    cur = ((n % total) + total) % total;
+    cur = next;
 
-    slides[cur].classList.remove('opacity-0');
-    slides[cur].classList.add('opacity-100');
+    slides[cur].classList.add('is-active');
     if (dotBars[cur]) {
       dotBars[cur].style.width      = '2rem';
       dotBars[cur].style.background = '#E7952A';
     }
+    if (dotsM[cur]) dotsM[cur].classList.add('is-on');
     if (numEl) numEl.textContent = pad(cur + 1);
   }
 
+  function start() { stop(); if (total > 1) timer = setInterval(function () { goTo(cur + 1); }, 7000); }
+  function stop()  { if (timer) { clearInterval(timer); timer = null; } }
+
   document.querySelectorAll('.carousel-dot').forEach(function (btn) {
-    btn.addEventListener('click', function () { goTo(+this.dataset.index); });
+    btn.addEventListener('click', function () { goTo(+this.dataset.index); start(); });
   });
 
-  setInterval(function () { goTo(cur + 1); }, 7000);
+  var prev = document.getElementById('hero-prev');
+  var next = document.getElementById('hero-next');
+  if (prev) prev.addEventListener('click', function () { goTo(cur - 1); start(); });
+  if (next) next.addEventListener('click', function () { goTo(cur + 1); start(); });
+
+  // Keyboard arrows
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft')  { goTo(cur - 1); start(); }
+    if (e.key === 'ArrowRight') { goTo(cur + 1); start(); }
+  });
+
+  // Touch swipe
+  var tx = null;
+  if (hero) {
+    hero.addEventListener('touchstart', function (e) { tx = e.changedTouches[0].clientX; }, { passive: true });
+    hero.addEventListener('touchend', function (e) {
+      if (tx === null) return;
+      var dx = e.changedTouches[0].clientX - tx;
+      if (Math.abs(dx) > 45) { goTo(dx < 0 ? cur + 1 : cur - 1); start(); }
+      tx = null;
+    }, { passive: true });
+    // Pause while hovering, and when the tab is hidden
+    hero.addEventListener('mouseenter', stop);
+    hero.addEventListener('mouseleave', start);
+  }
+  document.addEventListener('visibilitychange', function () {
+    document.hidden ? stop() : start();
+  });
+
+  start();
 })();
 </script>
 </body>
