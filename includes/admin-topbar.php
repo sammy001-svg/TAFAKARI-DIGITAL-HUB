@@ -169,4 +169,22 @@ document.addEventListener('click', function(e) {
     document.getElementById('tb-user-dropdown').classList.add('hidden');
   }
 });
+<?php if (isset($_GET['updated'])):
+  $_msgs = [
+    'saved'     => ['Changes saved successfully.',                              '#0f172a'],
+    'published' => ['Changes saved and published.',                             '#16a34a'],
+    'submitted' => ['Changes saved and submitted for approval.',                '#E7952A'],
+    'requeued'  => ['Changes saved. Item unpublished and sent for re-approval.', '#E7952A'],
+  ];
+  $_m = $_msgs[$_GET['updated']] ?? $_msgs['saved']; ?>
+document.addEventListener('DOMContentLoaded', function() {
+  var b = document.createElement('div');
+  b.textContent = <?= json_encode($_m[0]) ?>;
+  b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;'
+    + 'border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);'
+    + 'color:#fff;background:<?= $_m[1] ?>';
+  document.body.appendChild(b);
+  setTimeout(function(){ b.remove(); }, 4500);
+});
+<?php endif; ?>
 </script>

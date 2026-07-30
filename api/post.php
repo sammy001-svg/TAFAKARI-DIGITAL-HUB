@@ -28,8 +28,10 @@ if ($method === 'GET') {
 }
 
 if ($method === 'PUT') {
-    if (!$isSuper && in_array($post['status'], ['PUBLISHED','ARCHIVED']))
-        json_error('Cannot edit a published or archived post', 403);
+    // Owners may edit their own PUBLISHED content; it returns to the approval
+    // queue below. ARCHIVED stays locked to super admins.
+    if (!$isSuper && $post['status'] === 'ARCHIVED')
+        json_error('Cannot edit an archived post', 403);
 
     $body          = request_body();
     $title         = trim($body['title']         ?? $post['title']);
@@ -45,6 +47,12 @@ if ($method === 'PUT') {
     $pdo->prepare(
         'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,updatedAt=NOW(3) WHERE id=?'
     )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$id]);
+
+    // Non-super admin edited live content — pull it back for re-approval
+    if (!$isSuper && $post['status'] === 'PUBLISHED') {
+        $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")
+            ->execute([$id]);
+    }
 
     $stmt->execute([$id]);
     json_response($stmt->fetch());

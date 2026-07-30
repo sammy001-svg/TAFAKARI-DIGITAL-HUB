@@ -20,16 +20,25 @@ $post = $stmt->fetch();
 
 if (!$post) { header('Location: /admin/content'); exit; }
 
-// Permission: ADMIN can only edit own DRAFT/REJECTED
+// Permission: ADMIN may edit their own content — including PUBLISHED, which
+// re-enters the approval queue on save. ARCHIVED stays locked.
+$lockedMsg = '';
 if (!$isSuper) {
     if ($post['authorId'] !== $uid) { header('Location: /admin/content'); exit; }
-    if (in_array($post['status'], ['PUBLISHED','ARCHIVED'])) { header('Location: /admin/content'); exit; }
+    if ($post['status'] === 'ARCHIVED') {
+        $lockedMsg = 'This content is archived and cannot be edited. Ask a super admin to restore it first.';
+    }
 }
+
+// A non-super admin editing live content sends it back for re-approval
+$willRequeue = (!$isSuper && $post['status'] === 'PUBLISHED');
 
 $canSubmit = $isSuper || in_array($post['status'], ['DRAFT','REJECTED']);
 
 $error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
+    $error = $lockedMsg;
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title         = trim($_POST['title']         ?? '');
     $type          = trim($_POST['type']          ?? 'ARTICLE');
     $description   = trim($_POST['description']   ?? '');
@@ -54,10 +63,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,updatedAt=NOW(3) WHERE id=?'
         )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$id]);
 
+        $flag = 'saved';
         if ($andPublish) {
             $pdo->prepare("UPDATE Post SET status='PUBLISHED',approverId=?,updatedAt=NOW(3) WHERE id=?")->execute([$uid, $id]);
+            $flag = 'published';
         } elseif ($andSubmit && $canSubmit) {
             $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
+            $flag = 'submitted';
+        } elseif ($willRequeue) {
+            // Admin edited live content — pull it from the public site pending re-approval
+            $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
+            $flag = 'requeued';
         }
         $redirect = match($type) {
             'ARTICLE'       => '/admin/content/articles',
@@ -67,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'DOCUMENT'      => '/admin/content/documents',
             default         => '/admin/content',
         };
-        header('Location: ' . $redirect);
+        header('Location: ' . $redirect . '?updated=' . $flag);
         exit;
     }
 }
@@ -129,6 +145,22 @@ $adminPageSub   = h($post['title'] ?? '');
 
   <?php if ($error): ?>
     <div class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm"><?= h($error) ?></div>
+  <?php endif; ?>
+
+  <?php if ($lockedMsg): ?>
+    <div class="mb-6 p-4 bg-slate-100 border border-slate-200 rounded-2xl text-slate-600 text-sm flex items-start gap-2.5">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span><?= h($lockedMsg) ?></span>
+    </div>
+  <?php elseif ($willRequeue): ?>
+    <div class="mb-6 p-4 rounded-2xl text-sm flex items-start gap-2.5" style="background:#fffbeb;border:1px solid #fde68a;color:#92400e">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px">
+        <path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      </svg>
+      <span>This item is currently <strong>live</strong>. Saving changes will unpublish it and resubmit it for super-admin approval.</span>
+    </div>
   <?php endif; ?>
 
   <form method="POST" class="max-w-3xl space-y-8">
@@ -226,7 +258,11 @@ $adminPageSub   = h($post['title'] ?? '');
     </div>
 
     <div class="flex gap-3 flex-wrap">
-      <button type="submit" name="save_draft" class="btn-primary" style="padding:.7rem 1.75rem">Save Changes</button>
+      <?php if (!$lockedMsg): ?>
+        <button type="submit" name="save_draft" class="btn-primary" style="padding:.7rem 1.75rem">
+          <?= $willRequeue ? 'Save &amp; Resubmit for Approval' : 'Save Changes' ?>
+        </button>
+      <?php endif; ?>
       <?php if ($isSuper && in_array($post['status'], ['DRAFT','PENDING','REJECTED'])): ?>
         <button type="submit" name="save_publish"
                 class="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
