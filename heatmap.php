@@ -270,19 +270,19 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
   100% { transform: scale(5.5); opacity: 0;   }
 }
 /* ── Map tile bg before load ──────────────────────────────────────── */
-.leaflet-container { background: #181422; }
+.leaflet-container { background: #eceae5; }
 
 /* ── Leaflet tooltip overrides ────────────────────────────────────── */
 .leaflet-tooltip {
-  background: rgba(10,2,4,.92) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,.12) !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
   font-family: 'Inter', sans-serif !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   padding: 5px 10px !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,.4) !important;
+  box-shadow: 0 4px 16px rgba(15,23,42,.15) !important;
   white-space: nowrap !important;
 }
 .leaflet-tooltip::before,
@@ -291,30 +291,30 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 
 /* ── Attribution ──────────────────────────────────────────────────── */
 .leaflet-control-attribution {
-  background: rgba(0,0,0,.6) !important;
-  color: rgba(255,255,255,.4) !important;
+  background: rgba(255,255,255,.85) !important;
+  color: #64748b !important;
   font-size: 9px !important;
 }
-.leaflet-control-attribution a { color: rgba(231,149,42,.7) !important; }
+.leaflet-control-attribution a { color: #750B25 !important; }
 
 /* ── Zoom control ─────────────────────────────────────────────────── */
 .leaflet-control-zoom a {
-  background: rgba(10,2,4,.88) !important;
-  color: rgba(255,255,255,.8) !important;
-  border-color: rgba(255,255,255,.12) !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
 }
-.leaflet-control-zoom a:hover { background: rgba(231,149,42,.2) !important; }
+.leaflet-control-zoom a:hover { background: #F8F8F0 !important; color: #750B25 !important; }
 
 /* ── Control panel scrollbar ──────────────────────────────────────── */
 #ctrl-panel {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.15) transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 #ctrl-panel::-webkit-scrollbar { width: 3px; }
-#ctrl-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 2px; }
+#ctrl-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 
 /* ── Search input placeholder ─────────────────────────────────────── */
-#map-search::placeholder { color: rgba(255,255,255,.28); }
+#map-search::placeholder { color: #94a3b8; }
 
 /* ── Category checkboxes ──────────────────────────────────────────── */
 .cat-check { display: none; }
@@ -322,13 +322,13 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
   display: flex; align-items: center; gap: 8px; cursor: pointer;
   padding: 5px 7px; border-radius: 8px; transition: background .15s;
 }
-.cat-label:hover { background: rgba(255,255,255,.07); }
+.cat-label:hover { background: #f1f5f9; }
 .cat-dot {
   width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
   border: 2px solid transparent; transition: border-color .15s;
 }
-.cat-check:checked + .cat-label .cat-dot { border-color: rgba(255,255,255,.65); }
-.cat-check:not(:checked) + .cat-label { opacity: .38; }
+.cat-check:checked + .cat-label .cat-dot { border-color: rgba(15,23,42,.4); }
+.cat-check:not(:checked) + .cat-label { opacity: .42; }
 
 /* ── Intensity slider ─────────────────────────────────────────────── */
 .int-slider {
@@ -338,7 +338,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 .int-slider::-webkit-slider-thumb {
   -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%;
   background: #E7952A; border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,.4); cursor: pointer;
+  box-shadow: 0 1px 4px rgba(15,23,42,.3); cursor: pointer;
 }
 .int-slider::-moz-range-thumb {
   width: 15px; height: 15px; border-radius: 50%;
@@ -356,7 +356,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 /* ── Ctrl-panel backdrop (mobile only) ───────────────────────────── */
 #ctrl-backdrop {
   position: absolute; inset: 0;
-  background: rgba(0,0,0,.5); z-index: 999;
+  background: rgba(15,23,42,.38); z-index: 999;
   display: none;
   backdrop-filter: blur(1px);
 }
@@ -364,9 +364,9 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 /* ── Country hover tooltip (floating card) ─────────────────────────── */
 #ctry-hover-card {
   position: absolute; z-index: 1200; pointer-events: none;
-  background: rgba(8,4,8,.94); border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.97); border: 1px solid #e2e8f0;
   border-radius: 14px; padding: 12px 14px; min-width: 190px; max-width: 240px;
-  backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(15,23,42,.18);
   transition: opacity .15s; font-family: 'Inter', sans-serif;
 }
 #ctry-hover-card.hidden { opacity: 0; }
@@ -377,15 +377,15 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 /* ── Date filter inputs ───────────────────────────────────────────── */
 .date-inp {
   width: 100%; padding: 7px 10px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.07);
-  color: #fff; font-size: 11px; outline: none; transition: border-color .15s;
-  color-scheme: dark;
+  border: 1px solid #e2e8f0; background: #f8fafc;
+  color: #0f172a; font-size: 11px; outline: none; transition: border-color .15s;
+  color-scheme: light;
 }
-.date-inp:focus { border-color: rgba(231,149,42,.5); }
+.date-inp:focus { border-color: #E7952A; }
 
 /* ── Intensity legend tiers ───────────────────────────────────────── */
 .int-tier { display:flex; align-items:center; gap:10px; padding:4px 6px; border-radius:8px; transition:background .12s; }
-.int-tier:hover { background:rgba(255,255,255,.05); }
+.int-tier:hover { background:#f1f5f9; }
 
 /* ── Country panel stats grid ─────────────────────────────────────── */
 .cstat { background:#f8fafc; border-radius:10px; padding:9px 11px; text-align:center; }
@@ -482,8 +482,8 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
     <!-- Mobile filter toggle -->
     <button id="ctrl-toggle"
             onclick="_ctrlOpen()"
-            class="absolute top-3 left-3 z-[1100] items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-white"
-            style="background:rgba(10,2,4,.88);border:1px solid rgba(255,255,255,.14);min-height:40px">
+            class="absolute top-3 left-3 z-[1100] items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold"
+            style="background:#ffffff;color:#750B25;border:1px solid #e2e8f0;box-shadow:0 2px 10px rgba(15,23,42,.12);min-height:40px">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24">
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
@@ -496,48 +496,48 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
     <!-- ── Left control panel ───────────────────────────────────────── -->
     <div id="ctrl-panel"
          class="absolute top-0 left-0 bottom-0 z-[1000] overflow-y-auto"
-         style="width:248px;background:rgba(10,2,4,.93);backdrop-filter:blur(12px);border-right:1px solid rgba(255,255,255,.07)">
+         style="width:248px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-right:1px solid #e2e8f0">
 
       <!-- Mobile-only header with close button -->
-      <div class="md:hidden flex items-center justify-between px-4 py-3.5" style="border-bottom:1px solid rgba(255,255,255,.1);flex-shrink:0">
-        <span class="text-xs font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.8)" data-i18n="heatmapPage.mapFilters">Map Filters</span>
+      <div class="md:hidden flex items-center justify-between px-4 py-3.5" style="border-bottom:1px solid #e2e8f0;flex-shrink:0">
+        <span class="text-xs font-black uppercase tracking-[.12em]" style="color:#750B25" data-i18n="heatmapPage.mapFilters">Map Filters</span>
         <button onclick="_ctrlClose()"
-                style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>
+                style="width:32px;height:32px;border-radius:50%;border:none;background:#f1f5f9;color:#475569;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>
       </div>
 
       <div class="p-4 space-y-5">
 
         <!-- Search -->
         <div>
-          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.searchLocations">Search Locations</p>
+          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:#750B25" data-i18n="heatmapPage.searchLocations">Search Locations</p>
           <div class="relative">
-            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style="color:rgba(255,255,255,.3)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style="color:#94a3b8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input id="map-search" type="search" placeholder="Location, country…" oninput="applyFilters()"
                    data-i18n-placeholder="heatmapPage.searchPlaceholder"
-                   class="w-full text-xs text-white rounded-xl border pl-8 pr-3 py-2.5 focus:outline-none focus:border-amber-400/40"
-                   style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)">
+                   class="w-full text-xs rounded-xl border pl-8 pr-3 py-2.5 focus:outline-none"
+                   style="background:#f8fafc;border-color:#e2e8f0;color:#0f172a">
           </div>
         </div>
 
         <!-- View mode -->
         <div>
-          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.viewMode">View Mode</p>
-          <div class="grid grid-cols-3 gap-1 p-1 rounded-xl" style="background:rgba(255,255,255,.05)">
+          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:#750B25" data-i18n="heatmapPage.viewMode">View Mode</p>
+          <div class="grid grid-cols-3 gap-1 p-1 rounded-xl" style="background:#f1f5f9">
             <button id="mode-markers" onclick="setMode('markers')"
-                    class="mode-btn text-[10px] font-bold py-2 rounded-lg text-white transition-all"
-                    style="background:rgba(231,149,42,.22);border:1px solid rgba(231,149,42,.35)">
+                    class="mode-btn text-[10px] font-bold py-2 rounded-lg transition-all"
+                    style="color:#750B25;background:#ffffff;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,.08)">
               ● <span data-i18n="heatmapPage.markers">Markers</span>
             </button>
             <button id="mode-heat" onclick="setMode('heat')"
                     class="mode-btn text-[10px] font-bold py-2 rounded-lg transition-all"
-                    style="color:rgba(255,255,255,.4);background:transparent;border:1px solid transparent">
+                    style="color:#64748b;background:transparent;border:1px solid transparent">
               ◈ <span data-i18n="heatmapPage.heatmapMode">Heat</span>
             </button>
             <button id="mode-countries" onclick="setMode('countries')"
                     class="mode-btn text-[10px] font-bold py-2 rounded-lg transition-all"
-                    style="color:rgba(255,255,255,.4);background:transparent;border:1px solid transparent">
+                    style="color:#64748b;background:transparent;border:1px solid transparent">
               ⬡ Countries
             </button>
           </div>
@@ -546,14 +546,14 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
         <!-- Country filter -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.country">Country</p>
-            <button onclick="setCountry('ALL')" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)" data-i18n="heatmapPage.reset">Reset</button>
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:#750B25" data-i18n="heatmapPage.country">Country</p>
+            <button onclick="setCountry('ALL')" class="text-[10px] font-bold" style="color:rgba(117,11,37,.62)" data-i18n="heatmapPage.reset">Reset</button>
           </div>
-          <div class="space-y-px max-h-44 overflow-y-auto pr-0.5" style="scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent">
+          <div class="space-y-px max-h-44 overflow-y-auto pr-0.5" style="scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent">
             <?php foreach ($ctryList as $code => [$name, $flag]): ?>
               <button onclick="setCountry('<?= $code ?>')" data-ctry="<?= $code ?>"
                       class="ctry-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-all"
-                      style="color:rgba(255,255,255,.55)">
+                      style="color:#475569">
                 <span style="font-size:14px;line-height:1"><?= $flag ?></span>
                 <span class="text-xs font-medium" <?= $code === 'ALL' ? 'data-i18n="heatmapPage.allCountries"' : '' ?>><?= h($name) ?></span>
               </button>
@@ -564,8 +564,8 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
         <!-- Category filter -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.category">Category</p>
-            <button onclick="toggleAllCats()" class="text-[10px] font-bold" style="color:rgba(231,149,42,.45)" data-i18n="heatmapPage.toggleAll">Toggle All</button>
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:#750B25" data-i18n="heatmapPage.category">Category</p>
+            <button onclick="toggleAllCats()" class="text-[10px] font-bold" style="color:rgba(117,11,37,.62)" data-i18n="heatmapPage.toggleAll">Toggle All</button>
           </div>
           <?php foreach ($cats as $cat => $col):
             // Cast: PHP turns numeric category names into int keys, which
@@ -577,8 +577,8 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
               <input type="checkbox" class="cat-check" id="<?= $id ?>" value="<?= h($cat) ?>" checked onchange="applyFilters()">
               <label for="<?= $id ?>" class="cat-label">
                 <span class="cat-dot" style="background:<?= $col ?>"></span>
-                <span class="text-[11px]" style="color:rgba(255,255,255,.72)"><?= h($cat) ?></span>
-                <span class="text-[10px] font-bold ml-auto cat-count" data-cat="<?= h($cat) ?>" style="color:rgba(255,255,255,.28)"></span>
+                <span class="text-[11px]" style="color:#334155"><?= h($cat) ?></span>
+                <span class="text-[10px] font-bold ml-auto cat-count" data-cat="<?= h($cat) ?>" style="color:#94a3b8"></span>
               </label>
             </div>
           <?php endforeach; ?>
@@ -587,46 +587,46 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
         <!-- Intensity slider -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)" data-i18n="heatmapPage.minIntensity">Min Intensity</p>
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:#750B25" data-i18n="heatmapPage.minIntensity">Min Intensity</p>
             <span id="int-val" class="text-xs font-black" style="color:#E7952A">1</span>
           </div>
           <input type="range" class="int-slider" id="int-slider" min="1" max="10" value="1"
                  oninput="updateSlider();applyFilters()"
-                 style="background:linear-gradient(to right,#E7952A 0%,rgba(255,255,255,.12) 0%)">
+                 style="background:linear-gradient(to right,#E7952A 0%,#e2e8f0 0%)">
           <div class="flex justify-between mt-1">
-            <span class="text-[9px]" style="color:rgba(255,255,255,.22)" data-i18n="heatmapPage.low">Low</span>
-            <span class="text-[9px]" style="color:rgba(255,255,255,.22)" data-i18n="heatmapPage.critical">Critical</span>
+            <span class="text-[9px]" style="color:#94a3b8" data-i18n="heatmapPage.low">Low</span>
+            <span class="text-[9px]" style="color:#94a3b8" data-i18n="heatmapPage.critical">Critical</span>
           </div>
         </div>
 
         <!-- Date range filter -->
         <div>
-          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:rgba(231,149,42,.7)">Date Range (Reports)</p>
+          <p class="text-[10px] font-black uppercase tracking-[.12em] mb-1.5" style="color:#750B25">Date Range (Reports)</p>
           <div class="space-y-1.5">
             <div>
-              <label class="text-[9px]" style="color:rgba(255,255,255,.35)">From</label>
+              <label class="text-[9px]" style="color:#64748b">From</label>
               <input type="date" id="date-from" class="date-inp" oninput="applyFilters()">
             </div>
             <div>
-              <label class="text-[9px]" style="color:rgba(255,255,255,.35)">To</label>
+              <label class="text-[9px]" style="color:#64748b">To</label>
               <input type="date" id="date-to" class="date-inp" oninput="applyFilters()">
             </div>
           </div>
           <button onclick="document.getElementById('date-from').value='';document.getElementById('date-to').value='';applyFilters()"
-                  class="mt-1.5 text-[9px] font-bold" style="color:rgba(231,149,42,.45)">Clear dates</button>
+                  class="mt-1.5 text-[9px] font-bold" style="color:rgba(117,11,37,.62)">Clear dates</button>
         </div>
 
         <!-- Intensity legend -->
         <div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(231,149,42,.7)">Intensity Legend</p>
-            <div style="display:flex;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.12)">
+            <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:#750B25">Intensity Legend</p>
+            <div style="display:flex;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0">
               <button id="leg-tab-esc" onclick="setLegTab('escalating')"
-                      style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px;border:none;cursor:pointer;background:rgba(237,28,36,.2);color:#ED1C24;line-height:1;white-space:nowrap">
+                      style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px;border:none;cursor:pointer;background:rgba(237,28,36,.12);color:#ED1C24;line-height:1;white-space:nowrap">
                 ↑ Escalating
               </button>
               <button id="leg-tab-desc" onclick="setLegTab('deescalating')"
-                      style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,.28);line-height:1;white-space:nowrap">
+                      style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px;border:none;cursor:pointer;background:transparent;color:#94a3b8;line-height:1;white-space:nowrap">
                 ↓ De-escalating
               </button>
             </div>
@@ -637,35 +637,35 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
               <div style="width:14px;height:14px;border-radius:50%;background:#ED1C24;box-shadow:0 0 8px #ED1C2499;flex-shrink:0"></div>
               <div>
                 <p style="font-size:10px;font-weight:700;color:#ED1C24;margin:0">Very High</p>
-                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">9–10 · Active conflict</p>
+                <p style="font-size:9px;color:#64748b;margin:0">9–10 · Active conflict</p>
               </div>
             </div>
             <div class="int-tier">
               <div style="width:12px;height:12px;border-radius:50%;background:#E7952A;box-shadow:0 0 6px #E7952A77;flex-shrink:0;margin-left:1px"></div>
               <div>
                 <p style="font-size:10px;font-weight:700;color:#E7952A;margin:0">High</p>
-                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">7–8 · Elevated risk</p>
+                <p style="font-size:9px;color:#64748b;margin:0">7–8 · Elevated risk</p>
               </div>
             </div>
             <div class="int-tier">
               <div style="width:10px;height:10px;border-radius:50%;background:#F59E0B;flex-shrink:0;margin-left:2px"></div>
               <div>
                 <p style="font-size:10px;font-weight:700;color:#F59E0B;margin:0">Moderate</p>
-                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">5–6 · Significant concern</p>
+                <p style="font-size:9px;color:#64748b;margin:0">5–6 · Significant concern</p>
               </div>
             </div>
             <div class="int-tier">
-              <div style="width:8px;height:8px;border-radius:50%;background:#84CC16;flex-shrink:0;margin-left:3px"></div>
+              <div style="width:8px;height:8px;border-radius:50%;background:#65A30D;flex-shrink:0;margin-left:3px"></div>
               <div>
-                <p style="font-size:10px;font-weight:700;color:#84CC16;margin:0">Low</p>
-                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">2–4 · Emerging situation</p>
+                <p style="font-size:10px;font-weight:700;color:#65A30D;margin:0">Low</p>
+                <p style="font-size:9px;color:#64748b;margin:0">2–4 · Emerging situation</p>
               </div>
             </div>
             <div class="int-tier">
-              <div style="width:8px;height:8px;border-radius:50%;background:#10B981;flex-shrink:0;margin-left:3px"></div>
+              <div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0;margin-left:3px"></div>
               <div>
-                <p style="font-size:10px;font-weight:700;color:#10B981;margin:0">Stable / Peaceful</p>
-                <p style="font-size:9px;color:rgba(255,255,255,.38);margin:0">1 · Minimal risk</p>
+                <p style="font-size:10px;font-weight:700;color:#059669;margin:0">Stable / Peaceful</p>
+                <p style="font-size:9px;color:#64748b;margin:0">1 · Minimal risk</p>
               </div>
             </div>
           </div>
@@ -675,23 +675,23 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
               <div style="width:16px;height:16px;border-radius:50%;background:#10B981;box-shadow:0 0 8px #10B98188;flex-shrink:0;display:flex;align-items:center;justify-content:center">
                 <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M3 7l3 3 3-3" stroke="rgba(0,0,0,.7)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">Major improvement</span>
+              <span class="text-[11px]" style="color:#334155">Major improvement</span>
             </div>
             <div class="flex items-center gap-2.5">
               <div style="width:13px;height:13px;border-radius:50%;background:#34D399;flex-shrink:0;margin-left:1.5px;display:flex;align-items:center;justify-content:center">
                 <svg width="7" height="7" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M3 7l3 3 3-3" stroke="rgba(0,0,0,.7)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">Moderate progress</span>
+              <span class="text-[11px]" style="color:#334155">Moderate progress</span>
             </div>
             <div class="flex items-center gap-2.5">
               <div style="width:9px;height:9px;border-radius:50%;background:#6EE7B7;flex-shrink:0;margin-left:3.5px"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.55)">Early / fragile improvement</span>
+              <span class="text-[11px]" style="color:#334155">Early / fragile improvement</span>
             </div>
           </div>
         </div>
 
         <!-- Published Reports toggle -->
-        <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:16px">
+        <div style="border-top:1px solid #e2e8f0;padding-top:16px">
           <div class="flex items-center justify-between mb-2">
             <p class="text-[10px] font-black uppercase tracking-[.12em]" style="color:rgba(99,102,241,.85)" data-i18n="heatmapPage.publishedReports">Published Reports</p>
             <button id="reports-toggle-btn" onclick="toggleReports()"
@@ -700,23 +700,23 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
               ON
             </button>
           </div>
-          <p class="text-[10px] mb-3" style="color:rgba(255,255,255,.28)"><?= count($postMarkers) ?> <span data-i18n="heatmapPage.reportsFromDb">reports from the database</span></p>
+          <p class="text-[10px] mb-3" style="color:#94a3b8"><?= count($postMarkers) ?> <span data-i18n="heatmapPage.reportsFromDb">reports from the database</span></p>
           <div class="space-y-1.5">
             <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#750B25;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendArticle">Article</span>
+              <div style="width:10px;height:10px;background:#750B25;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendArticle">Article</span>
             </div>
             <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#E7952A;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendPodcast">Podcast</span>
+              <div style="width:10px;height:10px;background:#E7952A;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendPodcast">Podcast</span>
             </div>
             <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#ED1C24;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendVideo">Video</span>
+              <div style="width:10px;height:10px;background:#ED1C24;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendVideo">Video</span>
             </div>
             <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#6366F1;border:1.5px solid rgba(255,255,255,.5);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:rgba(255,255,255,.45)" data-i18n="heatmapPage.legendDocument">Document</span>
+              <div style="width:10px;height:10px;background:#6366F1;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
+              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendDocument">Document</span>
             </div>
           </div>
         </div>
@@ -730,15 +730,15 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
     <!-- ── Map toolbar (top-right) ──────────────────────────────────── -->
     <div class="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
       <button onclick="resetView()" title="Reset map view" data-i18n-title="heatmapPage.resetMapView"
-              class="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:opacity-80 transition-opacity"
-              style="background:rgba(10,2,4,.82);border:1px solid rgba(255,255,255,.12)">
+              class="w-9 h-9 flex items-center justify-center rounded-xl hover:opacity-80 transition-opacity"
+              style="background:#ffffff;color:#475569;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(15,23,42,.1)">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
         </svg>
       </button>
       <button onclick="toggleFullscreen()" title="Toggle fullscreen" data-i18n-title="heatmapPage.toggleFullscreen"
-              class="w-9 h-9 flex items-center justify-center rounded-xl text-white hover:opacity-80 transition-opacity"
-              style="background:rgba(10,2,4,.82);border:1px solid rgba(255,255,255,.12)">
+              class="w-9 h-9 flex items-center justify-center rounded-xl hover:opacity-80 transition-opacity"
+              style="background:#ffffff;color:#475569;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(15,23,42,.1)">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
         </svg>
@@ -747,8 +747,8 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 
     <!-- ── Active count pill ─────────────────────────────────────────── -->
     <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-[1000]">
-      <div class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white"
-           style="background:rgba(10,2,4,.8);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px)">
+      <div class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold"
+           style="background:rgba(255,255,255,.95);color:#0f172a;border:1px solid #e2e8f0;box-shadow:0 2px 12px rgba(15,23,42,.12);backdrop-filter:blur(8px)">
         <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background:#10b981"></span>
         <span id="active-count">Loading…</span>
       </div>
@@ -806,9 +806,9 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 /* ── Guard: show clear error if Leaflet CDN failed to load ─────── */
 if (typeof L === 'undefined') {
   var _me = document.getElementById('map');
-  if (_me) _me.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:rgba(10,2,4,.9);gap:14px">'
-    + '<svg width="36" height="36" fill="none" stroke="#E7952A" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/></svg>'
-    + '<p style="font-family:Inter,sans-serif;color:rgba(255,255,255,.75);font-size:13px;margin:0;text-align:center">Map library failed to load.<br>Please check your internet connection and refresh.</p>'
+  if (_me) _me.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#f8fafc;gap:14px">'
+    + '<svg width="36" height="36" fill="none" stroke="#750B25" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/></svg>'
+    + '<p style="font-family:Inter,sans-serif;color:#475569;font-size:13px;margin:0;text-align:center">Map library failed to load.<br>Please check your internet connection and refresh.</p>'
     + '</div>';
   throw new Error('[Heatmap] Leaflet.js not loaded');
 }
@@ -816,7 +816,7 @@ if (typeof L === 'undefined') {
 /* ── Map + tile layer — must be first so base map always renders ─── */
 var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   subdomains: 'abcd',
   maxZoom: 19
@@ -1003,7 +1003,7 @@ function makePostIcon(d) {
 
 /* ── De-escalating icon factory ───────────────────────────────────── */
 function makeDeescIcon(d) {
-  var col   = d.deescLevel >= 3 ? '#10B981' : d.deescLevel >= 2 ? '#34D399' : '#6EE7B7';
+  var col   = d.deescLevel >= 3 ? '#047857' : d.deescLevel >= 2 ? '#059669' : '#10B981';
   var size  = d.deescLevel >= 3 ? 32 : d.deescLevel >= 2 ? 24 : 18;
   var glow  = d.deescLevel >= 3 ? '0 0 10px 3px '+col+'66' : d.deescLevel >= 2 ? '0 0 6px 2px '+col+'44' : 'none';
   var inner = size - 6;
@@ -1031,12 +1031,12 @@ function setLegTab(tab) {
   var btnEsc  = document.getElementById('leg-tab-esc');
   var btnDesc = document.getElementById('leg-tab-desc');
   if (btnEsc) {
-    btnEsc.style.background = isDesc ? 'transparent' : 'rgba(237,28,36,.2)';
-    btnEsc.style.color      = isDesc ? 'rgba(255,255,255,.28)' : '#ED1C24';
+    btnEsc.style.background = isDesc ? 'transparent' : 'rgba(237,28,36,.12)';
+    btnEsc.style.color      = isDesc ? '#94a3b8' : '#ED1C24';
   }
   if (btnDesc) {
-    btnDesc.style.background = isDesc ? 'rgba(16,185,129,.22)' : 'transparent';
-    btnDesc.style.color      = isDesc ? '#10B981' : 'rgba(255,255,255,.28)';
+    btnDesc.style.background = isDesc ? 'rgba(5,150,105,.14)' : 'transparent';
+    btnDesc.style.color      = isDesc ? '#059669' : '#94a3b8';
   }
   var legEsc  = document.getElementById('legend-escalating');
   var legDesc = document.getElementById('legend-deescalating');
@@ -1055,7 +1055,7 @@ function setLegTab(tab) {
 
 /* ── De-escalating detail panel ───────────────────────────────────── */
 function openDeescDetail(d) {
-  var col        = d.deescLevel >= 3 ? '#10B981' : d.deescLevel >= 2 ? '#34D399' : '#6EE7B7';
+  var col        = d.deescLevel >= 3 ? '#047857' : d.deescLevel >= 2 ? '#059669' : '#10B981';
   var levelLabel = d.deescLevel >= 3 ? 'Major Improvement' : d.deescLevel >= 2 ? 'Moderate Progress' : 'Early Progress';
   var catC       = CAT_COLORS[d.category] || '#64748b';
   if (window.innerWidth < 768) document.getElementById('ctrl-panel').classList.remove('ctrl-open');
@@ -1112,7 +1112,7 @@ function renderDeescTable(data) {
     return;
   }
   tbody.innerHTML = sorted.map(function(d, i) {
-    var col  = d.deescLevel >= 3 ? '#10B981' : d.deescLevel >= 2 ? '#34D399' : '#6EE7B7';
+    var col  = d.deescLevel >= 3 ? '#047857' : d.deescLevel >= 2 ? '#059669' : '#10B981';
     var catC = CAT_COLORS[d.category] || '#94a3b8';
     var bg   = i % 2 === 0 ? '#fff' : '#fafafa';
     var pct  = (d.deescLevel / 3 * 100).toFixed(0);
@@ -1141,9 +1141,9 @@ function toggleReports() {
   var btn = document.getElementById('reports-toggle-btn');
   if (btn) {
     btn.textContent = showReports ? 'ON' : 'OFF';
-    btn.style.background    = showReports ? 'rgba(99,102,241,.25)' : 'rgba(255,255,255,.06)';
-    btn.style.color         = showReports ? '#818CF8' : 'rgba(255,255,255,.35)';
-    btn.style.borderColor   = showReports ? 'rgba(99,102,241,.35)' : 'rgba(255,255,255,.1)';
+    btn.style.background    = showReports ? 'rgba(99,102,241,.14)' : '#f1f5f9';
+    btn.style.color         = showReports ? '#4F46E5' : '#94a3b8';
+    btn.style.borderColor   = showReports ? 'rgba(99,102,241,.35)' : '#e2e8f0';
   }
   applyFilters();
 }
@@ -1190,8 +1190,8 @@ function intensityColor(v) {
   if (v >= 9) return '#ED1C24';
   if (v >= 7) return '#E7952A';
   if (v >= 5) return '#F59E0B';
-  if (v >= 2) return '#84CC16';
-  return '#10B981';
+  if (v >= 2) return '#65A30D';
+  return '#059669';
 }
 function intensityLabel(v) {
   if (v >= 9) return 'Very High';
@@ -1223,7 +1223,7 @@ function openCountryPanel(code) {
   var avgInt     = locations.length ? (locations.reduce(function(s,d){ return s+d.intensity; },0)/locations.length).toFixed(1) : 0;
   var allCats    = getCountryCategories(code);
   var trend      = getCountryTrend(code);
-  var trendCol   = trend === 'Decreasing' ? '#10B981' : trend === 'Increasing' ? '#ED1C24' : '#E7952A';
+  var trendCol   = trend === 'Decreasing' ? '#059669' : trend === 'Increasing' ? '#ED1C24' : '#E7952A';
   var trendIcon  = trend === 'Decreasing' ? '↓' : trend === 'Increasing' ? '↑' : '→';
   var intCol     = intensityColor(maxInt);
   var intLbl     = maxInt > 0 ? intensityLabel(maxInt) : 'No data';
@@ -1326,14 +1326,14 @@ function showCountryHoverCard(e, code) {
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
     + '<span style="font-size:20px">' + flag + '</span>'
     + '<div>'
-    + '<p style="font-family:Outfit,sans-serif;font-weight:900;font-size:13px;color:#fff;margin:0">' + esc(name) + '</p>'
+    + '<p style="font-family:Outfit,sans-serif;font-weight:900;font-size:13px;color:#0f172a;margin:0">' + esc(name) + '</p>'
     + '<p style="font-size:9px;font-weight:700;color:'+col+';margin:0">' + lbl + ' · ' + trendIcon + trend + '</p>'
     + '</div>'
     + '</div>'
     + (cats ? '<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:3px">' + cats + '</div>' : '')
     + '<div style="display:flex;justify-content:space-between;align-items:center">'
-    + '<span style="font-size:9px;color:rgba(255,255,255,.4)">' + (rep > 0 ? rep + ' reports' : mapData.filter(function(d){ return d.country===code; }).length + ' locations') + '</span>'
-    + '<span style="font-size:9px;font-weight:700;color:rgba(231,149,42,.7)">Click for details →</span>'
+    + '<span style="font-size:9px;color:#64748b">' + (rep > 0 ? rep + ' reports' : mapData.filter(function(d){ return d.country===code; }).length + ' locations') + '</span>'
+    + '<span style="font-size:9px;font-weight:700;color:#750B25">Click for details →</span>'
     + '</div>';
 
   // Position near the mouse
@@ -1380,7 +1380,7 @@ function loadChoropleth() {
             return {
               fillColor:   col,
               fillOpacity: hasData ? 0.17 : 0.04,
-              color:       'rgba(255,255,255,0.12)',
+              color:       'rgba(15,23,42,0.18)',
               weight:      0.7,
             };
           },
@@ -1389,7 +1389,7 @@ function loadChoropleth() {
             if (!code) return;
             layer.on({
               mouseover: function(e) {
-                layer.setStyle({ fillOpacity: 0.38, weight: 1.5, color: 'rgba(255,255,255,0.45)' });
+                layer.setStyle({ fillOpacity: 0.42, weight: 1.8, color: 'rgba(117,11,37,0.65)' });
                 showCountryHoverCard(e, code);
               },
               mousemove: function(e) {
@@ -1464,7 +1464,7 @@ function updateSlider() {
   var pct = ((v-1)/9*100).toFixed(1);
   document.getElementById('int-val').textContent = v;
   document.getElementById('int-slider').style.background =
-    'linear-gradient(to right,#E7952A '+pct+'%,rgba(255,255,255,.12) '+pct+'%)';
+    'linear-gradient(to right,#E7952A '+pct+'%,#e2e8f0 '+pct+'%)';
 }
 
 /* ── Country filter ───────────────────────────────────────────────── */
@@ -1472,8 +1472,8 @@ function setCountry(code) {
   selCtry = code;
   document.querySelectorAll('.ctry-btn').forEach(function(b) {
     var active = b.dataset.ctry === code;
-    b.style.background  = active ? 'rgba(231,149,42,.18)' : '';
-    b.style.color       = active ? '#E7952A' : 'rgba(255,255,255,.5)';
+    b.style.background  = active ? 'rgba(117,11,37,.09)' : '';
+    b.style.color       = active ? '#750B25' : '#475569';
     b.style.fontWeight  = active ? '700' : '500';
   });
   applyFilters();
@@ -1608,7 +1608,7 @@ function applyFilters() {
     if (pts.length) {
       heatLayer = L.heatLayer(pts, {
         radius: 38, blur: 28, maxZoom: 9,
-        gradient: { '0.0':'#F4C87E', '0.42':'#E7952A', '0.72':'#ED1C24', '1.0':'#750B25' }
+        gradient: { '0.0':'#E7952A', '0.40':'#ED1C24', '0.75':'#A50E1F', '1.0':'#750B25' }
       }).addTo(map);
     }
   }
@@ -1700,9 +1700,10 @@ function setMode(mode) {
   viewMode = mode;
   document.querySelectorAll('.mode-btn').forEach(function(b) {
     var on = b.id === 'mode-' + mode;
-    b.style.background   = on ? 'rgba(231,149,42,.22)' : 'transparent';
-    b.style.borderColor  = on ? 'rgba(231,149,42,.35)' : 'transparent';
-    b.style.color        = on ? '#fff' : 'rgba(255,255,255,.38)';
+    b.style.background   = on ? '#ffffff' : 'transparent';
+    b.style.borderColor  = on ? '#e2e8f0' : 'transparent';
+    b.style.color        = on ? '#750B25' : '#64748b';
+    b.style.boxShadow    = on ? '0 1px 3px rgba(15,23,42,.08)' : 'none';
   });
   applyFilters();
 }
