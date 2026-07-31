@@ -158,6 +158,34 @@ if (is_super_admin()) {
   </div>
 </header>
 
+<?php if (isset($_GET['updated'])): ?>
+<script>
+// Save confirmation toast — content pages redirect here with ?updated=<flag>
+document.addEventListener('DOMContentLoaded', function () {
+  var flag = <?= json_encode((string)$_GET['updated']) ?>;
+  var msg = {
+    saved:     ['Changes saved successfully.',                                   '#16a34a'],
+    published: ['Changes saved and published.',                                  '#16a34a'],
+    submitted: ['Changes saved and submitted for approval.',                     '#750B25'],
+    requeued:  ['Saved. This item is now awaiting super-admin re-approval.',     '#E7952A']
+  }[flag];
+  if (!msg) return;
+
+  var b = document.createElement('div');
+  b.textContent = msg[0];
+  b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:13px 22px;'
+    + 'border-radius:12px;font-size:13px;font-weight:600;max-width:340px;line-height:1.45;'
+    + 'box-shadow:0 8px 28px rgba(15,23,42,.22);color:#fff;background:' + msg[1];
+  document.body.appendChild(b);
+  setTimeout(function () {
+    b.style.transition = 'opacity .4s';
+    b.style.opacity = '0';
+    setTimeout(function () { b.remove(); }, 400);
+  }, 4000);
+});
+</script>
+<?php endif; ?>
+
 <script>
 function toggleUserMenu() {
   var dd = document.getElementById('tb-user-dropdown');

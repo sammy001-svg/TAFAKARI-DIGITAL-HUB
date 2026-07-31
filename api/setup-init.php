@@ -25,12 +25,14 @@ $sqls = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
     'Post' => "CREATE TABLE IF NOT EXISTS `Post` (
-      `id` VARCHAR(191) NOT NULL, `title` VARCHAR(191) NOT NULL, `content` TEXT NULL,
-      `description` TEXT NULL, `thumbnailUrl` VARCHAR(191) NULL, `mediaUrl` VARCHAR(191) NULL,
+      `id` VARCHAR(191) NOT NULL, `title` VARCHAR(255) NOT NULL, `content` TEXT NULL,
+      `description` TEXT NULL, `thumbnailUrl` VARCHAR(1024) NULL, `mediaUrl` VARCHAR(1024) NULL,
       `type` ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT') NOT NULL DEFAULT 'ARTICLE',
       `status` ENUM('DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED') NOT NULL DEFAULT 'DRAFT',
       `authorId` VARCHAR(191) NOT NULL, `approverId` VARCHAR(191) NULL, `rejectionNotes` TEXT NULL,
-      `country` VARCHAR(191) NOT NULL, `region` VARCHAR(191) NOT NULL, `issueCategory` VARCHAR(191) NOT NULL,
+      -- issueCategory holds a comma-joined list from the multi-select, so it
+      -- needs far more room than a single value would
+      `country` VARCHAR(191) NOT NULL, `region` VARCHAR(191) NOT NULL, `issueCategory` VARCHAR(512) NOT NULL,
       `viewCount` INT NOT NULL DEFAULT 0, `downloadCount` INT NOT NULL DEFAULT 0,
       `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),

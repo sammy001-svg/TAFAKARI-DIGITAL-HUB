@@ -249,7 +249,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
-<!-- OUR VALUES                                                                -->
+<!-- OUR CORE VALUES                                                                -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 py-20">
   <div class="text-center max-w-2xl mx-auto mb-12">
@@ -277,7 +277,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
-<!-- OUR TEAM (Placeholder ready for real names/photos)                       -->
+<!-- OUR TEAM MEMBERS (Placeholder ready for real names/photos)                       -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 mb-20">
   <div class="mb-10">
@@ -348,7 +348,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
-<!-- PARTNERS                                                                  -->
+<!-- OUR PARTNERS                                                                  -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 mb-20">
   <div class="bg-white rounded-3xl border border-amber-100 p-10 shadow-sm">

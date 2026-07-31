@@ -52,39 +52,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     $andSubmit     = isset($_POST['save_submit']);
     $andPublish    = $isSuper && isset($_POST['save_publish']);
 
+    // Column limits per migrations/001-widen-post-columns.sql. Overflowing one
+    // throws a PDOException that would otherwise surface as a blank page and a
+    // silently discarded edit.
     if (!$title)             $error = 'Title is required.';
     elseif (!$country)       $error = 'Country is required.';
     elseif (!$region)        $error = 'Region is required.';
     elseif (!$issueCategory) $error = 'Issue category is required.';
+    elseif (mb_strlen($title) > 255)
+        $error = 'Title is too long — ' . mb_strlen($title) . ' characters, limit is 255.';
+    elseif (mb_strlen($issueCategory) > 512)
+        $error = 'Too many issue categories selected. The combined list is ' . mb_strlen($issueCategory)
+               . ' characters but the limit is 512. Please select fewer categories.';
+    elseif (mb_strlen($region) > 191)
+        $error = 'Region is too long — ' . mb_strlen($region) . ' characters, limit is 191.';
+    elseif (mb_strlen($thumbnailUrl) > 1024)
+        $error = 'Thumbnail URL is too long — ' . mb_strlen($thumbnailUrl) . ' characters, limit is 1024.';
+    elseif (mb_strlen($mediaUrl) > 1024)
+        $error = 'Media URL is too long — ' . mb_strlen($mediaUrl) . ' characters, limit is 1024.';
     else {
         $validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT'];
         if (!in_array($type, $validTypes)) $type = 'ARTICLE';
-        $pdo->prepare(
-            'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,updatedAt=NOW(3) WHERE id=?'
-        )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$id]);
 
-        $flag = 'saved';
-        if ($andPublish) {
-            $pdo->prepare("UPDATE Post SET status='PUBLISHED',approverId=?,updatedAt=NOW(3) WHERE id=?")->execute([$uid, $id]);
-            $flag = 'published';
-        } elseif ($andSubmit && $canSubmit) {
-            $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
-            $flag = 'submitted';
-        } elseif ($willRequeue) {
-            // Admin edited live content — pull it from the public site pending re-approval
-            $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
-            $flag = 'requeued';
+        try {
+            $pdo->prepare(
+                'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,updatedAt=NOW(3) WHERE id=?'
+            )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$id]);
+
+            $flag = 'saved';
+            if ($andPublish) {
+                $pdo->prepare("UPDATE Post SET status='PUBLISHED',approverId=?,updatedAt=NOW(3) WHERE id=?")->execute([$uid, $id]);
+                $flag = 'published';
+            } elseif ($andSubmit && $canSubmit) {
+                $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
+                $flag = 'submitted';
+            } elseif ($willRequeue) {
+                // Admin edited live content — pull it from the public site pending re-approval
+                $pdo->prepare("UPDATE Post SET status='PENDING',rejectionNotes=NULL,updatedAt=NOW(3) WHERE id=?")->execute([$id]);
+                $flag = 'requeued';
+            }
+
+            $redirect = match($type) {
+                'ARTICLE'       => '/admin/content/articles',
+                'GALLERY_IMAGE' => '/admin/content/gallery',
+                'PODCAST'       => '/admin/content/podcasts',
+                'VIDEO'         => '/admin/content/videos',
+                'DOCUMENT'      => '/admin/content/documents',
+                default         => '/admin/content',
+            };
+            header('Location: ' . $redirect . '?updated=' . $flag);
+            exit;
+        } catch (\Throwable $e) {
+            error_log('[admin/content/edit] save failed for post ' . $id . ': ' . $e->getMessage());
+            $error = 'Could not save your changes: ' . $e->getMessage();
         }
-        $redirect = match($type) {
-            'ARTICLE'       => '/admin/content/articles',
-            'GALLERY_IMAGE' => '/admin/content/gallery',
-            'PODCAST'       => '/admin/content/podcasts',
-            'VIDEO'         => '/admin/content/videos',
-            'DOCUMENT'      => '/admin/content/documents',
-            default         => '/admin/content',
-        };
-        header('Location: ' . $redirect . '?updated=' . $flag);
-        exit;
     }
 }
 

@@ -37,24 +37,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($type === 'PODCAST'       && !$mediaUrl) $error = 'Audio file URL is required for podcasts.';
     elseif ($type === 'VIDEO'         && !$mediaUrl) $error = 'Video URL is required for videos.';
     elseif ($type === 'DOCUMENT'      && !$mediaUrl) $error = 'Document URL is required for documents.';
+    // Column limits per migrations/001-widen-post-columns.sql — overflow throws
+    // a PDOException and would lose the post silently
+    elseif (mb_strlen($title) > 255)
+        $error = 'Title is too long — ' . mb_strlen($title) . ' characters, limit is 255.';
+    elseif (mb_strlen($issueCategory) > 512)
+        $error = 'Too many issue categories selected. The combined list is ' . mb_strlen($issueCategory)
+               . ' characters but the limit is 512. Please select fewer categories.';
+    elseif (mb_strlen($region) > 191)
+        $error = 'Region is too long — ' . mb_strlen($region) . ' characters, limit is 191.';
+    elseif (mb_strlen($thumbnailUrl) > 1024)
+        $error = 'Thumbnail URL is too long — ' . mb_strlen($thumbnailUrl) . ' characters, limit is 1024.';
+    elseif (mb_strlen($mediaUrl) > 1024)
+        $error = 'Media URL is too long — ' . mb_strlen($mediaUrl) . ' characters, limit is 1024.';
     else {
         $id     = generate_id();
         $status = ($isSuper && isset($_POST['_publish'])) ? 'PUBLISHED' : 'DRAFT';
-        db()->prepare(
-            'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
-        )->execute([$id,$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$status,$uid]);
+        try {
+            db()->prepare(
+                'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
+            )->execute([$id,$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$status,$uid]);
 
-        $redirect = match($type) {
-            'ARTICLE'      => '/admin/content/articles',
-            'GALLERY_IMAGE'=> '/admin/content/gallery',
-            'PODCAST'      => '/admin/content/podcasts',
-            'VIDEO'        => '/admin/content/videos',
-            'DOCUMENT'     => '/admin/content/documents',
-            default        => '/admin/content',
-        };
-        header('Location: ' . $redirect . '?created=' . ($status === 'PUBLISHED' ? 'pub' : '1'));
-        exit;
+            $redirect = match($type) {
+                'ARTICLE'      => '/admin/content/articles',
+                'GALLERY_IMAGE'=> '/admin/content/gallery',
+                'PODCAST'      => '/admin/content/podcasts',
+                'VIDEO'        => '/admin/content/videos',
+                'DOCUMENT'     => '/admin/content/documents',
+                default        => '/admin/content',
+            };
+            header('Location: ' . $redirect . '?created=' . ($status === 'PUBLISHED' ? 'pub' : '1'));
+            exit;
+        } catch (\Throwable $e) {
+            error_log('[admin/content/new] create failed: ' . $e->getMessage());
+            $error = 'Could not save this item: ' . $e->getMessage();
+        }
     }
     $defaultType = $_POST['type'] ?? $defaultType;
 }
