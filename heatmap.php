@@ -948,6 +948,12 @@ var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_HEX_T
 /* ── Per-country DB stats (reports, latest date, categories) ─────── */
 var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 
+/* ── Master country list (name, code, flag, centroid) ────────────── */
+/* Declared here with the other PHP data: it is consumed further down by
+   CTRY_BY_NAME and makeCountryIcon, and a later `var` would hoist as
+   undefined and throw at first use. */
+var COUNTRY_DATA_LIST = <?= json_encode($_countriesData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+
 /* ── Alpha-2 → ISO 3166-1 numeric (for GeoJSON choropleth filter) ── */
 var A2_TO_NUM = {
   'DZ':'012','AO':'024','BI':'108','BJ':'204','BF':'854','CM':'120','CF':'140','TD':'148',
@@ -1489,8 +1495,6 @@ function refreshChoropleth(activeCats) {
 }
 
 /* ── Country-aggregate markers (Countries view mode) ─────────────── */
-var COUNTRY_DATA_LIST = <?= json_encode($_countriesData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
-
 function makeCountryIcon(code, intensity) {
   var col  = intensity > 0 ? intensityColor(intensity) : '#475569';
   var size = intensity >= 8 ? 44 : intensity >= 5 ? 36 : 28;
