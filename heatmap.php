@@ -1021,7 +1021,7 @@ var CTRY_BY_NAME = {};
 })();
 
 /* ── Category dot: one per country+category, grows with post count ── */
-function makeCategoryDotIcon(col, count) {
+function makeCategoryDotIcon(col, count, highlight) {
   // 1 report = 15px, easing off via sqrt so busy countries stay usable.
   // Range is roughly 15px (1 report) to 29px (18+).
   var dot = Math.round(11 + Math.min(Math.sqrt(count), 4.2) * 4.3);
@@ -1047,7 +1047,8 @@ function makeCategoryDotIcon(col, count) {
         + 'display:flex;align-items:center;justify-content:center;overflow:visible">'
         + ring
         + '<div style="width:' + dot + 'px;height:' + dot + 'px;border-radius:50%;background:' + col
-        + ';border:2px solid #fff;box-shadow:0 1px 7px rgba(15,23,42,.32),0 0 0 1px rgba(15,23,42,.08);'
+        + ';border:2px solid #fff;box-shadow:0 1px 7px rgba(15,23,42,.32),0 0 0 1px rgba(15,23,42,.08)'
+        + (highlight ? ',0 0 0 3px rgba(117,11,37,.55)' : '') + ';'
         + 'position:relative;z-index:2;cursor:pointer;display:flex;align-items:center;justify-content:center">'
         + label + '</div></div>',
   });
@@ -1674,7 +1675,9 @@ function applyFilters() {
   if (showReports && postData && postData.length) {
     var groups = {};                       // "Country||Category" -> [posts]
     postData.forEach(function(d) {
-      if (selCtry !== 'ALL' && CNAME[selCtry] !== d.country) return;
+      // NOTE: deliberately NOT filtered by selCtry. Selecting a country opens
+      // its panel and focuses the conflict layer, but every country's content
+      // dots stay on the map so the overall picture is never lost.
       // Match on ANY of the post's categories so a multi-category post stays
       // visible when filtering by a secondary one
       var dCats = d.categories && d.categories.length ? d.categories : [d.category];
@@ -1729,9 +1732,12 @@ function applyFilters() {
         lng += Math.cos(ang) * rad;
       }
 
+      // Ring the selected country's dots instead of hiding everyone else's
+      var isSelCtry = (selCtry !== 'ALL' && CNAME[selCtry] === ctry);
+
       var m = L.marker([lat, lng], {
-        icon: makeCategoryDotIcon(col, items.length),
-        zIndexOffset: 600
+        icon: makeCategoryDotIcon(col, items.length, isSelCtry),
+        zIndexOffset: isSelCtry ? 700 : 600
       }).bindTooltip(
         '<strong>' + esc(ctry) + '</strong><br>'
         + '<span style="color:' + col + ';font-weight:700">' + esc(cat) + '</span>'
