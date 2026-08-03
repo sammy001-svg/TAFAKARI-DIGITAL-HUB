@@ -722,7 +722,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
           </p>
           <!-- Size scale -->
           <div class="flex items-end gap-3 mb-2.5" style="padding:2px 2px 0">
-            <?php foreach ([[14,'1'],[19,'5'],[25,'20+']] as [$sz,$lbl]): ?>
+            <?php foreach ([[15,'1'],[21,'5'],[29,'20+']] as [$sz,$lbl]): ?>
               <div class="flex flex-col items-center gap-1">
                 <div style="width:<?= $sz ?>px;height:<?= $sz ?>px;border-radius:50%;background:#750B25;border:2px solid #fff;box-shadow:0 1px 5px rgba(15,23,42,.28)"></div>
                 <span class="text-[9px]" style="color:#94a3b8"><?= $lbl ?></span>
@@ -1022,18 +1022,20 @@ var CTRY_BY_NAME = {};
 
 /* ── Category dot: one per country+category, grows with post count ── */
 function makeCategoryDotIcon(col, count) {
-  // 1 post = 18px, growing ~3px each, easing off so busy countries stay usable
-  var dot = Math.round(18 + Math.min(Math.sqrt(count), 4.2) * 8);
-  var box = dot + 26;                       // room for the pulse ring
+  // 1 report = 15px, easing off via sqrt so busy countries stay usable.
+  // Range is roughly 15px (1 report) to 29px (18+).
+  var dot = Math.round(11 + Math.min(Math.sqrt(count), 4.2) * 4.3);
+  var box = dot + 18;                       // room for the pulse ring
   var ring = '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'
            + 'width:' + dot + 'px;height:' + dot + 'px;pointer-events:none">'
            + '<div style="width:100%;height:100%;border-radius:50%;background:' + col
            + ';animation:pulse-ring 2.8s ease-out infinite"></div></div>';
 
-  var label = count > 1
+  // Only label once the dot is big enough to hold a readable number
+  var label = (count > 1 && dot >= 19)
     ? '<span style="position:relative;z-index:3;font-family:Outfit,sans-serif;font-weight:900;'
-      + 'font-size:' + (dot >= 30 ? 12 : 10) + 'px;color:#fff;line-height:1;'
-      + 'text-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none">' + count + '</span>'
+      + 'font-size:' + (dot >= 25 ? 10 : 9) + 'px;color:#fff;line-height:1;'
+      + 'text-shadow:0 1px 3px rgba(0,0,0,.45);pointer-events:none">' + count + '</span>'
     : '';
 
   return L.divIcon({
@@ -1045,7 +1047,7 @@ function makeCategoryDotIcon(col, count) {
         + 'display:flex;align-items:center;justify-content:center;overflow:visible">'
         + ring
         + '<div style="width:' + dot + 'px;height:' + dot + 'px;border-radius:50%;background:' + col
-        + ';border:2.5px solid #fff;box-shadow:0 2px 12px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.08);'
+        + ';border:2px solid #fff;box-shadow:0 1px 7px rgba(15,23,42,.32),0 0 0 1px rgba(15,23,42,.08);'
         + 'position:relative;z-index:2;cursor:pointer;display:flex;align-items:center;justify-content:center">'
         + label + '</div></div>',
   });
