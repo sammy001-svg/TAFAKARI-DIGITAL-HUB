@@ -65,7 +65,9 @@ function uw_img(string $id, string $fieldName, string $label, string $hint = '',
       </button>
     </div>
     <div id="uw-url-wrap-<?= $eid ?>" style="display:none;margin-top:4px">
-      <input type="url" id="uw-url-<?= $eid ?>" placeholder="https://…"
+      <!-- type="text": also accepts relative upload paths, and avoids a hidden
+           invalid url field silently blocking form submission -->
+      <input type="text" inputmode="url" id="uw-url-<?= $eid ?>" placeholder="https://…"
              style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit"
              oninput="uwSetUrl('<?= $eid ?>','<?= $valId ?>',this.value)">
     </div>
@@ -122,8 +124,15 @@ function uw_media(string $id, string $fieldName, string $label, string $fileType
         'document' => 'Upload File',
         default    => 'Upload Image',
     };
-    // If there's a pre-filled value start on URL tab (it came from a URL)
-    $startUpload = !$hasVal;
+    // Distinguish an uploaded file (stored as a relative path like
+    // "/public/uploads/documents/x.pdf") from a pasted absolute URL.
+    // An uploaded path must NOT be placed in the URL box: that field is
+    // validated by the browser and a relative path is not a valid URL, which
+    // silently blocks form submission.
+    $isUploadedPath = $hasVal && str_starts_with($current, '/');
+    $startUpload    = !$hasVal || $isUploadedPath;
+    $urlFieldVal    = $isUploadedPath ? '' : $ecur;
+    $existingName   = $isUploadedPath ? htmlspecialchars(basename($current), ENT_QUOTES) : '';
     ?>
 <?php if ($label !== ''): ?><div>
   <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px"><?= $elbl ?></label>
@@ -149,15 +158,15 @@ function uw_media(string $id, string $fieldName, string $label, string $fileType
            ondragover="uwmDragOver(event,'<?= $eid ?>')" ondragleave="uwmDragOut('<?= $eid ?>')"
            ondrop="uwmDrop(event,'<?= $eid ?>')"
            style="border:2px dashed #e2e8f0;border-radius:12px;padding:18px 14px;cursor:pointer;text-align:center;transition:border-color .2s,background .2s;background:#f8fafc;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px">
-        <div id="uwm-empty-<?= $eid ?>">
+        <div id="uwm-empty-<?= $eid ?>"<?= $isUploadedPath ? ' style="display:none"' : '' ?>>
           <svg width="26" height="26" fill="none" stroke="#cbd5e1" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 5px"><path d="<?= $iconPath ?>"/></svg>
           <p style="font-size:12px;font-weight:600;color:#64748b;margin:0">Click to upload or drag &amp; drop</p>
           <p id="uwm-drop-hint-<?= $eid ?>" style="font-size:11px;color:#94a3b8;margin:2px 0 0"><?= $edh ?></p>
         </div>
-        <div id="uwm-prev-<?= $eid ?>" style="display:none;width:100%">
+        <div id="uwm-prev-<?= $eid ?>" style="<?= $isUploadedPath ? '' : 'display:none;' ?>width:100%">
           <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:8px 12px;border-radius:8px">
             <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="1.5" viewBox="0 0 24 24" style="flex-shrink:0"><path d="<?= $iconPath ?>"/></svg>
-            <p id="uwm-name-<?= $eid ?>" style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin:0"></p>
+            <p id="uwm-name-<?= $eid ?>" style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin:0"><?= $existingName ?></p>
             <button type="button" onclick="uwmClear('<?= $eid ?>','<?= $valId ?>',event)"
                     style="font-size:13px;color:#ef4444;background:none;border:none;cursor:pointer;font-weight:700;padding:0 2px;flex-shrink:0">×</button>
           </div>
@@ -175,8 +184,10 @@ function uw_media(string $id, string $fieldName, string $label, string $fileType
     </div>
     <!-- URL panel -->
     <div id="uwm-url-<?= $eid ?>"<?= $startUpload ? ' style="display:none"' : '' ?>>
-      <input type="url" id="uwm-url-inp-<?= $eid ?>" placeholder="<?= $euph ?>"
-             value="<?= $ecur ?>"
+      <!-- type="text" (not "url"): this field also holds relative upload paths,
+           which fail HTML5 url validation and would block form submission -->
+      <input type="text" inputmode="url" id="uwm-url-inp-<?= $eid ?>" placeholder="<?= $euph ?>"
+             value="<?= $urlFieldVal ?>"
              style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit"
              oninput="uwmUrlInput('<?= $eid ?>','<?= $valId ?>',this.value)">
       <p id="uwm-url-hint-<?= $eid ?>" style="font-size:11px;color:#94a3b8;margin:5px 0 0"><?= $euh ?></p>
