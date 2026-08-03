@@ -200,6 +200,19 @@ try {
         $url = ($postTypeUrl[$p['type']] ?? '/news/') . $p['id'];
         if (($p['type'] ?? '') === 'GALLERY_IMAGE') $url = '/gallery';
 
+        // issueCategory can hold a comma-separated list from the multi-select,
+        // so map each entry individually — a whole-string lookup would miss and
+        // silently colour every multi-category post as 'Policy'.
+        $rawIssues  = array_filter(array_map('trim', explode(',', (string)($p['issueCategory'] ?? ''))));
+        $mappedCats = [];
+        foreach ($rawIssues as $ri) {
+            // Unmapped names are kept as-is: custom Heatmap Config categories
+            // are already heatmap-category names.
+            $mc = $issueToCat[$ri] ?? $ri;
+            if ($mc !== '' && !in_array($mc, $mappedCats, true)) $mappedCats[] = $mc;
+        }
+        if (!$mappedCats) $mappedCats = ['Policy'];
+
         $postMarkers[] = [
             'id'       => $p['id'],
             'title'    => $p['title'],
@@ -207,7 +220,8 @@ try {
             'desc'     => mb_substr($p['description'] ?? '', 0, 150),
             'country'  => $p['country'],
             'region'   => $region,
-            'category' => $issueToCat[$p['issueCategory'] ?? ''] ?? 'Policy',
+            'category'   => $mappedCats[0],
+            'categories' => $mappedCats,
             'date'     => format_date($p['createdAt']),
             'dateRaw'  => date('Y-m-d', strtotime($p['createdAt'])),
             'thumb'    => $p['thumbnailUrl'] ?? '',
@@ -701,23 +715,29 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
             </button>
           </div>
           <p class="text-[10px] mb-3" style="color:#94a3b8"><?= count($postMarkers) ?> <span data-i18n="heatmapPage.reportsFromDb">reports from the database</span></p>
-          <div class="space-y-1.5">
-            <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#750B25;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendArticle">Article</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#E7952A;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendPodcast">Podcast</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#ED1C24;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendVideo">Video</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div style="width:10px;height:10px;background:#6366F1;border:1.5px solid rgba(15,23,42,.18);border-radius:2px;flex-shrink:0"></div>
-              <span class="text-[11px]" style="color:#475569" data-i18n="heatmapPage.legendDocument">Document</span>
-            </div>
+          <p class="text-[11px] mb-2.5" style="color:#475569;line-height:1.55">
+            Each dot is one <strong>category</strong> in a country. Its colour is the
+            category colour set in Heatmap Config; it <strong>grows</strong> with the
+            number of published reports.
+          </p>
+          <!-- Size scale -->
+          <div class="flex items-end gap-3 mb-2.5" style="padding:2px 2px 0">
+            <?php foreach ([[14,'1'],[19,'5'],[25,'20+']] as [$sz,$lbl]): ?>
+              <div class="flex flex-col items-center gap-1">
+                <div style="width:<?= $sz ?>px;height:<?= $sz ?>px;border-radius:50%;background:#750B25;border:2px solid #fff;box-shadow:0 1px 5px rgba(15,23,42,.28)"></div>
+                <span class="text-[9px]" style="color:#94a3b8"><?= $lbl ?></span>
+              </div>
+            <?php endforeach; ?>
+            <span class="text-[9px] ml-0.5 mb-1" style="color:#94a3b8">reports</span>
+          </div>
+          <!-- Category colours currently configured -->
+          <div class="flex flex-wrap gap-x-3 gap-y-1">
+            <?php foreach ($cats as $cLbl => $cCol): $cLbl = (string)$cLbl; ?>
+              <div class="flex items-center gap-1.5">
+                <span style="width:9px;height:9px;border-radius:50%;background:<?= h((string)$cCol) ?>;flex-shrink:0;display:inline-block"></span>
+                <span class="text-[10px]" style="color:#475569"><?= h($cLbl) ?></span>
+              </div>
+            <?php endforeach; ?>
           </div>
         </div>
 
@@ -981,26 +1001,55 @@ function wrap(dot, col, dur, delay) {
        + ';animation:pulse-ring '+dur+' ease-out '+delay+' infinite;"></div></div>';
 }
 
+/* ── Country centroid lookup (name → lat/lng/code) ────────────────── */
+var CTRY_BY_NAME = {};
+(function () {
+  for (var i = 0; i < COUNTRY_DATA_LIST.length; i++) {
+    var c = COUNTRY_DATA_LIST[i];
+    CTRY_BY_NAME[c.name] = { lat: +c.lat, lng: +c.lng, code: c.code };
+  }
+  // Common alternate spelling used by some posts
+  if (CTRY_BY_NAME['DR Congo']) {
+    CTRY_BY_NAME['Democratic Republic of Congo'] = CTRY_BY_NAME['DR Congo'];
+  }
+})();
+
+/* ── Category dot: one per country+category, grows with post count ── */
+function makeCategoryDotIcon(col, count) {
+  // 1 post = 18px, growing ~3px each, easing off so busy countries stay usable
+  var dot = Math.round(18 + Math.min(Math.sqrt(count), 4.2) * 8);
+  var box = dot + 26;                       // room for the pulse ring
+  var ring = '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'
+           + 'width:' + dot + 'px;height:' + dot + 'px;pointer-events:none">'
+           + '<div style="width:100%;height:100%;border-radius:50%;background:' + col
+           + ';animation:pulse-ring 2.8s ease-out infinite"></div></div>';
+
+  var label = count > 1
+    ? '<span style="position:relative;z-index:3;font-family:Outfit,sans-serif;font-weight:900;'
+      + 'font-size:' + (dot >= 30 ? 12 : 10) + 'px;color:#fff;line-height:1;'
+      + 'text-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none">' + count + '</span>'
+    : '';
+
+  return L.divIcon({
+    className: '',
+    iconSize:      [box, box],
+    iconAnchor:    [box / 2, box / 2],
+    tooltipAnchor: [box / 2 + 2, 0],
+    html: '<div style="position:relative;width:' + box + 'px;height:' + box + 'px;'
+        + 'display:flex;align-items:center;justify-content:center;overflow:visible">'
+        + ring
+        + '<div style="width:' + dot + 'px;height:' + dot + 'px;border-radius:50%;background:' + col
+        + ';border:2.5px solid #fff;box-shadow:0 2px 12px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.08);'
+        + 'position:relative;z-index:2;cursor:pointer;display:flex;align-items:center;justify-content:center">'
+        + label + '</div></div>',
+  });
+}
+
 /* ── Post marker icon factory ─────────────────────────────────────── */
 var POST_TYPE_COLORS = {
   ARTICLE:'#750B25', PODCAST:'#E7952A', VIDEO:'#ED1C24',
   DOCUMENT:'#6366F1', GALLERY_IMAGE:'#10B981'
 };
-function makePostIcon(d) {
-  var col = POST_TYPE_COLORS[d.type] || '#750B25';
-  return L.divIcon({
-    className: '',
-    iconSize:  [22, 22],
-    iconAnchor:[11, 11],
-    tooltipAnchor: [14, 0],
-    html: '<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center">'
-        + '<div style="width:13px;height:13px;background:'+col
-        + ';border:2px solid rgba(255,255,255,.75);border-radius:3px;'
-        + 'box-shadow:0 2px 10px rgba(0,0,0,.45);cursor:pointer"></div>'
-        + '</div>',
-  });
-}
-
 /* ── De-escalating icon factory ───────────────────────────────────── */
 function makeDeescIcon(d) {
   var col   = d.deescLevel >= 3 ? '#047857' : d.deescLevel >= 2 ? '#059669' : '#10B981';
@@ -1613,12 +1662,21 @@ function applyFilters() {
     }
   }
 
-  // Render post pins (always on top of heat or markers layer)
+  // Render published content as one growing, category-coloured dot per
+  // country+category, so several categories in the same country stay legible.
   var visiblePosts = 0;
   if (showReports && postData && postData.length) {
+    var groups = {};                       // "Country||Category" -> [posts]
     postData.forEach(function(d) {
       if (selCtry !== 'ALL' && CNAME[selCtry] !== d.country) return;
-      if (cats.indexOf(d.category) === -1) return;
+      // Match on ANY of the post's categories so a multi-category post stays
+      // visible when filtering by a secondary one
+      var dCats = d.categories && d.categories.length ? d.categories : [d.category];
+      var catHit = false;
+      for (var ci = 0; ci < dCats.length; ci++) {
+        if (cats.indexOf(dCats[ci]) !== -1) { catHit = true; break; }
+      }
+      if (!catHit) return;
       // Date range filter
       if (dateFrom && d.dateRaw && d.dateRaw < dateFrom) return;
       if (dateTo   && d.dateRaw && d.dateRaw > dateTo)   return;
@@ -1627,14 +1685,59 @@ function applyFilters() {
         if (haystack.indexOf(q) === -1) return;
       }
       visiblePosts++;
-      var m = L.marker([d.lat, d.lng], {
-        icon: makePostIcon(d),
-        zIndexOffset: 500
+      var key = d.country + '||' + d.category;
+      (groups[key] = groups[key] || []).push(d);
+    });
+
+    // Count categories per country so we can fan them out around the centroid
+    var perCountry = {};
+    Object.keys(groups).forEach(function(k) {
+      var ctry = k.split('||')[0];
+      perCountry[ctry] = (perCountry[ctry] || 0) + 1;
+    });
+
+    var seenIdx = {};
+    Object.keys(groups).forEach(function(key) {
+      var parts = key.split('||');
+      var ctry  = parts[0], cat = parts[1];
+      var items = groups[key];
+      var col   = CAT_COLORS[cat] || '#94a3b8';
+
+      // Anchor on the country centroid; fall back to the posts' own coords
+      var base = CTRY_BY_NAME[ctry];
+      var lat, lng;
+      if (base) {
+        lat = base.lat; lng = base.lng;
+      } else {
+        lat = items.reduce(function(s,d){ return s + d.lat; }, 0) / items.length;
+        lng = items.reduce(function(s,d){ return s + d.lng; }, 0) / items.length;
+      }
+
+      // Fan multiple categories evenly around the centroid so none overlap
+      var total = perCountry[ctry] || 1;
+      var idx   = (seenIdx[ctry] = (seenIdx[ctry] === undefined ? 0 : seenIdx[ctry] + 1));
+      if (total > 1) {
+        var ang = (2 * Math.PI * idx) / total - Math.PI / 2;
+        var rad = 1.15 + Math.min(total, 6) * 0.12;   // degrees
+        lat += Math.sin(ang) * rad * 0.72;
+        lng += Math.cos(ang) * rad;
+      }
+
+      var m = L.marker([lat, lng], {
+        icon: makeCategoryDotIcon(col, items.length),
+        zIndexOffset: 600
       }).bindTooltip(
-        '<strong>' + esc(d.title) + '</strong><br><small>' + esc(d.type) + ' · ' + esc(d.country) + '</small>',
+        '<strong>' + esc(ctry) + '</strong><br>'
+        + '<span style="color:' + col + ';font-weight:700">' + esc(cat) + '</span>'
+        + ' &middot; ' + items.length + ' ' + (items.length === 1 ? 'report' : 'reports'),
         { direction: 'right', opacity: 1 }
       );
-      m.on('click', function() { openPostDetail(d); });
+      m.on('click', (function(c, k, list) {
+        return function() {
+          if (list.length === 1) openPostDetail(list[0]);
+          else openCategoryCluster(c, k, list);
+        };
+      })(ctry, cat, items));
       m.addTo(map);
       postMarkers.push(m);
     });
@@ -1808,6 +1911,54 @@ function closeDetail() {
 }
 
 /* ── Post detail panel ────────────────────────────────────────────── */
+/* ── Cluster panel: every report behind one category dot ──────────── */
+function openCategoryCluster(country, category, items) {
+  var col = CAT_COLORS[category] || '#94a3b8';
+  var TYPE_LABEL = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
+
+  var rows = items.slice().sort(function(a, b) {
+    return (b.dateRaw || '').localeCompare(a.dateRaw || '');
+  }).map(function(d, i) {
+    return '<button onclick="_clusterOpen(' + i + ')" style="display:block;width:100%;text-align:left;'
+      + 'background:#fff;border:1px solid #e2e8f0;border-left:3px solid ' + col + ';border-radius:10px;'
+      + 'padding:11px 13px;margin-bottom:7px;cursor:pointer">'
+      + '<p style="font-family:Outfit,sans-serif;font-weight:800;font-size:13px;color:#0f172a;margin:0 0 3px;line-height:1.35">'
+      + esc(d.title) + '</p>'
+      + '<p style="font-size:10px;color:#94a3b8;margin:0;font-weight:600">'
+      + esc(TYPE_LABEL[d.type] || d.type) + ' &middot; ' + esc(d.date || '') + '</p>'
+      + '</button>';
+  }).join('');
+
+  window._clusterItems = items.slice().sort(function(a, b) {
+    return (b.dateRaw || '').localeCompare(a.dateRaw || '');
+  });
+
+  var html =
+    '<div style="height:4px;background:' + col + '"></div>'
+    + '<div style="padding:20px 20px 28px">'
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">'
+    + '<span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:' + col + '">'
+    + esc(category) + '</span>'
+    + '<button onclick="closeDetail()" style="width:28px;height:28px;border-radius:50%;border:none;'
+    + 'background:#f1f5f9;color:#64748b;cursor:pointer;font-size:18px;line-height:1;'
+    + 'display:flex;align-items:center;justify-content:center">&times;</button>'
+    + '</div>'
+    + '<h3 style="font-family:Outfit,sans-serif;font-weight:900;font-size:21px;color:#0f172a;margin:0 0 3px">'
+    + esc(country) + '</h3>'
+    + '<p style="font-size:12px;color:#94a3b8;margin:0 0 18px;font-weight:600">'
+    + items.length + ' published ' + (items.length === 1 ? 'report' : 'reports') + ' in this category</p>'
+    + rows
+    + '</div>';
+
+  document.getElementById('detail-content').innerHTML = html;
+  document.getElementById('detail-panel').classList.add('panel-open');
+  document.getElementById('detail-panel').classList.remove('panel-hidden');
+}
+
+function _clusterOpen(i) {
+  if (window._clusterItems && window._clusterItems[i]) openPostDetail(window._clusterItems[i]);
+}
+
 function openPostDetail(d) {
   var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
   var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery'};
