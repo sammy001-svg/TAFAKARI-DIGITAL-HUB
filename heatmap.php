@@ -498,10 +498,10 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 shrink-0">
         <?php
         $kpis = [
-          [format_number($totalReports),   'Total Reports',    '#E7952A', 'totalReports'],
-          [format_number($monthlyReports), 'This Month',       '#E7952A', 'thisMonth'],
-          ['—',                            'Active Hotspots',  '#ED1C24', 'activeHotspots'],
-          ['14',                           'Countries',        '#E7952A', 'countriesKpi'],
+          [format_number($totalReports),        'Total Reports',    '#E7952A', 'totalReports'],
+          [format_number($monthlyReports),       'This Month',       '#E7952A', 'thisMonth'],
+          [format_number(count($countryStats)),  'Active Hotspots',  '#ED1C24', 'activeHotspots'],
+          [format_number(count($_countriesData)),'Countries',        '#E7952A', 'countriesKpi'],
         ];
         foreach ($kpis as $i => [$val, $lbl, $col, $lblKey]): ?>
           <div class="rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-center" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
@@ -1659,7 +1659,7 @@ function applyFilters() {
     });
     document.getElementById('active-count').textContent =
       visibleDesc.length + ' improving situation' + (visibleDesc.length !== 1 ? 's' : '') + ' visible';
-    var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+    var allHot = Object.keys(COUNTRY_STATS).length;
     var kpiEl  = document.getElementById('kpi-hotspots');
     if (kpiEl) kpiEl.textContent = allHot;
     renderDeescTable(visibleDesc);
@@ -1684,7 +1684,7 @@ function applyFilters() {
     });
     var pill = Object.keys(seenCountries).length + ' countries';
     document.getElementById('active-count').textContent = pill;
-    var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+    var allHot = Object.keys(COUNTRY_STATS).length;
     var kpiEl  = document.getElementById('kpi-hotspots');
     if (kpiEl) kpiEl.textContent = allHot;
     renderTable(visible);
@@ -1808,8 +1808,9 @@ function applyFilters() {
   if (visiblePosts > 0) pill += ' · ' + visiblePosts + ' report' + (visiblePosts !== 1 ? 's' : '');
   document.getElementById('active-count').textContent = pill;
 
-  // KPI hotspots (always from full dataset)
-  var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+  // KPI hotspots: distinct countries with at least one real published report
+  // (always from the full COUNTRY_STATS snapshot, not the current filter selection)
+  var allHot = Object.keys(COUNTRY_STATS).length;
   var kpiEl  = document.getElementById('kpi-hotspots');
   if (kpiEl) kpiEl.textContent = allHot;
 
