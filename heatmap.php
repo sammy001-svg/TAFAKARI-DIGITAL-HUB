@@ -38,6 +38,30 @@ $_defaultCountriesData = [
     ['name'=>'Liberia',                  'code'=>'LR','flag'=>'🇱🇷','lat'=>6.428,  'lng'=>-10.785],
     ['name'=>'Sierra Leone',             'code'=>'SL','flag'=>'🇸🇱','lat'=>8.460,  'lng'=>-11.780],
     ['name'=>'Guinea',                   'code'=>'GN','flag'=>'🇬🇳','lat'=>11.805, 'lng'=>-11.805],
+    // The remaining countries below are present so every option in the content-creation
+    // country dropdown (see african_countries()) has a map coordinate — otherwise a
+    // published post tagged with one of these is silently dropped from the heatmap.
+    ['name'=>'Benin',                    'code'=>'BJ','flag'=>'🇧🇯','lat'=>9.307,  'lng'=>2.315],
+    ['name'=>'Botswana',                 'code'=>'BW','flag'=>'🇧🇼','lat'=>-22.328,'lng'=>24.685],
+    ['name'=>'Cabo Verde',               'code'=>'CV','flag'=>'🇨🇻','lat'=>16.539, 'lng'=>-23.042],
+    ['name'=>'Comoros',                  'code'=>'KM','flag'=>'🇰🇲','lat'=>-11.645,'lng'=>43.333],
+    ['name'=>'Congo',                    'code'=>'CG','flag'=>'🇨🇬','lat'=>-0.228, 'lng'=>15.827],
+    ['name'=>'Djibouti',                 'code'=>'DJ','flag'=>'🇩🇯','lat'=>11.825, 'lng'=>42.590],
+    ['name'=>'Equatorial Guinea',        'code'=>'GQ','flag'=>'🇬🇶','lat'=>1.651,  'lng'=>10.268],
+    ['name'=>'Eritrea',                  'code'=>'ER','flag'=>'🇪🇷','lat'=>15.179, 'lng'=>39.782],
+    ['name'=>'Eswatini',                 'code'=>'SZ','flag'=>'🇸🇿','lat'=>-26.523,'lng'=>31.466],
+    ['name'=>'Gabon',                    'code'=>'GA','flag'=>'🇬🇦','lat'=>-0.804, 'lng'=>11.609],
+    ['name'=>'Gambia',                   'code'=>'GM','flag'=>'🇬🇲','lat'=>13.443, 'lng'=>-15.310],
+    ['name'=>'Guinea-Bissau',            'code'=>'GW','flag'=>'🇬🇼','lat'=>11.804, 'lng'=>-15.180],
+    ['name'=>'Ivory Coast',              'code'=>'CI','flag'=>'🇨🇮','lat'=>7.540,  'lng'=>-5.547],
+    ['name'=>'Lesotho',                  'code'=>'LS','flag'=>'🇱🇸','lat'=>-29.610,'lng'=>28.234],
+    ['name'=>'Libya',                    'code'=>'LY','flag'=>'🇱🇾','lat'=>26.335, 'lng'=>17.228],
+    ['name'=>'Mauritania',               'code'=>'MR','flag'=>'🇲🇷','lat'=>21.008, 'lng'=>-10.941],
+    ['name'=>'Mauritius',                'code'=>'MU','flag'=>'🇲🇺','lat'=>-20.348,'lng'=>57.552],
+    ['name'=>'Namibia',                  'code'=>'NA','flag'=>'🇳🇦','lat'=>-22.958,'lng'=>18.490],
+    ['name'=>'São Tomé and Príncipe',    'code'=>'ST','flag'=>'🇸🇹','lat'=>0.186,  'lng'=>6.613],
+    ['name'=>'Togo',                     'code'=>'TG','flag'=>'🇹🇬','lat'=>8.620,  'lng'=>0.825],
+    ['name'=>'Tunisia',                  'code'=>'TN','flag'=>'🇹🇳','lat'=>33.887, 'lng'=>9.538],
 ];
 $_dbCountries = json_decode(get_setting('heatmap_countries', ''), true);
 $_countriesData = (is_array($_dbCountries) && count($_dbCountries) > 0) ? $_dbCountries : $_defaultCountriesData;
@@ -962,7 +986,7 @@ var A2_TO_NUM = {
   'LY':'434','MG':'450','MW':'454','ML':'466','MR':'478','MA':'504','MZ':'508','NA':'516',
   'NE':'562','NG':'566','RW':'646','ST':'678','SN':'686','SL':'694','SO':'706','ZA':'710',
   'SS':'728','SD':'729','TZ':'834','TG':'768','TN':'788','UG':'800','ZM':'894','ZW':'716',
-  'BW':'072','CV':'132','LI':'430','MU':'480','SC':'690','SZ':'748','ZR':'180',
+  'BW':'072','CV':'132','GW':'624','MU':'480','SC':'690','SZ':'748','ZR':'180',
 };
 /* Reverse: numeric → alpha-2 */
 var NUM_TO_A2 = {};
@@ -1315,7 +1339,7 @@ function openCountryPanel(code) {
     + '<p style="font-size:11px;color:#94a3b8;font-weight:600;margin:0 0 18px">Country Overview</p>'
     // Stats grid
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">'
-    + _stat('Reports', reports > 0 ? reports : locations.length, intCol)
+    + _stat('Reports', reports, intCol)
     + _stat('Locations', locations.length || '—', '#64748b')
     + _stat('Peak Intensity', maxInt > 0 ? intLbl : '—', intCol)
     + _stat('Trend', trendIcon + ' ' + trend, trendCol)
@@ -1345,10 +1369,13 @@ function openCountryPanel(code) {
     + '<div style="display:flex;flex-wrap:wrap;gap:5px">' + (catHtml || '<span style="font-size:11px;color:#cbd5e1">No data</span>') + '</div>'
     + '</div>'
     // CTA buttons
-    + '<a href="/news?country=' + encodeURIComponent(name) + '"'
-    + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:11px 16px;border-radius:12px;background:#750B25;color:#fff;font-size:13px;font-weight:700;justify-content:center;margin-bottom:8px">'
-    + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
-    + 'View All Reports (' + (reports > 0 ? reports : locations.length) + ')</a>'
+    + (reports > 0
+      ? ('<a href="/news?country=' + encodeURIComponent(name) + '"'
+        + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:11px 16px;border-radius:12px;background:#750B25;color:#fff;font-size:13px;font-weight:700;justify-content:center;margin-bottom:8px">'
+        + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+        + 'View All Reports (' + reports + ')</a>')
+      : ('<div style="display:flex;align-items:center;gap:7px;padding:11px 16px;border-radius:12px;background:#f1f5f9;color:#94a3b8;font-size:13px;font-weight:700;justify-content:center;margin-bottom:8px">'
+        + 'No published reports yet for ' + esc(name) + '</div>'))
     + '<a href="/heatmap?country=' + encodeURIComponent(code) + '"'
     + ' onclick="setCountry(\'' + esc(code) + '\');return false"'
     + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:10px 16px;border-radius:12px;border:1.5px solid #e2e8f0;color:#475569;font-size:12px;font-weight:700;justify-content:center">'
