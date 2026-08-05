@@ -1297,7 +1297,6 @@ function openCountryPanel(code) {
   var name    = CNAME[code] || code;
   var flag    = FLAG[code] || '';
   var dbS     = COUNTRY_STATS[name] || {};
-  var reports = dbS.reports || 0;
   var latestF = dbS.latestFmt || null;
 
   var locations  = mapData.filter(function(d){ return d.country === code; });
@@ -1313,6 +1312,14 @@ function openCountryPanel(code) {
   var topLoc = locations.length
     ? locations.slice().sort(function(a,b){ return b.intensity - a.intensity; })[0]
     : null;
+
+  // Real published posts for this country, of ANY content type (article, document,
+  // podcast, video, gallery) — postData already carries the correct per-type detail
+  // URL for each item, so linking straight to these avoids the old bug where
+  // "View All Reports" always pointed at /news (articles only) even when the
+  // country's published content was actually a document/video/podcast.
+  var countryPosts = postData.filter(function(d){ return d.country === name; });
+  var TYPE_LABEL = { ARTICLE:'News', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Gallery' };
 
   var catHtml = allCats.map(function(c) {
     var cc = CAT_COLORS[c] || '#94a3b8';
@@ -1339,7 +1346,7 @@ function openCountryPanel(code) {
     + '<p style="font-size:11px;color:#94a3b8;font-weight:600;margin:0 0 18px">Country Overview</p>'
     // Stats grid
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">'
-    + _stat('Reports', reports, intCol)
+    + _stat('Reports', countryPosts.length, intCol)
     + _stat('Locations', locations.length || '—', '#64748b')
     + _stat('Peak Intensity', maxInt > 0 ? intLbl : '—', intCol)
     + _stat('Trend', trendIcon + ' ' + trend, trendCol)
@@ -1368,14 +1375,27 @@ function openCountryPanel(code) {
     + '<p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 8px">Issue Categories</p>'
     + '<div style="display:flex;flex-wrap:wrap;gap:5px">' + (catHtml || '<span style="font-size:11px;color:#cbd5e1">No data</span>') + '</div>'
     + '</div>'
-    // CTA buttons
-    + (reports > 0
-      ? ('<a href="/news?country=' + encodeURIComponent(name) + '"'
-        + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:11px 16px;border-radius:12px;background:#750B25;color:#fff;font-size:13px;font-weight:700;justify-content:center;margin-bottom:8px">'
-        + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
-        + 'View All Reports (' + reports + ')</a>')
-      : ('<div style="display:flex;align-items:center;gap:7px;padding:11px 16px;border-radius:12px;background:#f1f5f9;color:#94a3b8;font-size:13px;font-weight:700;justify-content:center;margin-bottom:8px">'
+    // Published reports — direct links to the actual posts (any content type)
+    + '<div style="margin-bottom:12px">'
+    + '<p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 8px">Published Reports (' + countryPosts.length + ')</p>'
+    + (countryPosts.length > 0
+      ? ('<div style="max-height:230px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:12px">'
+        + countryPosts.map(function(p, i) {
+            var tlbl = TYPE_LABEL[p.type] || p.type;
+            return '<a href="' + esc(p.url) + '"'
+              + ' style="display:block;padding:10px 12px;text-decoration:none;color:#0f172a;'
+              + (i < countryPosts.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : '') + '">'
+              + '<span style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
+              + '<span style="font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#750B25;background:#750B2514;border-radius:8px;padding:1px 6px">' + esc(tlbl) + '</span>'
+              + '<span style="font-size:9px;color:#94a3b8">' + esc(p.date || '') + '</span>'
+              + '</span>'
+              + '<span style="display:block;font-size:12px;font-weight:700;line-height:1.4">' + esc(p.title) + '</span>'
+              + '</a>';
+          }).join('')
+        + '</div>')
+      : ('<div style="padding:11px 16px;border-radius:12px;background:#f1f5f9;color:#94a3b8;font-size:12px;font-weight:600;text-align:center">'
         + 'No published reports yet for ' + esc(name) + '</div>'))
+    + '</div>'
     + '<a href="/heatmap?country=' + encodeURIComponent(code) + '"'
     + ' onclick="setCountry(\'' + esc(code) + '\');return false"'
     + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:10px 16px;border-radius:12px;border:1.5px solid #e2e8f0;color:#475569;font-size:12px;font-weight:700;justify-content:center">'

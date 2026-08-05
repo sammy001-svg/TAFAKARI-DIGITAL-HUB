@@ -5,7 +5,9 @@
       "Bash(nohup php -S 127.0.0.1:8098)",
       "Bash(disown)",
       "Bash(curl -s -o /tmp/heatmap_out.html -w \"HTTP %{http_code}\\\\n\" http://127.0.0.1:8098/heatmap.php)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "WebFetch(domain:www.crtp-tafakarihub.org)",
+      "Bash(php -l heatmap.php)"
     ]
   }
 }
