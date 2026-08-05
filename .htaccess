@@ -73,6 +73,7 @@ RewriteRule ^admin/content/?$                     admin/content/index.php      [
 RewriteRule ^admin/content/new/?$                 admin/content/new.php        [L,QSA]
 RewriteRule ^admin/content/articles/?$            admin/content/articles.php   [L,QSA]
 RewriteRule ^admin/content/gallery/?$             admin/content/gallery.php    [L,QSA]
+RewriteRule ^admin/content/gallery-upload/?$      admin/content/gallery-upload.php [L,QSA]
 RewriteRule ^admin/content/podcasts/?$            admin/content/podcasts.php   [L,QSA]
 RewriteRule ^admin/content/videos/?$              admin/content/videos.php     [L,QSA]
 RewriteRule ^admin/content/documents/?$           admin/content/documents.php  [L,QSA]
