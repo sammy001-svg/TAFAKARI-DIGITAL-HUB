@@ -135,11 +135,11 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
 
     <!-- Mobile hamburger -->
     <button id="nav-hamburger" onclick="_navOpen()"
-            class="md:hidden w-11 h-11 flex flex-col items-center justify-center gap-1.25 rounded-xl hover:bg-white/10 transition-colors"
+            class="md:hidden w-11 h-11 flex flex-col items-center justify-center gap-[5px] rounded-xl hover:bg-white/10 transition-colors"
             aria-label="Open navigation" aria-expanded="false">
       <span class="w-5 h-0.5 bg-white rounded-full transition-all duration-300" id="hb1"></span>
       <span class="w-5 h-0.5 bg-white rounded-full transition-all duration-300" id="hb2"></span>
-      <span class="w-3 h-0.5 bg-white/70 rounded-full self-start ml-1.25 transition-all duration-300" id="hb3"></span>
+      <span class="w-3 h-0.5 bg-white/70 rounded-full self-start ml-[5px] transition-all duration-300" id="hb3"></span>
     </button>
 
   </div>

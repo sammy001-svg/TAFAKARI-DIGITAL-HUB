@@ -521,7 +521,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
     <!-- Mobile filter toggle -->
     <button id="ctrl-toggle"
             onclick="_ctrlOpen()"
-            class="absolute top-3 left-3 z-1100 items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold"
+            class="absolute top-3 left-3 z-[1100] items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold"
             style="background:#ffffff;color:#750B25;border:1px solid #e2e8f0;box-shadow:0 2px 10px rgba(15,23,42,.12);min-height:40px">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24">
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
@@ -534,7 +534,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 
     <!-- ── Left control panel ───────────────────────────────────────── -->
     <div id="ctrl-panel"
-         class="absolute top-0 left-0 bottom-0 z-1000 overflow-y-auto"
+         class="absolute top-0 left-0 bottom-0 z-[1000] overflow-y-auto"
          style="width:248px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-right:1px solid #e2e8f0">
 
       <!-- Mobile-only header with close button -->
@@ -773,7 +773,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
     <div id="map" style="width:100%;height:100%;z-index:1"></div>
 
     <!-- ── Map toolbar (top-right) ──────────────────────────────────── -->
-    <div class="absolute top-3 right-3 z-1000 flex flex-col gap-2">
+    <div class="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
       <button onclick="resetView()" title="Reset map view" data-i18n-title="heatmapPage.resetMapView"
               class="w-9 h-9 flex items-center justify-center rounded-xl hover:opacity-80 transition-opacity"
               style="background:#ffffff;color:#475569;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(15,23,42,.1)">
@@ -791,7 +791,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
     </div>
 
     <!-- ── Active count pill ─────────────────────────────────────────── -->
-    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-1000">
+    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-[1000]">
       <div class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold"
            style="background:rgba(255,255,255,.95);color:#0f172a;border:1px solid #e2e8f0;box-shadow:0 2px 12px rgba(15,23,42,.12);backdrop-filter:blur(8px)">
         <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background:#10b981"></span>
@@ -801,7 +801,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 
     <!-- ── Right detail panel ────────────────────────────────────────── -->
     <div id="detail-panel"
-         class="absolute top-0 right-0 bottom-0 z-1000 overflow-y-auto panel-hidden"
+         class="absolute top-0 right-0 bottom-0 z-[1000] overflow-y-auto panel-hidden"
          style="width:340px;background:#fff;box-shadow:-4px 0 40px rgba(0,0,0,.18)">
       <div id="detail-content"></div>
     </div>

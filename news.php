@@ -90,7 +90,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
   <!-- ── Filter panel ─────────────────────────────────────────────────────── -->
   <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 mb-8">
     <form method="GET" action="/news" class="flex flex-wrap gap-3 items-end">
-      <div class="flex-1 min-w-50">
+      <div class="flex-1 min-w-[200px]">
         <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5" data-i18n="newsPage.searchLabel">Search</label>
         <div class="relative">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>

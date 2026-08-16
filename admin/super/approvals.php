@@ -148,7 +148,7 @@ $adminPageSub   = $totalPending > 0
     <!-- Filter bar -->
     <form method="GET" action="/admin/super/approvals" class="flex flex-wrap items-center gap-3 mb-6">
       <?php if (!empty($availableCountries) && count($availableCountries) > 1): ?>
-        <select name="country" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-35">
+        <select name="country" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-[140px]">
           <option value="">All Countries</option>
           <?php foreach ($availableCountries as $c): ?>
             <option value="<?= h($c) ?>" <?= $filterCountry === $c ? 'selected' : '' ?>><?= h($c) ?></option>

@@ -890,7 +890,7 @@ try {
               <h3 class="font-outfit font-black text-[2.5rem] text-white leading-none mb-1" data-i18n="<?= h($g['nameKey']) ?>"><?= h($g['name']) ?></h3>
               <p class="text-white/50 text-xs mb-1" data-i18n="home.geo.<?= h($g['unitsKey']) ?>"><?= h($g['units']) ?></p>
               <p class="text-white/40 text-[11px] italic mb-5"><?= $g['cities'] ?></p>
-              <p class="text-white/75 text-sm leading-relaxed mb-6 max-w-65" data-i18n="home.geo.<?= h($g['descKey']) ?>"><?= h($g['desc']) ?></p>
+              <p class="text-white/75 text-sm leading-relaxed mb-6 max-w-[260px]" data-i18n="home.geo.<?= h($g['descKey']) ?>"><?= h($g['desc']) ?></p>
               <a href="/heatmap"
                  class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:gap-3" style="color:#E7952A">
                 <span data-i18n="home.exploreRegion">Explore Region</span>

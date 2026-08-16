@@ -79,7 +79,7 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 shadow-sm"
              style="focus-ring-color:#750B25">
     </div>
-    <select name="type" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-32.5">
+    <select name="type" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-[130px]">
       <option value="">All Types</option>
       <?php foreach ($typeNames as $val => $label): ?>
         <option value="<?= h($val) ?>" <?= $typeFilter === $val ? 'selected' : '' ?>><?= h($label) ?></option>

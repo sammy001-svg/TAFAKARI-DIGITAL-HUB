@@ -268,7 +268,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
     foreach ($kpis as $k): ?>
       <a href="<?= h($k['href']) ?>"
          class="kpi-card relative bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 overflow-hidden">
-        <div class="absolute inset-x-0 top-0 h-0.75 rounded-t-2xl" style="background:<?= $k['ic_col'] ?>"></div>
+        <div class="absolute inset-x-0 top-0 h-[3px] rounded-t-2xl" style="background:<?= $k['ic_col'] ?>"></div>
         <div class="flex items-start justify-between">
           <div class="kpi-icon w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
                style="background:<?= $k['ic_bg'] ?>">
