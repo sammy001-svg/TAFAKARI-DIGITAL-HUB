@@ -71,8 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     elseif (mb_strlen($mediaUrl) > 1024)
         $error = 'Media URL is too long — ' . mb_strlen($mediaUrl) . ' characters, limit is 1024.';
     else {
-        $validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT'];
+        $validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF'];
         if (!in_array($type, $validTypes)) $type = 'ARTICLE';
+        if ($type === 'POLICY_BRIEF') ensure_policy_brief_post_type();
 
         try {
             $pdo->prepare(
@@ -98,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
                 'PODCAST'       => '/admin/content/podcasts',
                 'VIDEO'         => '/admin/content/videos',
                 'DOCUMENT'      => '/admin/content/documents',
+                'POLICY_BRIEF'  => '/admin/content/policy-briefs',
                 default         => '/admin/content',
             };
             header('Location: ' . $redirect . '?updated=' . $flag);
