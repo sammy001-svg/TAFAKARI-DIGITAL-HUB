@@ -146,7 +146,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
        style="background:#0D0102;border-right:1px solid rgba(255,255,255,.055)">
 
   <!-- Branding -->
-  <div class="flex items-center gap-2 px-3 h-[64px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
+  <div class="flex items-center gap-2 px-3 h-16 border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
     <!-- Logo — full -->
     <a href="/" aria-label="CRTP — Home" class="sb-logo-full flex items-center gap-2 min-w-0">
       <div class="bg-white rounded-lg px-2 py-1.5 shadow-sm shrink-0">
