@@ -218,6 +218,23 @@ function ensure_comment_rating_column(): void {
     } catch (Exception $e) {}
 }
 
+// Widens the Post.type ENUM to include POLICY_BRIEF on existing databases.
+// Must run before any INSERT/UPDATE sets type='POLICY_BRIEF' — MySQL rejects
+// (or silently blanks, outside strict mode) enum values not yet in the column
+// definition, so this is called from every write path that can set that type.
+function ensure_policy_brief_post_type(): void {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $pdo = db();
+        $col = $pdo->query("SHOW COLUMNS FROM `Post` LIKE 'type'")->fetch();
+        if ($col && stripos($col['Type'], 'POLICY_BRIEF') === false) {
+            $pdo->exec("ALTER TABLE `Post` MODIFY `type` ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF') NOT NULL DEFAULT 'ARTICLE'");
+        }
+    } catch (Exception $e) {}
+}
+
 // ── JSON API helpers ─────────────────────────────────────────────
 
 function json_response(mixed $data, int $status = 200): never {
@@ -312,6 +329,7 @@ function type_badge(string $type): string {
         'PODCAST'       => '🎧',
         'VIDEO'         => '🎬',
         'DOCUMENT'      => '📁',
+        'POLICY_BRIEF'  => '📜',
     ];
     $icon = $icons[$type] ?? '📄';
     $label = str_replace('_', ' ', $type);
