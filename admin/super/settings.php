@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'sub'    => trim($s['sub']     ?? ''),
                     'badge'  => trim($s['badge']   ?? ''),
                     'url'    => trim($s['url']     ?? ''),
+                    'cta'    => trim($s['cta']     ?? ''),
                 ];
             }
             set_setting('carousel_slides', json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $uid);
@@ -389,7 +390,10 @@ function renderSlides() {
       + '<input type="text" placeholder="Headline *" value="'+esc(s.title)+'" onchange="slides['+i+'].title=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '<input type="text" placeholder="Sub-headline" value="'+esc(s.sub)+'" onchange="slides['+i+'].sub=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '<input type="text" placeholder="Badge text (e.g. 47 Counties)" value="'+esc(s.badge)+'" onchange="slides['+i+'].badge=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
-      + '<input type="text" placeholder="CTA URL (optional, e.g. /news)" value="'+esc(s.url)+'" onchange="slides['+i+'].url=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
+      + '<div style="display:flex;gap:6px">'
+      + '<input type="text" placeholder="Button text (default: Explore Heatmap)" value="'+esc(s.cta||'')+'" onchange="slides['+i+'].cta=this.value" style="flex:1;min-width:0;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
+      + '<input type="text" placeholder="Button link (default: /heatmap)" value="'+esc(s.url)+'" onchange="slides['+i+'].url=this.value" style="flex:1;min-width:0;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
+      + '</div>'
       + '</div>'
       + '</div>';
   }).join('');
@@ -397,7 +401,7 @@ function renderSlides() {
 
 function addSlide() {
   if (slides.length >= 5) { alert('Maximum 5 slides.'); return; }
-  slides.push({ img:'', region:'', title:'', sub:'', badge:'', url:'' });
+  slides.push({ img:'', region:'', title:'', sub:'', badge:'', url:'', cta:'' });
   renderSlides();
 }
 
