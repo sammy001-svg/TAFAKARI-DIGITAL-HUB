@@ -969,6 +969,8 @@ var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
 
 /* ── Published post markers from DB ──────────────────────────────── */
 var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+var postDataById = {};
+postData.forEach(function(d) { postDataById[d.id] = d; });
 
 /* ── Per-country DB stats (reports, latest date, categories) ─────── */
 var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
@@ -1719,7 +1721,8 @@ function applyFilters() {
 
   // Render published content as one growing, category-coloured dot per
   // country+category, so several categories in the same country stay legible.
-  var visiblePosts = 0;
+  var visiblePosts     = 0;
+  var visibleRealPosts = [];   // flat list of matching real posts, for the flashpoints table
   if (showReports && postData && postData.length) {
     var groups = {};                       // "Country||Category" -> [posts]
     postData.forEach(function(d) {
@@ -1742,6 +1745,7 @@ function applyFilters() {
         if (haystack.indexOf(q) === -1) return;
       }
       visiblePosts++;
+      visibleRealPosts.push(d);
       var key = d.country + '||' + d.category;
       (groups[key] = groups[key] || []).push(d);
     });
@@ -1816,30 +1820,63 @@ function applyFilters() {
   if (kpiEl) kpiEl.textContent = allHot;
 
   // Table
-  renderTable(visible);
+  renderTable(visible, visibleRealPosts);
 }
 
 /* ── Render flashpoints table ─────────────────────────────────────── */
-function renderTable(data) {
-  var sorted = data.slice().sort(function(a,b){ return b.intensity - a.intensity; }).slice(0, 15);
-  var tbody  = document.getElementById('hotspot-tbody');
+function renderTable(data, realPosts) {
+  var tbody = document.getElementById('hotspot-tbody');
 
-  if (!sorted.length) {
+  // Real published posts first (most recent), then demo intensity data
+  // fills any remaining rows up to 15 total.
+  var realRows = (realPosts || []).slice()
+    .sort(function(a,b){ return (b.dateRaw||'').localeCompare(a.dateRaw||''); });
+  var demoRows = data.slice()
+    .sort(function(a,b){ return b.intensity - a.intensity; })
+    .slice(0, Math.max(0, 15 - realRows.length));
+
+  if (!realRows.length && !demoRows.length) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-300 text-sm">No locations match the current filters.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = sorted.map(function(d, i) {
-    var rank = i + 1;
+  var rank = 0;
+  var rowsHtml = '';
+
+  realRows.forEach(function(d) {
+    rank++;
+    var catC = CAT_COLORS[d.category] || '#94a3b8';
+    var bg   = (rank % 2 === 1) ? '#fff' : '#fafafa';
+    var ctryInfo = CTRY_BY_NAME[d.country];
+    var code     = ctryInfo ? ctryInfo.code : '';
+    var flag     = FLAG[code] || '';
+    var rankDisplay = '<span style="font-size:11px;color:#cbd5e1;font-weight:600">' + rank + '</span>';
+
+    rowsHtml += '<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s"'
+      + ' onmouseover="this.style.background=\'#fef3f2\'" onmouseout="this.style.background=\''+bg+'\'"'
+      + ' onclick="openPostDetail(postDataById[\'' + esc(d.id) + '\'])">'
+      + '<td class="px-4 py-3">' + rankDisplay + '</td>'
+      + '<td class="px-4 py-3"><span style="font-weight:600;color:#0f172a">' + esc(d.title) + '</span></td>'
+      + '<td class="px-4 py-3 hidden md:table-cell"><span style="color:#64748b;font-size:12px">'
+      + flag + ' ' + esc(d.country) + '</span></td>'
+      + '<td class="px-4 py-3 hidden sm:table-cell">'
+      + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'35;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;white-space:nowrap">'
+      + esc(d.category) + '</span></td>'
+      + '<td class="px-4 py-3">'
+      + '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#16a34a">'
+      + '<svg width="9" height="9" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>'
+      + 'Published &middot; ' + esc(d.date || '') + '</span></td>'
+      + '</tr>';
+  });
+
+  demoRows.forEach(function(d) {
+    rank++;
     var col  = d.intensity > 7 ? '#ED1C24' : d.intensity > 4 ? '#E7952A' : '#94a3b8';
     var catC = CAT_COLORS[d.category] || '#94a3b8';
-    var bg   = i % 2 === 0 ? '#fff' : '#fafafa';
-    var rankDisplay = rank <= 3
-      ? '<span style="font-family:Outfit,sans-serif;font-weight:900;font-size:14px;color:'
-        + (rank===1?'#ED1C24':rank===2?'#E7952A':'#94a3b8') + '">' + rank + '</span>'
-      : '<span style="font-size:11px;color:#cbd5e1;font-weight:600">' + rank + '</span>';
+    var bg   = (rank % 2 === 1) ? '#fff' : '#fafafa';
+    var rankDisplay = '<span style="font-size:11px;color:#cbd5e1;font-weight:600">' + rank + '</span>';
 
-    return '<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s"'
+    rowsHtml += '<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s"'
       + ' onmouseover="this.style.background=\'#fef3f2\'" onmouseout="this.style.background=\''+bg+'\'"'
       + ' onclick="zoomTo('+d.lat+','+d.lng+')">'
       + '<td class="px-4 py-3">' + rankDisplay + '</td>'
@@ -1856,7 +1893,9 @@ function renderTable(data) {
       + '<span style="font-size:12px;font-weight:700;color:'+col+';width:18px;text-align:right">'+d.intensity+'</span>'
       + '</div></td>'
       + '</tr>';
-  }).join('');
+  });
+
+  tbody.innerHTML = rowsHtml;
 }
 
 /* ── View mode toggle ─────────────────────────────────────────────── */
