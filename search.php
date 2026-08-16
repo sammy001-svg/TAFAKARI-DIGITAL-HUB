@@ -20,6 +20,12 @@ $typeConfig = [
         'url'   => fn($r) => $r['mediaUrl'] ?? '/documents',
         'color' => '#2B6CB0',
     ],
+    'POLICY_BRIEF' => [
+        'label' => 'Policy Briefs',
+        'icon'  => 'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2',
+        'url'   => fn($r) => '/policy-briefs/' . $r['id'],
+        'color' => '#8B5CF6',
+    ],
     'PODCAST' => [
         'label' => 'Podcasts',
         'icon'  => 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3',
@@ -52,7 +58,7 @@ if ($q !== '') {
              WHERE status = 'PUBLISHED'
                AND (title LIKE ? OR description LIKE ?)
              ORDER BY
-               CASE type WHEN 'ARTICLE' THEN 1 WHEN 'DOCUMENT' THEN 2 WHEN 'PODCAST' THEN 3 WHEN 'VIDEO' THEN 4 ELSE 5 END,
+               CASE type WHEN 'ARTICLE' THEN 1 WHEN 'DOCUMENT' THEN 2 WHEN 'POLICY_BRIEF' THEN 3 WHEN 'PODCAST' THEN 4 WHEN 'VIDEO' THEN 5 ELSE 6 END,
                createdAt DESC
              LIMIT 60"
         );

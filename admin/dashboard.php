@@ -41,7 +41,7 @@ $recentPosts = $run(
 )->fetchAll();
 
 // ── Chart: content by type ─────────────────────────────────────────────────
-$typeStats = array_fill_keys(['ARTICLE','VIDEO','PODCAST','DOCUMENT','GALLERY_IMAGE'], 0);
+$typeStats = array_fill_keys(['ARTICLE','VIDEO','PODCAST','DOCUMENT','GALLERY_IMAGE','POLICY_BRIEF'], 0);
 try {
     if ($isSuper) {
         $rows = $pdo->query("SELECT type, COUNT(*) as cnt FROM Post GROUP BY type")->fetchAll();
@@ -343,6 +343,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
             'PODCAST'       => ['path'=>'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', 'ic'=>'#E7952A', 'ib'=>'rgba(231,149,42,.07)'],
             'VIDEO'         => ['path'=>'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z', 'ic'=>'#ED1C24', 'ib'=>'rgba(237,28,36,.07)'],
             'DOCUMENT'      => ['path'=>'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', 'ic'=>'#6366F1', 'ib'=>'rgba(99,102,241,.07)'],
+            'POLICY_BRIEF'  => ['path'=>'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2', 'ic'=>'#8B5CF6', 'ib'=>'rgba(139,92,246,.07)'],
           ];
           foreach ($recentPosts as $p):
             $author  = $p['authorName'] ?? $p['authorUsername'] ?? '—';
@@ -530,8 +531,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
       <?php else:
         $maxEngagement = max(array_map(fn($r) => (int)$r['viewCount'] + (int)$r['downloadCount'], $topContent));
         $maxEngagement = max($maxEngagement, 1);
-        $typeColors = ['ARTICLE'=>'#750B25','VIDEO'=>'#ED1C24','PODCAST'=>'#E7952A','DOCUMENT'=>'#6366F1','GALLERY_IMAGE'=>'#10B981'];
-        $typeLabels = ['ARTICLE'=>'Article','VIDEO'=>'Video','PODCAST'=>'Podcast','DOCUMENT'=>'Doc','GALLERY_IMAGE'=>'Gallery'];
+        $typeColors = ['ARTICLE'=>'#750B25','VIDEO'=>'#ED1C24','PODCAST'=>'#E7952A','DOCUMENT'=>'#6366F1','GALLERY_IMAGE'=>'#10B981','POLICY_BRIEF'=>'#8B5CF6'];
+        $typeLabels = ['ARTICLE'=>'Article','VIDEO'=>'Video','PODCAST'=>'Podcast','DOCUMENT'=>'Doc','GALLERY_IMAGE'=>'Gallery','POLICY_BRIEF'=>'Brief'];
       ?>
         <div class="divide-y divide-slate-50">
           <?php foreach ($topContent as $rank => $tc):
@@ -730,16 +731,17 @@ ctx.fillText('No posts in the last 6 months', ctx.canvas.width / 2, 60);
 new Chart(document.getElementById('typeChart'), {
   type: 'doughnut',
   data: {
-    labels: ['Article','Video','Podcast','Document','Gallery'],
+    labels: ['Article','Video','Podcast','Document','Gallery','Policy Brief'],
     datasets: [{
       data: [
         <?= $typeStats['ARTICLE'] ?>,
         <?= $typeStats['VIDEO'] ?>,
         <?= $typeStats['PODCAST'] ?>,
         <?= $typeStats['DOCUMENT'] ?>,
-        <?= $typeStats['GALLERY_IMAGE'] ?>
+        <?= $typeStats['GALLERY_IMAGE'] ?>,
+        <?= $typeStats['POLICY_BRIEF'] ?>
       ],
-      backgroundColor: ['#750B25','#ED1C24','#E7952A','#6366F1','#10B981'],
+      backgroundColor: ['#750B25','#ED1C24','#E7952A','#6366F1','#10B981','#8B5CF6'],
       borderWidth: 0,
       hoverOffset: 8
     }]

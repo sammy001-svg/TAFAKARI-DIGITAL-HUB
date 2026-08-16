@@ -1975,7 +1975,7 @@ function closeDetail() {
 /* ── Cluster panel: every report behind one category dot ──────────── */
 function openCategoryCluster(country, category, items) {
   var col = CAT_COLORS[category] || '#94a3b8';
-  var TYPE_LABEL = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
+  var TYPE_LABEL = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery', POLICY_BRIEF:'Policy Brief'};
 
   var rows = items.slice().sort(function(a, b) {
     return (b.dateRaw || '').localeCompare(a.dateRaw || '');
@@ -2021,8 +2021,8 @@ function _clusterOpen(i) {
 }
 
 function openPostDetail(d) {
-  var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
-  var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery'};
+  var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery', POLICY_BRIEF:'Policy Brief'};
+  var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery', POLICY_BRIEF:'Read Brief'};
   var col    = POST_TYPE_COLORS[d.type] || '#750B25';
   var label  = TYPE_LABEL[d.type]  || 'Report';
   var action = TYPE_ACTION[d.type] || 'Read More';

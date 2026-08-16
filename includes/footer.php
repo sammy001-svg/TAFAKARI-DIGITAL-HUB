@@ -39,6 +39,7 @@
         <ul class="space-y-4 text-sm">
           <li><a href="/podcasts" class="hover:text-secondary transition-colors" data-i18n="podcasts">Podcasts</a></li>
           <li><a href="/videos"   class="hover:text-secondary transition-colors" data-i18n="footer.videoLibrary">Video Library</a></li>
+          <li><a href="/policy-briefs" class="hover:text-secondary transition-colors" data-i18n="policyBriefs">Policy Briefs</a></li>
           <li><a href="/about"    class="hover:text-secondary transition-colors" data-i18n="aboutUs">About Us</a></li>
           <li><a href="/contact"  class="hover:text-secondary transition-colors" data-i18n="footer.contact">Contact</a></li>
         </ul>
