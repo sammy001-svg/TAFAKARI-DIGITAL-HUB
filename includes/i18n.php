@@ -7,7 +7,7 @@
       home: 'Home', aboutUs: 'About Us', ourPurpose: 'Our Purpose', ourMission: 'Our Mission',
       whatWeDo: 'What We Do', coverageArea: 'Coverage Area', heatmap: 'Heatmap', gallery: 'Gallery',
       news: 'News', podcasts: 'Podcasts', videos: 'Videos', documents: 'Documents',
-      policyBriefs: 'Policy Briefs',
+      policyBriefs: 'Policy Briefs', more: 'More',
       login: 'Login', getInvolved: 'Contact Us', search: 'Search',
 
       /* Footer */
@@ -358,7 +358,7 @@
       home: 'Nyumbani', aboutUs: 'Kuhusu Sisi', ourPurpose: 'Kusudi Letu', ourMission: 'Dhamira Yetu',
       whatWeDo: 'Tunachofanya', coverageArea: 'Eneo la Huduma', heatmap: 'Ramani ya Joto', gallery: 'Picha',
       news: 'Habari', podcasts: 'Podikasti', videos: 'Video', documents: 'Nyaraka',
-      policyBriefs: 'Muhtasari wa Sera',
+      policyBriefs: 'Muhtasari wa Sera', more: 'Zaidi',
       login: 'Ingia', getInvolved: 'Wasiliana Nasi', search: 'Tafuta',
 
       'footer.tagline': 'Jukwaa la kidijitali la watumiaji wengi linalotumika kama hazina kuu ya maarifa, kituo cha utangazaji wa vyombo vya habari, na chombo cha ushirikiano wa jamii katika Kenya, Ethiopia, na DRC.',
@@ -697,7 +697,7 @@
       home: 'Accueil', aboutUs: 'À propos', ourPurpose: 'Notre objectif', ourMission: 'Notre mission',
       whatWeDo: 'Ce que nous faisons', coverageArea: 'Zone de couverture', heatmap: 'Carte thermique', gallery: 'Galerie',
       news: 'Actualités', podcasts: 'Podcasts', videos: 'Vidéos', documents: 'Documents',
-      policyBriefs: 'Notes Politiques',
+      policyBriefs: 'Notes Politiques', more: 'Plus',
       login: 'Connexion', getInvolved: 'Nous Contacter', search: 'Rechercher',
 
       'footer.tagline': "Une plateforme numérique multi-utilisateurs servant de dépôt centralisé de connaissances, de centre de diffusion médiatique et d'outil d'engagement communautaire au Kenya, en Éthiopie et en RDC.",
