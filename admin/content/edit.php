@@ -119,12 +119,12 @@ $selectedCats = $_SERVER['REQUEST_METHOD'] === 'POST'
 
 // Upload widget config based on current post type
 $editType = $f['type'] ?? $post['type'] ?? 'ARTICLE';
-$mFt  = match($editType) { 'PODCAST'=>'audio', 'VIDEO'=>'video', 'DOCUMENT'=>'document', default=>'image' };
+$mFt  = match($editType) { 'PODCAST'=>'audio', 'VIDEO'=>'video', 'DOCUMENT','POLICY_BRIEF'=>'document', default=>'image' };
 $mAcc = match($mFt) { 'audio'=>'audio/*', 'video'=>'video/mp4,video/webm,video/ogg', 'document'=>'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx', default=>'image/*' };
 $mDH  = match($mFt) { 'audio'=>'MP3, OGG, WAV, M4A · max 150 MB', 'video'=>'MP4, WebM · max 500 MB', 'document'=>'PDF, DOCX, XLS, PPT · max 50 MB', default=>'JPG, PNG, WebP · max 8 MB' };
 $mUH  = match($mFt) { 'audio'=>'MP3 link or podcast episode URL', 'video'=>'YouTube / Vimeo link, or direct video URL', 'document'=>'Link to PDF, Word doc, or other file', default=>'Direct image URL' };
 $mPh  = match($mFt) { 'audio'=>'https://…/episode.mp3', 'video'=>'https://www.youtube.com/watch?v=…', 'document'=>'https://…/report.pdf', default=>'https://…/image.jpg' };
-$mLabel = match($editType) { 'PODCAST'=>'Audio File', 'VIDEO'=>'Video URL', 'DOCUMENT'=>'Document File', 'GALLERY_IMAGE'=>'Gallery Image', default=>'' };
+$mLabel = match($editType) { 'PODCAST'=>'Audio File', 'VIDEO'=>'Video URL', 'DOCUMENT'=>'Document File', 'GALLERY_IMAGE'=>'Gallery Image', 'POLICY_BRIEF'=>'Brief File', default=>'' };
 
 $moduleBack = match($post['type'] ?? 'ARTICLE') {
     'ARTICLE'       => ['/admin/content/articles',  'Articles'],
@@ -132,6 +132,7 @@ $moduleBack = match($post['type'] ?? 'ARTICLE') {
     'PODCAST'       => ['/admin/content/podcasts',  'Podcasts'],
     'VIDEO'         => ['/admin/content/videos',    'Videos'],
     'DOCUMENT'      => ['/admin/content/documents', 'Documents'],
+    'POLICY_BRIEF'  => ['/admin/content/policy-briefs', 'Policy Briefs'],
     default         => ['/admin/content',           'Content'],
 };
 
@@ -199,7 +200,7 @@ $adminPageSub   = h($post['title'] ?? '');
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Content Type</label>
           <select name="type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
-            <?php foreach (['ARTICLE'=>'Article','GALLERY_IMAGE'=>'Gallery Image','PODCAST'=>'Podcast','VIDEO'=>'Video','DOCUMENT'=>'Document'] as $v => $l): ?>
+            <?php foreach (['ARTICLE'=>'Article','GALLERY_IMAGE'=>'Gallery Image','PODCAST'=>'Podcast','VIDEO'=>'Video','DOCUMENT'=>'Document','POLICY_BRIEF'=>'Policy Brief'] as $v => $l): ?>
               <option value="<?= h($v) ?>" <?= (($f['type'] ?? 'ARTICLE') === $v) ? 'selected' : '' ?>><?= h($l) ?></option>
             <?php endforeach; ?>
           </select>

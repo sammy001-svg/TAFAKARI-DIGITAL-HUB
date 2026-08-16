@@ -182,6 +182,7 @@ $postTypeUrl = [
     'VIDEO'         => '/videos/',
     'DOCUMENT'      => '/documents/',
     'GALLERY_IMAGE' => '/gallery',
+    'POLICY_BRIEF'  => '/policy-briefs/',
 ];
 
 // ── Resolve coordinates for published posts ────────────────────────────
@@ -1081,7 +1082,7 @@ function makeCategoryDotIcon(col, count, highlight) {
 /* ── Post marker icon factory ─────────────────────────────────────── */
 var POST_TYPE_COLORS = {
   ARTICLE:'#750B25', PODCAST:'#E7952A', VIDEO:'#ED1C24',
-  DOCUMENT:'#6366F1', GALLERY_IMAGE:'#10B981'
+  DOCUMENT:'#6366F1', GALLERY_IMAGE:'#10B981', POLICY_BRIEF:'#8B5CF6'
 };
 /* ── De-escalating icon factory ───────────────────────────────────── */
 function makeDeescIcon(d) {
@@ -1319,7 +1320,7 @@ function openCountryPanel(code) {
   // "View All Reports" always pointed at /news (articles only) even when the
   // country's published content was actually a document/video/podcast.
   var countryPosts = postData.filter(function(d){ return d.country === name; });
-  var TYPE_LABEL = { ARTICLE:'News', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Gallery' };
+  var TYPE_LABEL = { ARTICLE:'News', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Gallery', POLICY_BRIEF:'Policy Brief' };
 
   var catHtml = allCats.map(function(c) {
     var cc = CAT_COLORS[c] || '#94a3b8';
