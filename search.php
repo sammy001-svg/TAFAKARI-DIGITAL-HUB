@@ -109,7 +109,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
   </div>
 </div>
 
-<main class="flex-grow max-w-5xl mx-auto px-6 py-10 w-full">
+<main class="grow max-w-5xl mx-auto px-6 py-10 w-full">
 
   <?php if ($q === ''): ?>
     <!-- ── No query yet — show suggestions ─────────────────────────────── -->
@@ -203,7 +203,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
               </div>
 
               <!-- Content -->
-              <div class="flex-grow min-w-0">
+              <div class="grow min-w-0">
                 <div class="flex flex-wrap gap-2 mb-1">
                   <?php if (!empty($r['country'])): ?>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#E7952A"><?= h($r['country']) ?></span>

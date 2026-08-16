@@ -148,7 +148,7 @@ $adminPageSub   = $totalPending > 0
     <!-- Filter bar -->
     <form method="GET" action="/admin/super/approvals" class="flex flex-wrap items-center gap-3 mb-6">
       <?php if (!empty($availableCountries) && count($availableCountries) > 1): ?>
-        <select name="country" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-[140px]">
+        <select name="country" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-35">
           <option value="">All Countries</option>
           <?php foreach ($availableCountries as $c): ?>
             <option value="<?= h($c) ?>" <?= $filterCountry === $c ? 'selected' : '' ?>><?= h($c) ?></option>
@@ -206,7 +206,7 @@ $adminPageSub   = $totalPending > 0
                     <path d="<?= $svg ?>"/>
                   </svg>
                 </div>
-                <div class="flex-grow min-w-0">
+                <div class="grow min-w-0">
                   <div class="flex items-center gap-2 flex-wrap mb-1">
                     <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600">
                       <?= h($typeLabels[$p['type']] ?? $p['type']) ?>
@@ -319,7 +319,7 @@ $adminPageSub   = $totalPending > 0
                          class="w-24 h-16 rounded-xl object-cover shrink-0 border border-slate-100"
                          onerror="this.style.display='none'">
                   <?php endif; ?>
-                  <div class="flex-grow min-w-0">
+                  <div class="grow min-w-0">
                     <?php if ($desc !== ''): ?>
                       <p class="text-sm text-slate-700 font-medium mb-2"><?= h($desc) ?></p>
                     <?php endif; ?>
