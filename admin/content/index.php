@@ -73,13 +73,13 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
 
   <!-- Search + Filter bar -->
   <form method="GET" action="/admin/content" class="flex flex-wrap items-center gap-3 mb-5">
-    <div class="relative flex-grow max-w-sm">
+    <div class="relative grow max-w-sm">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search by title or country…"
              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 shadow-sm"
              style="focus-ring-color:#750B25">
     </div>
-    <select name="type" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-[130px]">
+    <select name="type" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm min-w-32.5">
       <option value="">All Types</option>
       <?php foreach ($typeNames as $val => $label): ?>
         <option value="<?= h($val) ?>" <?= $typeFilter === $val ? 'selected' : '' ?>><?= h($label) ?></option>
