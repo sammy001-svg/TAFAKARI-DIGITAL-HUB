@@ -43,7 +43,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($decoded as $cat) {
             $name = trim($cat['name'] ?? '');
             if (!$name) continue;
-            $clean[] = ['name'=>$name,'color'=>trim($cat['color']??'#94a3b8')];
+            // Component elements each carry their own 1-10 intensity score;
+            // the category cell shows the average of them.
+            $els = [];
+            if (isset($cat['elements']) && is_array($cat['elements'])) {
+                foreach ($cat['elements'] as $e) {
+                    $e = trim((string)$e);
+                    if ($e !== '' && !in_array($e, $els, true)) $els[] = $e;
+                }
+            }
+            $clean[] = [
+                'name'     => $name,
+                'color'    => trim($cat['color'] ?? '#94a3b8'),
+                'elements' => $els,
+            ];
         }
         set_setting('heatmap_categories', json_encode($clean, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES), $uid);
         $saved = 'categories';
@@ -154,14 +167,11 @@ $defaultRegions = [
 ];
 
 $defaultCategories = [
-    ['name'=>'Security',    'color'=>'#ED1C24'],
-    ['name'=>'Displacement','color'=>'#E7952A'],
-    ['name'=>'Human Rights','color'=>'#F59E0B'],
-    ['name'=>'Health',      'color'=>'#10B981'],
-    ['name'=>'Policy',      'color'=>'#8B5CF6'],
-    ['name'=>'Climate',     'color'=>'#3B82F6'],
-    ['name'=>'Education',   'color'=>'#6366F1'],
-    ['name'=>'Agriculture', 'color'=>'#84CC16'],
+    ['name'=>'Conflict & Security Watch',          'color'=>'#ED1C24', 'elements'=>['Armed conflict & security incidents','Armed group statements & activity','Civilian harm & protection']],
+    ['name'=>'Peace & Political Track',            'color'=>'#750B25', 'elements'=>['Key peace & conflict developments','Peace initiatives & mediation','Government positions & actions']],
+    ['name'=>'Humanitarian & Emergency Situation', 'color'=>'#E7952A', 'elements'=>['Humanitarian situation & access','Displacement & returns','Natural disasters & health emergencies']],
+    ['name'=>'Actors & Institutional Engagement',  'color'=>'#3B82F6', 'elements'=>['International & regional actors','Religious institutions & civil society','Local governance & institutions']],
+    ['name'=>'Early Warning Signals',              'color'=>'#65A30D', 'elements'=>['Escalation indicators','Social tension & hate speech','Resource & economic stress']],
 ];
 
 $defaultIssueMap = [
@@ -355,7 +365,8 @@ $adminPageSub   = 'Manage countries, regions and categories for the conflict mon
       <table class="w-full text-sm" style="border-collapse:collapse">
         <thead style="background:#f8fafc">
           <tr>
-            <th class="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400">Category Name</th>
+            <th class="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400 w-64">Category Name</th>
+            <th class="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400">Component Elements <span class="normal-case font-semibold text-slate-300">(one per line — each scored 1–10)</span></th>
             <th class="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400 w-44">Color</th>
             <th class="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400 w-16">Preview</th>
             <th class="w-12"></th>
@@ -523,13 +534,21 @@ function renderCategories() {
   tbody.innerHTML = DB.categories.map(function(cat, i) {
     var col = esc(cat.color || '#94a3b8');
     return '<tr>'
-      + '<td class="px-4 py-2">' + ci(cat.name, 'Category name') + '</td>'
-      + '<td class="px-4 py-2"><div style="display:flex;gap:8px;align-items:center">'
+      + '<td class="px-4 py-2 align-top">' + ci(cat.name, 'Category name') + '</td>'
+      + '<td class="px-4 py-2 align-top">'
+      +   '<textarea class="cat-elements cell-input" rows="3" placeholder="One element per line"'
+      +   ' style="width:100%;resize:vertical;line-height:1.5;font-family:inherit">'
+      +   esc((cat.elements || []).join('
+')) + '</textarea>'
+      +   '<p style="font-size:10px;color:#94a3b8;margin:3px 0 0">'
+      +   'Category score = average of these elements</p>'
+      + '</td>'
+      + '<td class="px-4 py-2 align-top"><div style="display:flex;gap:8px;align-items:center">'
       +   '<input type="color" value="' + col + '" style="width:36px;height:32px;border-radius:7px;border:1px solid #e2e8f0;padding:2px;cursor:pointer" oninput="syncColor(this)">'
       +   '<input type="text" class="cell-input hex-input" value="' + col + '" placeholder="#rrggbb" maxlength="7" oninput="syncHex(this)" style="flex:1">'
       + '</div></td>'
-      + '<td class="px-4 py-2"><div class="color-swatch" style="width:28px;height:28px;border-radius:7px;background:' + col + ';border:1px solid rgba(0,0,0,.1)"></div></td>'
-      + '<td class="px-4 py-2">' + delBtn('categories', i) + '</td>'
+      + '<td class="px-4 py-2 align-top"><div class="color-swatch" style="width:28px;height:28px;border-radius:7px;background:' + col + ';border:1px solid rgba(0,0,0,.1)"></div></td>'
+      + '<td class="px-4 py-2 align-top">' + delBtn('categories', i) + '</td>'
       + '</tr>';
   }).join('');
   document.getElementById('categories-count').textContent = DB.categories.length + ' categories';
@@ -580,7 +599,7 @@ function syncHex(hexInput) {
 var emptyRow = {
   countries: {name:'',code:'',flag:'',lat:0,lng:0},
   regions:   {name:'',lat:0,lng:0},
-  categories:{name:'',color:'#94a3b8'},
+  categories:{name:'',color:'#94a3b8',elements:[]},
   issue_map: {from:'',to:''},
 };
 function addRow(tab) {
@@ -614,7 +633,14 @@ function serializeTab(tab) {
       arr.push({name:inputs[0].value.trim(), lat:parseFloat(inputs[1].value)||0, lng:parseFloat(inputs[2].value)||0});
     } else if (tab === 'categories') {
       var cp = tr.querySelector('input[type="color"]');
-      arr.push({name:inputs[0].value.trim(), color:inputs[1].value.trim() || (cp ? cp.value : '#94a3b8')});
+      var ta = tr.querySelector('textarea.cat-elements');
+      var els = ta ? ta.value.split('
+').map(function(x){ return x.trim(); }).filter(function(x){ return x !== ''; }) : [];
+      arr.push({
+        name: inputs[0].value.trim(),
+        color: inputs[1].value.trim() || (cp ? cp.value : '#94a3b8'),
+        elements: els
+      });
     } else if (tab === 'issue_map') {
       arr.push({from:inputs[0].value.trim(), to:inputs[1].value.trim()});
     }

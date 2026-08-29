@@ -162,9 +162,19 @@ $postTypeUrl = [
 
 // ── Resolve coordinates for published posts ────────────────────────────
 $postMarkers = [];
+// country => category => ['sum'=>float,'n'=>int]  (for the comparison matrix)
+$scoreMatrix = [];
 try {
+    // intensityScores only exists once migrations/002 has been run; detect it so
+    // an un-migrated database still renders the map instead of throwing.
+    $hasScores = false;
+    try {
+        $hasScores = (bool) db()->query("SHOW COLUMNS FROM Post LIKE 'intensityScores'")->fetch();
+    } catch (Exception $e) { $hasScores = false; }
+
+    $scoreCol = $hasScores ? ', intensityScores' : '';
     $posts = db()->query("
-        SELECT id, title, type, description, country, region, issueCategory, createdAt, thumbnailUrl
+        SELECT id, title, type, description, country, region, issueCategory, createdAt, thumbnailUrl$scoreCol
         FROM Post WHERE status='PUBLISHED' AND country IS NOT NULL AND country != ''
         ORDER BY createdAt DESC LIMIT 300
     ")->fetchAll();
@@ -213,8 +223,24 @@ try {
         }
         if (!$mappedCats) $mappedCats = ['Policy'];
 
+        // Per-category averages from this report's element scores
+        $catScores = heatmap_category_scores(post_intensity_scores($p['intensityScores'] ?? null));
+        $catAvgs   = [];
+        foreach ($catScores as $cn => $cs) {
+            $catAvgs[$cn] = $cs['avg'];
+            if (!isset($scoreMatrix[$p['country']][$cn])) {
+                $scoreMatrix[$p['country']][$cn] = ['sum' => 0.0, 'n' => 0];
+            }
+            $scoreMatrix[$p['country']][$cn]['sum'] += $cs['avg'];
+            $scoreMatrix[$p['country']][$cn]['n']   += 1;
+        }
+        // Overall score for this report = mean of its scored categories
+        $postAvg = $catAvgs ? round(array_sum($catAvgs) / count($catAvgs), 1) : null;
+
         $postMarkers[] = [
             'id'       => $p['id'],
+            'scores'   => $catAvgs,
+            'avg'      => $postAvg,
             'title'    => $p['title'],
             'type'     => $p['type'] ?? 'ARTICLE',
             'desc'     => mb_substr($p['description'] ?? '', 0, 150),
@@ -231,6 +257,15 @@ try {
         ];
     }
 } catch (Exception $e) {}
+
+// Flatten the score matrix to country => category => average
+$scoreMatrixAvg = [];
+foreach ($scoreMatrix as $ctry => $byCat) {
+    foreach ($byCat as $cn => $a) {
+        if ($a['n'] > 0) $scoreMatrixAvg[$ctry][$cn] = round($a['sum'] / $a['n'], 1);
+    }
+}
+ksort($scoreMatrixAvg);
 
 // ── Summary stats ──────────────────────────────────────────────────────
 $totalReports   = count($postMarkers);
@@ -786,6 +821,86 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 
   </div><!-- /#map-wrapper -->
 
+  <!-- ── Intensity matrix: country x category ──────────────────────── -->
+  <?php $hmTax = heatmap_taxonomy(); ?>
+  <div class="max-w-7xl mx-auto px-6 pt-10">
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-1">
+      <div>
+        <h2 class="font-outfit font-black text-xl text-slate-900">Intensity Matrix</h2>
+        <p class="text-sm text-slate-400 mt-0.5">
+          Average score per category, 1&ndash;10, where 10 is severe / critical.
+          Each cell is the mean of its component element scores across published reports.
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <?php foreach ([[9,'Critical'],[7,'High'],[5,'Moderate'],[2,'Low'],[1,'Stable']] as [$tv,$tl]): ?>
+          <span class="flex items-center gap-1.5">
+            <span style="width:11px;height:11px;border-radius:3px;background:<?= h(hm_tier_color($tv)) ?>;display:inline-block"></span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400"><?= h($tl) ?></span>
+          </span>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <?php if (empty($scoreMatrixAvg)): ?>
+      <div class="mt-5 rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
+        <p class="text-sm text-slate-500 font-semibold">No intensity scores recorded yet.</p>
+        <p class="text-xs text-slate-400 mt-1.5 max-w-lg mx-auto leading-relaxed">
+          Scores appear here once published reports carry an Intensity Assessment.
+          Open a report in the admin panel, score its component elements 1&ndash;10, and publish.
+        </p>
+      </div>
+    <?php else: ?>
+      <div class="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+        <table class="w-full text-sm" style="border-collapse:collapse;min-width:760px">
+          <thead>
+            <tr style="background:#f8fafc">
+              <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 sticky left-0" style="background:#f8fafc">Country</th>
+              <?php foreach ($hmTax as $c): ?>
+                <th class="px-3 py-3 text-[10px] font-black uppercase tracking-wider text-center" style="color:<?= h($c['color']) ?>">
+                  <span class="block leading-tight"><?= h($c['name']) ?></span>
+                </th>
+              <?php endforeach; ?>
+              <th class="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 text-center">Overall</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($scoreMatrixAvg as $ctry => $byCat):
+              $rowVals = [];
+              foreach ($hmTax as $c) {
+                if (isset($byCat[$c['name']])) $rowVals[] = $byCat[$c['name']];
+              }
+              $rowAvg = $rowVals ? round(array_sum($rowVals) / count($rowVals), 1) : null;
+            ?>
+              <tr style="border-top:1px solid #f1f5f9">
+                <td class="px-4 py-2.5 font-bold text-slate-800 whitespace-nowrap sticky left-0 bg-white"><?= h($ctry) ?></td>
+                <?php foreach ($hmTax as $c):
+                  $v = $byCat[$c['name']] ?? null; ?>
+                  <td class="px-3 py-2.5 text-center">
+                    <?php if ($v === null): ?>
+                      <span class="text-slate-300 text-xs">&mdash;</span>
+                    <?php else: ?>
+                      <span class="inline-block font-outfit font-black text-[13px] rounded-lg px-2.5 py-1"
+                            style="background:<?= h(hm_tier_color($v)) ?>;color:#fff;min-width:38px"
+                            title="<?= h(hm_tier_label($v)) ?>"><?= h(rtrim(rtrim(number_format($v, 1), '0'), '.')) ?></span>
+                    <?php endif; ?>
+                  </td>
+                <?php endforeach; ?>
+                <td class="px-4 py-2.5 text-center">
+                  <?php if ($rowAvg === null): ?>
+                    <span class="text-slate-300 text-xs">&mdash;</span>
+                  <?php else: ?>
+                    <span class="font-outfit font-black text-[13px]" style="color:<?= h(hm_tier_color($rowAvg)) ?>"><?= h(number_format($rowAvg, 1)) ?></span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
+
   <!-- ── Top Flashpoints table ─────────────────────────────────────── -->
   <div class="max-w-7xl mx-auto px-6 py-10">
     <div class="flex items-center justify-between mb-5">
@@ -948,6 +1063,10 @@ var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_HEX_T
 /* ── Per-country DB stats (reports, latest date, categories) ─────── */
 var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 
+/* ── Intensity taxonomy + country x category score matrix ────────── */
+var HM_TAXONOMY = <?= json_encode(array_map(fn($c) => ['name'=>$c['name'],'color'=>$c['color'],'elements'=>$c['elements']], heatmap_taxonomy()), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+var SCORE_MATRIX = <?= json_encode($scoreMatrixAvg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+
 /* ── Master country list (name, code, flag, centroid) ────────────── */
 /* Declared here with the other PHP data: it is consumed further down by
    CTRY_BY_NAME and makeCountryIcon, and a later `var` would hoist as
@@ -1021,22 +1140,34 @@ var CTRY_BY_NAME = {};
 })();
 
 /* ── Category dot: one per country+category, grows with post count ── */
-function makeCategoryDotIcon(col, count, highlight) {
-  // 1 report = 15px, easing off via sqrt so busy countries stay usable.
-  // Range is roughly 15px (1 report) to 29px (18+).
+function makeCategoryDotIcon(col, count, score, highlight) {
+  // Size still encodes VOLUME (how many reports); colour encodes the CATEGORY;
+  // the ring and the number encode INTENSITY (severity) when it has been scored.
   var dot = Math.round(11 + Math.min(Math.sqrt(count), 4.2) * 4.3);
-  var box = dot + 18;                       // room for the pulse ring
+  var scored = (score !== null && score !== undefined && !isNaN(score));
+  if (scored) dot = Math.max(dot, 22);          // room for the number
+  var box = dot + 20;
+
   var ring = '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);'
            + 'width:' + dot + 'px;height:' + dot + 'px;pointer-events:none">'
            + '<div style="width:100%;height:100%;border-radius:50%;background:' + col
            + ';animation:pulse-ring 2.8s ease-out infinite"></div></div>';
 
-  // Only label once the dot is big enough to hold a readable number
-  var label = (count > 1 && dot >= 19)
+  // Severity tier ring sits just outside the dot
+  var tierCol = scored ? intensityColor(score) : null;
+  var shadow  = '0 1px 7px rgba(15,23,42,.32),0 0 0 1px rgba(15,23,42,.08)'
+              + (scored ? ',0 0 0 3px ' + tierCol : '')
+              + (highlight ? ',0 0 0 ' + (scored ? '6px' : '3px') + ' rgba(117,11,37,.55)' : '');
+
+  var inner = scored
     ? '<span style="position:relative;z-index:3;font-family:Outfit,sans-serif;font-weight:900;'
-      + 'font-size:' + (dot >= 25 ? 10 : 9) + 'px;color:#fff;line-height:1;'
-      + 'text-shadow:0 1px 3px rgba(0,0,0,.45);pointer-events:none">' + count + '</span>'
-    : '';
+      + 'font-size:' + (dot >= 26 ? 11 : 10) + 'px;color:#fff;line-height:1;'
+      + 'text-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none">' + score.toFixed(1).replace(/\.0$/, '') + '</span>'
+    : (count > 1 && dot >= 19
+        ? '<span style="position:relative;z-index:3;font-family:Outfit,sans-serif;font-weight:900;'
+          + 'font-size:' + (dot >= 25 ? 10 : 9) + 'px;color:#fff;line-height:1;'
+          + 'text-shadow:0 1px 3px rgba(0,0,0,.45);pointer-events:none">' + count + '</span>'
+        : '');
 
   return L.divIcon({
     className: '',
@@ -1047,10 +1178,9 @@ function makeCategoryDotIcon(col, count, highlight) {
         + 'display:flex;align-items:center;justify-content:center;overflow:visible">'
         + ring
         + '<div style="width:' + dot + 'px;height:' + dot + 'px;border-radius:50%;background:' + col
-        + ';border:2px solid #fff;box-shadow:0 1px 7px rgba(15,23,42,.32),0 0 0 1px rgba(15,23,42,.08)'
-        + (highlight ? ',0 0 0 3px rgba(117,11,37,.55)' : '') + ';'
+        + ';border:2px solid #fff;box-shadow:' + shadow + ';'
         + 'position:relative;z-index:2;cursor:pointer;display:flex;align-items:center;justify-content:center">'
-        + label + '</div></div>',
+        + inner + '</div></div>',
   });
 }
 
@@ -1712,6 +1842,16 @@ function applyFilters() {
       var items = groups[key];
       var col   = CAT_COLORS[cat] || '#94a3b8';
 
+      // Average this group's per-report scores for that category
+      var sVals = [];
+      items.forEach(function(d) {
+        var v = d.scores ? d.scores[cat] : null;
+        if (v !== null && v !== undefined && !isNaN(v)) sVals.push(+v);
+      });
+      var gScore = sVals.length
+        ? Math.round((sVals.reduce(function(a,b){ return a+b; }, 0) / sVals.length) * 10) / 10
+        : null;
+
       // Anchor on the country centroid; fall back to the posts' own coords
       var base = CTRY_BY_NAME[ctry];
       var lat, lng;
@@ -1736,12 +1876,16 @@ function applyFilters() {
       var isSelCtry = (selCtry !== 'ALL' && CNAME[selCtry] === ctry);
 
       var m = L.marker([lat, lng], {
-        icon: makeCategoryDotIcon(col, items.length, isSelCtry),
+        icon: makeCategoryDotIcon(col, items.length, gScore, isSelCtry),
         zIndexOffset: isSelCtry ? 700 : 600
       }).bindTooltip(
         '<strong>' + esc(ctry) + '</strong><br>'
-        + '<span style="color:' + col + ';font-weight:700">' + esc(cat) + '</span>'
-        + ' &middot; ' + items.length + ' ' + (items.length === 1 ? 'report' : 'reports'),
+        + '<span style="color:' + col + ';font-weight:700">' + esc(cat) + '</span><br>'
+        + (gScore !== null
+            ? '<span style="color:' + intensityColor(gScore) + ';font-weight:800">'
+              + gScore.toFixed(1) + ' / 10 &middot; ' + intensityLabel(gScore) + '</span><br>'
+            : '<span style="color:#94a3b8">Not yet scored</span><br>')
+        + '<small>' + items.length + ' ' + (items.length === 1 ? 'report' : 'reports') + '</small>',
         { direction: 'right', opacity: 1 }
       );
       m.on('click', (function(c, k, list) {

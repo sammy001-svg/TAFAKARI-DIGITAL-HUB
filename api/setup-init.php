@@ -33,6 +33,8 @@ $sqls = [
       -- issueCategory holds a comma-joined list from the multi-select, so it
       -- needs far more room than a single value would
       `country` VARCHAR(191) NOT NULL, `region` VARCHAR(191) NOT NULL, `issueCategory` VARCHAR(512) NOT NULL,
+      -- Per-element 1-10 intensity scores, JSON keyed by element name
+      `intensityScores` TEXT NULL,
       `viewCount` INT NOT NULL DEFAULT 0, `downloadCount` INT NOT NULL DEFAULT 0,
       `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
       `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),

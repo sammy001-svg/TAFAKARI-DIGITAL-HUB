@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
+require_once dirname(__DIR__, 2) . '/includes/intensity-scoring.php';
 
 $user    = require_auth();
 $isSuper = is_super_admin();
@@ -51,13 +52,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (mb_strlen($mediaUrl) > 1024)
         $error = 'Media URL is too long — ' . mb_strlen($mediaUrl) . ' characters, limit is 1024.';
     else {
-        $id     = generate_id();
+    
+    // Per-element 1-10 intensity scores (0 = not assessed, dropped)
+    $intensityScores = [];
+    foreach ((array)($_POST['intensity'] ?? []) as $_el => $_v) {
+        $_el = trim((string)$_el);
+        $_v  = (int)$_v;
+        if ($_el !== '' && $_v >= 1 && $_v <= 10) $intensityScores[$_el] = $_v;
+    }
+    $intensityJson = $intensityScores ? json_encode($intensityScores, JSON_UNESCAPED_UNICODE) : null;
+    $id     = generate_id();
         $status = ($isSuper && isset($_POST['_publish'])) ? 'PUBLISHED' : 'DRAFT';
         try {
             db()->prepare(
-                'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
-            )->execute([$id,$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$status,$uid]);
+                'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,intensityScores,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
+            )->execute([$id,$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$status,$uid]);
 
             $redirect = match($type) {
                 'ARTICLE'      => '/admin/content/articles',
@@ -355,6 +365,9 @@ $adminPageSub   = $cfg['sub'];
       </div>
     </div>
 
+    <!-- Intensity Assessment -->
+    <?php intensity_scoring_fields(array_map('intval', (array)($_POST['intensity'] ?? []))); ?>
+
     <div class="flex gap-4 pb-8">
       <?php if ($isSuper): ?>
         <button type="submit" name="_publish" value="1"
@@ -372,6 +385,7 @@ $adminPageSub   = $cfg['sub'];
 </div>
 
 <?php uw_scripts(); ?>
+<?php intensity_scoring_scripts(); ?>
 <script>
 var _typeConfig = {
   ARTICLE: {

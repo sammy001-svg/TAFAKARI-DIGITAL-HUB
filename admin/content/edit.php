@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
+require_once dirname(__DIR__, 2) . '/includes/intensity-scoring.php';
 
 $user    = require_auth();
 $isSuper = is_super_admin();
@@ -49,6 +50,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     $region        = trim($_POST['region']        ?? '');
     $rawCats = array_filter(array_map('trim', (array)($_POST['issueCategories'] ?? [])));
     $issueCategory = implode(',', array_intersect($rawCats, issue_categories()));
+
+    // Per-element 1-10 intensity scores (0 = not assessed, dropped)
+    $intensityScores = [];
+    foreach ((array)($_POST['intensity'] ?? []) as $_el => $_v) {
+        $_el = trim((string)$_el);
+        $_v  = (int)$_v;
+        if ($_el !== '' && $_v >= 1 && $_v <= 10) $intensityScores[$_el] = $_v;
+    }
+    $intensityJson = $intensityScores ? json_encode($intensityScores, JSON_UNESCAPED_UNICODE) : null;
     $andSubmit     = isset($_POST['save_submit']);
     $andPublish    = $isSuper && isset($_POST['save_publish']);
 
@@ -76,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
 
         try {
             $pdo->prepare(
-                'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,updatedAt=NOW(3) WHERE id=?'
-            )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$id]);
+                'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,intensityScores=?,updatedAt=NOW(3) WHERE id=?'
+            )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$id]);
 
             $flag = 'saved';
             if ($andPublish) {
@@ -278,6 +288,14 @@ $adminPageSub   = h($post['title'] ?? '');
       </div>
     </div>
 
+    <!-- Intensity Assessment -->
+    <?php
+      $currentScores = $_SERVER['REQUEST_METHOD'] === 'POST'
+          ? array_map('intval', (array)($_POST['intensity'] ?? []))
+          : post_intensity_scores($post['intensityScores'] ?? null);
+      intensity_scoring_fields($currentScores);
+    ?>
+
     <div class="flex gap-3 flex-wrap">
       <?php if (!$lockedMsg): ?>
         <button type="submit" name="save_draft" class="btn-primary" style="padding:.7rem 1.75rem">
@@ -301,6 +319,7 @@ $adminPageSub   = h($post['title'] ?? '');
 </div>
 
 <?php uw_scripts(); ?>
+<?php intensity_scoring_scripts(); ?>
 <script>
 function switchTab(tab) {
   var write   = document.getElementById('write-panel');

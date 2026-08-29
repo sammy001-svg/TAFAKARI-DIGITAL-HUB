@@ -291,6 +291,173 @@ function issue_categories(): array {
     return $cached;
 }
 
+// ── Heat-map taxonomy: categories -> component elements ──────────
+
+/**
+ * Default component elements for each of the five heat-map categories.
+ * Used when a category has no explicit element list configured in
+ * Admin > Heatmap Config. Keyed by category name.
+ */
+function heatmap_default_elements(): array {
+    return [
+        'Conflict & Security Watch' => [
+            'Armed conflict & security incidents',
+            'Armed group statements & activity',
+            'Civilian harm & protection',
+        ],
+        'Peace & Political Track' => [
+            'Key peace & conflict developments',
+            'Peace initiatives & mediation',
+            'Government positions & actions',
+        ],
+        'Humanitarian & Emergency Situation' => [
+            'Humanitarian situation & access',
+            'Displacement & returns',
+            'Natural disasters & health emergencies',
+        ],
+        'Actors & Institutional Engagement' => [
+            'International & regional actors',
+            'Religious institutions & civil society',
+            'Local governance & institutions',
+        ],
+        'Early Warning Signals' => [
+            'Escalation indicators',
+            'Social tension & hate speech',
+            'Resource & economic stress',
+        ],
+    ];
+}
+
+/**
+ * The configured heat-map taxonomy.
+ *
+ * Returns a list of ['name' => string, 'color' => string, 'elements' => string[]].
+ * Element lists come from the stored config when present, otherwise from
+ * heatmap_default_elements(), otherwise the category stands alone as its own
+ * single element so it always remains scoreable.
+ */
+function heatmap_taxonomy(): array {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+
+    $defaults = heatmap_default_elements();
+    $out      = [];
+
+    try {
+        $raw = get_setting('heatmap_categories', '');
+        $rows = $raw !== '' ? json_decode($raw, true) : null;
+        if (is_array($rows)) {
+            foreach ($rows as $r) {
+                if (!is_array($r)) continue;
+                $name = trim((string)($r['name'] ?? ''));
+                if ($name === '') continue;
+
+                $els = [];
+                if (isset($r['elements']) && is_array($r['elements'])) {
+                    foreach ($r['elements'] as $e) {
+                        $e = trim((string)$e);
+                        if ($e !== '' && !in_array($e, $els, true)) $els[] = $e;
+                    }
+                }
+                if (!$els) $els = $defaults[$name] ?? [$name];
+
+                $out[] = [
+                    'name'     => $name,
+                    'color'    => trim((string)($r['color'] ?? '')) ?: '#94a3b8',
+                    'elements' => $els,
+                ];
+            }
+        }
+    } catch (Throwable $e) {}
+
+    if (!$out) {
+        foreach ($defaults as $name => $els) {
+            $out[] = ['name' => $name, 'color' => '#94a3b8', 'elements' => $els];
+        }
+    }
+
+    $cached = $out;
+    return $cached;
+}
+
+/** Flat map of element name => owning category name. */
+function heatmap_element_index(): array {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+    $idx = [];
+    foreach (heatmap_taxonomy() as $c) {
+        foreach ($c['elements'] as $e) $idx[$e] = $c['name'];
+    }
+    $cached = $idx;
+    return $cached;
+}
+
+/**
+ * Average the 1-10 element scores of one post into per-category averages.
+ *
+ * @param  array $scores  element name => score
+ * @return array          category name => ['avg'=>float,'n'=>int,'elements'=>[el=>score]]
+ */
+function heatmap_category_scores(array $scores): array {
+    $idx = heatmap_element_index();
+    $acc = [];
+    foreach ($scores as $el => $val) {
+        $v = (int)$val;
+        if ($v < 1 || $v > 10) continue;          // 0 / blank means "not assessed"
+        $cat = $idx[$el] ?? null;
+        if ($cat === null) continue;              // element no longer configured
+        if (!isset($acc[$cat])) $acc[$cat] = ['sum' => 0, 'n' => 0, 'elements' => []];
+        $acc[$cat]['sum'] += $v;
+        $acc[$cat]['n']   += 1;
+        $acc[$cat]['elements'][$el] = $v;
+    }
+    $out = [];
+    foreach ($acc as $cat => $a) {
+        $out[$cat] = [
+            'avg'      => round($a['sum'] / $a['n'], 1),
+            'n'        => $a['n'],
+            'elements' => $a['elements'],
+        ];
+    }
+    return $out;
+}
+
+/**
+ * Severity tier colour for a 1-10 intensity score.
+ * Mirrors intensityColor() in heatmap.php so server- and client-rendered
+ * views agree.
+ */
+function hm_tier_color(float $v): string {
+    if ($v >= 9) return '#ED1C24';   // Critical
+    if ($v >= 7) return '#E7952A';   // High
+    if ($v >= 5) return '#F59E0B';   // Moderate
+    if ($v >= 2) return '#65A30D';   // Low
+    return '#059669';                // Stable
+}
+
+/** Severity tier label for a 1-10 intensity score. */
+function hm_tier_label(float $v): string {
+    if ($v >= 9) return 'Critical';
+    if ($v >= 7) return 'High';
+    if ($v >= 5) return 'Moderate';
+    if ($v >= 2) return 'Low';
+    return 'Stable';
+}
+
+/** Decode a post's stored intensityScores JSON into element => score. */
+function post_intensity_scores(?string $json): array {
+    if ($json === null || trim($json) === '') return [];
+    $d = json_decode($json, true);
+    if (!is_array($d)) return [];
+    $out = [];
+    foreach ($d as $el => $v) {
+        $el = trim((string)$el);
+        $v  = (int)$v;
+        if ($el !== '' && $v >= 1 && $v <= 10) $out[$el] = $v;
+    }
+    return $out;
+}
+
 // ── Status / type badge HTML ─────────────────────────────────────
 
 function status_badge(string $status): string {

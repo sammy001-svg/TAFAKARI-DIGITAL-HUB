@@ -1,0 +1,44 @@
+-- ============================================================================
+--  002 — Per-element intensity scores on Post
+-- ============================================================================
+--
+--  WHY
+--  ---
+--  Each heat-map category is made up of component elements (e.g. "Armed
+--  conflict & security incidents" inside "Conflict & Security Watch"). The
+--  analyst submitting a report scores each element 1-10, where 10 is
+--  severe/critical. The category cell then shows the average of its component
+--  scores, which makes categories comparable across weeks, countries and
+--  regions.
+--
+--  STORAGE
+--  -------
+--  A JSON object keyed by element name:
+--
+--    {"Armed conflict & security incidents":8,"Displacement & returns":6}
+--
+--  Kept as a JSON blob rather than a separate table because the element list
+--  is user-configurable in Admin > Heatmap Config: a normalised table would
+--  need migrating every time an element is renamed. Aggregation happens in PHP
+--  over a few hundred rows, which is well within budget.
+--
+--  TEXT (not VARCHAR): with ~15 elements this can exceed any sane VARCHAR, and
+--  we have already been bitten once by VARCHAR(191) overflow silently killing
+--  saves (see migrations/001).
+--
+--  SAFE TO RUN
+--  -----------
+--  Adds one nullable column. No data is read, changed or removed. Existing
+--  posts get NULL and simply carry no scores until edited. Re-running is
+--  harmless apart from a duplicate-column error, which you can ignore.
+--
+--  HOW TO RUN (cPanel)
+--  -------------------
+--  phpMyAdmin -> select your database -> SQL tab -> paste -> Go.
+-- ============================================================================
+
+ALTER TABLE `Post`
+  ADD COLUMN `intensityScores` TEXT NULL AFTER `issueCategory`;
+
+-- Verify:
+--   SHOW FULL COLUMNS FROM `Post` WHERE Field = 'intensityScores';
