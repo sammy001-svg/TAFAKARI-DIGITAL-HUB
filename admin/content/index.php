@@ -18,7 +18,7 @@ $skip         = ($page - 1) * $pageSize;
 
 $validStatuses = ['DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
 if (!in_array($statusFilter, $validStatuses)) $statusFilter = 'ALL';
-$validTypes = ['ARTICLE','VIDEO','PODCAST','DOCUMENT','GALLERY_IMAGE'];
+$validTypes = ['ARTICLE','VIDEO','PODCAST','DOCUMENT','GALLERY_IMAGE','POLICY_BRIEF'];
 if (!in_array($typeFilter, $validTypes)) $typeFilter = '';
 
 $whereParts = [];
@@ -55,7 +55,7 @@ function pageHref(string $status, int $p, string $search = '', string $type = ''
 }
 
 $tabs      = ['ALL','DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
-$typeNames = ['ARTICLE'=>'Article','VIDEO'=>'Video','PODCAST'=>'Podcast','DOCUMENT'=>'Document','GALLERY_IMAGE'=>'Gallery'];
+$typeNames = ['ARTICLE'=>'Article','VIDEO'=>'Video','PODCAST'=>'Podcast','DOCUMENT'=>'Document','GALLERY_IMAGE'=>'Gallery','POLICY_BRIEF'=>'Policy Brief'];
 
 $pageTitle      = ($isSuper ? 'All Content' : 'My Content') . ' | Tafakari Admin';
 $adminPageTitle = $isSuper ? 'All Content' : 'My Content';
@@ -73,7 +73,7 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
 
   <!-- Search + Filter bar -->
   <form method="GET" action="/admin/content" class="flex flex-wrap items-center gap-3 mb-5">
-    <div class="relative flex-grow max-w-sm">
+    <div class="relative grow max-w-sm">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search by title or country…"
              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 shadow-sm"
@@ -146,6 +146,7 @@ $adminPageSub   = $total . ' item' . ($total !== 1 ? 's' : '') . ($statusFilter 
             'PODCAST'       => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z',
             'VIDEO'         => 'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z',
             'DOCUMENT'      => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+            'POLICY_BRIEF'  => 'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2',
           ];
           foreach ($posts as $p):
             $isOwner    = ($p['authorId'] === $uid);

@@ -38,6 +38,30 @@ $_defaultCountriesData = [
     ['name'=>'Liberia',                  'code'=>'LR','flag'=>'🇱🇷','lat'=>6.428,  'lng'=>-10.785],
     ['name'=>'Sierra Leone',             'code'=>'SL','flag'=>'🇸🇱','lat'=>8.460,  'lng'=>-11.780],
     ['name'=>'Guinea',                   'code'=>'GN','flag'=>'🇬🇳','lat'=>11.805, 'lng'=>-11.805],
+    // The remaining countries below are present so every option in the content-creation
+    // country dropdown (see african_countries()) has a map coordinate — otherwise a
+    // published post tagged with one of these is silently dropped from the heatmap.
+    ['name'=>'Benin',                    'code'=>'BJ','flag'=>'🇧🇯','lat'=>9.307,  'lng'=>2.315],
+    ['name'=>'Botswana',                 'code'=>'BW','flag'=>'🇧🇼','lat'=>-22.328,'lng'=>24.685],
+    ['name'=>'Cabo Verde',               'code'=>'CV','flag'=>'🇨🇻','lat'=>16.539, 'lng'=>-23.042],
+    ['name'=>'Comoros',                  'code'=>'KM','flag'=>'🇰🇲','lat'=>-11.645,'lng'=>43.333],
+    ['name'=>'Congo',                    'code'=>'CG','flag'=>'🇨🇬','lat'=>-0.228, 'lng'=>15.827],
+    ['name'=>'Djibouti',                 'code'=>'DJ','flag'=>'🇩🇯','lat'=>11.825, 'lng'=>42.590],
+    ['name'=>'Equatorial Guinea',        'code'=>'GQ','flag'=>'🇬🇶','lat'=>1.651,  'lng'=>10.268],
+    ['name'=>'Eritrea',                  'code'=>'ER','flag'=>'🇪🇷','lat'=>15.179, 'lng'=>39.782],
+    ['name'=>'Eswatini',                 'code'=>'SZ','flag'=>'🇸🇿','lat'=>-26.523,'lng'=>31.466],
+    ['name'=>'Gabon',                    'code'=>'GA','flag'=>'🇬🇦','lat'=>-0.804, 'lng'=>11.609],
+    ['name'=>'Gambia',                   'code'=>'GM','flag'=>'🇬🇲','lat'=>13.443, 'lng'=>-15.310],
+    ['name'=>'Guinea-Bissau',            'code'=>'GW','flag'=>'🇬🇼','lat'=>11.804, 'lng'=>-15.180],
+    ['name'=>'Ivory Coast',              'code'=>'CI','flag'=>'🇨🇮','lat'=>7.540,  'lng'=>-5.547],
+    ['name'=>'Lesotho',                  'code'=>'LS','flag'=>'🇱🇸','lat'=>-29.610,'lng'=>28.234],
+    ['name'=>'Libya',                    'code'=>'LY','flag'=>'🇱🇾','lat'=>26.335, 'lng'=>17.228],
+    ['name'=>'Mauritania',               'code'=>'MR','flag'=>'🇲🇷','lat'=>21.008, 'lng'=>-10.941],
+    ['name'=>'Mauritius',                'code'=>'MU','flag'=>'🇲🇺','lat'=>-20.348,'lng'=>57.552],
+    ['name'=>'Namibia',                  'code'=>'NA','flag'=>'🇳🇦','lat'=>-22.958,'lng'=>18.490],
+    ['name'=>'São Tomé and Príncipe',    'code'=>'ST','flag'=>'🇸🇹','lat'=>0.186,  'lng'=>6.613],
+    ['name'=>'Togo',                     'code'=>'TG','flag'=>'🇹🇬','lat'=>8.620,  'lng'=>0.825],
+    ['name'=>'Tunisia',                  'code'=>'TN','flag'=>'🇹🇳','lat'=>33.887, 'lng'=>9.538],
 ];
 $_dbCountries = json_decode(get_setting('heatmap_countries', ''), true);
 $_countriesData = (is_array($_dbCountries) && count($_dbCountries) > 0) ? $_dbCountries : $_defaultCountriesData;
@@ -158,6 +182,7 @@ $postTypeUrl = [
     'VIDEO'         => '/videos/',
     'DOCUMENT'      => '/documents/',
     'GALLERY_IMAGE' => '/gallery',
+    'POLICY_BRIEF'  => '/policy-briefs/',
 ];
 
 // ── Resolve coordinates for published posts ────────────────────────────
@@ -486,7 +511,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 }
 </style>
 
-<main class="flex-grow">
+<main class="grow">
 
   <!-- ── Page header ───────────────────────────────────────────────── -->
   <div style="background:#750B25" class="text-white px-4 md:px-6 py-6 md:py-8">
@@ -509,10 +534,10 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 shrink-0">
         <?php
         $kpis = [
-          [format_number($totalReports),   'Total Reports',    '#E7952A', 'totalReports'],
-          [format_number($monthlyReports), 'This Month',       '#E7952A', 'thisMonth'],
-          ['—',                            'Active Hotspots',  '#ED1C24', 'activeHotspots'],
-          ['14',                           'Countries',        '#E7952A', 'countriesKpi'],
+          [format_number($totalReports),        'Total Reports',    '#E7952A', 'totalReports'],
+          [format_number($monthlyReports),       'This Month',       '#E7952A', 'thisMonth'],
+          [format_number(count($countryStats)),  'Active Hotspots',  '#ED1C24', 'activeHotspots'],
+          [format_number(count($_countriesData)),'Countries',        '#E7952A', 'countriesKpi'],
         ];
         foreach ($kpis as $i => [$val, $lbl, $col, $lblKey]): ?>
           <div class="rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-center" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
@@ -1059,6 +1084,8 @@ var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
 
 /* ── Published post markers from DB ──────────────────────────────── */
 var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+var postDataById = {};
+postData.forEach(function(d) { postDataById[d.id] = d; });
 
 /* ── Per-country DB stats (reports, latest date, categories) ─────── */
 var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
@@ -1081,7 +1108,7 @@ var A2_TO_NUM = {
   'LY':'434','MG':'450','MW':'454','ML':'466','MR':'478','MA':'504','MZ':'508','NA':'516',
   'NE':'562','NG':'566','RW':'646','ST':'678','SN':'686','SL':'694','SO':'706','ZA':'710',
   'SS':'728','SD':'729','TZ':'834','TG':'768','TN':'788','UG':'800','ZM':'894','ZW':'716',
-  'BW':'072','CV':'132','LI':'430','MU':'480','SC':'690','SZ':'748','ZR':'180',
+  'BW':'072','CV':'132','GW':'624','MU':'480','SC':'690','SZ':'748','ZR':'180',
 };
 /* Reverse: numeric → alpha-2 */
 var NUM_TO_A2 = {};
@@ -1187,7 +1214,7 @@ function makeCategoryDotIcon(col, count, score, highlight) {
 /* ── Post marker icon factory ─────────────────────────────────────── */
 var POST_TYPE_COLORS = {
   ARTICLE:'#750B25', PODCAST:'#E7952A', VIDEO:'#ED1C24',
-  DOCUMENT:'#6366F1', GALLERY_IMAGE:'#10B981'
+  DOCUMENT:'#6366F1', GALLERY_IMAGE:'#10B981', POLICY_BRIEF:'#8B5CF6'
 };
 /* ── De-escalating icon factory ───────────────────────────────────── */
 function makeDeescIcon(d) {
@@ -1403,7 +1430,6 @@ function openCountryPanel(code) {
   var name    = CNAME[code] || code;
   var flag    = FLAG[code] || '';
   var dbS     = COUNTRY_STATS[name] || {};
-  var reports = dbS.reports || 0;
   var latestF = dbS.latestFmt || null;
 
   var locations  = mapData.filter(function(d){ return d.country === code; });
@@ -1419,6 +1445,14 @@ function openCountryPanel(code) {
   var topLoc = locations.length
     ? locations.slice().sort(function(a,b){ return b.intensity - a.intensity; })[0]
     : null;
+
+  // Real published posts for this country, of ANY content type (article, document,
+  // podcast, video, gallery) — postData already carries the correct per-type detail
+  // URL for each item, so linking straight to these avoids the old bug where
+  // "View All Reports" always pointed at /news (articles only) even when the
+  // country's published content was actually a document/video/podcast.
+  var countryPosts = postData.filter(function(d){ return d.country === name; });
+  var TYPE_LABEL = { ARTICLE:'News', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Gallery', POLICY_BRIEF:'Policy Brief' };
 
   var catHtml = allCats.map(function(c) {
     var cc = CAT_COLORS[c] || '#94a3b8';
@@ -1445,7 +1479,7 @@ function openCountryPanel(code) {
     + '<p style="font-size:11px;color:#94a3b8;font-weight:600;margin:0 0 18px">Country Overview</p>'
     // Stats grid
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">'
-    + _stat('Reports', reports > 0 ? reports : locations.length, intCol)
+    + _stat('Reports', countryPosts.length, intCol)
     + _stat('Locations', locations.length || '—', '#64748b')
     + _stat('Peak Intensity', maxInt > 0 ? intLbl : '—', intCol)
     + _stat('Trend', trendIcon + ' ' + trend, trendCol)
@@ -1474,11 +1508,27 @@ function openCountryPanel(code) {
     + '<p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 8px">Issue Categories</p>'
     + '<div style="display:flex;flex-wrap:wrap;gap:5px">' + (catHtml || '<span style="font-size:11px;color:#cbd5e1">No data</span>') + '</div>'
     + '</div>'
-    // CTA buttons
-    + '<a href="/news?country=' + encodeURIComponent(name) + '"'
-    + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:11px 16px;border-radius:12px;background:#750B25;color:#fff;font-size:13px;font-weight:700;justify-content:center;margin-bottom:8px">'
-    + '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
-    + 'View All Reports (' + (reports > 0 ? reports : locations.length) + ')</a>'
+    // Published reports — direct links to the actual posts (any content type)
+    + '<div style="margin-bottom:12px">'
+    + '<p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 8px">Published Reports (' + countryPosts.length + ')</p>'
+    + (countryPosts.length > 0
+      ? ('<div style="max-height:230px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:12px">'
+        + countryPosts.map(function(p, i) {
+            var tlbl = TYPE_LABEL[p.type] || p.type;
+            return '<a href="' + esc(p.url) + '"'
+              + ' style="display:block;padding:10px 12px;text-decoration:none;color:#0f172a;'
+              + (i < countryPosts.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : '') + '">'
+              + '<span style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
+              + '<span style="font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#750B25;background:#750B2514;border-radius:8px;padding:1px 6px">' + esc(tlbl) + '</span>'
+              + '<span style="font-size:9px;color:#94a3b8">' + esc(p.date || '') + '</span>'
+              + '</span>'
+              + '<span style="display:block;font-size:12px;font-weight:700;line-height:1.4">' + esc(p.title) + '</span>'
+              + '</a>';
+          }).join('')
+        + '</div>')
+      : ('<div style="padding:11px 16px;border-radius:12px;background:#f1f5f9;color:#94a3b8;font-size:12px;font-weight:600;text-align:center">'
+        + 'No published reports yet for ' + esc(name) + '</div>'))
+    + '</div>'
     + '<a href="/heatmap?country=' + encodeURIComponent(code) + '"'
     + ' onclick="setCountry(\'' + esc(code) + '\');return false"'
     + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;padding:10px 16px;border-radius:12px;border:1.5px solid #e2e8f0;color:#475569;font-size:12px;font-weight:700;justify-content:center">'
@@ -1742,7 +1792,7 @@ function applyFilters() {
     });
     document.getElementById('active-count').textContent =
       visibleDesc.length + ' improving situation' + (visibleDesc.length !== 1 ? 's' : '') + ' visible';
-    var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+    var allHot = Object.keys(COUNTRY_STATS).length;
     var kpiEl  = document.getElementById('kpi-hotspots');
     if (kpiEl) kpiEl.textContent = allHot;
     renderDeescTable(visibleDesc);
@@ -1767,7 +1817,7 @@ function applyFilters() {
     });
     var pill = Object.keys(seenCountries).length + ' countries';
     document.getElementById('active-count').textContent = pill;
-    var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+    var allHot = Object.keys(COUNTRY_STATS).length;
     var kpiEl  = document.getElementById('kpi-hotspots');
     if (kpiEl) kpiEl.textContent = allHot;
     renderTable(visible);
@@ -1801,7 +1851,8 @@ function applyFilters() {
 
   // Render published content as one growing, category-coloured dot per
   // country+category, so several categories in the same country stay legible.
-  var visiblePosts = 0;
+  var visiblePosts     = 0;
+  var visibleRealPosts = [];   // flat list of matching real posts, for the flashpoints table
   if (showReports && postData && postData.length) {
     var groups = {};                       // "Country||Category" -> [posts]
     postData.forEach(function(d) {
@@ -1824,6 +1875,7 @@ function applyFilters() {
         if (haystack.indexOf(q) === -1) return;
       }
       visiblePosts++;
+      visibleRealPosts.push(d);
       var key = d.country + '||' + d.category;
       (groups[key] = groups[key] || []).push(d);
     });
@@ -1905,36 +1957,70 @@ function applyFilters() {
   if (visiblePosts > 0) pill += ' · ' + visiblePosts + ' report' + (visiblePosts !== 1 ? 's' : '');
   document.getElementById('active-count').textContent = pill;
 
-  // KPI hotspots (always from full dataset)
-  var allHot = mapData.filter(function(d){ return d.intensity >= 8; }).length;
+  // KPI hotspots: distinct countries with at least one real published report
+  // (always from the full COUNTRY_STATS snapshot, not the current filter selection)
+  var allHot = Object.keys(COUNTRY_STATS).length;
   var kpiEl  = document.getElementById('kpi-hotspots');
   if (kpiEl) kpiEl.textContent = allHot;
 
   // Table
-  renderTable(visible);
+  renderTable(visible, visibleRealPosts);
 }
 
 /* ── Render flashpoints table ─────────────────────────────────────── */
-function renderTable(data) {
-  var sorted = data.slice().sort(function(a,b){ return b.intensity - a.intensity; }).slice(0, 15);
-  var tbody  = document.getElementById('hotspot-tbody');
+function renderTable(data, realPosts) {
+  var tbody = document.getElementById('hotspot-tbody');
 
-  if (!sorted.length) {
+  // Real published posts first (most recent), then demo intensity data
+  // fills any remaining rows up to 15 total.
+  var realRows = (realPosts || []).slice()
+    .sort(function(a,b){ return (b.dateRaw||'').localeCompare(a.dateRaw||''); });
+  var demoRows = data.slice()
+    .sort(function(a,b){ return b.intensity - a.intensity; })
+    .slice(0, Math.max(0, 15 - realRows.length));
+
+  if (!realRows.length && !demoRows.length) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-300 text-sm">No locations match the current filters.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = sorted.map(function(d, i) {
-    var rank = i + 1;
+  var rank = 0;
+  var rowsHtml = '';
+
+  realRows.forEach(function(d) {
+    rank++;
+    var catC = CAT_COLORS[d.category] || '#94a3b8';
+    var bg   = (rank % 2 === 1) ? '#fff' : '#fafafa';
+    var ctryInfo = CTRY_BY_NAME[d.country];
+    var code     = ctryInfo ? ctryInfo.code : '';
+    var flag     = FLAG[code] || '';
+    var rankDisplay = '<span style="font-size:11px;color:#cbd5e1;font-weight:600">' + rank + '</span>';
+
+    rowsHtml += '<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s"'
+      + ' onmouseover="this.style.background=\'#fef3f2\'" onmouseout="this.style.background=\''+bg+'\'"'
+      + ' onclick="openPostDetail(postDataById[\'' + esc(d.id) + '\'])">'
+      + '<td class="px-4 py-3">' + rankDisplay + '</td>'
+      + '<td class="px-4 py-3"><span style="font-weight:600;color:#0f172a">' + esc(d.title) + '</span></td>'
+      + '<td class="px-4 py-3 hidden md:table-cell"><span style="color:#64748b;font-size:12px">'
+      + flag + ' ' + esc(d.country) + '</span></td>'
+      + '<td class="px-4 py-3 hidden sm:table-cell">'
+      + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'35;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;white-space:nowrap">'
+      + esc(d.category) + '</span></td>'
+      + '<td class="px-4 py-3">'
+      + '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#16a34a">'
+      + '<svg width="9" height="9" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>'
+      + 'Published &middot; ' + esc(d.date || '') + '</span></td>'
+      + '</tr>';
+  });
+
+  demoRows.forEach(function(d) {
+    rank++;
     var col  = d.intensity > 7 ? '#ED1C24' : d.intensity > 4 ? '#E7952A' : '#94a3b8';
     var catC = CAT_COLORS[d.category] || '#94a3b8';
-    var bg   = i % 2 === 0 ? '#fff' : '#fafafa';
-    var rankDisplay = rank <= 3
-      ? '<span style="font-family:Outfit,sans-serif;font-weight:900;font-size:14px;color:'
-        + (rank===1?'#ED1C24':rank===2?'#E7952A':'#94a3b8') + '">' + rank + '</span>'
-      : '<span style="font-size:11px;color:#cbd5e1;font-weight:600">' + rank + '</span>';
+    var bg   = (rank % 2 === 1) ? '#fff' : '#fafafa';
+    var rankDisplay = '<span style="font-size:11px;color:#cbd5e1;font-weight:600">' + rank + '</span>';
 
-    return '<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s"'
+    rowsHtml += '<tr style="background:'+bg+';border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s"'
       + ' onmouseover="this.style.background=\'#fef3f2\'" onmouseout="this.style.background=\''+bg+'\'"'
       + ' onclick="zoomTo('+d.lat+','+d.lng+')">'
       + '<td class="px-4 py-3">' + rankDisplay + '</td>'
@@ -1951,7 +2037,9 @@ function renderTable(data) {
       + '<span style="font-size:12px;font-weight:700;color:'+col+';width:18px;text-align:right">'+d.intensity+'</span>'
       + '</div></td>'
       + '</tr>';
-  }).join('');
+  });
+
+  tbody.innerHTML = rowsHtml;
 }
 
 /* ── View mode toggle ─────────────────────────────────────────────── */
@@ -2070,7 +2158,7 @@ function closeDetail() {
 /* ── Cluster panel: every report behind one category dot ──────────── */
 function openCategoryCluster(country, category, items) {
   var col = CAT_COLORS[category] || '#94a3b8';
-  var TYPE_LABEL = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
+  var TYPE_LABEL = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery', POLICY_BRIEF:'Policy Brief'};
 
   var rows = items.slice().sort(function(a, b) {
     return (b.dateRaw || '').localeCompare(a.dateRaw || '');
@@ -2116,8 +2204,8 @@ function _clusterOpen(i) {
 }
 
 function openPostDetail(d) {
-  var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery'};
-  var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery'};
+  var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery', POLICY_BRIEF:'Policy Brief'};
+  var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery', POLICY_BRIEF:'Read Brief'};
   var col    = POST_TYPE_COLORS[d.type] || '#750B25';
   var label  = TYPE_LABEL[d.type]  || 'Report';
   var action = TYPE_ACTION[d.type] || 'Read More';

@@ -24,7 +24,7 @@ if ($method === 'GET') {
     if (!$isSuper) { $where[] = 'p.authorId = ?'; $params[] = $uid; }
 
     $validStatuses = ['DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
-    $validTypes    = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT'];
+    $validTypes    = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF'];
 
     if ($status !== null && in_array($status, $validStatuses, true)) {
         $where[] = 'p.status = ?';  $params[] = $status;
@@ -74,8 +74,9 @@ if ($method === 'POST') {
     if (!$region)        json_error('Region is required');
     if (!$issueCategory) json_error('Issue category is required');
 
-    $validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT'];
+    $validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF'];
     if (!in_array($type, $validTypes)) $type = 'ARTICLE';
+    if ($type === 'POLICY_BRIEF') ensure_policy_brief_post_type();
 
     $id = generate_id();
     db()->prepare(

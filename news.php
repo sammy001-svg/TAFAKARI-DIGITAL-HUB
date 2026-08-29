@@ -85,7 +85,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
   </div>
 </div>
 
-<main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+<main class="grow max-w-7xl mx-auto px-6 py-12 w-full">
 
   <!-- ── Filter panel ─────────────────────────────────────────────────────── -->
   <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-5 mb-8">
@@ -191,11 +191,11 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
           </div>
 
           <!-- Content -->
-          <div class="p-6 flex flex-col flex-grow">
+          <div class="p-6 flex flex-col grow">
             <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#C47C1A">
               <?= h($p['issueCategory']) ?>
             </span>
-            <h3 class="font-outfit font-bold text-lg leading-snug text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 mb-2 flex-grow">
+            <h3 class="font-outfit font-bold text-lg leading-snug text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 mb-2 grow">
               <?= h($p['title']) ?>
             </h3>
             <?php if (!empty($p['description'])): ?>

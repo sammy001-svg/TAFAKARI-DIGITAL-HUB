@@ -4,8 +4,11 @@ $_navLinks = [
   ['/gallery',   'Gallery',   'gallery',  '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>'],
   ['/news',      'News',      'news',     '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>'],
   ['/podcasts',  'Podcasts',  'podcasts', '<path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>'],
-  ['/videos',    'Videos',    'videos',   '<polygon points="23,7 16,12 23,17"/><rect x="1" y="5" width="15" height="14" rx="2"/>'],
-  ['/documents', 'Documents', 'documents','<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'],
+];
+$_moreLinks = [
+  ['/videos',        'Videos',        'videos',      '<polygon points="23,7 16,12 23,17"/><rect x="1" y="5" width="15" height="14" rx="2"/>'],
+  ['/documents',     'Documents',     'documents',   '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'],
+  ['/policy-briefs', 'Policy Briefs', 'policyBriefs','<rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6M9 8h1"/>'],
 ];
 $_aboutLinks = [
   ['/about#purpose',    'Our Purpose', 'ourPurpose'],
@@ -15,6 +18,7 @@ $_aboutLinks = [
 $_currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
 $_homeActive  = ($_currentPath === '/');
 $_aboutActive = (strpos($_currentPath, '/about') === 0);
+$_moreActive  = in_array($_currentPath, array_column($_moreLinks, 0), true);
 $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
 ?>
 
@@ -71,6 +75,30 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
           <?php if ($active): ?><span class="absolute -bottom-3.5 left-0 right-0 h-0.5 rounded-full" style="background:#E7952A"></span><?php endif; ?>
         </a>
       <?php endforeach; ?>
+
+      <!-- More dropdown -->
+      <div class="relative group">
+        <button type="button"
+           class="flex items-center gap-1 pb-0.5 transition-colors whitespace-nowrap <?= $_moreActive ? 'font-bold' : 'text-white/80 hover:text-white' ?>"
+           <?= $_moreActive ? 'style="color:#E7952A"' : '' ?>>
+          <span data-i18n="more">More</span>
+          <svg class="w-3.5 h-3.5 mt-0.5 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          <?php if ($_moreActive): ?><span class="absolute -bottom-3.5 left-0 right-0 h-0.5 rounded-full" style="background:#E7952A"></span><?php endif; ?>
+        </button>
+
+        <div class="absolute left-0 top-full pt-3 invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150 z-50">
+          <div class="w-56 rounded-2xl shadow-2xl py-2" style="background:#750B25;border:1px solid rgba(255,255,255,.12)">
+            <?php foreach ($_moreLinks as [$href, $label, $i18nKey, $iconPath]):
+              $mActive = ($_currentPath === $href); ?>
+              <a href="<?= h($href) ?>"
+                 class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors <?= $mActive ? 'text-white bg-white/10' : 'text-white/85 hover:bg-white/10 hover:text-white' ?>">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0;opacity:.8"><?= $iconPath ?></svg>
+                <span data-i18n="<?= h($i18nKey) ?>"><?= h($label) ?></span>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Desktop CTA -->
@@ -109,9 +137,9 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
     <button id="nav-hamburger" onclick="_navOpen()"
             class="md:hidden w-11 h-11 flex flex-col items-center justify-center gap-[5px] rounded-xl hover:bg-white/10 transition-colors"
             aria-label="Open navigation" aria-expanded="false">
-      <span class="w-5 h-[2px] bg-white rounded-full transition-all duration-300" id="hb1"></span>
-      <span class="w-5 h-[2px] bg-white rounded-full transition-all duration-300" id="hb2"></span>
-      <span class="w-3 h-[2px] bg-white/70 rounded-full self-start ml-[5px] transition-all duration-300" id="hb3"></span>
+      <span class="w-5 h-0.5 bg-white rounded-full transition-all duration-300" id="hb1"></span>
+      <span class="w-5 h-0.5 bg-white rounded-full transition-all duration-300" id="hb2"></span>
+      <span class="w-3 h-0.5 bg-white/70 rounded-full self-start ml-[5px] transition-all duration-300" id="hb3"></span>
     </button>
 
   </div>
@@ -211,6 +239,33 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
         <?php endif; ?>
       </a>
     <?php endforeach; ?>
+
+    <!-- More accordion -->
+    <div style="margin-bottom:4px">
+      <div style="display:flex;align-items:center;border-radius:16px;<?= $_moreActive
+        ? 'background:rgba(231,149,42,.16);color:#E7952A;border:1px solid rgba(231,149,42,.28)'
+        : 'color:rgba(255,255,255,.78);border:1px solid transparent' ?>">
+        <button type="button" onclick="_toggleDrawerSection('more-sub')" aria-label="Toggle More submenu"
+                style="flex:1;display:flex;align-items:center;gap:14px;padding:13px 0 13px 16px;background:none;border:none;font-size:15px;font-weight:600;color:inherit;text-align:left;cursor:pointer">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0;opacity:<?= $_moreActive?'1':'.7' ?>"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          <span style="flex:1" data-i18n="more">More</span>
+        </button>
+        <button type="button" onclick="_toggleDrawerSection('more-sub')" aria-label="Toggle More submenu"
+                style="background:none;border:none;color:inherit;padding:13px 16px;cursor:pointer;display:flex;align-items:center">
+          <svg id="more-sub-chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="transition:transform .2s<?= $_moreActive ? ';transform:rotate(180deg)' : '' ?>"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+      </div>
+      <div id="more-sub" style="display:<?= $_moreActive ? 'block' : 'none' ?>;padding:6px 0 2px 20px;border-left:1px solid rgba(255,255,255,.12);margin-left:20px">
+        <?php foreach ($_moreLinks as [$href, $label, $i18nKey, $iconPath]):
+          $mActive = ($_currentPath === $href); ?>
+          <a href="<?= h($href) ?>" onclick="_navClose()"
+             style="display:flex;align-items:center;gap:10px;padding:9px 12px;text-decoration:none;font-size:14px;font-weight:600;<?= $mActive ? 'color:#E7952A' : 'color:rgba(255,255,255,.75)' ?>">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0;opacity:.8"><?= $iconPath ?></svg>
+            <span data-i18n="<?= h($i18nKey) ?>"><?= h($label) ?></span>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
 
     <!-- Search -->
     <a href="/search" onclick="_navClose()"

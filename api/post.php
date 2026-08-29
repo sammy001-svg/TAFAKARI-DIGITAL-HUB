@@ -44,6 +44,8 @@ if ($method === 'PUT') {
     $region        = trim($body['region']        ?? $post['region']);
     $issueCategory = trim($body['issueCategory'] ?? $post['issueCategory']);
 
+    if ($type === 'POLICY_BRIEF') ensure_policy_brief_post_type();
+
     $pdo->prepare(
         'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,updatedAt=NOW(3) WHERE id=?'
     )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$id]);

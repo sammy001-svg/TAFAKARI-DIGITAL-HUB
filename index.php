@@ -329,7 +329,7 @@ try {
 
           <!-- CTAs -->
           <div class="hero-anim flex flex-wrap items-center gap-5">
-            <a href="<?= !empty($s['url']) ? h($s['url']) : '/heatmap' ?>" class="btn-gold" style="padding:.8rem 1.9rem" data-i18n="home.exploreHeatmap">Explore Heatmap</a>
+            <a href="<?= !empty($s['url']) ? h($s['url']) : '/heatmap' ?>" class="btn-gold" style="padding:.8rem 1.9rem" <?= empty($s['cta']) ? 'data-i18n="home.exploreHeatmap"' : '' ?>><?= !empty($s['cta']) ? h($s['cta']) : 'Explore Heatmap' ?></a>
             <a href="/about" class="inline-flex items-center gap-2 text-sm font-bold text-white/85 hover:text-white transition-colors">
               <span data-i18n="ourMission">Our Mission</span>
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>

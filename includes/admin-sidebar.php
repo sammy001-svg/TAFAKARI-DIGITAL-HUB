@@ -5,7 +5,7 @@ $_name    = $_u['name'] ?? $_u['username'] ?? 'User';
 $_initial = strtoupper(substr($_name, 0, 1));
 $_path    = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
 
-$_contentModulePaths = ['/admin/content/articles','/admin/content/gallery','/admin/content/podcasts','/admin/content/videos','/admin/content/documents'];
+$_contentModulePaths = ['/admin/content/articles','/admin/content/gallery','/admin/content/podcasts','/admin/content/videos','/admin/content/documents','/admin/content/policy-briefs'];
 
 $_navCore = [
   ['href' => '/admin/dashboard',   'label' => 'Overview',   'svg' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
@@ -19,6 +19,7 @@ $_navModules = [
   ['href' => '/admin/content/podcasts',  'label' => 'Podcasts',  'svg' => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z'],
   ['href' => '/admin/content/videos',    'label' => 'Videos',    'svg' => 'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z'],
   ['href' => '/admin/content/documents', 'label' => 'Documents', 'svg' => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'],
+  ['href' => '/admin/content/policy-briefs', 'label' => 'Policy Briefs', 'svg' => 'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2'],
 ];
 
 $_navSuper = [
@@ -145,7 +146,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
        style="background:#0D0102;border-right:1px solid rgba(255,255,255,.055)">
 
   <!-- Branding -->
-  <div class="flex items-center gap-2 px-3 h-[64px] border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
+  <div class="flex items-center gap-2 px-3 h-16 border-b shrink-0" style="border-color:rgba(255,255,255,.055)">
     <!-- Logo — full -->
     <a href="/" aria-label="CRTP — Home" class="sb-logo-full flex items-center gap-2 min-w-0">
       <div class="bg-white rounded-lg px-2 py-1.5 shadow-sm shrink-0">

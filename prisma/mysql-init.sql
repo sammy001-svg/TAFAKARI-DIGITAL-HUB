@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `Post` (
   `description`    TEXT                                                         NULL,
   `thumbnailUrl`   VARCHAR(191)                                                 NULL,
   `mediaUrl`       VARCHAR(191)                                                 NULL,
-  `type`           ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT') NOT NULL DEFAULT 'ARTICLE',
+  `type`           ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF') NOT NULL DEFAULT 'ARTICLE',
   `status`         ENUM('DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED')    NOT NULL DEFAULT 'DRAFT',
   `authorId`       VARCHAR(191)                                                 NOT NULL,
   `approverId`     VARCHAR(191)                                                 NULL,

@@ -10,6 +10,8 @@ $user    = require_auth();
 $isSuper = is_super_admin();
 $uid     = $user['id'];
 
+ensure_policy_brief_post_type();
+
 $createError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'create') {
     $c_title         = trim($_POST['title']         ?? '');
@@ -21,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'crea
     $c_region        = trim($_POST['region']        ?? '');
     $c_issueCategory = trim($_POST['issueCategory'] ?? '');
     if (!$c_title)             $createError = 'Title is required.';
-    elseif (!$c_mediaUrl)      $createError = 'Document URL is required.';
+    elseif (!$c_mediaUrl)      $createError = 'Brief file is required.';
     elseif (!$c_country)       $createError = 'Country is required.';
     elseif (!$c_region)        $createError = 'Region is required.';
     elseif (!$c_issueCategory) $createError = 'Issue category is required.';
@@ -31,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'crea
         db()->prepare(
             'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
-        )->execute([$id,$c_title,'DOCUMENT',$c_description,$c_content,$c_thumbnailUrl,$c_mediaUrl,$c_country,$c_region,$c_issueCategory,$status,$uid]);
-        header('Location: /admin/content/documents?created=' . ($status === 'PUBLISHED' ? 'pub' : '1'));
+        )->execute([$id,$c_title,'POLICY_BRIEF',$c_description,$c_content,$c_thumbnailUrl,$c_mediaUrl,$c_country,$c_region,$c_issueCategory,$status,$uid]);
+        header('Location: /admin/content/policy-briefs?created=' . ($status === 'PUBLISHED' ? 'pub' : '1'));
         exit;
     }
 }
@@ -47,7 +49,7 @@ $validStatuses = ['DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'];
 if (!in_array($statusFilter, $validStatuses)) $statusFilter = 'ALL';
 
 $whereParts = ['p.type = ?'];
-$params     = ['DOCUMENT'];
+$params     = ['POLICY_BRIEF'];
 if (!$isSuper)               { $whereParts[] = 'p.authorId = ?'; $params[] = $uid; }
 if ($statusFilter !== 'ALL') { $whereParts[] = 'p.status = ?';   $params[] = $statusFilter; }
 if ($search !== '')          { $whereParts[] = '(p.title LIKE ? OR p.country LIKE ? OR p.issueCategory LIKE ?)'; $params[] = "%$search%"; $params[] = "%$search%"; $params[] = "%$search%"; }
@@ -69,51 +71,29 @@ $stPosts->execute($params);
 $posts = $stPosts->fetchAll();
 $totalPages = max(1, (int)ceil($total / $pageSize));
 
-$stCounts = $pdo->prepare("SELECT status, COUNT(*) as cnt FROM Post WHERE type='DOCUMENT'" . (!$isSuper ? " AND authorId=?" : "") . " GROUP BY status");
+$stCounts = $pdo->prepare("SELECT status, COUNT(*) as cnt FROM Post WHERE type='POLICY_BRIEF'" . (!$isSuper ? " AND authorId=?" : "") . " GROUP BY status");
 $stCounts->execute(!$isSuper ? [$uid] : []);
 $statusCounts = ['ALL' => $total];
 foreach ($stCounts->fetchAll() as $row) $statusCounts[$row['status']] = (int)$row['cnt'];
 
 $totalDownloads = 0;
 try {
-    $dStmt = $pdo->prepare("SELECT SUM(downloadCount) FROM Post WHERE type='DOCUMENT'" . (!$isSuper ? " AND authorId=?" : ""));
+    $dStmt = $pdo->prepare("SELECT SUM(downloadCount) FROM Post WHERE type='POLICY_BRIEF'" . (!$isSuper ? " AND authorId=?" : ""));
     $dStmt->execute(!$isSuper ? [$uid] : []);
     $totalDownloads = (int)$dStmt->fetchColumn();
 } catch (Exception $e) {}
 
-function docHref(string $status, int $p, string $search = ''): string {
+function pbAdminHref(string $status, int $p, string $search = ''): string {
     $q = [];
     if ($status !== 'ALL') $q['status'] = $status;
     if ($p > 1)            $q['page']   = $p;
     if ($search !== '')    $q['q']      = $search;
-    return '/admin/content/documents' . ($q ? '?' . http_build_query($q) : '');
+    return '/admin/content/policy-briefs' . ($q ? '?' . http_build_query($q) : '');
 }
 
-function docFileType(string $url): string {
-    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
-    return match($ext) {
-        'pdf'  => 'PDF',
-        'doc'  => 'DOC',
-        'docx' => 'DOCX',
-        'xls','xlsx' => 'XLS',
-        'ppt','pptx' => 'PPT',
-        default => strtoupper($ext) ?: 'DOC',
-    };
-}
-
-function docFileColor(string $type): string {
-    return match($type) {
-        'PDF'  => '#dc2626',
-        'DOC','DOCX' => '#2563eb',
-        'XLS','XLSX' => '#16a34a',
-        'PPT','PPTX' => '#ea580c',
-        default => '#64748b',
-    };
-}
-
-$pageTitle      = 'Documents | Tafakari Admin';
-$adminPageTitle = 'Documents';
-$adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFilter !== 'ALL' ? ' · ' . strtolower($statusFilter) : '');
+$pageTitle      = 'Policy Briefs | Tafakari Admin';
+$adminPageTitle = 'Policy Briefs';
+$adminPageSub   = $total . ' brief' . ($total !== 1 ? 's' : '') . ($statusFilter !== 'ALL' ? ' · ' . strtolower($statusFilter) : '');
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
 <body class="antialiased font-inter" style="background:#F4F6F8">
@@ -131,15 +111,15 @@ $adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFil
       <div class="flex items-center gap-2 mb-1">
         <a href="/admin/content" class="text-[11px] font-bold text-slate-400 hover:text-primary transition-colors">All Content</a>
         <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-        <span class="text-[11px] font-bold text-slate-600">Documents</span>
+        <span class="text-[11px] font-bold text-slate-600">Policy Briefs</span>
       </div>
-      <h1 class="font-outfit font-black text-2xl text-slate-900">Document Library</h1>
+      <h1 class="font-outfit font-black text-2xl text-slate-900">Policy Briefs</h1>
     </div>
     <button type="button" onclick="openCreateDrawer()"
             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold shadow-sm transition-opacity hover:opacity-90"
             style="background:#750B25;color:#fff;border:none;cursor:pointer">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
-      Upload Document
+      New Policy Brief
     </button>
   </div>
 
@@ -147,7 +127,7 @@ $adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFil
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
     <?php
     $stats = [
-      ['label'=>'Documents',  'val'=>$total,                           'color'=>'#750B25'],
+      ['label'=>'Briefs',     'val'=>$total,                          'color'=>'#750B25'],
       ['label'=>'Published',  'val'=>$statusCounts['PUBLISHED'] ?? 0, 'color'=>'#16a34a'],
       ['label'=>'Downloads',  'val'=>number_format($totalDownloads),  'color'=>'#E7952A'],
       ['label'=>'Drafts',     'val'=>$statusCounts['DRAFT'] ?? 0,     'color'=>'#64748b'],
@@ -161,23 +141,23 @@ $adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFil
   </div>
 
   <!-- Search -->
-  <form method="GET" action="/admin/content/documents" class="flex flex-wrap items-center gap-3 mb-5">
-    <div class="relative grow max-w-sm">
+  <form method="GET" action="/admin/content/policy-briefs" class="flex flex-wrap items-center gap-3 mb-5">
+    <div class="relative flex-grow max-w-sm">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search documents…"
+      <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search policy briefs…"
              class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none shadow-sm">
     </div>
     <?php if ($statusFilter !== 'ALL'): ?><input type="hidden" name="status" value="<?= h($statusFilter) ?>"><?php endif; ?>
     <button type="submit" class="px-4 py-2.5 rounded-xl text-[12px] font-bold text-white shadow-sm" style="background:#750B25">Search</button>
     <?php if ($search !== ''): ?>
-      <a href="<?= h(docHref($statusFilter, 1)) ?>" class="px-4 py-2.5 rounded-xl text-[12px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 bg-white shadow-sm">Clear</a>
+      <a href="<?= h(pbAdminHref($statusFilter, 1)) ?>" class="px-4 py-2.5 rounded-xl text-[12px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 bg-white shadow-sm">Clear</a>
     <?php endif; ?>
   </form>
 
   <!-- Status Tabs -->
   <div class="flex items-center gap-1 p-1 bg-white rounded-xl border border-slate-100 shadow-sm w-fit flex-wrap mb-6">
     <?php foreach (['ALL','DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED'] as $tab): ?>
-      <a href="<?= h(docHref($tab, 1, $search)) ?>"
+      <a href="<?= h(pbAdminHref($tab, 1, $search)) ?>"
          class="px-3.5 py-2 rounded-lg text-[11px] font-bold transition-all <?= $statusFilter === $tab ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50' ?>"
          <?= $statusFilter === $tab ? 'style="background:#750B25"' : '' ?>>
         <?= ucfirst(strtolower($tab)) ?>
@@ -195,16 +175,16 @@ $adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFil
           <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
         </svg>
       </div>
-      <h3 class="font-outfit font-bold text-xl text-slate-900">No documents yet</h3>
-      <p class="text-slate-500 mt-2 text-sm mb-6"><?= $search !== '' ? 'No results for "' . h($search) . '".' : 'Upload research reports, policy briefs, or field notes.' ?></p>
-      <button type="button" onclick="openCreateDrawer()" class="btn-primary" style="padding:.65rem 1.5rem;border:none;cursor:pointer">Upload Document</button>
+      <h3 class="font-outfit font-bold text-xl text-slate-900">No policy briefs yet</h3>
+      <p class="text-slate-500 mt-2 text-sm mb-6"><?= $search !== '' ? 'No results for "' . h($search) . '".' : 'Publish concise, actionable briefs for policymakers.' ?></p>
+      <button type="button" onclick="openCreateDrawer()" class="btn-primary" style="padding:.65rem 1.5rem;border:none;cursor:pointer">New Policy Brief</button>
     </div>
   <?php else: ?>
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-5">
       <table class="w-full">
         <thead>
           <tr style="background:#FAFBFC;border-bottom:1px solid rgba(0,0,0,.06)">
-            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">Document</th>
+            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">Brief</th>
             <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400 hidden md:table-cell">Status</th>
             <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400 hidden lg:table-cell">Downloads</th>
             <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-[.12em] text-slate-400 hidden lg:table-cell">Country</th>
@@ -219,20 +199,18 @@ $adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFil
             $canSubmit  = !$isSuper && $isOwner && in_array($p['status'], ['DRAFT','REJECTED']);
             $canPublish = $isSuper && in_array($p['status'], ['DRAFT','PENDING','REJECTED']);
             $canArch    = $isSuper && in_array($p['status'], ['PUBLISHED','ARCHIVED']);
-            $fileType   = !empty($p['mediaUrl']) ? docFileType($p['mediaUrl']) : 'DOC';
-            $fileColor  = docFileColor($fileType);
           ?>
           <tr class="hover:bg-slate-50/70 transition-colors group">
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <!-- File type icon -->
-                <div class="w-10 h-12 rounded-lg flex flex-col items-center justify-center shrink-0 shadow-sm"
-                     style="background:<?= $fileColor ?>15;border:1px solid <?= $fileColor ?>30">
-                  <svg width="14" height="14" fill="none" stroke="<?= $fileColor ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                    <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                  </svg>
-                  <span class="text-[8px] font-black mt-0.5" style="color:<?= $fileColor ?>"><?= $fileType ?></span>
-                </div>
+                <!-- Thumbnail or file icon -->
+                <?php if (!empty($p['thumbnailUrl'])): ?>
+                  <img src="<?= h($p['thumbnailUrl']) ?>" alt="" class="w-10 h-10 rounded-lg object-cover shrink-0 shadow-sm border border-slate-100">
+                <?php else: ?>
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-sm" style="background:rgba(117,11,37,.08)">
+                    <svg width="14" height="14" fill="none" stroke="#750B25" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                  </div>
+                <?php endif; ?>
                 <div class="min-w-0">
                   <p class="text-[13px] font-semibold text-slate-900 truncate max-w-xs"><?= h($p['title']) ?></p>
                   <div class="flex items-center gap-2 mt-0.5">
@@ -285,7 +263,7 @@ $adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFil
                   </button>
                 <?php endif; ?>
                 <?php if ($canDelete): ?>
-                  <button onclick="postAction('/api/posts/<?= h($p['id']) ?>','DELETE',this,'Delete this document?')"
+                  <button onclick="postAction('/api/posts/<?= h($p['id']) ?>','DELETE',this,'Delete this policy brief?')"
                           class="px-3 py-1.5 text-[10px] font-bold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors">Delete</button>
                 <?php endif; ?>
               </div>
@@ -301,13 +279,13 @@ $adminPageSub   = $total . ' document' . ($total !== 1 ? 's' : '') . ($statusFil
         <p class="text-[11px] text-slate-400">Showing <?= $skip+1 ?>–<?= min($skip+$pageSize,$total) ?> of <?= $total ?></p>
         <div class="flex items-center gap-2">
           <?php if ($page > 1): ?>
-            <a href="<?= h(docHref($statusFilter, $page-1, $search)) ?>" class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">&larr; Prev</a>
+            <a href="<?= h(pbAdminHref($statusFilter, $page-1, $search)) ?>" class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">&larr; Prev</a>
           <?php else: ?>
             <span class="px-3 py-2 text-[11px] font-bold rounded-xl text-slate-300">&larr; Prev</span>
           <?php endif; ?>
           <span class="px-3 py-2 text-[11px] font-bold text-slate-500"><?= $page ?> / <?= $totalPages ?></span>
           <?php if ($page < $totalPages): ?>
-            <a href="<?= h(docHref($statusFilter, $page+1, $search)) ?>" class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">Next &rarr;</a>
+            <a href="<?= h(pbAdminHref($statusFilter, $page+1, $search)) ?>" class="px-3 py-2 text-[11px] font-bold bg-white rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">Next &rarr;</a>
           <?php else: ?>
             <span class="px-3 py-2 text-[11px] font-bold rounded-xl text-slate-300">Next &rarr;</span>
           <?php endif; ?>
@@ -332,7 +310,7 @@ function postAction(url, method, btn, confirmMsg) {
 }
 </script>
 
-<!-- ── Create Document Drawer ─────────────────────────────────────── -->
+<!-- ── Create Policy Brief Drawer ─────────────────────────────────────── -->
 <div id="create-backdrop" onclick="closeCreateDrawer()"
      style="position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s"></div>
 
@@ -343,7 +321,7 @@ function postAction(url, method, btn, confirmMsg) {
 
   <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #f1f5f9;flex-shrink:0;position:sticky;top:0;background:#fff;z-index:1">
     <div>
-      <p style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#750B25;margin:0 0 3px">Upload Document</p>
+      <p style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#750B25;margin:0 0 3px">New Policy Brief</p>
       <p style="font-size:13px;font-weight:600;color:#0f172a;margin:0">Saved as draft — publish after review</p>
     </div>
     <button onclick="closeCreateDrawer()" style="width:36px;height:36px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:20px;line-height:1">&times;</button>
@@ -353,31 +331,31 @@ function postAction(url, method, btn, confirmMsg) {
     <div style="margin:16px 24px 0;padding:12px 16px;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;color:#dc2626;font-size:13px;font-weight:500"><?= h($createError) ?></div>
   <?php endif; ?>
 
-  <form method="POST" action="/admin/content/documents" onsubmit="return uwCheckRequired(this)" style="flex:1;padding:24px;display:flex;flex-direction:column;gap:18px">
+  <form method="POST" action="/admin/content/policy-briefs" onsubmit="return uwCheckRequired(this)" style="flex:1;padding:24px;display:flex;flex-direction:column;gap:18px">
     <input type="hidden" name="_action" value="create">
 
     <div>
-      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Document Title *</label>
+      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Brief Title *</label>
       <input type="text" name="title" required value="<?= h(($createError ? $_POST['title'] : '') ?? '') ?>"
              style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit"
-             placeholder="e.g. Annual Peace Report 2024">
+             placeholder="e.g. Youth Employment Policy Recommendations 2026">
     </div>
 
     <div>
       <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Short Description</label>
       <textarea name="description" rows="2"
                 style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;resize:none;font-family:inherit"
-                placeholder="Brief description shown in listings"><?= h(($createError ? $_POST['description'] : '') ?? '') ?></textarea>
+                placeholder="Brief description shown on cards"><?= h(($createError ? $_POST['description'] : '') ?? '') ?></textarea>
     </div>
 
-    <?php uw_img('doc-thumb','thumbnailUrl','Cover Image','Document cover shown in listings (optional)',($createError ? ($_POST['thumbnailUrl'] ?? '') : '')); ?>
-    <?php uw_media('doc-media','mediaUrl','Document File *','document','.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx','PDF, DOCX, XLS, PPT · max 50 MB','Link to PDF, Word doc, or other file','https://…/report.pdf',($createError ? ($_POST['mediaUrl'] ?? '') : ''),true); ?>
+    <?php uw_img('pb-thumb','thumbnailUrl','Cover Image','Shown on the public policy brief card (recommended)',($createError ? ($_POST['thumbnailUrl'] ?? '') : '')); ?>
+    <?php uw_media('pb-media','mediaUrl','Brief File *','document','.pdf,.doc,.docx','PDF or Word · max 50 MB','Link to the downloadable brief','https://…/brief.pdf',($createError ? ($_POST['mediaUrl'] ?? '') : ''),true); ?>
 
     <div>
-      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Abstract / Summary</label>
-      <textarea name="content" rows="5"
+      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Full Brief Content</label>
+      <textarea name="content" rows="6"
                 style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;resize:vertical;font-family:inherit"
-                placeholder="Key findings, scope, or executive summary…"><?= h(($createError ? $_POST['content'] : '') ?? '') ?></textarea>
+                placeholder="Key findings and policy recommendations — shown on the brief's page…"><?= h(($createError ? $_POST['content'] : '') ?? '') ?></textarea>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -455,7 +433,7 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeCrea
 document.addEventListener('DOMContentLoaded', function(){
   var isPub = <?= json_encode($_GET['created'] === 'pub') ?>;
   var b = document.createElement('div');
-  b.textContent = isPub ? 'Document published successfully.' : 'Document saved as draft.';
+  b.textContent = isPub ? 'Policy brief published successfully.' : 'Policy brief saved as draft.';
   b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);color:#fff;background:' + (isPub ? '#16a34a' : '#0f172a');
   document.body.appendChild(b);
   setTimeout(function(){ b.remove(); }, 3500);

@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                   `id` VARCHAR(191) NOT NULL, `title` VARCHAR(191) NOT NULL,
                   `content` TEXT NULL, `description` TEXT NULL,
                   `thumbnailUrl` VARCHAR(191) NULL, `mediaUrl` VARCHAR(191) NULL,
-                  `type` ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT') NOT NULL DEFAULT 'ARTICLE',
+                  `type` ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF') NOT NULL DEFAULT 'ARTICLE',
                   `status` ENUM('DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED') NOT NULL DEFAULT 'DRAFT',
                   `authorId` VARCHAR(191) NOT NULL, `approverId` VARCHAR(191) NULL,
                   `rejectionNotes` TEXT NULL, `country` VARCHAR(191) NOT NULL,

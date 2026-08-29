@@ -19,7 +19,7 @@ $pending = $pdo->query(
      ORDER BY c.createdAt ASC"
 )->fetchAll();
 
-$_postTypeUrl = ['ARTICLE' => '/news/', 'PODCAST' => '/podcasts/', 'VIDEO' => '/videos/', 'DOCUMENT' => '/documents/', 'GALLERY_IMAGE' => '/gallery'];
+$_postTypeUrl = ['ARTICLE' => '/news/', 'PODCAST' => '/podcasts/', 'VIDEO' => '/videos/', 'DOCUMENT' => '/documents/', 'GALLERY_IMAGE' => '/gallery', 'POLICY_BRIEF' => '/policy-briefs/'];
 
 $totalComments  = (int)$pdo->query("SELECT COUNT(*) FROM Comment")->fetchColumn();
 $pendingCount   = (int)$pdo->query("SELECT COUNT(*) FROM Comment WHERE isModerated=0")->fetchColumn();

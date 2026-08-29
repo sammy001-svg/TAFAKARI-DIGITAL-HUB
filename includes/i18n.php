@@ -7,6 +7,7 @@
       home: 'Home', aboutUs: 'About Us', ourPurpose: 'Our Purpose', ourMission: 'Our Mission',
       whatWeDo: 'What We Do', coverageArea: 'Coverage Area', heatmap: 'Heatmap', gallery: 'Gallery',
       news: 'News', podcasts: 'Podcasts', videos: 'Videos', documents: 'Documents',
+      policyBriefs: 'Policy Briefs', more: 'More',
       login: 'Login', getInvolved: 'Contact Us', search: 'Search',
 
       /* Footer */
@@ -301,6 +302,18 @@
       'documentsPage.download': 'Download',
       'documentsPage.fileUnavailable': 'File unavailable',
 
+      'policyBriefsPage.badge': 'Policy & Analysis',
+      'policyBriefsPage.title': 'Policy Briefs',
+      'policyBriefsPage.desc': 'Concise, actionable analysis and recommendations for policymakers, drawn from our field research across the region.',
+      'policyBriefsPage.searchLabel': 'Search',
+      'policyBriefsPage.searchPlaceholder': 'Search policy briefs...',
+      'policyBriefsPage.search': 'Search',
+      'policyBriefsPage.noBriefsFound': 'No policy briefs found',
+      'policyBriefsPage.briefsFound': 'briefs found',
+      'policyBriefsPage.briefsPlural': 'policy briefs',
+      'policyBriefsPage.willAppear': 'Policy briefs will appear here once published.',
+      'policyBriefsPage.readMore': 'Read More',
+
       /* News page */
       'newsPage.badge': 'News & Analysis',
       'newsPage.title': 'News & Articles',
@@ -345,6 +358,7 @@
       home: 'Nyumbani', aboutUs: 'Kuhusu Sisi', ourPurpose: 'Kusudi Letu', ourMission: 'Dhamira Yetu',
       whatWeDo: 'Tunachofanya', coverageArea: 'Eneo la Huduma', heatmap: 'Ramani ya Joto', gallery: 'Picha',
       news: 'Habari', podcasts: 'Podikasti', videos: 'Video', documents: 'Nyaraka',
+      policyBriefs: 'Muhtasari wa Sera', more: 'Zaidi',
       login: 'Ingia', getInvolved: 'Wasiliana Nasi', search: 'Tafuta',
 
       'footer.tagline': 'Jukwaa la kidijitali la watumiaji wengi linalotumika kama hazina kuu ya maarifa, kituo cha utangazaji wa vyombo vya habari, na chombo cha ushirikiano wa jamii katika Kenya, Ethiopia, na DRC.',
@@ -630,6 +644,18 @@
       'documentsPage.download': 'Pakua',
       'documentsPage.fileUnavailable': 'Faili haipatikani',
 
+      'policyBriefsPage.badge': 'Sera na Uchambuzi',
+      'policyBriefsPage.title': 'Muhtasari wa Sera',
+      'policyBriefsPage.desc': 'Uchambuzi mfupi na mapendekezo kwa watunga sera, yaliyotokana na utafiti wetu wa kimaeneo.',
+      'policyBriefsPage.searchLabel': 'Tafuta',
+      'policyBriefsPage.searchPlaceholder': 'Tafuta muhtasari wa sera...',
+      'policyBriefsPage.search': 'Tafuta',
+      'policyBriefsPage.noBriefsFound': 'Hakuna muhtasari wa sera uliopatikana',
+      'policyBriefsPage.briefsFound': 'muhtasari zilizopatikana',
+      'policyBriefsPage.briefsPlural': 'muhtasari wa sera',
+      'policyBriefsPage.willAppear': 'Muhtasari wa sera utaonekana hapa mara utakapochapishwa.',
+      'policyBriefsPage.readMore': 'Soma Zaidi',
+
       'newsPage.badge': 'Habari na Uchambuzi',
       'newsPage.title': 'Habari na Makala',
       'newsPage.desc': 'Uripoti wa kina na uchambuzi kutoka barani Afrika — migogoro, utawala, hali ya hewa, na sauti za jamii.',
@@ -671,6 +697,7 @@
       home: 'Accueil', aboutUs: 'À propos', ourPurpose: 'Notre objectif', ourMission: 'Notre mission',
       whatWeDo: 'Ce que nous faisons', coverageArea: 'Zone de couverture', heatmap: 'Carte thermique', gallery: 'Galerie',
       news: 'Actualités', podcasts: 'Podcasts', videos: 'Vidéos', documents: 'Documents',
+      policyBriefs: 'Notes Politiques', more: 'Plus',
       login: 'Connexion', getInvolved: 'Nous Contacter', search: 'Rechercher',
 
       'footer.tagline': "Une plateforme numérique multi-utilisateurs servant de dépôt centralisé de connaissances, de centre de diffusion médiatique et d'outil d'engagement communautaire au Kenya, en Éthiopie et en RDC.",
@@ -955,6 +982,18 @@
       'documentsPage.downloads': 'téléchargements',
       'documentsPage.download': 'Télécharger',
       'documentsPage.fileUnavailable': 'Fichier indisponible',
+
+      'policyBriefsPage.badge': 'Politique & Analyse',
+      'policyBriefsPage.title': 'Notes Politiques',
+      'policyBriefsPage.desc': 'Analyses concises et recommandations pour les décideurs, issues de nos recherches de terrain dans la région.',
+      'policyBriefsPage.searchLabel': 'Rechercher',
+      'policyBriefsPage.searchPlaceholder': 'Rechercher des notes politiques...',
+      'policyBriefsPage.search': 'Rechercher',
+      'policyBriefsPage.noBriefsFound': 'Aucune note politique trouvée',
+      'policyBriefsPage.briefsFound': 'notes trouvées',
+      'policyBriefsPage.briefsPlural': 'notes politiques',
+      'policyBriefsPage.willAppear': 'Les notes politiques apparaîtront ici une fois publiées.',
+      'policyBriefsPage.readMore': 'Lire Plus',
 
       'newsPage.badge': 'Actualités et Analyses',
       'newsPage.title': 'Actualités et Articles',

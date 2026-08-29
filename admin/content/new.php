@@ -11,9 +11,13 @@ $user    = require_auth();
 $isSuper = is_super_admin();
 $uid     = $user['id'];
 
-$validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT'];
+$validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF'];
 $requestedType = strtoupper(trim($_GET['type'] ?? ''));
 $defaultType   = in_array($requestedType, $validTypes) ? $requestedType : 'ARTICLE';
+
+if ($defaultType === 'POLICY_BRIEF' || ($_SERVER['REQUEST_METHOD'] === 'POST' && strtoupper(trim($_POST['type'] ?? '')) === 'POLICY_BRIEF')) {
+    ensure_policy_brief_post_type();
+}
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -38,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($type === 'PODCAST'       && !$mediaUrl) $error = 'Audio file URL is required for podcasts.';
     elseif ($type === 'VIDEO'         && !$mediaUrl) $error = 'Video URL is required for videos.';
     elseif ($type === 'DOCUMENT'      && !$mediaUrl) $error = 'Document URL is required for documents.';
+    elseif ($type === 'POLICY_BRIEF'  && !$mediaUrl) $error = 'Brief file URL is required for policy briefs.';
     // Column limits per migrations/001-widen-post-columns.sql — overflow throws
     // a PDOException and would lose the post silently
     elseif (mb_strlen($title) > 255)
@@ -75,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'PODCAST'      => '/admin/content/podcasts',
                 'VIDEO'        => '/admin/content/videos',
                 'DOCUMENT'     => '/admin/content/documents',
+                'POLICY_BRIEF' => '/admin/content/policy-briefs',
                 default        => '/admin/content',
             };
             header('Location: ' . $redirect . '?created=' . ($status === 'PUBLISHED' ? 'pub' : '1'));
@@ -168,6 +174,22 @@ $typeConfig = [
         'backHref'    => '/admin/content/documents',
         'backLabel'   => 'Documents',
     ],
+    'POLICY_BRIEF' => [
+        'label'       => 'Policy Brief',
+        'heading'     => 'New Policy Brief',
+        'sub'         => 'Publish concise, actionable analysis for policymakers.',
+        'thumbLabel'  => 'Cover Image URL',
+        'thumbHint'   => 'Shown on the public policy brief card (recommended)',
+        'mediaLabel'  => 'Brief File URL *',
+        'mediaHint'   => 'Direct link to PDF or Word file (required)',
+        'mediaReq'    => true,
+        'hasBody'     => true,
+        'bodyLabel'   => 'Full Brief Content',
+        'bodyHint'    => 'Key findings and policy recommendations',
+        'bodyRows'    => 8,
+        'backHref'    => '/admin/content/policy-briefs',
+        'backLabel'   => 'Policy Briefs',
+    ],
 ];
 
 $selectedNewCats = $_SERVER['REQUEST_METHOD'] === 'POST'
@@ -213,7 +235,7 @@ $adminPageSub   = $cfg['sub'];
         <!-- Type Selector -->
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Content Type</label>
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2" id="type-selector">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2" id="type-selector">
             <?php
             $typeIcons = [
               'ARTICLE'       => 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h2',
@@ -221,8 +243,9 @@ $adminPageSub   = $cfg['sub'];
               'PODCAST'       => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z',
               'VIDEO'         => 'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z',
               'DOCUMENT'      => 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+              'POLICY_BRIEF'  => 'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2',
             ];
-            $typeShortLabels = ['ARTICLE'=>'Article','GALLERY_IMAGE'=>'Gallery','PODCAST'=>'Podcast','VIDEO'=>'Video','DOCUMENT'=>'Document'];
+            $typeShortLabels = ['ARTICLE'=>'Article','GALLERY_IMAGE'=>'Gallery','PODCAST'=>'Podcast','VIDEO'=>'Video','DOCUMENT'=>'Document','POLICY_BRIEF'=>'Policy Brief'];
             foreach ($validTypes as $t): ?>
             <button type="button" data-type="<?= $t ?>"
                     onclick="setType('<?= $t ?>')"
@@ -269,11 +292,11 @@ $adminPageSub   = $cfg['sub'];
 
         <!-- Media (GALLERY, PODCAST, VIDEO, DOCUMENT) -->
         <?php
-          $mFt  = match($defaultType) { 'PODCAST'=>'audio', 'VIDEO'=>'video', 'DOCUMENT'=>'document', default=>'image' };
-          $mAcc = match($defaultType) { 'PODCAST'=>'audio/*', 'VIDEO'=>'video/mp4,video/webm,video/ogg', 'DOCUMENT'=>'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx', default=>'image/*' };
-          $mDH  = match($defaultType) { 'PODCAST'=>'MP3, OGG, WAV, M4A · max 150 MB', 'VIDEO'=>'MP4, WebM · max 500 MB', 'DOCUMENT'=>'PDF, DOCX, XLS · max 50 MB', default=>'JPG, PNG, WebP · max 8 MB' };
-          $mUH  = match($defaultType) { 'PODCAST'=>'MP3 link or podcast episode URL', 'VIDEO'=>'YouTube / Vimeo link, or direct video URL', 'DOCUMENT'=>'Link to PDF or other document file', default=>'Direct image URL' };
-          $mPh  = match($defaultType) { 'PODCAST'=>'https://…/episode.mp3', 'VIDEO'=>'https://www.youtube.com/watch?v=…', 'DOCUMENT'=>'https://…/report.pdf', default=>'https://…' };
+          $mFt  = match($defaultType) { 'PODCAST'=>'audio', 'VIDEO'=>'video', 'DOCUMENT','POLICY_BRIEF'=>'document', default=>'image' };
+          $mAcc = match($defaultType) { 'PODCAST'=>'audio/*', 'VIDEO'=>'video/mp4,video/webm,video/ogg', 'DOCUMENT'=>'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx', 'POLICY_BRIEF'=>'.pdf,.doc,.docx', default=>'image/*' };
+          $mDH  = match($defaultType) { 'PODCAST'=>'MP3, OGG, WAV, M4A · max 150 MB', 'VIDEO'=>'MP4, WebM · max 500 MB', 'DOCUMENT'=>'PDF, DOCX, XLS · max 50 MB', 'POLICY_BRIEF'=>'PDF or Word · max 50 MB', default=>'JPG, PNG, WebP · max 8 MB' };
+          $mUH  = match($defaultType) { 'PODCAST'=>'MP3 link or podcast episode URL', 'VIDEO'=>'YouTube / Vimeo link, or direct video URL', 'DOCUMENT','POLICY_BRIEF'=>'Link to PDF or other document file', default=>'Direct image URL' };
+          $mPh  = match($defaultType) { 'PODCAST'=>'https://…/episode.mp3', 'VIDEO'=>'https://www.youtube.com/watch?v=…', 'DOCUMENT'=>'https://…/report.pdf', 'POLICY_BRIEF'=>'https://…/brief.pdf', default=>'https://…' };
           $mReq = $cfg['mediaReq'] && $defaultType !== 'ARTICLE';
         ?>
         <div id="media-url-section" data-uw-section style="<?= $defaultType === 'ARTICLE' ? 'display:none' : '' ?>">
@@ -430,6 +453,15 @@ var _typeConfig = {
     titlePlaceholder:'Document title', mediaSectionTitle:'File & Cover', isArticle:false,
     mediaFileType:'document', mediaAccept:'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',
     mediaDropHint:'PDF, DOCX, XLS, PPT · max 50 MB', mediaUrlHint:'Link to PDF or other document file', mediaUpLabel:'Upload File'
+  },
+  POLICY_BRIEF: {
+    heading:'New Policy Brief', backHref:'/admin/content/policy-briefs', backLabel:'Policy Briefs',
+    thumbLabel:'Cover Image', thumbHint:'Shown on the public policy brief card (recommended)',
+    mediaLabel:'Brief File *', mediaHint:'PDF or Word file (required)', mediaReq:true, hasBody:true,
+    bodyLabel:'Full Brief Content', bodyHint:'Key findings and policy recommendations',
+    titlePlaceholder:'Policy brief title', mediaSectionTitle:'File & Cover', isArticle:false,
+    mediaFileType:'document', mediaAccept:'.pdf,.doc,.docx',
+    mediaDropHint:'PDF or Word · max 50 MB', mediaUrlHint:'Link to the downloadable brief', mediaUpLabel:'Upload File'
   }
 };
 
@@ -438,11 +470,12 @@ var _typeIconPaths = {
   GALLERY_IMAGE: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
   PODCAST:       'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z',
   VIDEO:         'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z',
-  DOCUMENT:      'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'
+  DOCUMENT:      'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+  POLICY_BRIEF:  'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2'
 };
 
 var _typeShortLabels = {
-  ARTICLE:'Article', GALLERY_IMAGE:'Gallery', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document'
+  ARTICLE:'Article', GALLERY_IMAGE:'Gallery', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', POLICY_BRIEF:'Policy Brief'
 };
 
 function setType(type) {

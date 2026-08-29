@@ -27,7 +27,7 @@ $sqls = [
     'Post' => "CREATE TABLE IF NOT EXISTS `Post` (
       `id` VARCHAR(191) NOT NULL, `title` VARCHAR(255) NOT NULL, `content` TEXT NULL,
       `description` TEXT NULL, `thumbnailUrl` VARCHAR(1024) NULL, `mediaUrl` VARCHAR(1024) NULL,
-      `type` ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT') NOT NULL DEFAULT 'ARTICLE',
+      `type` ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF') NOT NULL DEFAULT 'ARTICLE',
       `status` ENUM('DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED') NOT NULL DEFAULT 'DRAFT',
       `authorId` VARCHAR(191) NOT NULL, `approverId` VARCHAR(191) NULL, `rejectionNotes` TEXT NULL,
       -- issueCategory holds a comma-joined list from the multi-select, so it
