@@ -102,10 +102,9 @@ try {
 $viewsByCountry = [];
 $viewsByCountryMax = 1;
 try {
-    $q = $isSuper ? "1" : "authorId='$uid'";
-    $rows = $pdo->query(
+    $rows = $run(
         "SELECT country, SUM(viewCount) AS tv FROM Post
-         WHERE $q AND status='PUBLISHED' AND viewCount > 0 AND country IS NOT NULL AND country != ''
+         WHERE $whereOnly AND status='PUBLISHED' AND viewCount > 0 AND country IS NOT NULL AND country != ''
          GROUP BY country ORDER BY tv DESC LIMIT 8"
     )->fetchAll();
     foreach ($rows as $r) $viewsByCountry[$r['country']] = (int)$r['tv'];

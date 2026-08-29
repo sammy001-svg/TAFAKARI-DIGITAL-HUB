@@ -461,6 +461,86 @@ function hm_tier_label(float $v): string {
     return 'Stable';
 }
 
+// ── Two-week monitoring cycles ───────────────────────────────────
+//
+// Intensity scores live on Post rows and are never overwritten, so the full
+// history is inherently preserved. A "cycle" is therefore just a date window
+// over those rows: closing one and opening the next destroys nothing, and any
+// past cycle can be replayed by re-running the aggregation over its dates.
+
+/** Cycle length in days. Capped at 14 - the cycle must never exceed two weeks. */
+function hm_cycle_days(): int {
+    $n = (int) get_setting('heatmap_cycle_days', '14');
+    if ($n < 1)  $n = 14;
+    if ($n > 14) $n = 14;
+    return $n;
+}
+
+/** Date all cycles are counted from (a Monday by default). */
+function hm_cycle_anchor(): string {
+    $a = trim(get_setting('heatmap_cycle_anchor', ''));
+    if ($a !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $a)) return $a;
+    return '2026-01-05';
+}
+
+/**
+ * The cycle containing $date.
+ *
+ * @return array{index:int,start:string,end:string,label:string,short:string}
+ *         end is inclusive.
+ */
+function hm_cycle_bounds(string $date): array {
+    $len    = hm_cycle_days();
+    $anchor = new DateTimeImmutable(hm_cycle_anchor());
+    $d      = new DateTimeImmutable(substr($date, 0, 10));
+
+    $diff = (int) floor(($d->getTimestamp() - $anchor->getTimestamp()) / 86400);
+    $idx  = (int) floor($diff / $len);
+
+    $start = $anchor->modify('+' . ($idx * $len) . ' days');
+    $end   = $start->modify('+' . ($len - 1) . ' days');
+
+    return [
+        'index' => $idx,
+        'start' => $start->format('Y-m-d'),
+        'end'   => $end->format('Y-m-d'),
+        'label' => hm_cycle_label($start->format('Y-m-d'), $end->format('Y-m-d')),
+        'short' => $start->format('j M') . ' – ' . $end->format('j M'),
+    ];
+}
+
+/** Human label for a cycle, e.g. "6 – 19 Jul 2026". */
+function hm_cycle_label(string $start, string $end): string {
+    $s = new DateTimeImmutable($start);
+    $e = new DateTimeImmutable($end);
+    if ($s->format('Y') !== $e->format('Y')) {
+        return $s->format('j M Y') . ' – ' . $e->format('j M Y');
+    }
+    if ($s->format('m') !== $e->format('m')) {
+        return $s->format('j M') . ' – ' . $e->format('j M Y');
+    }
+    return $s->format('j') . ' – ' . $e->format('j M Y');
+}
+
+/** Move $n cycles from the cycle containing $date (negative = earlier). */
+function hm_cycle_shift(string $date, int $n): array {
+    $len = hm_cycle_days();
+    $c   = hm_cycle_bounds($date);
+    $d   = (new DateTimeImmutable($c['start']))->modify('+' . ($n * $len) . ' days');
+    return hm_cycle_bounds($d->format('Y-m-d'));
+}
+
+/** The cycle we are in right now. */
+function hm_cycle_current(): array {
+    return hm_cycle_bounds(date('Y-m-d'));
+}
+
+/** True when $date (Y-m-d or datetime) falls inside the given cycle. */
+function hm_in_cycle(string $date, array $cycle): bool {
+    $d = substr($date, 0, 10);
+    return $d >= $cycle['start'] && $d <= $cycle['end'];
+}
+
 /** Decode a post's stored intensityScores JSON into element => score. */
 function post_intensity_scores(?string $json): array {
     if ($json === null || trim($json) === '') return [];

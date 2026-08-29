@@ -187,8 +187,12 @@ $postTypeUrl = [
 
 // ── Resolve coordinates for published posts ────────────────────────────
 $postMarkers = [];
-// country => category => ['sum'=>float,'n'=>int]  (for the comparison matrix)
+// country => category => ['sum'=>float,'n'=>int]  (all-time)
 $scoreMatrix = [];
+// cycleStart => country => category => ['sum','n']  (per two-week cycle)
+$cycleMatrix = [];
+// cycleStart => cycle meta + report counts
+$cycleIndex  = [];
 try {
     // intensityScores only exists once migrations/002 has been run; detect it so
     // an un-migrated database still renders the map instead of throwing.
@@ -251,14 +255,30 @@ try {
         // Per-category averages from this report's element scores
         $catScores = heatmap_category_scores(post_intensity_scores($p['intensityScores'] ?? null));
         $catAvgs   = [];
+        $pCycle    = hm_cycle_bounds($p['createdAt']);
         foreach ($catScores as $cn => $cs) {
             $catAvgs[$cn] = $cs['avg'];
+
+            // All-time accumulator
             if (!isset($scoreMatrix[$p['country']][$cn])) {
                 $scoreMatrix[$p['country']][$cn] = ['sum' => 0.0, 'n' => 0];
             }
             $scoreMatrix[$p['country']][$cn]['sum'] += $cs['avg'];
             $scoreMatrix[$p['country']][$cn]['n']   += 1;
+
+            // Per-cycle accumulator — this is what makes the archive replayable
+            if (!isset($cycleMatrix[$pCycle['start']][$p['country']][$cn])) {
+                $cycleMatrix[$pCycle['start']][$p['country']][$cn] = ['sum' => 0.0, 'n' => 0];
+            }
+            $cycleMatrix[$pCycle['start']][$p['country']][$cn]['sum'] += $cs['avg'];
+            $cycleMatrix[$pCycle['start']][$p['country']][$cn]['n']   += 1;
         }
+        // Track which cycles actually contain reports (drives the archive picker)
+        if (!isset($cycleIndex[$pCycle['start']])) {
+            $cycleIndex[$pCycle['start']] = $pCycle + ['reports' => 0, 'scored' => 0];
+        }
+        $cycleIndex[$pCycle['start']]['reports']++;
+        if ($catAvgs) $cycleIndex[$pCycle['start']]['scored']++;
         // Overall score for this report = mean of its scored categories
         $postAvg = $catAvgs ? round(array_sum($catAvgs) / count($catAvgs), 1) : null;
 
@@ -266,6 +286,7 @@ try {
             'id'       => $p['id'],
             'scores'   => $catAvgs,
             'avg'      => $postAvg,
+            'cycle'    => $pCycle['start'],
             'title'    => $p['title'],
             'type'     => $p['type'] ?? 'ARTICLE',
             'desc'     => mb_substr($p['description'] ?? '', 0, 150),
@@ -283,14 +304,57 @@ try {
     }
 } catch (Exception $e) {}
 
-// Flatten the score matrix to country => category => average
-$scoreMatrixAvg = [];
-foreach ($scoreMatrix as $ctry => $byCat) {
-    foreach ($byCat as $cn => $a) {
-        if ($a['n'] > 0) $scoreMatrixAvg[$ctry][$cn] = round($a['sum'] / $a['n'], 1);
+// ── Monitoring cycle selection ─────────────────────────────────────────
+// Nothing is ever overwritten: every cycle stays queryable from Post history.
+krsort($cycleIndex);                       // newest cycle first
+$availableCycles = array_values($cycleIndex);
+
+/** Average a cycle/all-time accumulator into country => category => score. */
+$hm_flatten = function (array $acc): array {
+    $out = [];
+    foreach ($acc as $ctry => $byCat) {
+        foreach ($byCat as $cn => $a) {
+            if ($a['n'] > 0) $out[$ctry][$cn] = round($a['sum'] / $a['n'], 1);
+        }
+    }
+    ksort($out);
+    return $out;
+};
+
+$reqCycle   = trim($_GET['cycle']   ?? '');   // '' = default, 'all' = all time
+$reqCompare = trim($_GET['compare'] ?? '');
+
+$isAllTime  = ($reqCycle === 'all');
+$activeCycle = null;
+
+if (!$isAllTime) {
+    if ($reqCycle !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $reqCycle)) {
+        $activeCycle = hm_cycle_bounds($reqCycle);
+    } elseif ($availableCycles) {
+        // Default to the most recent cycle that actually holds reports, so the
+        // dashboard is never blank just because the current cycle is young.
+        $activeCycle = hm_cycle_bounds($availableCycles[0]['start']);
+    } else {
+        $activeCycle = hm_cycle_current();
     }
 }
-ksort($scoreMatrixAvg);
+
+$compareCycle = null;
+if (!$isAllTime && $reqCompare !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $reqCompare)) {
+    $compareCycle = hm_cycle_bounds($reqCompare);
+    if ($compareCycle['start'] === $activeCycle['start']) $compareCycle = null;
+}
+
+// Matrix actually rendered
+$scoreMatrixAvg = $isAllTime
+    ? $hm_flatten($scoreMatrix)
+    : $hm_flatten($cycleMatrix[$activeCycle['start']] ?? []);
+
+$compareMatrixAvg = $compareCycle
+    ? $hm_flatten($cycleMatrix[$compareCycle['start']] ?? [])
+    : [];
+
+$currentCycle = hm_cycle_current();
 
 // ── Summary stats ──────────────────────────────────────────────────────
 $totalReports   = count($postMarkers);
@@ -846,38 +910,137 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 
   </div><!-- /#map-wrapper -->
 
-  <!-- ── Intensity matrix: country x category ──────────────────────── -->
-  <?php $hmTax = heatmap_taxonomy(); ?>
+  <!-- ── Intensity matrix + monitoring-cycle archive ──────────────── -->
+  <?php
+    $hmTax   = heatmap_taxonomy();
+    $cycLen  = hm_cycle_days();
+    $prevCyc = $isAllTime ? null : hm_cycle_shift($activeCycle['start'], -1);
+    $nextCyc = $isAllTime ? null : hm_cycle_shift($activeCycle['start'],  1);
+    $hasNext = $nextCyc && $nextCyc['start'] <= $currentCycle['start'];
+    $curMeta = (!$isAllTime && isset($cycleIndex[$activeCycle['start']])) ? $cycleIndex[$activeCycle['start']] : null;
+    // Preserve the compare selection when stepping between cycles
+    $qs = function (array $over) use ($reqCompare) {
+        $q = array_filter([
+            'cycle'   => $over['cycle']   ?? null,
+            'compare' => $over['compare'] ?? ($reqCompare ?: null),
+        ]);
+        return '/heatmap' . ($q ? '?' . http_build_query($q) : '');
+    };
+  ?>
   <div class="max-w-7xl mx-auto px-6 pt-10">
-    <div class="flex flex-wrap items-end justify-between gap-3 mb-1">
+
+    <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
       <div>
         <h2 class="font-outfit font-black text-xl text-slate-900">Intensity Matrix</h2>
         <p class="text-sm text-slate-400 mt-0.5">
           Average score per category, 1&ndash;10, where 10 is severe / critical.
-          Each cell is the mean of its component element scores across published reports.
+          Every <?= (int)$cycLen ?>-day cycle is archived &mdash; nothing is overwritten.
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <?php foreach ([[9,'Critical'],[7,'High'],[5,'Moderate'],[2,'Low'],[1,'Stable']] as [$tv,$tl]): ?>
           <span class="flex items-center gap-1.5">
-            <span style="width:11px;height:11px;border-radius:3px;background:<?= h(hm_tier_color($tv)) ?>;display:inline-block"></span>
+            <span style="width:11px;height:11px;border-radius:3px;background:<?= h(hm_tier_color((float)$tv)) ?>;display:inline-block"></span>
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400"><?= h($tl) ?></span>
           </span>
         <?php endforeach; ?>
       </div>
     </div>
 
+    <!-- Monitoring cycle / archive selector -->
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 mb-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+
+      <span class="text-[10px] font-black uppercase tracking-[.12em]" style="color:#750B25">Monitoring Cycle</span>
+
+      <div class="flex items-center gap-1.5">
+        <a href="<?= $isAllTime ? '#' : h($qs(['cycle' => $prevCyc['start']])) ?>"
+           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 <?= $isAllTime ? 'opacity-40 pointer-events-none' : 'hover:bg-slate-50' ?>"
+           title="Previous cycle" aria-label="Previous cycle">
+          <svg width="14" height="14" fill="none" stroke="#475569" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </a>
+
+        <select onchange="if(this.value)location.href=this.value"
+                class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm font-bold text-slate-800"
+                style="min-width:210px;outline:none">
+          <option value="<?= h($qs(['cycle' => 'all'])) ?>" <?= $isAllTime ? 'selected' : '' ?>>All time (every cycle)</option>
+          <?php if (!$availableCycles): ?>
+            <option selected><?= h($activeCycle['label']) ?> (no reports)</option>
+          <?php endif; ?>
+          <?php foreach ($availableCycles as $cy): ?>
+            <option value="<?= h($qs(['cycle' => $cy['start']])) ?>"
+                    <?= (!$isAllTime && $cy['start'] === $activeCycle['start']) ? 'selected' : '' ?>>
+              <?= h($cy['label']) ?> &middot; <?= (int)$cy['reports'] ?> report<?= $cy['reports'] == 1 ? '' : 's' ?><?= $cy['start'] === $currentCycle['start'] ? ' (current)' : '' ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+
+        <a href="<?= ($isAllTime || !$hasNext) ? '#' : h($qs(['cycle' => $nextCyc['start']])) ?>"
+           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 <?= ($isAllTime || !$hasNext) ? 'opacity-40 pointer-events-none' : 'hover:bg-slate-50' ?>"
+           title="Next cycle" aria-label="Next cycle">
+          <svg width="14" height="14" fill="none" stroke="#475569" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+      </div>
+
+      <?php if (!$isAllTime): ?>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold text-slate-400">Compare with</span>
+          <select onchange="if(this.value)location.href=this.value"
+                  class="px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700"
+                  style="min-width:190px;outline:none">
+            <option value="/heatmap?<?= h(http_build_query(['cycle' => $activeCycle['start']])) ?>">No comparison</option>
+            <?php foreach ($availableCycles as $cy): if ($cy['start'] === $activeCycle['start']) continue; ?>
+              <option value="/heatmap?<?= h(http_build_query(['cycle' => $activeCycle['start'], 'compare' => $cy['start']])) ?>"
+                      <?= ($compareCycle && $cy['start'] === $compareCycle['start']) ? 'selected' : '' ?>>
+                <?= h($cy['label']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      <?php endif; ?>
+
+      <div class="ml-auto text-right">
+        <?php if ($isAllTime): ?>
+          <p class="text-xs font-bold text-slate-700">All cycles combined</p>
+          <p class="text-[11px] text-slate-400"><?= count($availableCycles) ?> cycle<?= count($availableCycles) == 1 ? '' : 's' ?> archived</p>
+        <?php else: ?>
+          <p class="text-xs font-bold text-slate-700"><?= h($activeCycle['label']) ?></p>
+          <p class="text-[11px] text-slate-400">
+            <?= $curMeta ? (int)$curMeta['reports'] : 0 ?> report<?= ($curMeta && $curMeta['reports'] == 1) ? '' : 's' ?>
+            <?php if ($activeCycle['start'] === $currentCycle['start']): ?>
+              &middot; <span style="color:#059669;font-weight:700">current cycle</span>
+            <?php endif; ?>
+          </p>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <?php if ($compareCycle): ?>
+      <p class="text-xs text-slate-500 mb-3">
+        Showing <strong><?= h($activeCycle['label']) ?></strong> against
+        <strong><?= h($compareCycle['label']) ?></strong>.
+        <span style="color:#ED1C24;font-weight:700">&uarr; escalating</span> &middot;
+        <span style="color:#059669;font-weight:700">&darr; de-escalating</span> &middot;
+        <span class="text-slate-400 font-semibold">&rarr; stable</span>
+      </p>
+    <?php endif; ?>
+
     <?php if (empty($scoreMatrixAvg)): ?>
-      <div class="mt-5 rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
-        <p class="text-sm text-slate-500 font-semibold">No intensity scores recorded yet.</p>
+      <div class="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
+        <p class="text-sm text-slate-500 font-semibold">
+          No intensity scores in <?= $isAllTime ? 'any cycle' : h($activeCycle['label']) ?>.
+        </p>
         <p class="text-xs text-slate-400 mt-1.5 max-w-lg mx-auto leading-relaxed">
-          Scores appear here once published reports carry an Intensity Assessment.
-          Open a report in the admin panel, score its component elements 1&ndash;10, and publish.
+          <?php if ($availableCycles): ?>
+            Use the selector above to open a cycle that has data, or choose &ldquo;All time&rdquo;.
+          <?php else: ?>
+            Scores appear once published reports carry an Intensity Assessment.
+            Open a report in the admin panel, score its component elements 1&ndash;10, and publish.
+          <?php endif; ?>
         </p>
       </div>
     <?php else: ?>
-      <div class="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-        <table class="w-full text-sm" style="border-collapse:collapse;min-width:760px">
+      <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+        <table class="w-full text-sm" style="border-collapse:collapse;min-width:<?= $compareCycle ? 940 : 760 ?>px">
           <thead>
             <tr style="background:#f8fafc">
               <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 sticky left-0" style="background:#f8fafc">Country</th>
@@ -890,24 +1053,45 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
             </tr>
           </thead>
           <tbody>
-            <?php foreach ($scoreMatrixAvg as $ctry => $byCat):
+            <?php
+            // Include countries present in either period, so one that dropped
+            // out this cycle is still visible when comparing
+            $rowCountries = array_keys($scoreMatrixAvg);
+            foreach (array_keys($compareMatrixAvg) as $cc) {
+                if (!in_array($cc, $rowCountries, true)) $rowCountries[] = $cc;
+            }
+            sort($rowCountries);
+            foreach ($rowCountries as $ctry):
+              $byCat  = $scoreMatrixAvg[$ctry]   ?? [];
+              $byCatB = $compareMatrixAvg[$ctry] ?? [];
               $rowVals = [];
-              foreach ($hmTax as $c) {
-                if (isset($byCat[$c['name']])) $rowVals[] = $byCat[$c['name']];
-              }
+              foreach ($hmTax as $c) if (isset($byCat[$c['name']])) $rowVals[] = $byCat[$c['name']];
               $rowAvg = $rowVals ? round(array_sum($rowVals) / count($rowVals), 1) : null;
             ?>
               <tr style="border-top:1px solid #f1f5f9">
                 <td class="px-4 py-2.5 font-bold text-slate-800 whitespace-nowrap sticky left-0 bg-white"><?= h($ctry) ?></td>
                 <?php foreach ($hmTax as $c):
-                  $v = $byCat[$c['name']] ?? null; ?>
+                  $v  = $byCat[$c['name']]  ?? null;
+                  $vb = $byCatB[$c['name']] ?? null; ?>
                   <td class="px-3 py-2.5 text-center">
                     <?php if ($v === null): ?>
                       <span class="text-slate-300 text-xs">&mdash;</span>
                     <?php else: ?>
                       <span class="inline-block font-outfit font-black text-[13px] rounded-lg px-2.5 py-1"
-                            style="background:<?= h(hm_tier_color($v)) ?>;color:#fff;min-width:38px"
-                            title="<?= h(hm_tier_label($v)) ?>"><?= h(rtrim(rtrim(number_format($v, 1), '0'), '.')) ?></span>
+                            style="background:<?= h(hm_tier_color((float)$v)) ?>;color:#fff;min-width:38px"
+                            title="<?= h(hm_tier_label((float)$v)) ?>"><?= h(rtrim(rtrim(number_format($v, 1), '0'), '.')) ?></span>
+                    <?php endif; ?>
+                    <?php if ($compareCycle && $v !== null && $vb !== null):
+                      $delta = round($v - $vb, 1);
+                      $dCol  = $delta > 0.05 ? '#ED1C24' : ($delta < -0.05 ? '#059669' : '#94a3b8');
+                      $dArr  = $delta > 0.05 ? '&uarr;' : ($delta < -0.05 ? '&darr;' : '&rarr;'); ?>
+                      <span class="block text-[10px] font-bold mt-1" style="color:<?= $dCol ?>">
+                        <?= $dArr ?> <?= abs($delta) < 0.05 ? '0' : h(sprintf('%+.1f', $delta)) ?>
+                      </span>
+                    <?php elseif ($compareCycle && $v !== null && $vb === null): ?>
+                      <span class="block text-[10px] font-bold mt-1" style="color:#94a3b8">new</span>
+                    <?php elseif ($compareCycle && $v === null && $vb !== null): ?>
+                      <span class="block text-[10px] font-bold mt-1" style="color:#94a3b8">was <?= h(number_format($vb, 1)) ?></span>
                     <?php endif; ?>
                   </td>
                 <?php endforeach; ?>
@@ -915,7 +1099,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
                   <?php if ($rowAvg === null): ?>
                     <span class="text-slate-300 text-xs">&mdash;</span>
                   <?php else: ?>
-                    <span class="font-outfit font-black text-[13px]" style="color:<?= h(hm_tier_color($rowAvg)) ?>"><?= h(number_format($rowAvg, 1)) ?></span>
+                    <span class="font-outfit font-black text-[13px]" style="color:<?= h(hm_tier_color((float)$rowAvg)) ?>"><?= h(number_format($rowAvg, 1)) ?></span>
                   <?php endif; ?>
                 </td>
               </tr>
@@ -1093,6 +1277,9 @@ var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON
 /* ── Intensity taxonomy + country x category score matrix ────────── */
 var HM_TAXONOMY = <?= json_encode(array_map(fn($c) => ['name'=>$c['name'],'color'=>$c['color'],'elements'=>$c['elements']], heatmap_taxonomy()), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 var SCORE_MATRIX = <?= json_encode($scoreMatrixAvg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+
+/* Active monitoring cycle: null when viewing all time */
+var ACTIVE_CYCLE = <?= json_encode($isAllTime ? null : $activeCycle['start'], JSON_HEX_TAG) ?>;
 
 /* ── Master country list (name, code, flag, centroid) ────────────── */
 /* Declared here with the other PHP data: it is consumed further down by
@@ -1856,6 +2043,8 @@ function applyFilters() {
   if (showReports && postData && postData.length) {
     var groups = {};                       // "Country||Category" -> [posts]
     postData.forEach(function(d) {
+      // Restrict dots to the selected monitoring cycle (null = all time)
+      if (ACTIVE_CYCLE && d.cycle !== ACTIVE_CYCLE) return;
       // NOTE: deliberately NOT filtered by selCtry. Selecting a country opens
       // its panel and focuses the conflict layer, but every country's content
       // dots stay on the map so the overall picture is never lost.
