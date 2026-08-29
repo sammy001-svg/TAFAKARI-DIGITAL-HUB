@@ -187,7 +187,7 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
                   </button>
                 <?php elseif ($hasLink): ?>
                   <a href="<?= h($ep['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
-                     class="flex items-center gap-1.5 text-xs font-bold transition-colors" style="color:#C47C1A">
+                     class="flex items-center gap-1.5 text-xs font-bold transition-colors" style="color:#750B25">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                     <span data-i18n="home.listen">Listen</span> &rarr;
                   </a>
@@ -225,7 +225,7 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
               </audio>
               <p class="text-xs text-slate-400 mt-2">
                 <span data-i18n="podcastsPage.directFileNote">Direct file — plays in your browser. Having trouble?</span>
-                <a href="<?= h($ep['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer" class="font-bold underline" style="color:#C47C1A" data-i18n="podcastsPage.openFileDirectly">Open file directly</a>
+                <a href="<?= h($ep['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer" class="font-bold underline" style="color:#750B25" data-i18n="podcastsPage.openFileDirectly">Open file directly</a>
               </p>
             </div>
           <?php endif; ?>

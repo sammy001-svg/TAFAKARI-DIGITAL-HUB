@@ -123,6 +123,7 @@
       'home.exploreHeatmap': 'Explore Heatmap',
       'home.scroll': 'Scroll',
 
+      'home.ourReach': 'Our Reach',
       'home.stat.countries': 'Countries',
       'home.stat.adminUnits': 'Administrative Units',
       'home.stat.publishedResources': 'Published Resources',
@@ -471,6 +472,7 @@
       'home.exploreHeatmap': 'Angalia Ramani ya Joto',
       'home.scroll': 'Sogeza',
 
+      'home.ourReach': 'Ufikiaji Wetu',
       'home.stat.countries': 'Nchi',
       'home.stat.adminUnits': 'Vitengo vya Kiutawala',
       'home.stat.publishedResources': 'Rasilimali Zilizochapishwa',
@@ -810,6 +812,7 @@
       'home.exploreHeatmap': 'Explorer la Carte Thermique',
       'home.scroll': 'Défiler',
 
+      'home.ourReach': 'Notre Portée',
       'home.stat.countries': 'Pays',
       'home.stat.adminUnits': 'Unités Administratives',
       'home.stat.publishedResources': 'Ressources Publiées',

@@ -211,7 +211,7 @@ $adminPageSub   = $totalPending > 0
                     <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-600">
                       <?= h($typeLabels[$p['type']] ?? $p['type']) ?>
                     </span>
-                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest" style="background:rgba(231,149,42,.15);color:#C47C1A">
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest" style="background:rgba(231,149,42,.15);color:#750B25">
                       <?= h($p['country']) ?>
                     </span>
                     <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">
@@ -266,7 +266,7 @@ $adminPageSub   = $totalPending > 0
                     <?php else: ?>
                       <div class="px-4 py-3 flex items-center gap-3">
                         <svg width="16" height="16" fill="none" stroke="#E7952A" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                        <a href="<?= h($media) ?>" target="_blank" rel="noopener noreferrer" class="text-xs font-bold underline" style="color:#C47C1A">
+                        <a href="<?= h($media) ?>" target="_blank" rel="noopener noreferrer" class="text-xs font-bold underline" style="color:#750B25">
                           Listen to Episode &rarr;
                         </a>
                       </div>

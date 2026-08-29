@@ -254,7 +254,7 @@ function byline_label(string $type): string {
  *  byline           - the stated author or issuing body of the source material.
  *                     Distinct from authorId, which is the platform user who
  *                     entered the record.
- *  intensityScores  - per-element 1-10 scores (see migrations/002).
+ *  intensityScores  - per-element 1-10 scores (see migrations/004).
  *
  * Mirrors ensure_policy_brief_post_type(): self-healing so a deploy works
  * without a manual migration step. Runs at most once per request.

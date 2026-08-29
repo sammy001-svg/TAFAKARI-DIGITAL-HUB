@@ -93,7 +93,7 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     <?php foreach ($impactStats as $s): ?>
       <a href="<?= h($s['href']) ?>" class="block bg-white rounded-2xl border border-amber-100 shadow-sm p-5 text-center hover:shadow-md hover:border-amber-200 hover:-translate-y-0.5 transition-all">
         <div class="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center" style="background:#F8F8F0">
-          <svg width="20" height="20" fill="none" stroke="#C47C1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <svg width="20" height="20" fill="none" stroke="#750B25" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="<?= $s['icon'] ?>"/>
           </svg>
         </div>

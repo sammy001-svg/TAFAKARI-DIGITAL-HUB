@@ -238,12 +238,12 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
               <?php if (!empty($v['mediaUrl'])): ?>
                 <?php if ($isEmbed): ?>
                   <button onclick="playEmbed('<?= h($v['id']) ?>')"
-                          class="text-xs font-bold transition-colors" style="color:#C47C1A">
+                          class="text-xs font-bold transition-colors" style="color:#750B25">
                     <span data-i18n="videosPage.watch">Watch</span> &rarr;
                   </button>
                 <?php else: ?>
                   <a href="<?= h($v['mediaUrl']) ?>" target="_blank" rel="noopener noreferrer"
-                     class="text-xs font-bold transition-colors" style="color:#C47C1A">
+                     class="text-xs font-bold transition-colors" style="color:#750B25">
                     <span data-i18n="videosPage.watch">Watch</span> &rarr;
                   </a>
                 <?php endif; ?>

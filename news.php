@@ -192,7 +192,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
 
           <!-- Content -->
           <div class="p-6 flex flex-col grow">
-            <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#C47C1A">
+            <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b">
               <?= h($p['issueCategory']) ?>
             </span>
             <h3 class="font-outfit font-bold text-lg leading-snug text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 mb-2 grow">
@@ -203,7 +203,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
             <?php endif; ?>
             <div class="flex items-center justify-between mt-auto pt-4 border-t border-amber-50">
               <span class="text-xs text-slate-400"><?= format_date($p['createdAt']) ?></span>
-              <span class="text-xs font-bold" style="color:#C47C1A"><span data-i18n="newsPage.readFull">Read Full</span> &rarr;</span>
+              <span class="text-xs font-bold" style="color:#750B25"><span data-i18n="newsPage.readFull">Read Full</span> &rarr;</span>
             </div>
           </div>
         </a>

@@ -71,7 +71,7 @@ $pageDesc  = 'The page you are looking for does not exist.';
       ];
       foreach ($links as $l): ?>
         <a href="<?= h($l['href']) ?>" class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white border border-amber-100 text-sm font-bold text-slate-700 hover:bg-amber-50 hover:border-amber-200 transition-colors shadow-sm">
-          <svg width="15" height="15" fill="none" stroke="#C47C1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <svg width="15" height="15" fill="none" stroke="#750B25" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="<?= $l['icon'] ?>"/>
           </svg>
           <?= h($l['label']) ?>
@@ -91,7 +91,7 @@ $pageDesc  = 'The page you are looking for does not exist.';
                 <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-amber-900 mr-2" style="background:#E7952A"><?= h($r['country']) ?></span>
                 <span class="text-sm font-bold text-slate-800 group-hover:text-amber-800 transition-colors"><?= h($r['title']) ?></span>
               </div>
-              <svg width="14" height="14" fill="none" stroke="#C47C1A" stroke-width="2.5" viewBox="0 0 24 24" class="shrink-0 group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+              <svg width="14" height="14" fill="none" stroke="#750B25" stroke-width="2.5" viewBox="0 0 24 24" class="shrink-0 group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
             </a>
           <?php endforeach; ?>
         </div>

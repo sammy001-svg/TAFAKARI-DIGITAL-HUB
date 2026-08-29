@@ -328,7 +328,7 @@ $pageAuthor    = $authorDisplay;
 
     <!-- Back link -->
     <div class="mt-12 pt-8 border-t border-amber-100">
-      <a href="/news" class="inline-flex items-center gap-2 text-sm font-bold transition-colors hover:text-amber-700" style="color:#C47C1A">
+      <a href="/news" class="inline-flex items-center gap-2 text-sm font-bold transition-colors hover:text-amber-700" style="color:#750B25">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
         Back to News
       </a>

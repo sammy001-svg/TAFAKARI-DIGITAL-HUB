@@ -194,7 +194,7 @@ $cycleMatrix = [];
 // cycleStart => cycle meta + report counts
 $cycleIndex  = [];
 try {
-    // intensityScores only exists once migrations/002 has been run; detect it so
+    // intensityScores may not exist yet (see migrations/004); detect it so
     // an un-migrated database still renders the map instead of throwing.
     $hasScores = false;
     try {

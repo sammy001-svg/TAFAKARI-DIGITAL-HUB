@@ -116,7 +116,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
     <!-- ── No query yet — show suggestions ─────────────────────────────── -->
     <div class="text-center py-16">
       <div class="w-20 h-20 rounded-3xl mx-auto mb-6 flex items-center justify-center" style="background:#F8F8F0">
-        <svg width="36" height="36" fill="none" stroke="#C47C1A" stroke-width="1.8" viewBox="0 0 24 24">
+        <svg width="36" height="36" fill="none" stroke="#750B25" stroke-width="1.8" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
       </div>
@@ -222,7 +222,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
               <!-- Date + arrow -->
               <div class="shrink-0 text-right">
                 <span class="text-xs text-slate-400 block mb-1"><?= format_date($r['createdAt']) ?></span>
-                <svg width="16" height="16" fill="none" stroke="#C47C1A" stroke-width="2.5" viewBox="0 0 24 24" class="ml-auto group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                <svg width="16" height="16" fill="none" stroke="#750B25" stroke-width="2.5" viewBox="0 0 24 24" class="ml-auto group-hover:translate-x-0.5 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
               </div>
             </a>
           <?php endforeach; ?>

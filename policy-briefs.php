@@ -180,7 +180,7 @@ $pageTitle = 'Policy Briefs | Tafakari Digital Hub';
 
           <!-- Content -->
           <div class="p-6 flex flex-col grow">
-            <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#C47C1A">
+            <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b">
               <?= h($b['issueCategory']) ?>
             </span>
             <h3 class="font-outfit font-bold text-lg leading-snug text-slate-900 mb-2 grow">
@@ -195,12 +195,12 @@ $pageTitle = 'Policy Briefs | Tafakari Digital Hub';
                 <?php if (!empty($b['mediaUrl'])): ?>
                   <a href="/policy-briefs/<?= h($b['id']) ?>?download=1"
                      title="Download"
-                     class="flex items-center gap-1 text-xs font-bold hover:brightness-110 transition-all" style="color:#C47C1A">
+                     class="flex items-center gap-1 text-xs font-bold hover:brightness-110 transition-all" style="color:#750B25">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span data-i18n="documentsPage.download">Download</span>
                   </a>
                 <?php endif; ?>
-                <a href="/policy-briefs/<?= h($b['id']) ?>" class="text-xs font-bold" style="color:#C47C1A">
+                <a href="/policy-briefs/<?= h($b['id']) ?>" class="text-xs font-bold" style="color:#750B25">
                   <span data-i18n="policyBriefsPage.readMore">Read More</span> &rarr;
                 </a>
               </div>
