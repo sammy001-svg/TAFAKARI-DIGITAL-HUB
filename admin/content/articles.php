@@ -6,6 +6,8 @@ require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 
+ensure_post_columns();
+
 $user    = require_auth();
 $isSuper = is_super_admin();
 $uid     = $user['id'];
@@ -57,7 +59,7 @@ $stCount->execute($params);
 $total = (int)$stCount->fetchColumn();
 
 $stPosts = $pdo->prepare(
-    "SELECT p.id, p.title, p.status, p.country, p.region, p.issueCategory,
+    "SELECT p.id, p.title, p.byline, p.status, p.country, p.region, p.issueCategory,
             p.viewCount, p.thumbnailUrl, p.authorId, p.updatedAt, p.createdAt,
             u.name AS authorName, u.username AS authorUsername
      FROM Post p LEFT JOIN User u ON p.authorId = u.id
@@ -204,6 +206,9 @@ $adminPageSub   = $total . ' article' . ($total !== 1 ? 's' : '') . ($statusFilt
                 <?php endif; ?>
                 <div class="min-w-0">
                   <p class="text-[13px] font-semibold text-slate-900 truncate max-w-xs leading-snug"><?= h($p['title']) ?></p>
+                  <?php if (!empty($p['byline'])): ?>
+                    <p class="text-[11px] text-slate-400 truncate max-w-xs mt-0.5">by <?= h($p['byline']) ?></p>
+                  <?php endif; ?>
                   <div class="flex items-center gap-2 mt-0.5">
                     <?php if (!empty($p['issueCategory'])): ?>
                       <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style="background:rgba(117,11,37,.08);color:#750B25"><?= h($p['issueCategory']) ?></span>

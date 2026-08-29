@@ -235,6 +235,49 @@ function ensure_policy_brief_post_type(): void {
     } catch (Exception $e) {}
 }
 
+/**
+ * Content types that carry a stated author / issuing body.
+ * Reporting formats are attributable; media formats are not.
+ */
+function post_type_has_byline(string $type): bool {
+    return in_array($type, ['ARTICLE', 'DOCUMENT', 'POLICY_BRIEF'], true);
+}
+
+/** Label for the byline field / display, per content type. */
+function byline_label(string $type): string {
+    return $type === 'POLICY_BRIEF' ? 'Author / Issuing Body' : 'Author / Source';
+}
+
+/**
+ * Ensure the optional Post columns this app relies on exist.
+ *
+ *  byline           - the stated author or issuing body of the source material.
+ *                     Distinct from authorId, which is the platform user who
+ *                     entered the record.
+ *  intensityScores  - per-element 1-10 scores (see migrations/002).
+ *
+ * Mirrors ensure_policy_brief_post_type(): self-healing so a deploy works
+ * without a manual migration step. Runs at most once per request.
+ */
+function ensure_post_columns(): void {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
+    try {
+        $pdo  = db();
+        $rows = $pdo->query('SHOW COLUMNS FROM `Post`')->fetchAll();
+        $have = [];
+        foreach ($rows as $r) $have[$r['Field']] = true;
+
+        if (!isset($have['byline'])) {
+            $pdo->exec('ALTER TABLE `Post` ADD COLUMN `byline` VARCHAR(255) NULL AFTER `title`');
+        }
+        if (!isset($have['intensityScores'])) {
+            $pdo->exec('ALTER TABLE `Post` ADD COLUMN `intensityScores` TEXT NULL');
+        }
+    } catch (Exception $e) {}
+}
+
 // ── JSON API helpers ─────────────────────────────────────────────
 
 function json_response(mixed $data, int $status = 200): never {

@@ -26,6 +26,9 @@ $sqls = [
 
     'Post' => "CREATE TABLE IF NOT EXISTS `Post` (
       `id` VARCHAR(191) NOT NULL, `title` VARCHAR(255) NOT NULL, `content` TEXT NULL,
+      -- Stated author or issuing body of the source material.
+      -- Distinct from authorId, which is the platform user who entered it.
+      `byline` VARCHAR(255) NULL,
       `description` TEXT NULL, `thumbnailUrl` VARCHAR(1024) NULL, `mediaUrl` VARCHAR(1024) NULL,
       `type` ENUM('ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF') NOT NULL DEFAULT 'ARTICLE',
       `status` ENUM('DRAFT','PENDING','PUBLISHED','REJECTED','ARCHIVED') NOT NULL DEFAULT 'DRAFT',

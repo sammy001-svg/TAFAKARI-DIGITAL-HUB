@@ -7,6 +7,8 @@ require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 require_once dirname(__DIR__, 2) . '/includes/intensity-scoring.php';
 
+ensure_post_columns();   // self-healing: byline + intensityScores
+
 $user    = require_auth();
 $isSuper = is_super_admin();
 $uid     = $user['id'];
@@ -50,6 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (mb_strlen($issueCategory) > 512)
         $error = 'Too many issue categories selected. The combined list is ' . mb_strlen($issueCategory)
                . ' characters but the limit is 512. Please select fewer categories.';
+    elseif (mb_strlen(trim($_POST['byline'] ?? '')) > 255)
+        $error = 'Author / source is too long - limit is 255 characters.';
     elseif (mb_strlen($region) > 191)
         $error = 'Region is too long — ' . mb_strlen($region) . ' characters, limit is 191.';
     elseif (mb_strlen($thumbnailUrl) > 1024)
@@ -58,6 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Media URL is too long — ' . mb_strlen($mediaUrl) . ' characters, limit is 1024.';
     else {
     
+    // Stated author / issuing body; only meaningful for reporting formats
+    $byline = trim($_POST['byline'] ?? '');
+    if (!post_type_has_byline($type)) $byline = '';
+
     // Per-element 1-10 intensity scores (0 = not assessed, dropped)
     $intensityScores = [];
     foreach ((array)($_POST['intensity'] ?? []) as $_el => $_v) {
@@ -70,9 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = ($isSuper && isset($_POST['_publish'])) ? 'PUBLISHED' : 'DRAFT';
         try {
             db()->prepare(
-                'INSERT INTO Post (id,title,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,intensityScores,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
-            )->execute([$id,$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$status,$uid]);
+                'INSERT INTO Post (id,title,byline,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,intensityScores,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
+            )->execute([$id,$title,$byline,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$status,$uid]);
 
             $redirect = match($type) {
                 'ARTICLE'      => '/admin/content/articles',
@@ -268,6 +276,22 @@ $adminPageSub   = $cfg['sub'];
                  class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none"
                  id="input-title" placeholder="Enter a descriptive title">
         </div>
+
+        <?php if (post_type_has_byline($defaultType)): ?>
+        <!-- Author / issuing body — sits between the title and the summary -->
+        <div id="byline-field">
+          <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+            <?= h(byline_label($defaultType)) ?>
+            <span class="text-slate-300 font-bold normal-case tracking-normal">(optional)</span>
+          </label>
+          <input type="text" name="byline" value="<?= h($_POST['byline'] ?? '') ?>" maxlength="255"
+                 class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none"
+                 placeholder="e.g. Rodgers Mwansa, or Centre for Research, Training and Publications">
+          <p class="text-[11px] text-slate-400 mt-1.5">
+            Name the individual author, or the issuing body where no individual is named.
+          </p>
+        </div>
+        <?php endif; ?>
 
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Short Description</label>

@@ -144,6 +144,18 @@ $pageUrl       = $shareUrl;
         <?php endif; ?>
       </div>
       <h1 class="font-outfit text-3xl md:text-4xl font-black text-white leading-tight mb-4"><?= h($post['title']) ?></h1>
+      <?php if (!empty($post['byline'])): ?>
+        <!-- Stated author / issuing body: sits between title and summary -->
+        <p class="flex items-center gap-2 mb-4">
+          <svg width="15" height="15" fill="none" stroke="#E7952A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <a href="/search?q=<?= urlencode($post['byline']) ?>"
+             class="text-sm font-bold hover:underline" style="color:#E7952A"
+             title="See other reporting from this author or body"><?= h($post['byline']) ?></a>
+        </p>
+      <?php endif; ?>
+
       <?php if (!empty($post['description'])): ?>
         <p class="text-lg text-white/60 leading-relaxed mb-6 max-w-2xl"><?= h($post['description']) ?></p>
       <?php endif; ?>

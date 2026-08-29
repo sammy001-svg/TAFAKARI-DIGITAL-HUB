@@ -50,19 +50,20 @@ $results = [];
 $total   = 0;
 
 if ($q !== '') {
+    ensure_post_columns();   // byline may not exist yet
     try {
         $like = "%$q%";
         $stmt = db()->prepare(
-            "SELECT id, title, description, thumbnailUrl, mediaUrl, type, country, issueCategory, createdAt
+            "SELECT id, title, byline, description, thumbnailUrl, mediaUrl, type, country, issueCategory, createdAt
              FROM Post
              WHERE status = 'PUBLISHED'
-               AND (title LIKE ? OR description LIKE ?)
+               AND (title LIKE ? OR description LIKE ? OR byline LIKE ?)
              ORDER BY
                CASE type WHEN 'ARTICLE' THEN 1 WHEN 'DOCUMENT' THEN 2 WHEN 'POLICY_BRIEF' THEN 3 WHEN 'PODCAST' THEN 4 WHEN 'VIDEO' THEN 5 ELSE 6 END,
                createdAt DESC
              LIMIT 60"
         );
-        $stmt->execute([$like, $like]);
+        $stmt->execute([$like, $like, $like]);
         $rows = $stmt->fetchAll();
 
         // Group by type

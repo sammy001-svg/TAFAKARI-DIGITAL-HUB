@@ -7,6 +7,8 @@ require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 require_once dirname(__DIR__, 2) . '/includes/intensity-scoring.php';
 
+ensure_post_columns();   // self-healing: byline + intensityScores
+
 $user    = require_auth();
 $isSuper = is_super_admin();
 $uid     = $user['id'];
@@ -51,6 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     $rawCats = array_filter(array_map('trim', (array)($_POST['issueCategories'] ?? [])));
     $issueCategory = implode(',', array_intersect($rawCats, issue_categories()));
 
+    // Stated author / issuing body; only meaningful for reporting formats
+    $byline = trim($_POST['byline'] ?? '');
+    if (!post_type_has_byline($type)) $byline = '';
+
     // Per-element 1-10 intensity scores (0 = not assessed, dropped)
     $intensityScores = [];
     foreach ((array)($_POST['intensity'] ?? []) as $_el => $_v) {
@@ -74,6 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     elseif (mb_strlen($issueCategory) > 512)
         $error = 'Too many issue categories selected. The combined list is ' . mb_strlen($issueCategory)
                . ' characters but the limit is 512. Please select fewer categories.';
+    elseif (mb_strlen($byline) > 255)
+        $error = 'Author / source is too long - ' . mb_strlen($byline) . ' characters, limit is 255.';
     elseif (mb_strlen($region) > 191)
         $error = 'Region is too long — ' . mb_strlen($region) . ' characters, limit is 191.';
     elseif (mb_strlen($thumbnailUrl) > 1024)
@@ -87,8 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
 
         try {
             $pdo->prepare(
-                'UPDATE Post SET title=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,intensityScores=?,updatedAt=NOW(3) WHERE id=?'
-            )->execute([$title,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$id]);
+                'UPDATE Post SET title=?,byline=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,intensityScores=?,updatedAt=NOW(3) WHERE id=?'
+            )->execute([$title,$byline,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$id]);
 
             $flag = 'saved';
             if ($andPublish) {
@@ -209,12 +217,29 @@ $adminPageSub   = h($post['title'] ?? '');
         </div>
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Content Type</label>
-          <select name="type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
+          <select name="type" id="type-select" onchange="bylineToggle(this.value)"
+                  class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
             <?php foreach (['ARTICLE'=>'Article','GALLERY_IMAGE'=>'Gallery Image','PODCAST'=>'Podcast','VIDEO'=>'Video','DOCUMENT'=>'Document','POLICY_BRIEF'=>'Policy Brief'] as $v => $l): ?>
               <option value="<?= h($v) ?>" <?= (($f['type'] ?? 'ARTICLE') === $v) ? 'selected' : '' ?>><?= h($l) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
+
+        <!-- Author / issuing body — sits between the title and the summary.
+             Shown only for reporting formats; toggled when the type changes. -->
+        <div id="byline-field"<?= post_type_has_byline($editType) ? '' : ' style="display:none"' ?>>
+          <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+            <span id="byline-label"><?= h(byline_label($editType)) ?></span>
+            <span class="text-slate-300 font-bold normal-case tracking-normal">(optional)</span>
+          </label>
+          <input type="text" name="byline" value="<?= h($f['byline'] ?? '') ?>" maxlength="255"
+                 class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none"
+                 placeholder="e.g. Rodgers Mwansa, or Centre for Research, Training and Publications">
+          <p class="text-[11px] text-slate-400 mt-1.5">
+            Name the individual author, or the issuing body where no individual is named.
+          </p>
+        </div>
+
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Short Description</label>
           <textarea name="description" rows="3"
@@ -341,6 +366,16 @@ function switchTab(tab) {
       .catch(function(){ document.getElementById('preview-panel').textContent = document.getElementById('md-editor').value; });
   }
 }
+// Byline applies to reporting formats only
+function bylineToggle(type) {
+  var wrap = document.getElementById('byline-field');
+  var lbl  = document.getElementById('byline-label');
+  if (!wrap) return;
+  var show = (type === 'ARTICLE' || type === 'DOCUMENT' || type === 'POLICY_BRIEF');
+  wrap.style.display = show ? '' : 'none';
+  if (lbl) lbl.textContent = (type === 'POLICY_BRIEF') ? 'Author / Issuing Body' : 'Author / Source';
+}
+
 function catMsToggle() {
   var dd = document.getElementById('cat-ms-dropdown');
   if (dd.classList.contains('hidden')) {

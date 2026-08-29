@@ -1,0 +1,42 @@
+-- ============================================================================
+--  003 — Author / issuing body (byline) on Post
+-- ============================================================================
+--
+--  WHY
+--  ---
+--  News articles, documents and policy briefs need to name the author, or the
+--  issuing body where no individual author is given. This strengthens the
+--  traceability and credibility of the sources behind the heat map, and lets
+--  researchers follow one author's or institution's reporting over time.
+--
+--  NAMING
+--  ------
+--  Called `byline`, deliberately NOT `author` or `authorName`:
+--
+--    * Post.authorId already exists and is the platform USER who entered the
+--      record — a different thing entirely.
+--    * `authorName` is already used across the admin listings as an alias for
+--      the joined User name (u.name AS authorName), so reusing it would collide.
+--
+--  YOU PROBABLY DO NOT NEED TO RUN THIS
+--  ------------------------------------
+--  includes/functions.php::ensure_post_columns() adds the column automatically
+--  on first use, following the same self-healing pattern as
+--  ensure_policy_brief_post_type(). This file is kept as the written record and
+--  for anyone who prefers to apply schema changes by hand.
+--
+--  SAFE TO RUN
+--  -----------
+--  Adds one nullable column. Nothing is read, changed or removed. Existing
+--  posts get NULL and simply display no byline until one is entered.
+--
+--  HOW TO RUN (cPanel)
+--  -------------------
+--  phpMyAdmin -> select your database -> SQL tab -> paste -> Go.
+-- ============================================================================
+
+ALTER TABLE `Post`
+  ADD COLUMN `byline` VARCHAR(255) NULL AFTER `title`;
+
+-- Verify:
+--   SHOW FULL COLUMNS FROM `Post` WHERE Field = 'byline';
