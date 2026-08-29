@@ -410,6 +410,10 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 /* ── Map tile bg before load ──────────────────────────────────────── */
 .leaflet-container { background: #eceae5; }
 
+/* Mute the basemap so category dots stay dominant. Applied to the tile pane
+   only, so markers, tooltips and controls keep their full colour. */
+.leaflet-tile-pane { filter: grayscale(.72) brightness(1.05) contrast(.95); }
+
 /* ── Leaflet tooltip overrides ────────────────────────────────────── */
 .leaflet-tooltip {
   background: #ffffff !important;
@@ -1160,9 +1164,14 @@ if (typeof L === 'undefined') {
 /* ── Map + tile layer — must be first so base map always renders ─── */
 var map = L.map('map', { zoomControl: false }).setView([5, 22], 4);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  subdomains: 'abcd',
+// CARTO moved their basemaps behind an API key and now stamp unauthenticated
+// tiles with "API KEY REQUIRED", so we serve OpenStreetMap tiles instead - no
+// key, no sign-up - and desaturate them in CSS to keep the muted light canvas
+// the category dots need in order to stand out.
+// NOTE: OSM standard has no retina variant, so there is no {r} placeholder.
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  subdomains: 'abc',
   maxZoom: 19
 }).addTo(map);
 
