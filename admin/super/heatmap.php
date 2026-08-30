@@ -538,8 +538,7 @@ function renderCategories() {
       + '<td class="px-4 py-2 align-top">'
       +   '<textarea class="cat-elements cell-input" rows="3" placeholder="One element per line"'
       +   ' style="width:100%;resize:vertical;line-height:1.5;font-family:inherit">'
-      +   esc((cat.elements || []).join('
-')) + '</textarea>'
+      +   esc((cat.elements || []).join('\n')) + '</textarea>'
       +   '<p style="font-size:10px;color:#94a3b8;margin:3px 0 0">'
       +   'Category score = average of these elements</p>'
       + '</td>'
@@ -634,8 +633,7 @@ function serializeTab(tab) {
     } else if (tab === 'categories') {
       var cp = tr.querySelector('input[type="color"]');
       var ta = tr.querySelector('textarea.cat-elements');
-      var els = ta ? ta.value.split('
-').map(function(x){ return x.trim(); }).filter(function(x){ return x !== ''; }) : [];
+      var els = ta ? ta.value.split('\n').map(function(x){ return x.trim(); }).filter(function(x){ return x !== ''; }) : [];
       arr.push({
         name: inputs[0].value.trim(),
         color: inputs[1].value.trim() || (cp ? cp.value : '#94a3b8'),
