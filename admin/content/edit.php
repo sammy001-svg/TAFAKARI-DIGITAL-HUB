@@ -51,7 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     $country       = trim($_POST['country']       ?? '');
     $region        = trim($_POST['region']        ?? '');
     $rawCats = array_filter(array_map('trim', (array)($_POST['issueCategories'] ?? [])));
-    $issueCategory = implode(',', array_intersect($rawCats, issue_categories()));
+    // Allow the categories this post already carries, even if they have since
+    // been retired from Heatmap Config - otherwise editing an older report
+    // would drop them, or empty a required field and block the save entirely.
+    $existingCats  = array_filter(array_map('trim', explode(',', (string)($post['issueCategory'] ?? ''))));
+    $issueCategory = implode(',', array_intersect($rawCats, issue_categories_with($existingCats)));
 
     // Stated author / issuing body; only meaningful for reporting formats
     $byline = trim($_POST['byline'] ?? '');
@@ -300,13 +304,19 @@ $adminPageSub   = h($post['title'] ?? '');
                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
               </div>
               <div class="overflow-y-auto max-h-52 p-1.5" id="cat-ms-list">
-                <?php foreach (issue_categories() as $c): ?>
+                <?php foreach (issue_categories_with($selectedCats) as $c):
+                  $retired = is_retired_category($c); ?>
                   <label class="cat-ms-opt flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer">
                     <input type="checkbox" name="issueCategories[]" value="<?= h($c) ?>"
                            <?= in_array($c, $selectedCats, true) ? 'checked' : '' ?>
                            onchange="catMsUpdate()"
                            class="w-4 h-4 rounded" style="accent-color:#750B25">
-                    <span class="text-sm text-slate-700"><?= h($c) ?></span>
+                    <span class="text-sm <?= $retired ? 'text-slate-400' : 'text-slate-700' ?>"><?= h($c) ?></span>
+                    <?php if ($retired): ?>
+                      <span class="ml-auto text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
+                            style="background:#f1f5f9;color:#94a3b8"
+                            title="No longer in Heatmap Config; kept so it is not lost">retired</span>
+                    <?php endif; ?>
                   </label>
                 <?php endforeach; ?>
               </div>

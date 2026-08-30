@@ -319,36 +319,75 @@ function african_countries(): array {
     ];
 }
 
+/**
+ * Categories offered when tagging content.
+ *
+ * These are exactly the categories configured in Admin > Heatmap Config, so the
+ * content form and the heat map always agree. The built-in list below is only a
+ * fallback for a fresh install with nothing configured yet.
+ *
+ * (Previously this returned the built-in list PLUS the configured ones, which
+ * meant five configured categories showed up as seventeen on the form.)
+ */
 function issue_categories(): array {
     static $cached = null;
     if ($cached !== null) return $cached;
 
-    $list = [
-        'Health','Education','Security & Conflict','Climate & Environment',
-        'Economic Development','Policy & Governance','Human Rights',
-        'Migration & Refugees','Agriculture & Food Security',
-        'Infrastructure & Energy','Technology & Innovation',
-        'Gender & Social Affairs',
-    ];
-
-    // Append any custom categories added via Admin › Heatmap Config
+    $configured = [];
     try {
         $raw = get_setting('heatmap_categories', '');
         if ($raw !== '') {
             $dbCats = json_decode($raw, true);
             if (is_array($dbCats)) {
                 foreach ($dbCats as $cat) {
-                    $name = trim($cat['name'] ?? '');
-                    if ($name !== '' && !in_array($name, $list, true)) {
-                        $list[] = $name;
+                    $name = is_array($cat) ? trim((string)($cat['name'] ?? '')) : trim((string)$cat);
+                    if ($name !== '' && !in_array($name, $configured, true)) {
+                        $configured[] = $name;
                     }
                 }
             }
         }
     } catch (Throwable $e) {}
 
-    $cached = $list;
+    if ($configured) {
+        $cached = $configured;
+        return $cached;
+    }
+
+    // Fallback: nothing configured yet
+    $cached = [
+        'Health','Education','Security & Conflict','Climate & Environment',
+        'Economic Development','Policy & Governance','Human Rights',
+        'Migration & Refugees','Agriculture & Food Security',
+        'Infrastructure & Energy','Technology & Innovation',
+        'Gender & Social Affairs',
+    ];
     return $cached;
+}
+
+/**
+ * The configured categories, plus any values a post already carries that are no
+ * longer configured.
+ *
+ * Without this, editing an older post tagged with a since-retired category would
+ * drop that value on save (it would have no checkbox to re-submit), and could
+ * even block the save entirely by emptying a required field.
+ *
+ * @param  string[] $existing categories currently stored on the post
+ * @return string[]
+ */
+function issue_categories_with(array $existing): array {
+    $list = issue_categories();
+    foreach ($existing as $e) {
+        $e = trim((string)$e);
+        if ($e !== '' && !in_array($e, $list, true)) $list[] = $e;
+    }
+    return $list;
+}
+
+/** True when a category is no longer in the configured set (kept for legacy data). */
+function is_retired_category(string $name): bool {
+    return !in_array($name, issue_categories(), true);
 }
 
 // ── Heat-map taxonomy: categories -> component elements ──────────
