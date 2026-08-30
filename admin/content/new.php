@@ -39,7 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$title)             $error = 'Title is required.';
     elseif (!$country)       $error = 'Country is required.';
     elseif (!$region)        $error = 'Region is required.';
-    elseif (!$issueCategory) $error = 'Issue category is required.';
+    elseif (!$issueCategory && post_type_needs_category($type))
+        $error = 'Issue category is required.';
     elseif ($type === 'GALLERY_IMAGE' && !$mediaUrl) $error = 'Image URL is required for gallery images.';
     elseif ($type === 'PODCAST'       && !$mediaUrl) $error = 'Audio file URL is required for podcasts.';
     elseif ($type === 'VIDEO'         && !$mediaUrl) $error = 'Video URL is required for videos.';
@@ -382,6 +383,7 @@ $adminPageSub   = $cfg['sub'];
                  class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none"
                  placeholder="e.g. Nairobi, Tigray, Kinshasa">
         </div>
+        <?php if (post_type_needs_category($defaultType)): ?>
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Issue Categories *</label>
           <div class="relative" id="cat-ms-wrap">
@@ -409,6 +411,7 @@ $adminPageSub   = $cfg['sub'];
             </div>
           </div>
         </div>
+        <?php endif; ?>
       </div>
     </div>
 

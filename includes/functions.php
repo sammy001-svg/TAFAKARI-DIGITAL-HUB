@@ -236,6 +236,27 @@ function ensure_policy_brief_post_type(): void {
 }
 
 /**
+ * Content types that feed the conflict heat map.
+ *
+ * Only documents carry the monitoring reports the heat map is built from.
+ * Gallery images, podcasts, videos and news articles are published content,
+ * not assessed reporting, so they are not plotted or scored.
+ */
+function post_type_on_heatmap(string $type): bool {
+    return $type === 'DOCUMENT';
+}
+
+/**
+ * Content types that must be tagged with an issue category.
+ *
+ * Gallery images are exempt: they are illustrative, carry no heat-map meaning,
+ * and forcing a category on every upload only slows the batch uploader down.
+ */
+function post_type_needs_category(string $type): bool {
+    return $type !== 'GALLERY_IMAGE';
+}
+
+/**
  * Content types that carry a stated author / issuing body.
  * Reporting formats are attributable; media formats are not.
  */

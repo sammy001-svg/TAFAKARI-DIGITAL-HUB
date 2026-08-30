@@ -84,33 +84,8 @@ $categories = issue_categories();
             <p class="meta-err hidden text-[11px] text-rose-500 mt-1 font-semibold" id="err-region">Region is required.</p>
           </div>
 
-          <!-- Issue Categories (multi-select dropdown) -->
-          <div>
-            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Issue Categories *</label>
-            <div class="relative" id="cat-ms-wrap">
-              <button type="button" id="cat-ms-btn" onclick="catMsToggle()"
-                      class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-left flex items-center justify-between focus:outline-none">
-                <span id="cat-ms-label" class="text-slate-400">Select categories</span>
-                <svg width="13" height="13" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div id="cat-ms-dropdown" class="hidden absolute z-50 mt-1 w-full bg-white rounded-xl border border-slate-200 shadow-lg">
-                <div class="p-2 border-b border-slate-100">
-                  <input type="text" placeholder="Search categories…" oninput="catMsSearch(this.value)"
-                         class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
-                </div>
-                <div class="overflow-y-auto max-h-48 p-1.5">
-                  <?php foreach ($categories as $c): ?>
-                    <label class="cat-ms-opt flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer">
-                      <input type="checkbox" value="<?= h($c) ?>" onchange="catMsUpdate()"
-                             class="w-4 h-4 rounded" style="accent-color:#750B25">
-                      <span class="text-sm text-slate-700"><?= h($c) ?></span>
-                    </label>
-                  <?php endforeach; ?>
-                </div>
-              </div>
-            </div>
-            <p class="meta-err hidden text-[11px] text-rose-500 mt-1 font-semibold" id="err-category">At least one category is required.</p>
-          </div>
+          <!-- Issue categories intentionally omitted: gallery images are
+               not tagged to the heat map, so no category is collected. -->
 
           <!-- Description -->
           <div>
@@ -226,44 +201,6 @@ $categories = issue_categories();
 var queue       = [];   // {id, file, objUrl, title, status, errorMsg, postId}
 var processing  = false;
 var nextId      = 0;
-
-/* ── Category multi-select ──────────────────────────────────────── */
-function catMsToggle() {
-  var dd = document.getElementById('cat-ms-dropdown');
-  if (dd.classList.contains('hidden')) {
-    dd.classList.remove('hidden');
-    dd.querySelector('input[type=text]').focus();
-  } else {
-    dd.classList.add('hidden');
-  }
-}
-function catMsSearch(q) {
-  q = q.toLowerCase();
-  document.querySelectorAll('.cat-ms-opt').forEach(function(el) {
-    el.style.display = el.querySelector('span').textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
-  });
-}
-function catMsUpdate() {
-  var checked = document.querySelectorAll('#cat-ms-dropdown input[type=checkbox]:checked');
-  var label = document.getElementById('cat-ms-label');
-  if (checked.length === 0) {
-    label.textContent = 'Select categories'; label.style.color = '';
-  } else if (checked.length === 1) {
-    label.textContent = checked[0].value; label.style.color = '#0f172a';
-  } else {
-    label.textContent = checked.length + ' categories selected'; label.style.color = '#0f172a';
-  }
-}
-function getSelectedCats() {
-  return Array.from(document.querySelectorAll('#cat-ms-dropdown input[type=checkbox]:checked'))
-              .map(function(cb) { return cb.value; });
-}
-document.addEventListener('click', function(e) {
-  var wrap = document.getElementById('cat-ms-wrap');
-  if (wrap && !wrap.contains(e.target)) {
-    document.getElementById('cat-ms-dropdown').classList.add('hidden');
-  }
-});
 
 /* ── Drop zone ──────────────────────────────────────────────────── */
 function dzOver(e) {
@@ -413,7 +350,7 @@ function getMeta() {
   return {
     country:       document.getElementById('meta-country').value.trim(),
     region:        document.getElementById('meta-region').value.trim(),
-    issueCategory: getSelectedCats().join(','),
+    issueCategory: '',   // gallery images are not heat-map tagged
     description:   document.getElementById('meta-description').value.trim(),
   };
 }
@@ -423,7 +360,7 @@ function validateMeta() {
   var show = function(id, show) { document.getElementById(id).classList.toggle('hidden', !show); };
   show('err-country',  !m.country);       if (!m.country)       ok = false;
   show('err-region',   !m.region);        if (!m.region)        ok = false;
-  show('err-category', !m.issueCategory); if (!m.issueCategory) ok = false;
+  // No category requirement: gallery images are not heat-map tagged.
   if (!ok) {
     var first = document.querySelector('.meta-err:not(.hidden)');
     if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });

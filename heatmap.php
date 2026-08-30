@@ -204,7 +204,9 @@ try {
     $scoreCol = $hasScores ? ', intensityScores' : '';
     $posts = db()->query("
         SELECT id, title, type, description, country, region, issueCategory, createdAt, thumbnailUrl$scoreCol
-        FROM Post WHERE status='PUBLISHED' AND country IS NOT NULL AND country != ''
+        FROM Post
+        WHERE status='PUBLISHED' AND type='DOCUMENT'
+          AND country IS NOT NULL AND country != ''
         ORDER BY createdAt DESC LIMIT 300
     ")->fetchAll();
 
@@ -360,7 +362,8 @@ $currentCycle = hm_cycle_current();
 $totalReports   = count($postMarkers);
 $monthlyReports = 0;
 try {
-    $monthlyReports = (int) db()->query("SELECT COUNT(*) FROM Post WHERE status='PUBLISHED' AND createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
+    // Documents only, so this KPI matches what the map actually plots
+    $monthlyReports = (int) db()->query("SELECT COUNT(*) FROM Post WHERE status='PUBLISHED' AND type='DOCUMENT' AND createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
 } catch (Exception $e) { /* ignore */ }
 
 // ── Per-country DB stats — powering the hover summary panels ──────────
@@ -372,7 +375,8 @@ try {
                 MAX(createdAt) AS latestDate,
                 GROUP_CONCAT(DISTINCT issueCategory ORDER BY issueCategory SEPARATOR '|||') AS allCats
          FROM Post
-         WHERE status='PUBLISHED' AND country IS NOT NULL AND country <> ''
+         WHERE status='PUBLISHED' AND type='DOCUMENT'
+           AND country IS NOT NULL AND country <> ''
          GROUP BY country"
     )->fetchAll();
     foreach ($csRows as $cr) {

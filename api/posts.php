@@ -69,13 +69,15 @@ if ($method === 'POST') {
     $region        = trim($body['region']        ?? '');
     $issueCategory = trim($body['issueCategory'] ?? '');
 
+    // Normalise the type first: the category rule below depends on it
+    $validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF'];
+    if (!in_array($type, $validTypes)) $type = 'ARTICLE';
+
     if (!$title)         json_error('Title is required');
     if (!$country)       json_error('Country is required');
     if (!$region)        json_error('Region is required');
-    if (!$issueCategory) json_error('Issue category is required');
-
-    $validTypes = ['ARTICLE','GALLERY_IMAGE','PODCAST','VIDEO','DOCUMENT','POLICY_BRIEF'];
-    if (!in_array($type, $validTypes)) $type = 'ARTICLE';
+    // Gallery images are exempt - they carry no heat-map meaning
+    if (!$issueCategory && post_type_needs_category($type)) json_error('Issue category is required');
     if ($type === 'POLICY_BRIEF') ensure_policy_brief_post_type();
 
     $id = generate_id();

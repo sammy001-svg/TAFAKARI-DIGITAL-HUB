@@ -78,7 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     if (!$title)             $error = 'Title is required.';
     elseif (!$country)       $error = 'Country is required.';
     elseif (!$region)        $error = 'Region is required.';
-    elseif (!$issueCategory) $error = 'Issue category is required.';
+    elseif (!$issueCategory && post_type_needs_category($type))
+        $error = 'Issue category is required.';
     elseif (mb_strlen($title) > 255)
         $error = 'Title is too long — ' . mb_strlen($title) . ' characters, limit is 255.';
     elseif (mb_strlen($issueCategory) > 512)
@@ -290,7 +291,9 @@ $adminPageSub   = h($post['title'] ?? '');
           <input type="text" name="region" required value="<?= h($f['region'] ?? '') ?>"
                  class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
         </div>
-        <div>
+        <!-- Not shown for gallery images: they carry no heat-map meaning.
+             Toggled by bylineToggle() when the content type changes. -->
+        <div id="category-field"<?= post_type_needs_category($editType) ? '' : ' style="display:none"' ?>>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Issue Categories *</label>
           <div class="relative" id="cat-ms-wrap">
             <button type="button" id="cat-ms-btn" onclick="catMsToggle()"
@@ -384,6 +387,10 @@ function bylineToggle(type) {
   var show = (type === 'ARTICLE' || type === 'DOCUMENT' || type === 'POLICY_BRIEF');
   wrap.style.display = show ? '' : 'none';
   if (lbl) lbl.textContent = (type === 'POLICY_BRIEF') ? 'Author / Issuing Body' : 'Author / Source';
+
+  // Gallery images need no issue category
+  var cat = document.getElementById('category-field');
+  if (cat) cat.style.display = (type === 'GALLERY_IMAGE') ? 'none' : '';
 }
 
 function catMsToggle() {
