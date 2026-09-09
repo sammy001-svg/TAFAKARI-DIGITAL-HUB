@@ -277,26 +277,59 @@ function byline_label(string $type): string {
  *                     entered the record.
  *  intensityScores  - per-element 1-10 scores (see migrations/004).
  *
- * Mirrors ensure_policy_brief_post_type(): self-healing so a deploy works
- * without a manual migration step. Runs at most once per request.
+ * ATTEMPTED AT MOST ONCE, EVER - not once per request.
+ * ------------------------------------------------------
+ * ALTER TABLE takes a metadata lock on Post and rebuilds it. Every admin page
+ * queries Post (the sidebar counts pending posts), so a slow or repeatedly
+ * retried ALTER blocks the whole admin area until requests time out.
+ *
+ * An earlier version guarded only with a `static` flag, which resets each
+ * request, and swallowed failures - so if the ALTER could not succeed (no ALTER
+ * privilege is common on shared hosting) every single request tried to rebuild
+ * the table again. The outcome is now recorded in SiteSetting so the DDL runs
+ * once and never again.
+ *
+ * To retry after fixing the underlying cause, delete the
+ * `schema_post_columns_v1` row from SiteSetting, or just apply
+ * migrations/003 and migrations/004 by hand.
  */
 function ensure_post_columns(): void {
     static $checked = false;
     if ($checked) return;
     $checked = true;
+
+    // Already attempted in a previous request (successfully or not) - do not
+    // touch DDL again.
+    if (get_setting('schema_post_columns_v1', '') !== '') return;
+
     try {
         $pdo  = db();
         $rows = $pdo->query('SHOW COLUMNS FROM `Post`')->fetchAll();
         $have = [];
         foreach ($rows as $r) $have[$r['Field']] = true;
 
-        if (!isset($have['byline'])) {
-            $pdo->exec('ALTER TABLE `Post` ADD COLUMN `byline` VARCHAR(255) NULL AFTER `title`');
+        $missing = [];
+        if (!isset($have['byline']))          $missing[] = 'ADD COLUMN `byline` VARCHAR(255) NULL';
+        if (!isset($have['intensityScores'])) $missing[] = 'ADD COLUMN `intensityScores` TEXT NULL';
+
+        if (!$missing) {
+            set_setting('schema_post_columns_v1', 'ok');   // nothing to do
+            return;
         }
-        if (!isset($have['intensityScores'])) {
-            $pdo->exec('ALTER TABLE `Post` ADD COLUMN `intensityScores` TEXT NULL');
-        }
-    } catch (Exception $e) {}
+
+        // Record the attempt BEFORE running it: if this request dies mid-ALTER,
+        // the next one must not start another table rebuild on top of it.
+        set_setting('schema_post_columns_v1', 'attempted');
+
+        // One statement = one table rebuild, rather than one per column
+        $pdo->exec('ALTER TABLE `Post` ' . implode(', ', $missing));
+
+        set_setting('schema_post_columns_v1', 'ok');
+    } catch (Throwable $e) {
+        error_log('[ensure_post_columns] schema update failed: ' . $e->getMessage()
+                . ' - apply migrations/003 and migrations/004 manually.');
+        set_setting('schema_post_columns_v1', 'failed');
+    }
 }
 
 // ── JSON API helpers ─────────────────────────────────────────────
