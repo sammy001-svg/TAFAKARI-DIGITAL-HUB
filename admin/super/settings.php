@@ -36,16 +36,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $decoded = json_decode($raw, true);
         if (is_array($decoded)) {
             $clean = [];
+            // Flat fields hold the English copy; 'i18n' carries the sw/fr
+            // variants. Slides saved before translations existed keep working -
+            // they simply have no i18n block and stay English in every locale.
+            $textFields = ['region','title','sub','badge','cta'];
             foreach (array_slice($decoded, 0, 5) as $s) {
-                $clean[] = [
-                    'img'    => trim($s['img']    ?? ''),
-                    'region' => trim($s['region'] ?? ''),
-                    'title'  => trim($s['title']  ?? ''),
-                    'sub'    => trim($s['sub']     ?? ''),
-                    'badge'  => trim($s['badge']   ?? ''),
-                    'url'    => trim($s['url']     ?? ''),
-                    'cta'    => trim($s['cta']     ?? ''),
+                $row = [
+                    'img'    => trim($s['img'] ?? ''),
+                    'url'    => trim($s['url'] ?? ''),
                 ];
+                foreach ($textFields as $tf) $row[$tf] = trim($s[$tf] ?? '');
+
+                $i18n = [];
+                foreach (['sw','fr'] as $loc) {
+                    $vals = [];
+                    foreach ($textFields as $tf) {
+                        $v = trim($s['i18n'][$loc][$tf] ?? '');
+                        if ($v !== '') $vals[$tf] = $v;
+                    }
+                    if ($vals) $i18n[$loc] = $vals;
+                }
+                if ($i18n) $row['i18n'] = $i18n;
+
+                $clean[] = $row;
             }
             set_setting('carousel_slides', json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $uid);
             $saved = 'carousel';
@@ -365,6 +378,54 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+var LOCALES = [
+  { code:'en', label:'English' },
+  { code:'sw', label:'Kiswahili' },
+  { code:'fr', label:'French' }
+];
+var slideLocale = {};          // which language tab each slide is showing
+
+function setSlideLocale(i, loc) { slideLocale[i] = loc; renderSlides(); }
+
+/* Read/write a translatable field for a given locale.
+   English lives on the slide itself; sw/fr live under slide.i18n[loc]. */
+function slideVal(i, field, loc) {
+  var s = slides[i];
+  if (loc === 'en') return s[field] || '';
+  return (s.i18n && s.i18n[loc] && s.i18n[loc][field]) || '';
+}
+function setSlideVal(i, field, loc, val) {
+  var s = slides[i];
+  if (loc === 'en') { s[field] = val; return; }
+  if (!s.i18n) s.i18n = {};
+  if (!s.i18n[loc]) s.i18n[loc] = {};
+  s.i18n[loc][field] = val;
+}
+
+/* The five translatable text inputs for one slide, in the active language. */
+function slideFields(i, loc) {
+  var isEn = (loc === 'en');
+  var note = isEn
+    ? '<p style="font-size:10px;color:#94a3b8;margin:2px 0 0">This is the base copy shown when a translation is missing.</p>'
+    : '<p style="font-size:10px;color:#94a3b8;margin:2px 0 0">Leave a field blank to fall back to the English text.</p>';
+
+  var defs = [
+    ['region', 'Region / Country label'],
+    ['title',  isEn ? 'Headline *' : 'Headline'],
+    ['sub',    'Sub-headline'],
+    ['badge',  'Badge text (e.g. 47 Counties)'],
+    ['cta',    'Button text (default: Explore Heatmap)']
+  ];
+
+  return defs.map(function (d) {
+    var field = d[0], ph = d[1];
+    return '<input type="text" placeholder="' + esc(ph) + (isEn ? '' : ' — ' + loc.toUpperCase()) + '" '
+         + 'value="' + esc(slideVal(i, field, loc)) + '" '
+         + 'oninput="setSlideVal(' + i + ',\'' + field + '\',\'' + loc + '\',this.value)" '
+         + 'style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">';
+  }).join('') + note;
+}
+
 function renderSlides() {
   var el = document.getElementById('carousel-editor');
   if (slides.length === 0) {
@@ -386,14 +447,21 @@ function renderSlides() {
       + '<input type="text" id="slide-img-'+i+'" placeholder="Image URL *" value="'+esc(s.img)+'" onchange="slides['+i+'].img=this.value" style="flex:1;min-width:0;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '<button type="button" onclick="uploadSlideImage('+i+')" title="Upload image" style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:11px;font-weight:700;color:#750B25;flex-shrink:0">Upload</button>'
       + '</div>'
-      + '<input type="text" placeholder="Region / Country label" value="'+esc(s.region)+'" onchange="slides['+i+'].region=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
-      + '<input type="text" placeholder="Headline *" value="'+esc(s.title)+'" onchange="slides['+i+'].title=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
-      + '<input type="text" placeholder="Sub-headline" value="'+esc(s.sub)+'" onchange="slides['+i+'].sub=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
-      + '<input type="text" placeholder="Badge text (e.g. 47 Counties)" value="'+esc(s.badge)+'" onchange="slides['+i+'].badge=this.value" style="width:100%;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '<div style="display:flex;gap:6px">'
-      + '<input type="text" placeholder="Button text (default: Explore Heatmap)" value="'+esc(s.cta||'')+'" onchange="slides['+i+'].cta=this.value" style="flex:1;min-width:0;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '<input type="text" placeholder="Button link (default: /heatmap)" value="'+esc(s.url)+'" onchange="slides['+i+'].url=this.value" style="flex:1;min-width:0;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px">'
       + '</div>'
+      // Language tabs: English is the base copy, sw/fr are optional overrides
+      + '<div style="display:flex;gap:4px;margin-top:4px;border-bottom:1.5px solid #e2e8f0">'
+      +   LOCALES.map(function(L) {
+            var on = (slideLocale[i] || 'en') === L.code;
+            return '<button type="button" onclick="setSlideLocale('+i+',\'' + L.code + '\')" '
+                 + 'style="padding:5px 11px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;'
+                 + 'border:none;background:none;cursor:pointer;margin-bottom:-1.5px;'
+                 + (on ? 'color:#750B25;border-bottom:2.5px solid #750B25' : 'color:#94a3b8;border-bottom:2.5px solid transparent')
+                 + '">' + L.label + '</button>';
+          }).join('')
+      + '</div>'
+      + slideFields(i, slideLocale[i] || 'en')
       + '</div>'
       + '</div>';
   }).join('');
@@ -401,7 +469,7 @@ function renderSlides() {
 
 function addSlide() {
   if (slides.length >= 5) { alert('Maximum 5 slides.'); return; }
-  slides.push({ img:'', region:'', title:'', sub:'', badge:'', url:'', cta:'' });
+  slides.push({ img:'', region:'', title:'', sub:'', badge:'', url:'', cta:'', i18n:{} });
   renderSlides();
 }
 
@@ -445,11 +513,7 @@ function uploadSlideImage(i) {
 }
 
 function serializeCarousel() {
-  // Collect latest input values before serializing
-  document.querySelectorAll('#carousel-editor input').forEach(function(inp) {
-    var match = inp.placeholder;
-    // already bound via onchange — values are live
-  });
+  // Inputs write straight into `slides` via oninput, so it is already current.
   document.getElementById('carousel-json').value = JSON.stringify(slides);
 }
 

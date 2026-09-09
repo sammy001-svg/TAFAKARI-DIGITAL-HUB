@@ -23,6 +23,7 @@
       'footer.partnersNetwork': 'Our Partners & Network Members',
       'footer.becomePartner': 'Become a Partner',
       'footer.rightsReserved': 'A CRTP Initiative. All rights reserved.',
+      'footer.developedBy': 'Developed by',
       'footer.privacyPolicy': 'Privacy Policy',
       'footer.termsOfService': 'Terms of Service',
 
@@ -374,6 +375,7 @@
       'footer.partnersNetwork': 'Washirika na Wanachama wa Mtandao Wetu',
       'footer.becomePartner': 'Kuwa Mshirika',
       'footer.rightsReserved': 'Mpango wa CRTP. Haki zote zimehifadhiwa.',
+      'footer.developedBy': 'Imetengenezwa na',
       'footer.privacyPolicy': 'Sera ya Faragha',
       'footer.termsOfService': 'Masharti ya Huduma',
 
@@ -714,6 +716,7 @@
       'footer.partnersNetwork': 'Nos Partenaires et Membres du Réseau',
       'footer.becomePartner': 'Devenir Partenaire',
       'footer.rightsReserved': 'Une Initiative du CRTP. Tous droits réservés.',
+      'footer.developedBy': 'Développé par',
       'footer.privacyPolicy': 'Politique de Confidentialité',
       'footer.termsOfService': "Conditions d'Utilisation",
 
@@ -1043,6 +1046,22 @@
   };
   var LOCALE_LABELS = { en: 'English', sw: 'Kiswahili', fr: 'French' };
   var STORAGE_KEY = 'tafakari-locale';
+
+  /* Merge page-supplied strings (e.g. admin-managed carousel slides) into the
+     dictionaries. Pages set window.DYNAMIC_I18N before this script runs:
+       window.DYNAMIC_I18N = { en:{key:'…'}, sw:{…}, fr:{…} }
+     This is what lets database-driven content participate in the language
+     switcher without being hardcoded here. */
+  if (window.DYNAMIC_I18N) {
+    Object.keys(window.DYNAMIC_I18N).forEach(function (loc) {
+      var src = window.DYNAMIC_I18N[loc];
+      if (!src) return;
+      if (!TRANSLATIONS[loc]) TRANSLATIONS[loc] = {};
+      Object.keys(src).forEach(function (k) {
+        if (src[k] !== '' && src[k] != null) TRANSLATIONS[loc][k] = src[k];
+      });
+    });
+  }
 
   function applyLocale(locale) {
     var dict = TRANSLATIONS[locale] || TRANSLATIONS.en;

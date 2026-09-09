@@ -140,6 +140,14 @@
         <a href="#" class="hover:text-white" data-i18n="footer.termsOfService">Terms of Service</a>
       </div>
     </div>
+
+    <!-- Developer credit — sits at the very bottom of the footer -->
+    <div class="mt-6 pt-5 border-t border-slate-900 text-center">
+      <p class="text-[11px] text-slate-500">
+        <span data-i18n="footer.developedBy">Developed by</span>
+        <span class="font-semibold text-slate-400">Laus Creations Limited</span>
+      </p>
+    </div>
   </div>
 </footer>
 

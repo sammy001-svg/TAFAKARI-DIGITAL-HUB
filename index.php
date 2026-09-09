@@ -303,6 +303,37 @@ try {
     // filter out slides with no image or title
     $slides = array_values(array_filter($slides, fn($s) => !empty($s['img']) && !empty($s['title'])));
     if (empty($slides)) $slides = $defaultSlides;
+    // ── Carousel translations ────────────────────────────────────────
+    // Built-in slides carry a 'key' and are translated by includes/i18n.php.
+    // Admin-managed slides have no such key, so we mint one per slide index and
+    // publish their per-language copy through window.DYNAMIC_I18N, which the
+    // i18n runtime merges into its dictionaries before applying a locale.
+    $slideI18n = ['en' => [], 'sw' => [], 'fr' => []];
+    foreach ($slides as $i => $s) {
+        if (isset($s['key'])) continue;             // built-in slide, already translated
+        foreach (['region','title','sub','badge','cta'] as $f) {
+            $en = trim((string)($s[$f] ?? ''));
+            if ($en === '') continue;
+            $k = 'home.hero.slide' . $i . '.' . $f;
+            // Register English too: without it, switching back from sw/fr would
+            // leave the translated text on screen.
+            $slideI18n['en'][$k] = $en;
+            foreach (['sw','fr'] as $loc) {
+                $tr = trim((string)($s['i18n'][$loc][$f] ?? ''));
+                $slideI18n[$loc][$k] = $tr !== '' ? $tr : $en;   // fall back to English
+            }
+        }
+    }
+    $hasSlideI18n = (bool)array_filter($slideI18n);
+
+    /** data-i18n attribute for a slide field, whichever kind of slide it is. */
+    $slideAttr = function (array $s, int $i, string $field): string {
+        if (isset($s['key'])) return ' data-i18n="home.hero.' . h($s['key']) . '.' . $field . '"';
+        return trim((string)($s[$field] ?? '')) !== ''
+            ? ' data-i18n="home.hero.slide' . $i . '.' . $field . '"'
+            : '';
+    };
+
     foreach ($slides as $i => $s): ?>
       <div class="hero-slide <?= $i === 0 ? 'is-active' : '' ?>" data-index="<?= $i ?>">
         <img src="<?= h($s['img']) ?>" alt="<?= h($s['title']) ?>" class="hero-img"
@@ -314,22 +345,22 @@ try {
           <!-- Region eyebrow -->
           <div class="hero-anim flex items-center gap-3 mb-6">
             <span class="block w-10 h-px" style="background:#E7952A"></span>
-            <span class="text-[11px] font-black uppercase tracking-[.22em]" style="color:#E7952A" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.region"' : '' ?>><?= h($s['region']) ?></span>
+            <span class="text-[11px] font-black uppercase tracking-[.22em]" style="color:#E7952A" <?= $slideAttr($s, $i, 'region') ?>><?= h($s['region']) ?></span>
           </div>
 
           <!-- Headline -->
-          <h1 class="hero-anim hero-title font-outfit font-black text-4xl sm:text-5xl md:text-6xl text-white leading-[1.04] max-w-3xl mb-6" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.title"' : '' ?>>
+          <h1 class="hero-anim hero-title font-outfit font-black text-4xl sm:text-5xl md:text-6xl text-white leading-[1.04] max-w-3xl mb-6" <?= $slideAttr($s, $i, 'title') ?>>
             <?= h($s['title']) ?>
           </h1>
 
           <!-- Sub-headline -->
-          <p class="hero-anim hero-sub text-white/85 text-base md:text-lg max-w-xl mb-10 leading-relaxed" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.sub"' : '' ?>>
+          <p class="hero-anim hero-sub text-white/85 text-base md:text-lg max-w-xl mb-10 leading-relaxed" <?= $slideAttr($s, $i, 'sub') ?>>
             <?= h($s['sub']) ?>
           </p>
 
           <!-- CTAs -->
           <div class="hero-anim flex flex-wrap items-center gap-5">
-            <a href="<?= !empty($s['url']) ? h($s['url']) : '/heatmap' ?>" class="btn-gold" style="padding:.8rem 1.9rem" <?= empty($s['cta']) ? 'data-i18n="home.exploreHeatmap"' : '' ?>><?= !empty($s['cta']) ? h($s['cta']) : 'Explore Heatmap' ?></a>
+            <a href="<?= !empty($s['url']) ? h($s['url']) : '/heatmap' ?>" class="btn-gold" style="padding:.8rem 1.9rem"<?= empty($s['cta']) ? ' data-i18n="home.exploreHeatmap"' : $slideAttr($s, $i, 'cta') ?>><?= !empty($s['cta']) ? h($s['cta']) : 'Explore Heatmap' ?></a>
             <a href="/about" class="inline-flex items-center gap-2 text-sm font-bold text-white/85 hover:text-white transition-colors">
               <span data-i18n="ourMission">Our Mission</span>
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -339,7 +370,7 @@ try {
           <!-- Coverage badge -->
           <div class="hero-anim mt-10">
             <span class="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border"
-                  style="color:#E7952A;border-color:rgba(231,149,42,.55);background:rgba(231,149,42,.12)" <?= isset($s['key']) ? 'data-i18n="home.hero.'.h($s['key']).'.badge"' : '' ?>>
+                  style="color:#E7952A;border-color:rgba(231,149,42,.55);background:rgba(231,149,42,.12)" <?= $slideAttr($s, $i, 'badge') ?>>
               <?= h($s['badge']) ?>
             </span>
           </div>
@@ -931,6 +962,14 @@ try {
   </section>
 
 </main>
+
+<?php if ($hasSlideI18n): ?>
+  <!-- Per-slide carousel copy for the language switcher. Must be emitted before
+       includes/i18n.php (loaded from the footer), which merges it in. -->
+  <script>
+    window.DYNAMIC_I18N = <?= json_encode($slideI18n, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+  </script>
+<?php endif; ?>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 
