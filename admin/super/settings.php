@@ -387,6 +387,39 @@ var slideLocale = {};          // which language tab each slide is showing
 
 function setSlideLocale(i, loc) { slideLocale[i] = loc; renderSlides(); }
 
+/* True when a slide has any text entered for the given language. */
+function hasLangText(i, loc) {
+  return ['region','title','sub','badge','cta'].some(function (f) {
+    return slideVal(i, f, loc) !== '';
+  });
+}
+
+/* Small EN / SW / FR pills showing which languages a slide actually has.
+   Without these it is easy to assume a slide is translated when the fields
+   were never filled in, in which case the front end just repeats English. */
+function langChips(i) {
+  return '<span style="display:flex;gap:4px">' + LOCALES.map(function (L) {
+    var on = hasLangText(i, L.code);
+    return '<span id="chip-' + i + '-' + L.code + '" title="'
+         + (on ? L.label + ' filled in' : 'No ' + L.label + ' text yet - will show English')
+         + '" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;'
+         + (on ? 'background:#dcfce7;color:#166534' : 'background:#f1f5f9;color:#cbd5e1')
+         + '">' + L.code.toUpperCase() + '</span>';
+  }).join('') + '</span>';
+}
+
+/* Refresh one slide's pills without re-rendering (which would drop focus). */
+function refreshChips(i) {
+  LOCALES.forEach(function (L) {
+    var el = document.getElementById('chip-' + i + '-' + L.code);
+    if (!el) return;
+    var on = hasLangText(i, L.code);
+    el.style.background = on ? '#dcfce7' : '#f1f5f9';
+    el.style.color      = on ? '#166534' : '#cbd5e1';
+    el.title = on ? L.label + ' filled in' : 'No ' + L.label + ' text yet - will show English';
+  });
+}
+
 /* Read/write a translatable field for a given locale.
    English lives on the slide itself; sw/fr live under slide.i18n[loc]. */
 function slideVal(i, field, loc) {
@@ -396,10 +429,13 @@ function slideVal(i, field, loc) {
 }
 function setSlideVal(i, field, loc, val) {
   var s = slides[i];
-  if (loc === 'en') { s[field] = val; return; }
-  if (!s.i18n) s.i18n = {};
-  if (!s.i18n[loc]) s.i18n[loc] = {};
-  s.i18n[loc][field] = val;
+  if (loc === 'en') { s[field] = val; }
+  else {
+    if (!s.i18n) s.i18n = {};
+    if (!s.i18n[loc]) s.i18n[loc] = {};
+    s.i18n[loc][field] = val;
+  }
+  refreshChips(i);
 }
 
 /* The five translatable text inputs for one slide, in the active language. */
@@ -435,7 +471,10 @@ function renderSlides() {
   el.innerHTML = slides.map(function(s, i) {
     return '<div class="border border-slate-200 rounded-2xl overflow-hidden" id="slide-'+i+'">'
       + '<div style="background:#f8fafc;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">'
-      + '<span style="font-size:11px;font-weight:700;color:#64748b">Slide '+(i+1)+'</span>'
+      + '<span style="display:flex;align-items:center;gap:8px">'
+      +   '<span style="font-size:11px;font-weight:700;color:#64748b">Slide '+(i+1)+'</span>'
+      +   langChips(i)
+      + '</span>'
       + '<div style="display:flex;gap:6px">'
       + (i > 0 ? '<button type="button" onclick="moveSlide('+i+',-1)" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;background:#fff;cursor:pointer">↑</button>' : '')
       + (i < slides.length-1 ? '<button type="button" onclick="moveSlide('+i+',1)" style="padding:2px 6px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;background:#fff;cursor:pointer">↓</button>' : '')
