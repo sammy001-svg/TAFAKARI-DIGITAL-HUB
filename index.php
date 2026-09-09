@@ -1038,10 +1038,17 @@ try {
       if (Math.abs(dx) > 45) { goTo(dx < 0 ? cur + 1 : cur - 1); start(); }
       tx = null;
     }, { passive: true });
-    // Pause while hovering, and when the tab is hidden
-    hero.addEventListener('mouseenter', stop);
-    hero.addEventListener('mouseleave', start);
   }
+
+  // NOTE: deliberately no hover-pause on the hero itself. It fills ~84vh, so
+  // the cursor sits over it almost permanently; mouseenter would kill autoplay
+  // for the whole visit and it would only resume once an arrow was clicked.
+  // Pause on the arrows only, where hovering is a deliberate act.
+  [prev, next].forEach(function (btn) {
+    if (!btn) return;
+    btn.addEventListener('mouseenter', stop);
+    btn.addEventListener('mouseleave', start);
+  });
   document.addEventListener('visibilitychange', function () {
     document.hidden ? stop() : start();
   });
