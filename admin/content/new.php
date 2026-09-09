@@ -177,7 +177,7 @@ $typeConfig = [
         'mediaHint'   => 'Direct link to PDF, DOCX, or other file (required)',
         'mediaReq'    => true,
         'hasBody'     => true,
-        'bodyLabel'   => 'Abstract / Summary',
+        'bodyLabel'   => 'Summary',
         'bodyHint'    => 'Brief description of the document contents',
         'bodyRows'    => 8,
         'backHref'    => '/admin/content/documents',
@@ -476,7 +476,7 @@ var _typeConfig = {
     heading:'Upload Document', backHref:'/admin/content/documents', backLabel:'Documents',
     thumbLabel:'Cover Image', thumbHint:'Document cover shown in listings (optional)',
     mediaLabel:'Document File *', mediaHint:'PDF, DOCX, or other file (required)', mediaReq:true, hasBody:true,
-    bodyLabel:'Abstract / Summary', bodyHint:'Brief description of the document contents',
+    bodyLabel:'Summary', bodyHint:'Brief description of the document contents',
     titlePlaceholder:'Document title', mediaSectionTitle:'File & Cover', isArticle:false,
     mediaFileType:'document', mediaAccept:'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',
     mediaDropHint:'PDF, DOCX, XLS, PPT · max 50 MB', mediaUrlHint:'Link to PDF or other document file', mediaUpLabel:'Upload File'

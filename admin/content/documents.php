@@ -379,7 +379,7 @@ function postAction(url, method, btn, confirmMsg) {
     <?php uw_media('doc-media','mediaUrl','Document File *','document','.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx','PDF, DOCX, XLS, PPT · max 50 MB','Link to PDF, Word doc, or other file','https://…/report.pdf',($createError ? ($_POST['mediaUrl'] ?? '') : ''),true); ?>
 
     <div>
-      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Abstract / Summary</label>
+      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Summary</label>
       <textarea name="content" rows="5"
                 style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;resize:vertical;font-family:inherit"
                 placeholder="Key findings, scope, or executive summary…"><?= h(($createError ? $_POST['content'] : '') ?? '') ?></textarea>

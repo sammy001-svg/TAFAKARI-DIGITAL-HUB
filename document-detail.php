@@ -215,9 +215,9 @@ $pageUrl       = $shareUrl;
       </div>
     <?php endif; ?>
 
-    <!-- Abstract / body -->
+    <!-- Summary / body -->
     <?php if (!empty($post['content'])): ?>
-      <h2 class="font-outfit font-bold text-xl text-slate-900 mb-4">Abstract / Summary</h2>
+      <h2 class="font-outfit font-bold text-xl text-slate-900 mb-4">Summary</h2>
       <article class="prose max-w-none mb-12 bg-white rounded-3xl border border-amber-100 p-8 md:p-10 shadow-sm">
         <?= markdown_to_html($post['content']) ?>
       </article>
