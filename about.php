@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/about-content.php';
 
 // ── Pull live impact stats from DB ─────────────────────────────────────────────
 $stats = ['articles' => 0, 'documents' => 0, 'podcasts' => 0, 'videos' => 0, 'images' => 0, 'countries' => 0];
@@ -52,24 +53,16 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <div style="background:#0D0102" class="py-20 px-6">
   <div class="max-w-7xl mx-auto">
     <div class="max-w-3xl">
-      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 text-white" style="background:#750B25" data-i18n="about.badge">About CRTP</span>
+      <?php $t = about_text('hero_badge'); ?><span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 text-white" style="background:#750B25"<?= $t['i18n'] ?>><?= h($t['text']) ?></span>
       <h1 class="font-outfit text-5xl md:text-6xl font-black text-white leading-tight mb-6">
-        <span data-i18n="about.heroTitle1">Reflecting on Our</span><br>
-        <span style="color:#E7952A" data-i18n="about.heroTitle2">Shared Future</span>
+        <?php $t = about_text('hero_title1'); ?><span<?= $t['i18n'] ?>><?= h($t['text']) ?></span><br>
+        <?php $t = about_text('hero_title2'); ?><span style="color:#E7952A"<?= $t['i18n'] ?>><?= h($t['text']) ?></span>
       </h1>
-      <p class="text-white/70 text-lg leading-relaxed max-w-2xl mb-8" data-i18n="about.heroDesc">
-        The Centre for Research, Training and Policy (CRTP) is an independent research and capacity-building
-        organization committed to advancing peace, security, and good governance across Africa.
-        <em class="text-white/50">Tafakari</em> — meaning "to reflect" in Swahili — is our digital platform
-        connecting research, media, and community.
-      </p>
+      <?php $t = about_text('hero_desc'); ?>
+      <p class="text-white/70 text-lg leading-relaxed max-w-2xl mb-8"<?= $t['i18n'] ?>><?= h($t['text']) ?></p>
       <div class="flex flex-wrap gap-4">
-        <a href="/contact" class="px-7 py-3.5 rounded-2xl font-bold text-white transition-all hover:brightness-110" style="background:#750B25" data-i18n="about.partnerWithUs">
-          Partner With Us
-        </a>
-        <a href="/heatmap" class="px-7 py-3.5 rounded-2xl font-bold text-white transition-all border hover:bg-white/10" style="border-color:rgba(255,255,255,.2)" data-i18n="about.viewHeatmap">
-          View Conflict Heatmap
-        </a>
+        <a href="/contact" class="px-7 py-3.5 rounded-2xl font-bold text-white transition-all hover:brightness-110" style="background:#750B25"<?= about_text('hero_cta1')['i18n'] ?>><?= h(about_str('hero_cta1')) ?></a>
+        <a href="/heatmap" class="px-7 py-3.5 rounded-2xl font-bold text-white transition-all border hover:bg-white/10" style="border-color:rgba(255,255,255,.2)"<?= about_text('hero_cta2')['i18n'] ?>><?= h(about_str('hero_cta2')) ?></a>
       </div>
     </div>
   </div>
@@ -110,13 +103,10 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- PURPOSE                                                                   -->
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div id="purpose" class="max-w-7xl mx-auto px-6 mb-20 scroll-mt-24">
-  <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A" data-i18n="about.purposeBadge">Our Purpose</span>
-  <h2 class="font-outfit font-black text-4xl text-slate-900 mb-4" data-i18n="about.purposeTitle">Why CRTP Exists</h2>
-  <p class="text-slate-600 leading-relaxed text-lg max-w-3xl" data-i18n="about.purposeDesc">
-    CRTP exists to give African institutions, communities, and leaders a trustworthy source of
-    rigorous research and practical capacity-building support — so that decisions on peace,
-    security, and governance are grounded in evidence, not guesswork.
-  </p>
+  <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A"<?= about_text('purpose_badge')['i18n'] ?>><?= h(about_str('purpose_badge')) ?></span>
+  <?php $t = about_text('purpose_title'); ?><h2 class="font-outfit font-black text-4xl text-slate-900 mb-4"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
+  <?php $t = about_text('purpose_desc'); ?>
+  <p class="text-slate-600 leading-relaxed text-lg max-w-3xl"<?= $t['i18n'] ?>><?= h($t['text']) ?></p>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
@@ -128,23 +118,17 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
     <div class="bg-white rounded-3xl border border-amber-100 p-10 shadow-sm relative overflow-hidden">
       <div class="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" style="background:rgba(231,149,42,.06)"></div>
       <span class="inline-block w-10 h-1 rounded-full mb-5" style="background:#E7952A"></span>
-      <h2 class="font-outfit font-black text-3xl text-slate-900 mb-4" data-i18n="about.missionTitle">Our Mission</h2>
-      <p class="text-slate-600 leading-relaxed text-lg" data-i18n="about.missionDesc">
-        To generate rigorous, policy-relevant research and provide capacity-building support
-        that empowers institutions, communities, and leaders to build sustainable peace
-        and advance human security across Africa.
-      </p>
+      <?php $t = about_text('mission_title'); ?><h2 class="font-outfit font-black text-3xl text-slate-900 mb-4"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
+      <?php $t = about_text('mission_desc'); ?>
+      <p class="text-slate-600 leading-relaxed text-lg"<?= $t['i18n'] ?>><?= h($t['text']) ?></p>
     </div>
     <!-- Vision -->
     <div class="rounded-3xl border p-10 relative overflow-hidden" style="background:#0D0102;border-color:rgba(231,149,42,.2)">
       <div class="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" style="background:rgba(117,11,37,.15)"></div>
       <span class="inline-block w-10 h-1 rounded-full mb-5" style="background:#E7952A"></span>
-      <h2 class="font-outfit font-black text-3xl text-white mb-4" data-i18n="about.visionTitle">Our Vision</h2>
-      <p class="text-white/70 leading-relaxed text-lg" data-i18n="about.visionDesc">
-        An Africa where knowledge-driven decision-making, inclusive dialogue, and accountable
-        governance create the conditions for lasting peace and equitable development —
-        leaving no community behind.
-      </p>
+      <?php $t = about_text('vision_title'); ?><h2 class="font-outfit font-black text-3xl text-white mb-4"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
+      <?php $t = about_text('vision_desc'); ?>
+      <p class="text-white/70 leading-relaxed text-lg"<?= $t['i18n'] ?>><?= h($t['text']) ?></p>
     </div>
   </div>
 </div>
@@ -154,45 +138,24 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div id="what-we-do" class="max-w-7xl mx-auto px-6 mb-20 scroll-mt-24">
   <div class="mb-10">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A" data-i18n="about.whatWeDoBadge">What We Do</span>
-    <h2 class="font-outfit font-black text-4xl text-slate-900" data-i18n="about.programmeAreasTitle">Core Programme Areas</h2>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A"<?= about_text('programmes_badge')['i18n'] ?>><?= h(about_str('programmes_badge')) ?></span>
+    <?php $t = about_text('programmes_title'); ?><h2 class="font-outfit font-black text-4xl text-slate-900"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <?php
-    $programmes = [
-      [
-        'num' => '01', 'title' => 'Peace & Security Research', 'key' => 'peaceSecurity',
-        'desc' => 'Conflict analysis, early-warning systems, and field-based research across active and post-conflict zones. Our studies inform UN peacekeeping operations, NGO interventions, and government policy.',
-        'tags' => [['Conflict Analysis', 'conflictAnalysis'], ['Early Warning', 'earlyWarning'], ['Field Research', 'fieldResearch']],
-      ],
-      [
-        'num' => '02', 'title' => 'Governance & Policy', 'key' => 'governancePolicy',
-        'desc' => 'Monitoring state fragility, electoral integrity, institutional reform, and anti-corruption measures. We translate complex policy environments into actionable recommendations.',
-        'tags' => [['State Fragility', 'stateFragility'], ['Electoral Integrity', 'electoralIntegrity'], ['Policy Briefs', 'policyBriefs']],
-      ],
-      [
-        'num' => '03', 'title' => 'Capacity Building & Training', 'key' => 'capacityBuilding',
-        'desc' => 'Structured training programmes for journalists, civil society organizations, government officials, and community leaders on conflict-sensitive reporting, peacebuilding, and advocacy.',
-        'tags' => [['Journalism Training', 'journalismTraining'], ['CSO Support', 'csoSupport'], ['Advocacy Skills', 'advocacySkills']],
-      ],
-      [
-        'num' => '04', 'title' => 'Knowledge Management & Media', 'key' => 'knowledgeMedia',
-        'desc' => 'The Tafakari platform serves as our digital knowledge hub — aggregating research, broadcasting field stories through podcasts and video, and providing open-access document archives.',
-        'tags' => [['Open Access', 'openAccess'], ['Podcast', 'podcastTag'], ['Digital Media', 'digitalMedia']],
-      ],
-    ];
+    $programmes = about_list('programmes');
     ?>
     <?php foreach ($programmes as $p): ?>
       <div class="bg-white rounded-3xl border border-amber-100 p-8 shadow-sm hover:shadow-md hover:border-amber-200 transition-all group">
         <div class="flex items-start justify-between mb-5">
-          <span class="font-outfit font-black text-4xl" style="color:rgba(231,149,42,.25)"><?= h($p['num']) ?></span>
+          <span class="font-outfit font-black text-4xl" style="color:rgba(231,149,42,.25)"><?= h($p['num'] ?? '') ?></span>
           <span class="w-8 h-0.5 mt-5" style="background:#E7952A;display:block"></span>
         </div>
-        <h3 class="font-outfit font-bold text-xl text-slate-900 mb-3 group-hover:text-amber-800 transition-colors" data-i18n="about.programme.<?= h($p['key']) ?>.title"><?= h($p['title']) ?></h3>
-        <p class="text-slate-500 leading-relaxed text-sm mb-5" data-i18n="about.programme.<?= h($p['key']) ?>.desc"><?= h($p['desc']) ?></p>
+        <h3 class="font-outfit font-bold text-xl text-slate-900 mb-3 group-hover:text-amber-800 transition-colors"><?= h($p['title'] ?? '') ?></h3>
+        <p class="text-slate-500 leading-relaxed text-sm mb-5"><?= h($p['desc'] ?? '') ?></p>
         <div class="flex flex-wrap gap-2">
-          <?php foreach ($p['tags'] as [$tag, $tagKey]): ?>
-            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-800" data-i18n="about.tag.<?= h($tagKey) ?>"><?= h($tag) ?></span>
+          <?php foreach ((array)($p['tags'] ?? []) as $tag): ?>
+            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-800"><?= h((string)$tag) ?></span>
           <?php endforeach; ?>
         </div>
       </div>
@@ -207,40 +170,28 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
   <div class="max-w-7xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
       <div>
-        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-5 text-amber-900" style="background:#E7952A" data-i18n="about.whereWeWorkBadge">Where We Work</span>
-        <h2 class="font-outfit font-black text-4xl text-white mb-4" data-i18n="about.geoFocusTitle">Geographic Focus</h2>
-        <p class="text-white/60 leading-relaxed mb-8" data-i18n="about.geoFocusDesc">
-          Our primary focus spans East Africa and the Great Lakes region, with expanding coverage
-          across the Sahel and Horn of Africa — regions experiencing the most complex and
-          intersecting conflict dynamics on the continent.
-        </p>
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-5 text-amber-900" style="background:#E7952A"<?= about_text('geo_badge')['i18n'] ?>><?= h(about_str('geo_badge')) ?></span>
+        <?php $t = about_text('geo_title'); ?><h2 class="font-outfit font-black text-4xl text-white mb-4"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
+        <?php $t = about_text('geo_desc'); ?>
+        <p class="text-white/60 leading-relaxed mb-8"<?= $t['i18n'] ?>><?= h($t['text']) ?></p>
         <a href="/heatmap" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-slate-900 transition-all hover:brightness-110" style="background:#E7952A">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          <span data-i18n="about.exploreHeatmap">Explore Interactive Heatmap</span>
+          <span<?= about_text('geo_cta')['i18n'] ?>><?= h(about_str('geo_cta')) ?></span>
         </a>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <?php
-        $geoFocus = [
-          ['region' => 'East Africa', 'regionKey' => 'eastAfrica', 'countries' => 'Kenya · Uganda · Tanzania · Rwanda · Burundi', 'tag' => 'Primary', 'tagKey' => 'primary'],
-          ['region' => 'Great Lakes', 'regionKey' => 'greatLakes', 'countries' => 'DR Congo · Rwanda · Burundi · South Sudan', 'tag' => 'Primary', 'tagKey' => 'primary'],
-          ['region' => 'Horn of Africa', 'regionKey' => 'hornOfAfrica', 'countries' => 'Ethiopia · Somalia · Eritrea · Djibouti · Sudan', 'tag' => 'Active', 'tagKey' => 'active'],
-          ['region' => 'Sahel Region', 'regionKey' => 'sahelRegion', 'countries' => 'Mali · Niger · Burkina Faso · Chad · Nigeria NE', 'tag' => 'Expanding', 'tagKey' => 'expanding'],
-          ['region' => 'Southern Africa', 'regionKey' => 'southernAfrica', 'countries' => 'Mozambique · Zimbabwe · Zambia · Madagascar', 'tag' => 'Expanding', 'tagKey' => 'expanding'],
-          ['region' => 'Central Africa', 'regionKey' => 'centralAfrica', 'countries' => 'Central African Republic · Cameroon · Congo', 'tag' => 'Monitoring', 'tagKey' => 'monitoring'],
-        ];
+        $geoFocus = about_list('geo');
         foreach ($geoFocus as $g): ?>
           <div class="rounded-2xl p-5 border" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)">
             <div class="flex items-center justify-between mb-2">
-              <h4 class="font-outfit font-bold text-white text-sm" data-i18n="about.region.<?= h($g['regionKey']) ?>"><?= h($g['region']) ?></h4>
+              <h4 class="font-outfit font-bold text-white text-sm"><?= h($g['region'] ?? '') ?></h4>
               <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest
                 <?= $g['tag'] === 'Primary' ? 'text-amber-900' : ($g['tag'] === 'Active' ? 'text-emerald-800' : 'text-slate-500') ?>"
                 style="background:<?= $g['tag'] === 'Primary' ? '#E7952A' : ($g['tag'] === 'Active' ? 'rgba(52,211,153,.15)' : 'rgba(255,255,255,.08)') ?>"
-                data-i18n="about.geoTag.<?= h($g['tagKey']) ?>">
-                <?= h($g['tag']) ?>
-              </span>
+                ><?= h($g['tag'] ?? '') ?></span>
             </div>
-            <p class="text-white/40 text-xs leading-relaxed"><?= h($g['countries']) ?></p>
+            <p class="text-white/40 text-xs leading-relaxed"><?= h($g['countries'] ?? '') ?></p>
           </div>
         <?php endforeach; ?>
       </div>
@@ -253,24 +204,19 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 py-20">
   <div class="text-center max-w-2xl mx-auto mb-12">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A" data-i18n="about.foundationBadge">Our Foundation</span>
-    <h2 class="font-outfit font-black text-4xl text-slate-900" data-i18n="about.valuesTitle">Guiding Values</h2>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A"<?= about_text('values_badge')['i18n'] ?>><?= h(about_str('values_badge')) ?></span>
+    <?php $t = about_text('values_title'); ?><h2 class="font-outfit font-black text-4xl text-slate-900"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
     <?php
-    $values = [
-      ['title' => 'Rigour',       'key' => 'rigour',       'desc' => 'Evidence-based methodology underpins all our research. We hold ourselves to the highest academic and professional standards.'],
-      ['title' => 'Independence', 'key' => 'independence', 'desc' => 'We operate free from political affiliation or donor bias. Our findings reflect the evidence, not agendas.'],
-      ['title' => 'Inclusion',    'key' => 'inclusion',    'desc' => 'Community voices are as vital as academic expertise. We amplify perspectives that are often overlooked in formal policy spaces.'],
-      ['title' => 'Impact',       'key' => 'impact',       'desc' => 'Research without action is incomplete. We design every project with measurable policy, community, or behavioural outcomes in mind.'],
-    ];
-    foreach ($values as $i => $v): ?>
+    $values = about_list('values');
+    foreach ($values as $v): ?>
       <div class="bg-white rounded-2xl border border-amber-100 p-7 shadow-sm text-center hover:shadow-md hover:-translate-y-1 transition-all">
         <div class="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center font-outfit font-black text-lg text-white" style="background:#750B25">
-          <?= ['R', 'I', 'I', 'I'][$i] ?>
+          <?= h($v['letter'] ?? mb_strtoupper(mb_substr((string)($v['title'] ?? '?'), 0, 1))) ?>
         </div>
-        <h3 class="font-outfit font-bold text-lg text-slate-900 mb-2" data-i18n="about.value.<?= h($v['key']) ?>.title"><?= h($v['title']) ?></h3>
-        <p class="text-slate-500 text-sm leading-relaxed" data-i18n="about.value.<?= h($v['key']) ?>.desc"><?= h($v['desc']) ?></p>
+        <h3 class="font-outfit font-bold text-lg text-slate-900 mb-2"><?= h($v['title'] ?? '') ?></h3>
+        <p class="text-slate-500 text-sm leading-relaxed"><?= h($v['desc'] ?? '') ?></p>
       </div>
     <?php endforeach; ?>
   </div>
@@ -281,8 +227,8 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div class="max-w-7xl mx-auto px-6 mb-20">
   <div class="mb-10">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A" data-i18n="about.peopleBadge">The People</span>
-    <h2 class="font-outfit font-black text-4xl text-slate-900" data-i18n="about.teamTitle">Our Team</h2>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 text-amber-900" style="background:#E7952A"<?= about_text('team_badge')['i18n'] ?>><?= h(about_str('team_badge')) ?></span>
+    <?php $t = about_text('team_title'); ?><h2 class="font-outfit font-black text-4xl text-slate-900"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
     <p class="text-slate-500 mt-2" data-i18n="about.teamDesc">Researchers, journalists, and policy specialists committed to the long game.</p>
   </div>
   <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
@@ -418,18 +364,12 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
 <!-- ══════════════════════════════════════════════════════════════════════════ -->
 <div style="background:#0D0102" class="py-20 px-6">
   <div class="max-w-3xl mx-auto text-center">
-    <h2 class="font-outfit font-black text-4xl text-white mb-4" data-i18n="about.ctaTitle">Ready to collaborate?</h2>
-    <p class="text-white/60 text-lg mb-8" data-i18n="about.ctaDesc">
-      Whether you are a researcher, journalist, policymaker, or community leader —
-      there is a place for your expertise in our network.
-    </p>
+    <?php $t = about_text('cta_title'); ?><h2 class="font-outfit font-black text-4xl text-white mb-4"<?= $t['i18n'] ?>><?= h($t['text']) ?></h2>
+    <?php $t = about_text('cta_desc'); ?>
+    <p class="text-white/60 text-lg mb-8"<?= $t['i18n'] ?>><?= h($t['text']) ?></p>
     <div class="flex flex-wrap justify-center gap-4">
-      <a href="/contact" class="px-8 py-4 rounded-2xl font-bold text-slate-900 transition-all hover:brightness-110 text-base" style="background:#E7952A" data-i18n="about.getInTouch">
-        Get In Touch
-      </a>
-      <a href="/news" class="px-8 py-4 rounded-2xl font-bold text-white transition-all border hover:bg-white/10 text-base" style="border-color:rgba(255,255,255,.2)" data-i18n="about.readResearch">
-        Read Our Research
-      </a>
+      <a href="/contact" class="px-8 py-4 rounded-2xl font-bold text-slate-900 transition-all hover:brightness-110 text-base" style="background:#E7952A"<?= about_text('cta_btn1')['i18n'] ?>><?= h(about_str('cta_btn1')) ?></a>
+      <a href="/news" class="px-8 py-4 rounded-2xl font-bold text-white transition-all border hover:bg-white/10 text-base" style="border-color:rgba(255,255,255,.2)"<?= about_text('cta_btn2')['i18n'] ?>><?= h(about_str('cta_btn2')) ?></a>
     </div>
   </div>
 </div>
