@@ -1379,9 +1379,9 @@ var CAT_COLORS = <?= json_encode($cats,    JSON_UNESCAPED_UNICODE) ?>;
 var FLAG       = <?= json_encode($flagMap,  JSON_UNESCAPED_UNICODE) ?>;
 var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
 var SCORE_SOURCE_LABEL = <?= json_encode([
-  'ANALYST'     => score_source_label('ANALYST'),
-  'AI'          => score_source_label('AI'),
-  'AI_REVIEWED' => score_source_label('AI_REVIEWED'),
+  'ANALYST'     => score_source_public_label('ANALYST'),
+  'AI'          => score_source_public_label('AI'),
+  'AI_REVIEWED' => score_source_public_label('AI_REVIEWED'),
 ], JSON_HEX_TAG) ?>;
 
 /* ── Published post markers from DB ──────────────────────────────── */

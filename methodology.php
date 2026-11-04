@@ -12,6 +12,8 @@ $agg     = hm_agg_settings();
 $cycLen  = hm_cycle_days();
 $groups  = hm_country_groups();
 $peakPct = (int) round($agg['peak_weight'] * 100);
+// The status note describes AI assistance only once the agent is switched on
+$agentOn = get_setting('agent_enabled', '0') === '1';
 
 // Worked example: three reports on one country and category, same cycle
 $exReports = [
@@ -72,10 +74,17 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
 
     <div class="rounded-2xl px-5 py-4 text-sm leading-relaxed" style="background:rgba(231,149,42,.12);color:#0f172a;border:1px solid rgba(231,149,42,.35)">
       <strong style="color:#750B25">Current status.</strong>
-      Every score published on the heat map today is assigned by a trained CRTP analyst and approved
-      before publication. AI-assisted collection and scoring is in development. When it is introduced,
-      every AI-proposed score will be labelled as such and reviewed by an analyst; the AI will not publish
-      anything on its own.
+      <?php if ($agentOn): ?>
+        AI-assisted collection is in use. The Tafakari Agent, built on Anthropic's Claude, searches public
+        sources and proposes findings and intensity scores, each with the sources it read and the reasons for
+        every score. A CRTP analyst reviews every proposal, and a senior administrator approves every report,
+        before anything is published; the AI publishes nothing on its own. Each report on the map says whether
+        its scores came from an analyst, or from the agent and were then accepted or adjusted by an analyst.
+      <?php else: ?>
+        Every score published on the heat map today is assigned by a trained CRTP analyst and approved
+        before publication. When AI-assisted collection and scoring is introduced, every AI-proposed score
+        will be labelled as such and reviewed by an analyst; the AI will not publish anything on its own.
+      <?php endif; ?>
     </div>
 
     <!-- 1. Data sources -->

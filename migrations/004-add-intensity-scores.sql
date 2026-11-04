@@ -41,4 +41,4 @@ ALTER TABLE `Post`
   ADD COLUMN `intensityScores` TEXT NULL AFTER `issueCategory`;
 
 -- Verify:
---   SHOW FULL COLUMNS FROM `Post` WHERE Field = 'intensityScores';
+SHOW FULL COLUMNS FROM `Post` WHERE `Field` = 'intensityScores';

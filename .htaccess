@@ -5,6 +5,10 @@ RewriteBase /
 # Custom error pages
 ErrorDocument 404 /404.php
 
+# Never serve Composer dependencies, command-line scripts or Composer files
+RewriteRule ^(vendor|cron)(/|$) - [F,L]
+RewriteRule ^composer\.(json|lock)$ - [F,L]
+
 # Let real files and directories pass through
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
@@ -72,6 +76,7 @@ RewriteRule ^admin/login/?$               admin/login.php              [L]
 RewriteRule ^admin/logout/?$              admin/logout.php             [L]
 RewriteRule ^admin/dashboard/?$           admin/dashboard.php          [L]
 RewriteRule ^admin/profile/?$             admin/profile.php            [L]
+RewriteRule ^admin/agent/?$               admin/agent.php              [L,QSA]
 RewriteRule ^admin/content/?$                     admin/content/index.php      [L,QSA]
 RewriteRule ^admin/content/new/?$                 admin/content/new.php        [L,QSA]
 RewriteRule ^admin/content/articles/?$            admin/content/articles.php   [L,QSA]

@@ -1,0 +1,18 @@
+{
+    "name": "crtp/tafakari-digital-hub",
+    "description": "Tafakari Digital Hub (CRTP) - PHP site dependencies",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.1",
+        "anthropic-ai/sdk": "^1.4",
+        "guzzlehttp/guzzle": "^7.9"
+    },
+    "config": {
+        "platform": {
+            "php": "8.1.0"
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

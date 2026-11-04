@@ -39,14 +39,14 @@
 --  SAFE TO RUN
 --  -----------
 --  Adds five nullable columns. Nothing is read, changed or removed. Existing
---  posts get NULL: one country, one source, provenance not recorded. Re-running
---  only produces duplicate-column errors, which you can ignore.
+--  posts get NULL: one country, one source, provenance not recorded.
+--  If phpMyAdmin reports "#1060 - Duplicate column name 'additionalCountries'",
+--  ensure_post_columns() has ALREADY added all five columns automatically —
+--  you do not need to run the ALTER TABLE again.
 --
 --  HOW TO RUN (cPanel)
 --  -------------------
 --  phpMyAdmin -> select your database -> SQL tab -> paste -> Go.
---  Then, in the SiteSetting table, set the row `schema_post_columns_v2` to `ok`
---  (or delete it) so the application stops reporting the failed attempt.
 -- ============================================================================
 
 ALTER TABLE `Post`
@@ -56,6 +56,18 @@ ALTER TABLE `Post`
   ADD COLUMN `scoredBy`            VARCHAR(191) NULL,
   ADD COLUMN `scoredAt`            DATETIME(3)  NULL;
 
--- Verify:
---   SHOW FULL COLUMNS FROM `Post`
---   WHERE Field IN ('additionalCountries','sourceCount','scoreSource','scoredBy','scoredAt');
+CREATE TABLE IF NOT EXISTS `SiteSetting` (
+  `key` VARCHAR(100) NOT NULL,
+  `value` TEXT NULL,
+  `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `updatedBy` VARCHAR(191) NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `SiteSetting` (`key`, `value`, `updatedAt`)
+VALUES ('schema_post_columns_v2', 'ok', NOW(3))
+ON DUPLICATE KEY UPDATE `value` = 'ok', `updatedAt` = NOW(3);
+
+-- Verify all five columns exist:
+SHOW FULL COLUMNS FROM `Post`
+WHERE `Field` IN ('additionalCountries', 'sourceCount', 'scoreSource', 'scoredBy', 'scoredAt');

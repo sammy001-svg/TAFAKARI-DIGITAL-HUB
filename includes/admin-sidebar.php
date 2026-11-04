@@ -9,6 +9,7 @@ $_contentModulePaths = ['/admin/content/articles','/admin/content/gallery','/adm
 
 $_navCore = [
   ['href' => '/admin/dashboard',   'label' => 'Overview',   'svg' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+  ['href' => '/admin/agent',       'label' => 'Tafakari Agent', 'svg' => 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'],
   ['href' => '/admin/content',     'label' => 'My Content', 'svg' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
   ['href' => '/admin/profile',     'label' => 'My Profile', 'svg' => 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
 ];
@@ -35,6 +36,11 @@ $_navSuper = [
 ];
 
 $_pendingCount = 0;
+// Findings waiting in the Tafakari Agent queue (table may not exist yet)
+$_agentCount = 0;
+try {
+    $_agentCount = (int)db()->query("SELECT COUNT(*) FROM AgentItem WHERE status='PROPOSED'")->fetchColumn();
+} catch (Throwable $e) {}
 if ($_role === 'SUPER_ADMIN') {
     try {
         $_pendingCount = (int)db()->query("SELECT COUNT(*) FROM Post WHERE status='PENDING'")->fetchColumn();
@@ -185,7 +191,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
         Workspace
       </p>
       <div class="space-y-0.5">
-        <?php foreach ($_navCore as $item): _sidebarItem($item, $_path); endforeach; ?>
+        <?php foreach ($_navCore as $item): _sidebarItem($item, $_path, $item['href'] === '/admin/agent' ? $_agentCount : 0); endforeach; ?>
       </div>
     </div>
 

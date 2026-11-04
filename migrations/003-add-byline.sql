@@ -39,4 +39,4 @@ ALTER TABLE `Post`
   ADD COLUMN `byline` VARCHAR(255) NULL AFTER `title`;
 
 -- Verify:
---   SHOW FULL COLUMNS FROM `Post` WHERE Field = 'byline';
+SHOW FULL COLUMNS FROM `Post` WHERE `Field` = 'byline';

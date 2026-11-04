@@ -841,6 +841,20 @@ function score_source_label(?string $src): string {
 }
 
 /**
+ * Provenance label for a PUBLISHED report. Everything public has passed CRTP
+ * approval, so the AI labels say what the analyst did with the proposal,
+ * rather than suggesting an unreviewed score.
+ */
+function score_source_public_label(?string $src): string {
+    return match ($src) {
+        'ANALYST'     => 'Scored by a CRTP analyst',
+        'AI'          => 'AI-proposed scores, accepted by a CRTP analyst',
+        'AI_REVIEWED' => 'AI-proposed scores, adjusted by a CRTP analyst',
+        default       => 'Scored by CRTP',
+    };
+}
+
+/**
  * Provenance to store after an analyst saves a post's scoring.
  *
  * @param  array $prev   the stored Post row ([] when creating)

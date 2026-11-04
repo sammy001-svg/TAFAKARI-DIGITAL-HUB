@@ -19,3 +19,7 @@ deployment:
 
     # Signal Passenger to reload the Node.js app on next request
     - mkdir -p tmp && touch tmp/restart.txt
+
+    # PHP site dependencies (Anthropic SDK for the Tafakari Agent) into vendor/.
+    # Needs Composer on the server: cPanel > Terminal > `composer --version`.
+    - composer install --no-dev --no-interaction --optimize-autoloader
