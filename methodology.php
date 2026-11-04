@@ -221,6 +221,22 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
       <?php endif; ?>
     </section>
 
+    <!-- Reports -->
+    <section class="mt-step">
+      <h2 class="mb-3">Bi-weekly and quarterly reports</h2>
+      <p>
+        <a href="/reports" class="font-semibold underline" style="color:#750B25">Analysis reports</a> freeze these figures for one period and
+        scope, and compare them with the period before. A <strong>bi-weekly report</strong> covers one <?= (int)$cycLen ?>-day monitoring
+        cycle and matches the heat map for that cycle exactly. A <strong>quarterly report</strong> covers a calendar quarter; because a
+        quarter is a record rather than a reading of the current situation, its figures weight reports by corroboration only, and its
+        trend charts show each monitoring cycle of the quarter as it stood.
+      </p>
+      <p class="mt-3">
+        A change of half a point or more from the previous period is reported as escalation or de-escalation. Each report's narrative is
+        written by CRTP analysts, or drafted by the Tafakari Agent from the report's own figures and then edited; every report says which.
+      </p>
+    </section>
+
     <!-- 5. Human validation -->
     <section class="mt-step">
       <div class="flex items-center gap-3 mb-4"><span class="mt-num">5</span><h2>Human validation</h2></div>

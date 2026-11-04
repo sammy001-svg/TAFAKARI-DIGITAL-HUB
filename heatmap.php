@@ -243,6 +243,10 @@ try {
 
         if ($catAvgs) {
             $scoredReports[] = [
+                'id'        => $p['id'],
+                'title'     => $p['title'],
+                'url'       => $url,
+                'date'      => date('Y-m-d', strtotime($p['createdAt'])),
                 'countries' => $pCountries,
                 'cycle'     => $pCycle['start'],
                 'wc'        => $wc,
@@ -341,44 +345,10 @@ if (!$isAllTime && $reqCompare !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $re
 }
 
 // ── Aggregation: country and monitoring-region cells ───────────────────
-/**
- * Build country => category => cell and region => category => cell for one
- * cycle (null = all time). A report feeds every country it names, but each
- * monitoring region at most once, however many member countries it names.
- */
-$hm_build = function (?string $cycleStart) use ($scoredReports): array {
-    $groups    = hm_country_groups();
-    $byCountry = [];
-    $byRegion  = [];
-    foreach ($scoredReports as $r) {
-        if ($cycleStart !== null && $r['cycle'] !== $cycleStart) continue;
-        $w = $cycleStart === null ? $r['wc'] : $r['wr'];
-        $inRegions = [];
-        foreach ($groups as $g) {
-            if (array_intersect($r['countries'], $g['countries'])) $inRegions[] = $g['name'];
-        }
-        foreach ($r['cats'] as $cat => $s) {
-            $item = ['score' => $s, 'w' => $w];
-            foreach ($r['countries'] as $c)  $byCountry[$c][$cat][] = $item;
-            foreach ($inRegions as $rn)      $byRegion[$rn][$cat][]  = $item;
-        }
-    }
-    $finish = function (array $acc): array {
-        $out = [];
-        foreach ($acc as $k => $byCat) {
-            foreach ($byCat as $cat => $items) {
-                $cell = hm_aggregate($items);
-                if ($cell !== null) $out[$k][$cat] = $cell;
-            }
-        }
-        ksort($out);
-        return $out;
-    };
-    return ['country' => $finish($byCountry), 'region' => $finish($byRegion)];
-};
-
-$aggActive  = $hm_build($isAllTime ? null : $activeCycle['start']);
-$aggCompare = $compareCycle ? $hm_build($compareCycle['start']) : ['country' => [], 'region' => []];
+// hm_build_cells() is shared with the analysis reports (includes/functions.php),
+// so a published report and the live map can never disagree on a number.
+$aggActive  = hm_build_cells($scoredReports, $isAllTime ? null : $activeCycle['start']);
+$aggCompare = $compareCycle ? hm_build_cells($scoredReports, $compareCycle['start']) : ['country' => [], 'region' => [], 'total' => []];
 
 // Cells actually rendered (full detail), plus plain scores for the map script
 $scoreMatrixMeta   = $aggActive['country'];
@@ -389,6 +359,16 @@ $scoreMatrixAvg = array_map(fn($byCat) => array_map(fn($c) => $c['score'], $byCa
 
 $currentCycle = hm_cycle_current();
 $hmAgg        = hm_agg_settings();
+
+// ── Critical flags: reports scored 9+ in any category, in the period viewed ──
+$criticalReports = [];
+foreach ($scoredReports as $r) {
+    if (!$isAllTime && $r['cycle'] !== $activeCycle['start']) continue;
+    $peakCat = null; $peak = 0.0;
+    foreach ($r['cats'] as $cat => $s) if ($s > $peak) { $peak = (float) $s; $peakCat = $cat; }
+    if ($peak >= 9) $criticalReports[] = $r + ['peakCat' => $peakCat, 'peak' => $peak];
+}
+usort($criticalReports, fn($a, $b) => [$b['peak'], $b['date']] <=> [$a['peak'], $a['date']]);
 
 // ── Summary stats ──────────────────────────────────────────────────────
 $totalReports   = $reportCount;
@@ -659,6 +639,31 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
 
     </div>
   </div>
+
+  <!-- ── Critical flags in the period viewed ──────────────────────── -->
+  <?php if ($criticalReports): ?>
+    <div class="px-4 md:px-6 py-3" style="background:#fff;border-bottom:1px solid #fde2e2">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span class="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[.1em]" style="color:#b91c1c">
+          <span aria-hidden="true">&#9873;</span>
+          <?= count($criticalReports) ?> critical flag<?= count($criticalReports) === 1 ? '' : 's' ?>
+          <?= $isAllTime ? '(all time)' : 'this cycle' ?>
+        </span>
+        <?php foreach (array_slice($criticalReports, 0, 5) as $cr): ?>
+          <button type="button" onclick="openPostDetail(postDataById[<?= h(json_encode($cr['id'])) ?>])"
+                  class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-full border hover:bg-red-50"
+                  style="border-color:#fecaca" title="<?= h($cr['peakCat'] . ': ' . number_format($cr['peak'], 1) . ' / 10') ?>">
+            <span class="font-black text-white rounded-md px-1.5" style="background:#ED1C24"><?= h(rtrim(rtrim(number_format($cr['peak'], 1), '0'), '.')) ?></span>
+            <span class="truncate" style="max-width:260px"><?= h($cr['title']) ?></span>
+            <span class="text-slate-400"><?= h(implode(', ', $cr['countries'])) ?></span>
+          </button>
+        <?php endforeach; ?>
+        <?php if (count($criticalReports) > 5): ?>
+          <span class="text-xs text-slate-500">and <?= count($criticalReports) - 5 ?> more in the flashpoints table below</span>
+        <?php endif; ?>
+      </div>
+    </div>
+  <?php endif; ?>
 
   <!-- ── Map section ───────────────────────────────────────────────── -->
   <div id="map-wrapper" class="relative" style="height:620px">
@@ -982,7 +987,8 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
           Score per category, 1&ndash;10, where 10 is severe / critical, combining reports by
           corroboration, recency and peak severity.
           Every <?= (int)$cycLen ?>-day cycle is archived &mdash; nothing is overwritten.
-          <a href="/methodology" class="font-semibold underline" style="color:#750B25">How scores are calculated</a>
+          <a href="/methodology" class="font-semibold underline" style="color:#750B25">How scores are calculated</a> &middot;
+          <a href="/reports" class="font-semibold underline" style="color:#750B25">Analysis reports</a>
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
@@ -1487,7 +1493,7 @@ var CTRY_BY_NAME = {};
 })();
 
 /* ── Category dot: one per country+category, grows with post count ── */
-function makeCategoryDotIcon(col, count, score, highlight) {
+function makeCategoryDotIcon(col, count, score, highlight, critical) {
   // Size still encodes VOLUME (how many reports); colour encodes the CATEGORY;
   // the ring and the number encode INTENSITY (severity) when it has been scored.
   var dot = Math.round(11 + Math.min(Math.sqrt(count), 4.2) * 4.3);
@@ -1527,7 +1533,16 @@ function makeCategoryDotIcon(col, count, score, highlight) {
         + '<div style="width:' + dot + 'px;height:' + dot + 'px;border-radius:50%;background:' + col
         + ';border:2px solid #fff;box-shadow:' + shadow + ';'
         + 'position:relative;z-index:2;cursor:pointer;display:flex;align-items:center;justify-content:center">'
-        + inner + '</div></div>',
+        + inner + '</div>'
+        // Critical flag: a report in this group scored 9+, even if the group's
+        // combined score is lower. Shape and colour, never colour alone.
+        + (critical
+            ? '<div title="Includes a report scored critical (9+)" style="position:absolute;top:' + Math.max(0, (box - dot) / 2 - 5) + 'px;'
+              + 'right:' + Math.max(0, (box - dot) / 2 - 5) + 'px;z-index:4;width:16px;height:16px;border-radius:50%;'
+              + 'background:#ED1C24;border:2px solid #fff;color:#fff;font-size:9px;line-height:12px;text-align:center;'
+              + 'font-weight:900;box-shadow:0 1px 4px rgba(15,23,42,.35)">&#9873;</div>'
+            : '')
+        + '</div>',
   });
 }
 
@@ -2257,7 +2272,7 @@ function applyFilters() {
       var isSelCtry = (selCtry !== 'ALL' && CNAME[selCtry] === ctry);
 
       var m = L.marker([lat, lng], {
-        icon: makeCategoryDotIcon(col, items.length, gScore, isSelCtry),
+        icon: makeCategoryDotIcon(col, items.length, gScore, isSelCtry, !!(gAgg && gAgg.critical)),
         zIndexOffset: isSelCtry ? 700 : 600
       }).bindTooltip(
         '<strong>' + esc(ctry) + '</strong><br>'
@@ -2266,6 +2281,7 @@ function applyFilters() {
             ? '<span style="color:' + intensityColor(gScore) + ';font-weight:800">'
               + gScore.toFixed(1) + ' / 10 &middot; ' + intensityLabel(gScore) + '</span><br>'
             : '<span style="color:#94a3b8">Not yet scored</span><br>')
+        + (gAgg && gAgg.critical ? '<span style="color:#b91c1c;font-weight:800">&#9873; Includes a critical report (9+)</span><br>' : '')
         + '<small>' + items.length + ' ' + (items.length === 1 ? 'report' : 'reports') + '</small>',
         { direction: 'right', opacity: 1 }
       );

@@ -384,7 +384,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <tr class="border-t border-slate-100 align-top">
             <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-600"><?= h(format_date($r['startedAt'], 'j M Y, H:i')) ?></td>
             <td class="px-4 py-3 font-bold text-slate-800"><?= h($r['country']) ?></td>
-            <td class="px-4 py-3 text-xs text-slate-600"><?= h($r['triggeredBy'] === 'MANUAL' ? 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : '') : 'Scheduled') ?></td>
+            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', default => 'Scheduled' }) ?></td>
             <td class="px-4 py-3"><span class="ag-chip" style="background:<?= $sc ?>15;color:<?= $sc ?>"><?= h($r['status']) ?></span></td>
             <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
               <?= (int) $r['itemsProposed'] ?> new · <?= (int) $r['itemsDuplicate'] ?> dup · <?= (int) $r['itemsDiscarded'] ?> discarded</td>

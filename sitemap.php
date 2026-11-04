@@ -37,6 +37,7 @@ $static = [
     ['/gallery',   '0.7', 'weekly'],
     ['/heatmap',   '0.7', 'daily'],
     ['/methodology', '0.5', 'monthly'],
+    ['/reports',   '0.6', 'weekly'],
     ['/about',     '0.5', 'monthly'],
 ];
 foreach ($static as [$path, $pri, $freq]) {

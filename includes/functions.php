@@ -972,6 +972,65 @@ function hm_aggregate(array $items): ?array {
     ];
 }
 
+/**
+ * Aggregate a set of scored reports into cells. Shared by the heat map and
+ * the analysis reports, so both always compute identical numbers.
+ *
+ * Each report is ['countries' => string[], 'cats' => [category => score],
+ * 'wc' => corroboration weight, 'wr' => corroboration x recency weight, ...].
+ * A report feeds every country it names, but each monitoring region, and the
+ * overall total, at most once however many of their countries it names.
+ *
+ * @param  string $wkey 'wr' (within a cycle) or 'wc' (all time, or a quarter)
+ * @return array{country:array,region:array,total:array} cells keyed by category
+ */
+function hm_cells_from(array $reports, string $wkey): array {
+    $groups    = hm_country_groups();
+    $byCountry = [];
+    $byRegion  = [];
+    $total     = [];
+    foreach ($reports as $r) {
+        $w = $r[$wkey];
+        $inRegions = [];
+        foreach ($groups as $g) {
+            if (array_intersect($r['countries'], $g['countries'])) $inRegions[] = $g['name'];
+        }
+        foreach ($r['cats'] as $cat => $s) {
+            $item = ['score' => $s, 'w' => $w];
+            foreach ($r['countries'] as $c)  $byCountry[$c][$cat][] = $item;
+            foreach ($inRegions as $rn)      $byRegion[$rn][$cat][]  = $item;
+            $total[$cat][] = $item;
+        }
+    }
+    $finish = function (array $acc): array {
+        $out = [];
+        foreach ($acc as $k => $byCat) {
+            foreach ($byCat as $cat => $items) {
+                $cell = hm_aggregate($items);
+                if ($cell !== null) $out[$k][$cat] = $cell;
+            }
+        }
+        ksort($out);
+        return $out;
+    };
+    $tot = [];
+    foreach ($total as $cat => $items) {
+        $cell = hm_aggregate($items);
+        if ($cell !== null) $tot[$cat] = $cell;
+    }
+    return ['country' => $finish($byCountry), 'region' => $finish($byRegion), 'total' => $tot];
+}
+
+/**
+ * Heat-map cells for one monitoring cycle (null = all time): reports in that
+ * cycle weighted by corroboration x recency, or every report weighted by
+ * corroboration alone.
+ */
+function hm_build_cells(array $reports, ?string $cycleStart): array {
+    if ($cycleStart === null) return hm_cells_from($reports, 'wc');
+    return hm_cells_from(array_values(array_filter($reports, fn($r) => $r['cycle'] === $cycleStart)), 'wr');
+}
+
 // ── Status / type badge HTML ─────────────────────────────────────
 
 function status_badge(string $status): string {
