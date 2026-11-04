@@ -186,24 +186,21 @@ $postTypeUrl = [
 ];
 
 // ── Resolve coordinates for published posts ────────────────────────────
-$postMarkers = [];
-// country => category => ['sum'=>float,'n'=>int]  (all-time)
-$scoreMatrix = [];
-// cycleStart => country => category => ['sum','n']  (per two-week cycle)
-$cycleMatrix = [];
-// cycleStart => cycle meta + report counts
-$cycleIndex  = [];
+// A cross-border report is attributed to every country it names
+// (Post.additionalCountries), so it yields one map entry per country.
+$postMarkers   = [];   // one entry per (report, attributed country)
+$scoredReports = [];   // one entry per scored report, feeding the aggregation
+$cycleIndex    = [];   // cycleStart => cycle meta + report counts
+$reportCount   = 0;    // distinct reports on the map
 try {
-    // intensityScores may not exist yet (see migrations/004); detect it so
-    // an un-migrated database still renders the map instead of throwing.
-    $hasScores = false;
-    try {
-        $hasScores = (bool) db()->query("SHOW COLUMNS FROM Post LIKE 'intensityScores'")->fetch();
-    } catch (Exception $e) { $hasScores = false; }
-
-    $scoreCol = $hasScores ? ', intensityScores' : '';
+    // Newer columns may not exist yet (see migrations/004 and 005); select only
+    // what is there so an un-migrated database still renders the map.
+    $optCols = '';
+    foreach (['intensityScores', 'additionalCountries', 'sourceCount', 'scoreSource'] as $_oc) {
+        if (post_has_column($_oc)) $optCols .= ", $_oc";
+    }
     $posts = db()->query("
-        SELECT id, title, type, description, country, region, issueCategory, createdAt, thumbnailUrl$scoreCol
+        SELECT id, title, type, description, country, region, issueCategory, createdAt, thumbnailUrl$optCols
         FROM Post
         WHERE status='PUBLISHED' AND type='DOCUMENT'
           AND country IS NOT NULL AND country != ''
@@ -211,32 +208,9 @@ try {
     ")->fetchAll();
 
     foreach ($posts as $p) {
-        $lat = $lng = null;
-        $region = trim($p['region'] ?? '');
-
-        // Try region string against lookup keys
-        if ($region !== '') {
-            foreach ($regionCoords as $rKey => [$rlat, $rlng]) {
-                if (stripos($region, $rKey) !== false || stripos($rKey, $region) !== false) {
-                    $lat = $rlat; $lng = $rlng; break;
-                }
-            }
-        }
-
-        // Fall back to country centre
-        if ($lat === null) {
-            $cn = $p['country'];
-            if (isset($countryCoords[$cn])) {
-                [$lat, $lng] = $countryCoords[$cn];
-            }
-        }
-
-        if ($lat === null) continue;
-
-        // Deterministic sub-degree jitter so stacked pins spread out
-        $h    = crc32($p['id']);
-        $lat += (($h % 200) - 100) / 800.0;
-        $lng += ((($h >> 8) % 200) - 100) / 800.0;
+        $region     = trim($p['region'] ?? '');
+        $pCountries = post_countries($p);
+        $reportCount++;
 
         $url = ($postTypeUrl[$p['type']] ?? '/news/') . $p['id'];
         if (($p['type'] ?? '') === 'GALLERY_IMAGE') $url = '/gallery';
@@ -255,26 +229,28 @@ try {
         if (!$mappedCats) $mappedCats = ['Policy'];
 
         // Per-category averages from this report's element scores
-        $catScores = heatmap_category_scores(post_intensity_scores($p['intensityScores'] ?? null));
-        $catAvgs   = [];
-        $pCycle    = hm_cycle_bounds($p['createdAt']);
-        foreach ($catScores as $cn => $cs) {
+        $catAvgs = [];
+        foreach (heatmap_category_scores(post_intensity_scores($p['intensityScores'] ?? null)) as $cn => $cs) {
             $catAvgs[$cn] = $cs['avg'];
-
-            // All-time accumulator
-            if (!isset($scoreMatrix[$p['country']][$cn])) {
-                $scoreMatrix[$p['country']][$cn] = ['sum' => 0.0, 'n' => 0];
-            }
-            $scoreMatrix[$p['country']][$cn]['sum'] += $cs['avg'];
-            $scoreMatrix[$p['country']][$cn]['n']   += 1;
-
-            // Per-cycle accumulator — this is what makes the archive replayable
-            if (!isset($cycleMatrix[$pCycle['start']][$p['country']][$cn])) {
-                $cycleMatrix[$pCycle['start']][$p['country']][$cn] = ['sum' => 0.0, 'n' => 0];
-            }
-            $cycleMatrix[$pCycle['start']][$p['country']][$cn]['sum'] += $cs['avg'];
-            $cycleMatrix[$pCycle['start']][$p['country']][$cn]['n']   += 1;
         }
+
+        // Report weight (see hm_aggregate): corroboration alone for the
+        // all-time view, corroboration x recency within the report's cycle.
+        $pCycle  = hm_cycle_bounds($p['createdAt']);
+        $sources = max(1, (int)($p['sourceCount'] ?? 1));
+        $wc      = hm_corroboration_factor($sources);
+        $wr      = round($wc * hm_recency_factor($p['createdAt'], hm_cycle_ref_date($pCycle)), 4);
+
+        if ($catAvgs) {
+            $scoredReports[] = [
+                'countries' => $pCountries,
+                'cycle'     => $pCycle['start'],
+                'wc'        => $wc,
+                'wr'        => $wr,
+                'cats'      => $catAvgs,
+            ];
+        }
+
         // Track which cycles actually contain reports (drives the archive picker)
         if (!isset($cycleIndex[$pCycle['start']])) {
             $cycleIndex[$pCycle['start']] = $pCycle + ['reports' => 0, 'scored' => 0];
@@ -284,25 +260,54 @@ try {
         // Overall score for this report = mean of its scored categories
         $postAvg = $catAvgs ? round(array_sum($catAvgs) / count($catAvgs), 1) : null;
 
-        $postMarkers[] = [
-            'id'       => $p['id'],
-            'scores'   => $catAvgs,
-            'avg'      => $postAvg,
-            'cycle'    => $pCycle['start'],
-            'title'    => $p['title'],
-            'type'     => $p['type'] ?? 'ARTICLE',
-            'desc'     => mb_substr($p['description'] ?? '', 0, 150),
-            'country'  => $p['country'],
-            'region'   => $region,
-            'category'   => $mappedCats[0],
-            'categories' => $mappedCats,
-            'date'     => format_date($p['createdAt']),
-            'dateRaw'  => date('Y-m-d', strtotime($p['createdAt'])),
-            'thumb'    => $p['thumbnailUrl'] ?? '',
-            'url'      => $url,
-            'lat'      => round($lat, 5),
-            'lng'      => round($lng, 5),
-        ];
+        foreach ($pCountries as $ci => $ctry) {
+            $lat = $lng = null;
+
+            // The sub-national region describes the primary country only
+            if ($ci === 0 && $region !== '') {
+                foreach ($regionCoords as $rKey => [$rlat, $rlng]) {
+                    if (stripos($region, $rKey) !== false || stripos($rKey, $region) !== false) {
+                        $lat = $rlat; $lng = $rlng; break;
+                    }
+                }
+            }
+            // Fall back to country centre
+            if ($lat === null && isset($countryCoords[$ctry])) {
+                [$lat, $lng] = $countryCoords[$ctry];
+            }
+            if ($lat === null) continue;
+
+            // Deterministic sub-degree jitter so stacked pins spread out
+            $h    = crc32($ci === 0 ? $p['id'] : $p['id'] . '|' . $ctry);
+            $lat += (($h % 200) - 100) / 800.0;
+            $lng += ((($h >> 8) % 200) - 100) / 800.0;
+
+            $postMarkers[] = [
+                'id'          => $p['id'],
+                'scores'      => $catAvgs,
+                'avg'         => $postAvg,
+                'wc'          => $wc,
+                'wr'          => $wr,
+                'cycle'       => $pCycle['start'],
+                'title'       => $p['title'],
+                'type'        => $p['type'] ?? 'ARTICLE',
+                'desc'        => mb_substr($p['description'] ?? '', 0, 150),
+                'country'     => $ctry,
+                'countries'   => $pCountries,
+                'primary'     => $ci === 0,
+                'region'      => $ci === 0 ? $region : '',
+                'scoreSource' => $catAvgs ? ($p['scoreSource'] ?? null) : null,
+                'sources'     => $sources,
+                'category'    => $mappedCats[0],
+                'categories'  => $mappedCats,
+                'date'        => format_date($p['createdAt']),
+                'dateRaw'     => date('Y-m-d', strtotime($p['createdAt'])),
+                'thumb'       => $p['thumbnailUrl'] ?? '',
+                'url'         => $url,
+                'lat'         => round($lat, 5),
+                'lng'         => round($lng, 5),
+            ];
+        }
     }
 } catch (Exception $e) {}
 
@@ -310,18 +315,6 @@ try {
 // Nothing is ever overwritten: every cycle stays queryable from Post history.
 krsort($cycleIndex);                       // newest cycle first
 $availableCycles = array_values($cycleIndex);
-
-/** Average a cycle/all-time accumulator into country => category => score. */
-$hm_flatten = function (array $acc): array {
-    $out = [];
-    foreach ($acc as $ctry => $byCat) {
-        foreach ($byCat as $cn => $a) {
-            if ($a['n'] > 0) $out[$ctry][$cn] = round($a['sum'] / $a['n'], 1);
-        }
-    }
-    ksort($out);
-    return $out;
-};
 
 $reqCycle   = trim($_GET['cycle']   ?? '');   // '' = default, 'all' = all time
 $reqCompare = trim($_GET['compare'] ?? '');
@@ -347,19 +340,58 @@ if (!$isAllTime && $reqCompare !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $re
     if ($compareCycle['start'] === $activeCycle['start']) $compareCycle = null;
 }
 
-// Matrix actually rendered
-$scoreMatrixAvg = $isAllTime
-    ? $hm_flatten($scoreMatrix)
-    : $hm_flatten($cycleMatrix[$activeCycle['start']] ?? []);
+// ── Aggregation: country and monitoring-region cells ───────────────────
+/**
+ * Build country => category => cell and region => category => cell for one
+ * cycle (null = all time). A report feeds every country it names, but each
+ * monitoring region at most once, however many member countries it names.
+ */
+$hm_build = function (?string $cycleStart) use ($scoredReports): array {
+    $groups    = hm_country_groups();
+    $byCountry = [];
+    $byRegion  = [];
+    foreach ($scoredReports as $r) {
+        if ($cycleStart !== null && $r['cycle'] !== $cycleStart) continue;
+        $w = $cycleStart === null ? $r['wc'] : $r['wr'];
+        $inRegions = [];
+        foreach ($groups as $g) {
+            if (array_intersect($r['countries'], $g['countries'])) $inRegions[] = $g['name'];
+        }
+        foreach ($r['cats'] as $cat => $s) {
+            $item = ['score' => $s, 'w' => $w];
+            foreach ($r['countries'] as $c)  $byCountry[$c][$cat][] = $item;
+            foreach ($inRegions as $rn)      $byRegion[$rn][$cat][]  = $item;
+        }
+    }
+    $finish = function (array $acc): array {
+        $out = [];
+        foreach ($acc as $k => $byCat) {
+            foreach ($byCat as $cat => $items) {
+                $cell = hm_aggregate($items);
+                if ($cell !== null) $out[$k][$cat] = $cell;
+            }
+        }
+        ksort($out);
+        return $out;
+    };
+    return ['country' => $finish($byCountry), 'region' => $finish($byRegion)];
+};
 
-$compareMatrixAvg = $compareCycle
-    ? $hm_flatten($cycleMatrix[$compareCycle['start']] ?? [])
-    : [];
+$aggActive  = $hm_build($isAllTime ? null : $activeCycle['start']);
+$aggCompare = $compareCycle ? $hm_build($compareCycle['start']) : ['country' => [], 'region' => []];
+
+// Cells actually rendered (full detail), plus plain scores for the map script
+$scoreMatrixMeta   = $aggActive['country'];
+$compareMatrixMeta = $aggCompare['country'];
+$regionMatrixMeta  = $aggActive['region'];
+$regionCompareMeta = $aggCompare['region'];
+$scoreMatrixAvg = array_map(fn($byCat) => array_map(fn($c) => $c['score'], $byCat), $scoreMatrixMeta);
 
 $currentCycle = hm_cycle_current();
+$hmAgg        = hm_agg_settings();
 
 // ── Summary stats ──────────────────────────────────────────────────────
-$totalReports   = count($postMarkers);
+$totalReports   = $reportCount;
 $monthlyReports = 0;
 try {
     // Documents only, so this KPI matches what the map actually plots
@@ -367,32 +399,38 @@ try {
 } catch (Exception $e) { /* ignore */ }
 
 // ── Per-country DB stats — powering the hover summary panels ──────────
+// Accumulated in PHP rather than with GROUP BY country, so a cross-border
+// report counts for every country it is attributed to.
 $countryStats = [];
 try {
-    $csRows = db()->query(
-        "SELECT country,
-                COUNT(*) AS reportCount,
-                MAX(createdAt) AS latestDate,
-                GROUP_CONCAT(DISTINCT issueCategory ORDER BY issueCategory SEPARATOR '|||') AS allCats
+    $addlCol = post_has_column('additionalCountries') ? ', additionalCountries' : '';
+    $csRows  = db()->query(
+        "SELECT country, createdAt, issueCategory$addlCol
          FROM Post
          WHERE status='PUBLISHED' AND type='DOCUMENT'
-           AND country IS NOT NULL AND country <> ''
-         GROUP BY country"
+           AND country IS NOT NULL AND country <> ''"
     )->fetchAll();
+    $_acc = [];
     foreach ($csRows as $cr) {
         // NOTE: must not be named $cats — that holds the category→colour map
-        $_ccats = [];
-        foreach (explode('|||', $cr['allCats'] ?? '') as $cs) {
-            foreach (explode(',', $cs) as $c) {
-                $c = trim($c);
-                if ($c !== '') $_ccats[] = $c;
+        $_ccats = array_filter(array_map('trim', explode(',', (string)($cr['issueCategory'] ?? ''))));
+        foreach (post_countries($cr) as $ctry) {
+            if (!isset($_acc[$ctry])) $_acc[$ctry] = ['reports' => 0, 'latest' => null, 'cats' => []];
+            $_acc[$ctry]['reports']++;
+            if ($_acc[$ctry]['latest'] === null || $cr['createdAt'] > $_acc[$ctry]['latest']) {
+                $_acc[$ctry]['latest'] = $cr['createdAt'];
             }
+            foreach ($_ccats as $c) $_acc[$ctry]['cats'][$c] = true;
         }
-        $countryStats[$cr['country']] = [
-            'reports'    => (int)$cr['reportCount'],
-            'latestDate' => $cr['latestDate'] ? date('Y-m-d', strtotime($cr['latestDate'])) : null,
-            'latestFmt'  => $cr['latestDate'] ? format_date($cr['latestDate']) : null,
-            'cats'       => array_values(array_unique($_ccats)),
+    }
+    foreach ($_acc as $ctry => $a) {
+        $cl = array_keys($a['cats']);
+        sort($cl);
+        $countryStats[$ctry] = [
+            'reports'    => $a['reports'],
+            'latestDate' => $a['latest'] ? date('Y-m-d', strtotime($a['latest'])) : null,
+            'latestFmt'  => $a['latest'] ? format_date($a['latest']) : null,
+            'cats'       => $cl,
         ];
     }
 } catch (\Exception $e) {}
@@ -846,7 +884,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
               ON
             </button>
           </div>
-          <p class="text-[10px] mb-3" style="color:#94a3b8"><?= count($postMarkers) ?> <span data-i18n="heatmapPage.reportsFromDb">reports from the database</span></p>
+          <p class="text-[10px] mb-3" style="color:#94a3b8"><?= (int)$reportCount ?> <span data-i18n="heatmapPage.reportsFromDb">reports from the database</span></p>
           <p class="text-[11px] mb-2.5" style="color:#475569;line-height:1.55">
             Each dot is one <strong>category</strong> in a country. Its colour is the
             category colour set in Heatmap Config; it <strong>grows</strong> with the
@@ -941,8 +979,10 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
       <div>
         <h2 class="font-outfit font-black text-xl text-slate-900">Intensity Matrix</h2>
         <p class="text-sm text-slate-400 mt-0.5">
-          Average score per category, 1&ndash;10, where 10 is severe / critical.
+          Score per category, 1&ndash;10, where 10 is severe / critical, combining reports by
+          corroboration, recency and peak severity.
           Every <?= (int)$cycLen ?>-day cycle is archived &mdash; nothing is overwritten.
+          <a href="/methodology" class="font-semibold underline" style="color:#750B25">How scores are calculated</a>
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
@@ -1032,7 +1072,76 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
       </p>
     <?php endif; ?>
 
-    <?php if (empty($scoreMatrixAvg)): ?>
+    <?php
+      $hm_fmt = fn(float $v): string => rtrim(rtrim(number_format($v, 1), '0'), '.');
+
+      /** One matrix cell: score chip, critical flag and (when comparing) the delta. */
+      $hm_cell = function (?array $m, ?array $mb) use ($compareCycle, $hm_fmt): string {
+          $html = '';
+          if ($m === null) {
+              $html .= '<span class="text-slate-300 text-xs">&mdash;</span>';
+          } else {
+              $v    = (float)$m['score'];
+              $flag = $m['critical'] && $v < 9;
+              $tip  = hm_tier_label($v) . ' · ' . $m['n'] . ' report' . ($m['n'] == 1 ? '' : 's')
+                    . ' · weighted mean ' . number_format($m['mean'], 1)
+                    . ' · peak ' . number_format($m['peak'], 1)
+                    . ($m['critical'] ? ' · includes a report scored critical (9+)' : '');
+              $html .= '<span class="inline-block font-outfit font-black text-[13px] rounded-lg px-2.5 py-1"'
+                     . ' style="background:' . h(hm_tier_color($v)) . ';color:#fff;min-width:38px'
+                     . ($flag ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #ED1C24' : '') . '"'
+                     . ' title="' . h($tip) . '">' . h($hm_fmt($v)) . '</span>';
+              if ($flag) {
+                  $html .= '<span class="block text-[9px] font-black uppercase tracking-wider mt-1" style="color:#ED1C24"'
+                         . ' title="At least one report in this cell is scored 9 or more">&#9873; critical report</span>';
+              }
+          }
+          if ($compareCycle) {
+              if ($m !== null && $mb !== null) {
+                  $delta = round($m['score'] - $mb['score'], 1);
+                  $dCol  = $delta > 0.05 ? '#ED1C24' : ($delta < -0.05 ? '#059669' : '#94a3b8');
+                  $dArr  = $delta > 0.05 ? '&uarr;' : ($delta < -0.05 ? '&darr;' : '&rarr;');
+                  $html .= '<span class="block text-[10px] font-bold mt-1" style="color:' . $dCol . '">'
+                         . $dArr . ' ' . (abs($delta) < 0.05 ? '0' : h(sprintf('%+.1f', $delta))) . '</span>';
+              } elseif ($m !== null) {
+                  $html .= '<span class="block text-[10px] font-bold mt-1" style="color:#94a3b8">new</span>';
+              } elseif ($mb !== null) {
+                  $html .= '<span class="block text-[10px] font-bold mt-1" style="color:#94a3b8">was ' . h(number_format($mb['score'], 1)) . '</span>';
+              }
+          }
+          return $html;
+      };
+
+      /** Row "Overall": mean of the row's category scores. */
+      $hm_row_overall = function (array $byCat) use ($hmTax): string {
+          $vals = [];
+          foreach ($hmTax as $c) if (isset($byCat[$c['name']])) $vals[] = $byCat[$c['name']]['score'];
+          if (!$vals) return '<span class="text-slate-300 text-xs">&mdash;</span>';
+          $avg = round(array_sum($vals) / count($vals), 1);
+          return '<span class="font-outfit font-black text-[13px]" style="color:' . h(hm_tier_color($avg)) . '">'
+               . h(number_format($avg, 1)) . '</span>';
+      };
+
+      /** Shared table header. */
+      $hm_thead = function (string $firstCol) use ($hmTax): string {
+          $html = '<thead><tr style="background:#f8fafc">'
+                . '<th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 sticky left-0" style="background:#f8fafc">' . h($firstCol) . '</th>';
+          foreach ($hmTax as $c) {
+              $html .= '<th class="px-3 py-3 text-[10px] font-black uppercase tracking-wider text-center" style="color:' . h($c['color']) . '">'
+                     . '<span class="block leading-tight">' . h($c['name']) . '</span></th>';
+          }
+          return $html . '<th class="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 text-center">Overall</th></tr></thead>';
+      };
+
+      // Monitoring regions with data in either period, in configured order
+      $hmGroups   = hm_country_groups();
+      $regionRows = [];
+      foreach ($hmGroups as $g) {
+          if (isset($regionMatrixMeta[$g['name']]) || isset($regionCompareMeta[$g['name']])) $regionRows[] = $g;
+      }
+    ?>
+
+    <?php if (empty($scoreMatrixMeta) && empty($compareMatrixMeta)): ?>
       <div class="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
         <p class="text-sm text-slate-500 font-semibold">
           No intensity scores in <?= $isAllTime ? 'any cycle' : h($activeCycle['label']) ?>.
@@ -1047,69 +1156,60 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
         </p>
       </div>
     <?php else: ?>
+
+      <?php if ($regionRows): ?>
+        <h3 class="font-outfit font-black text-base text-slate-900 mb-1">Regional Overview</h3>
+        <p class="text-xs text-slate-400 mb-3 max-w-3xl leading-relaxed">
+          Each report counts once per region, even when it concerns several member countries.
+          Regions can overlap, so a country may appear in more than one.
+        </p>
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white mb-8">
+          <table class="w-full text-sm" style="border-collapse:collapse;min-width:<?= $compareCycle ? 940 : 760 ?>px">
+            <?= $hm_thead('Region') ?>
+            <tbody>
+              <?php foreach ($regionRows as $g):
+                $byCat  = $regionMatrixMeta[$g['name']]  ?? [];
+                $byCatB = $regionCompareMeta[$g['name']] ?? []; ?>
+                <tr style="border-top:1px solid #f1f5f9">
+                  <td class="px-4 py-2.5 sticky left-0 bg-white">
+                    <span class="block font-bold text-slate-800 whitespace-nowrap"><?= h($g['name']) ?></span>
+                    <span class="block text-[10px] text-slate-400" title="<?= h(implode(', ', $g['countries'])) ?>">
+                      <?= count($g['countries']) ?> countries
+                    </span>
+                  </td>
+                  <?php foreach ($hmTax as $c): ?>
+                    <td class="px-3 py-2.5 text-center"><?= $hm_cell($byCat[$c['name']] ?? null, $byCatB[$c['name']] ?? null) ?></td>
+                  <?php endforeach; ?>
+                  <td class="px-4 py-2.5 text-center"><?= $hm_row_overall($byCat) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <h3 class="font-outfit font-black text-base text-slate-900 mb-3">By Country</h3>
+      <?php endif; ?>
+
       <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
         <table class="w-full text-sm" style="border-collapse:collapse;min-width:<?= $compareCycle ? 940 : 760 ?>px">
-          <thead>
-            <tr style="background:#f8fafc">
-              <th class="text-left px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 sticky left-0" style="background:#f8fafc">Country</th>
-              <?php foreach ($hmTax as $c): ?>
-                <th class="px-3 py-3 text-[10px] font-black uppercase tracking-wider text-center" style="color:<?= h($c['color']) ?>">
-                  <span class="block leading-tight"><?= h($c['name']) ?></span>
-                </th>
-              <?php endforeach; ?>
-              <th class="px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-400 text-center">Overall</th>
-            </tr>
-          </thead>
+          <?= $hm_thead('Country') ?>
           <tbody>
             <?php
             // Include countries present in either period, so one that dropped
             // out this cycle is still visible when comparing
-            $rowCountries = array_keys($scoreMatrixAvg);
-            foreach (array_keys($compareMatrixAvg) as $cc) {
+            $rowCountries = array_keys($scoreMatrixMeta);
+            foreach (array_keys($compareMatrixMeta) as $cc) {
                 if (!in_array($cc, $rowCountries, true)) $rowCountries[] = $cc;
             }
             sort($rowCountries);
             foreach ($rowCountries as $ctry):
-              $byCat  = $scoreMatrixAvg[$ctry]   ?? [];
-              $byCatB = $compareMatrixAvg[$ctry] ?? [];
-              $rowVals = [];
-              foreach ($hmTax as $c) if (isset($byCat[$c['name']])) $rowVals[] = $byCat[$c['name']];
-              $rowAvg = $rowVals ? round(array_sum($rowVals) / count($rowVals), 1) : null;
-            ?>
+              $byCat  = $scoreMatrixMeta[$ctry]   ?? [];
+              $byCatB = $compareMatrixMeta[$ctry] ?? []; ?>
               <tr style="border-top:1px solid #f1f5f9">
                 <td class="px-4 py-2.5 font-bold text-slate-800 whitespace-nowrap sticky left-0 bg-white"><?= h($ctry) ?></td>
-                <?php foreach ($hmTax as $c):
-                  $v  = $byCat[$c['name']]  ?? null;
-                  $vb = $byCatB[$c['name']] ?? null; ?>
-                  <td class="px-3 py-2.5 text-center">
-                    <?php if ($v === null): ?>
-                      <span class="text-slate-300 text-xs">&mdash;</span>
-                    <?php else: ?>
-                      <span class="inline-block font-outfit font-black text-[13px] rounded-lg px-2.5 py-1"
-                            style="background:<?= h(hm_tier_color((float)$v)) ?>;color:#fff;min-width:38px"
-                            title="<?= h(hm_tier_label((float)$v)) ?>"><?= h(rtrim(rtrim(number_format($v, 1), '0'), '.')) ?></span>
-                    <?php endif; ?>
-                    <?php if ($compareCycle && $v !== null && $vb !== null):
-                      $delta = round($v - $vb, 1);
-                      $dCol  = $delta > 0.05 ? '#ED1C24' : ($delta < -0.05 ? '#059669' : '#94a3b8');
-                      $dArr  = $delta > 0.05 ? '&uarr;' : ($delta < -0.05 ? '&darr;' : '&rarr;'); ?>
-                      <span class="block text-[10px] font-bold mt-1" style="color:<?= $dCol ?>">
-                        <?= $dArr ?> <?= abs($delta) < 0.05 ? '0' : h(sprintf('%+.1f', $delta)) ?>
-                      </span>
-                    <?php elseif ($compareCycle && $v !== null && $vb === null): ?>
-                      <span class="block text-[10px] font-bold mt-1" style="color:#94a3b8">new</span>
-                    <?php elseif ($compareCycle && $v === null && $vb !== null): ?>
-                      <span class="block text-[10px] font-bold mt-1" style="color:#94a3b8">was <?= h(number_format($vb, 1)) ?></span>
-                    <?php endif; ?>
-                  </td>
+                <?php foreach ($hmTax as $c): ?>
+                  <td class="px-3 py-2.5 text-center"><?= $hm_cell($byCat[$c['name']] ?? null, $byCatB[$c['name']] ?? null) ?></td>
                 <?php endforeach; ?>
-                <td class="px-4 py-2.5 text-center">
-                  <?php if ($rowAvg === null): ?>
-                    <span class="text-slate-300 text-xs">&mdash;</span>
-                  <?php else: ?>
-                    <span class="font-outfit font-black text-[13px]" style="color:<?= h(hm_tier_color((float)$rowAvg)) ?>"><?= h(number_format($rowAvg, 1)) ?></span>
-                  <?php endif; ?>
-                </td>
+                <td class="px-4 py-2.5 text-center"><?= $hm_row_overall($byCat) ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -1278,11 +1378,16 @@ var deescData = [
 var CAT_COLORS = <?= json_encode($cats,    JSON_UNESCAPED_UNICODE) ?>;
 var FLAG       = <?= json_encode($flagMap,  JSON_UNESCAPED_UNICODE) ?>;
 var CNAME      = <?= json_encode($cnameMap, JSON_UNESCAPED_UNICODE) ?>;
+var SCORE_SOURCE_LABEL = <?= json_encode([
+  'ANALYST'     => score_source_label('ANALYST'),
+  'AI'          => score_source_label('AI'),
+  'AI_REVIEWED' => score_source_label('AI_REVIEWED'),
+], JSON_HEX_TAG) ?>;
 
 /* ── Published post markers from DB ──────────────────────────────── */
 var postData = <?= json_encode($postMarkers, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 var postDataById = {};
-postData.forEach(function(d) { postDataById[d.id] = d; });
+postData.forEach(function(d) { if (!postDataById[d.id] || d.primary) postDataById[d.id] = d; });
 
 /* ── Per-country DB stats (reports, latest date, categories) ─────── */
 var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
@@ -1290,6 +1395,21 @@ var COUNTRY_STATS = <?= json_encode($countryStats, JSON_UNESCAPED_UNICODE | JSON
 /* ── Intensity taxonomy + country x category score matrix ────────── */
 var HM_TAXONOMY = <?= json_encode(array_map(fn($c) => ['name'=>$c['name'],'color'=>$c['color'],'elements'=>$c['elements']], heatmap_taxonomy()), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 var SCORE_MATRIX = <?= json_encode($scoreMatrixAvg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+
+/* Aggregation settings - mirror hm_aggregate() in includes/functions.php */
+var HM_AGG = <?= json_encode(['peak' => $hmAgg['peak_weight']], JSON_HEX_TAG) ?>;
+function hmAggregate(items) {            // items: [{score, w}]
+  var sw = 0, sws = 0, peak = 0, n = 0;
+  items.forEach(function(it) {
+    if (!(it.score >= 1 && it.score <= 10) || !(it.w > 0)) return;
+    sw += it.w; sws += it.w * it.score; if (it.score > peak) peak = it.score; n++;
+  });
+  if (!n) return null;
+  var s = (1 - HM_AGG.peak) * (sws / sw) + HM_AGG.peak * peak;
+  // Round half away from zero after clearing float noise, as PHP round() does,
+  // so a dot never disagrees with its matrix cell (5.95 -> 6.0, not 5.9)
+  return { score: Math.round(Number((s * 10).toFixed(8))) / 10, peak: peak, n: n, critical: peak >= 9 };
+}
 
 /* Active monitoring cycle: null when viewing all time */
 var ACTIVE_CYCLE = <?= json_encode($isAllTime ? null : $activeCycle['start'], JSON_HEX_TAG) ?>;
@@ -2053,6 +2173,7 @@ function applyFilters() {
   // country+category, so several categories in the same country stay legible.
   var visiblePosts     = 0;
   var visibleRealPosts = [];   // flat list of matching real posts, for the flashpoints table
+  var seenPostIds      = {};   // a cross-border report has one entry per country
   if (showReports && postData && postData.length) {
     var groups = {};                       // "Country||Category" -> [posts]
     postData.forEach(function(d) {
@@ -2073,11 +2194,14 @@ function applyFilters() {
       if (dateFrom && d.dateRaw && d.dateRaw < dateFrom) return;
       if (dateTo   && d.dateRaw && d.dateRaw > dateTo)   return;
       if (q) {
-        var haystack = d.title.toLowerCase() + ' ' + d.country.toLowerCase() + ' ' + (d.region || '').toLowerCase() + ' ' + d.category.toLowerCase() + ' ' + d.type.toLowerCase();
+        var haystack = d.title.toLowerCase() + ' ' + (d.countries || [d.country]).join(' ').toLowerCase() + ' ' + (d.region || '').toLowerCase() + ' ' + d.category.toLowerCase() + ' ' + d.type.toLowerCase();
         if (haystack.indexOf(q) === -1) return;
       }
-      visiblePosts++;
-      visibleRealPosts.push(d);
+      if (!seenPostIds[d.id]) {
+        seenPostIds[d.id] = true;
+        visiblePosts++;
+        visibleRealPosts.push(postDataById[d.id] || d);
+      }
       var key = d.country + '||' + d.category;
       (groups[key] = groups[key] || []).push(d);
     });
@@ -2096,15 +2220,18 @@ function applyFilters() {
       var items = groups[key];
       var col   = CAT_COLORS[cat] || '#94a3b8';
 
-      // Average this group's per-report scores for that category
-      var sVals = [];
+      // Combine this group's report scores exactly as the matrix does:
+      // corroboration x recency weights within a cycle, corroboration alone
+      // for all time, blended with the peak score (see /methodology)
+      var sItems = [];
       items.forEach(function(d) {
         var v = d.scores ? d.scores[cat] : null;
-        if (v !== null && v !== undefined && !isNaN(v)) sVals.push(+v);
+        if (v !== null && v !== undefined && !isNaN(v)) {
+          sItems.push({ score: +v, w: ACTIVE_CYCLE ? +d.wr : +d.wc });
+        }
       });
-      var gScore = sVals.length
-        ? Math.round((sVals.reduce(function(a,b){ return a+b; }, 0) / sVals.length) * 10) / 10
-        : null;
+      var gAgg   = hmAggregate(sItems);
+      var gScore = gAgg ? gAgg.score : null;
 
       // Anchor on the country centroid; fall back to the posts' own coords
       var base = CTRY_BY_NAME[ctry];
@@ -2434,7 +2561,11 @@ function openPostDetail(d) {
     + esc(d.title)+'</h3>'
     + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'
     + '<span style="background:#f1f5f9;color:#64748b;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
-    + '📍 '+esc(d.country)+(d.region ? ', '+esc(d.region) : '')+'</span>'
+    + '📍 '+esc((d.countries && d.countries.length ? d.countries[0] : d.country))+(d.region ? ', '+esc(d.region) : '')+'</span>'
+    + (d.countries && d.countries.length > 1
+       ? '<span style="background:#750B2512;color:#750B25;border:1px solid #750B2530;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
+         + 'Cross-border: also ' + esc(d.countries.slice(1).join(', ')) + '</span>'
+       : '')
     + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'38;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
     + esc(d.category)+'</span>'
     + '</div>'
@@ -2443,7 +2574,12 @@ function openPostDetail(d) {
          + '<p style="font-size:13px;color:#374151;line-height:1.7;margin:0">'+esc(d.desc)+(d.desc.length >= 150 ? '…' : '')+'</p>'
          + '</div>'
        : '')
-    + '<p style="font-size:11px;color:#94a3b8;margin:0 0 18px">Published '+esc(d.date)+'</p>'
+    + '<p style="font-size:11px;color:#94a3b8;margin:0 0 18px">Published '+esc(d.date)
+    + (d.avg !== null && d.avg !== undefined
+       ? ' &middot; ' + esc(SCORE_SOURCE_LABEL[d.scoreSource] || 'Scored') + ' &middot; '
+         + (+d.sources) + ' source' + (+d.sources === 1 ? '' : 's')
+       : '')
+    + '</p>'
     + '<a href="'+esc(d.url)+'"'
     + ' style="display:flex;align-items:center;gap:7px;text-decoration:none;'
     + 'padding:12px 16px;border-radius:12px;background:'+col+';color:#fff;'

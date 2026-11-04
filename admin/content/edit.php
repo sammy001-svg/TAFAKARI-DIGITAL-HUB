@@ -98,10 +98,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
         if (!in_array($type, $validTypes)) $type = 'ARTICLE';
         if ($type === 'POLICY_BRIEF') ensure_policy_brief_post_type();
 
+        // Cross-border attribution, corroboration and score provenance -
+        // written only where migrations/005 has been applied.
+        $sourceCount = source_count_from_post($_POST);
+        $sets = 'title=?,byline=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,intensityScores=?';
+        $vals = [$title,$byline,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson];
+
+        $extra = [
+            'additionalCountries' => additional_countries_from_post($_POST, $country),
+            'sourceCount'         => $sourceCount,
+        ];
+        // Provenance moves only when the scoring itself changes, so fixing a
+        // typo in the title does not reassign who scored the report.
+        $prov = score_provenance_after_edit($post, $intensityScores, $sourceCount);
+        if ($prov['changed']) {
+            $extra['scoreSource'] = $prov['source'];
+            $extra['scoredBy']    = $prov['source'] !== null ? $uid : null;
+            $extra['scoredAt']    = $prov['source'] !== null ? date('Y-m-d H:i:s') : null;
+        }
+        foreach ($extra as $col => $val) {
+            if (post_has_column($col)) { $sets .= ",$col=?"; $vals[] = $val; }
+        }
+        $vals[] = $id;
+
         try {
-            $pdo->prepare(
-                'UPDATE Post SET title=?,byline=?,type=?,description=?,content=?,thumbnailUrl=?,mediaUrl=?,country=?,region=?,issueCategory=?,intensityScores=?,updatedAt=NOW(3) WHERE id=?'
-            )->execute([$title,$byline,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$id]);
+            $pdo->prepare("UPDATE Post SET $sets,updatedAt=NOW(3) WHERE id=?")->execute($vals);
 
             $flag = 'saved';
             if ($andPublish) {
@@ -279,13 +300,19 @@ $adminPageSub   = h($post['title'] ?? '');
       <div class="space-y-5">
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Country *</label>
-          <select name="country" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
+          <select name="country" id="primary-country" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
             <option value="">Select country</option>
             <?php foreach (african_countries() as $c): ?>
               <option value="<?= h($c) ?>" <?= (($f['country'] ?? '') === $c) ? 'selected' : '' ?>><?= h($c) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
+        <?php
+          $selectedAddl = $_SERVER['REQUEST_METHOD'] === 'POST'
+              ? array_map('strval', (array)($_POST['additionalCountries'] ?? []))
+              : post_additional_countries($post['additionalCountries'] ?? null, (string)$post['country']);
+          additional_countries_field($selectedAddl, (string)($f['country'] ?? ''));
+        ?>
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Region *</label>
           <input type="text" name="region" required value="<?= h($f['region'] ?? '') ?>"
@@ -334,7 +361,24 @@ $adminPageSub   = h($post['title'] ?? '');
       $currentScores = $_SERVER['REQUEST_METHOD'] === 'POST'
           ? array_map('intval', (array)($_POST['intensity'] ?? []))
           : post_intensity_scores($post['intensityScores'] ?? null);
-      intensity_scoring_fields($currentScores);
+      $currentSources = $_SERVER['REQUEST_METHOD'] === 'POST'
+          ? source_count_from_post($_POST)
+          : max(1, (int)($post['sourceCount'] ?? 1));
+
+      // Who last set these scores, for the provenance line
+      $scorerName = null;
+      if (!empty($post['scoredBy'])) {
+          try {
+              $st = $pdo->prepare('SELECT name FROM User WHERE id = ? LIMIT 1');
+              $st->execute([$post['scoredBy']]);
+              $scorerName = $st->fetchColumn() ?: null;
+          } catch (\Throwable $e) {}
+      }
+      intensity_scoring_fields($currentScores, $currentSources, [
+          'source' => $post['scoreSource'] ?? null,
+          'by'     => $scorerName,
+          'at'     => $post['scoredAt'] ?? null,
+      ]);
     ?>
 
     <div class="flex gap-3 flex-wrap">

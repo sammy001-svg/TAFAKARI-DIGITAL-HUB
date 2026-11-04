@@ -17,7 +17,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawJson = trim($_POST[$action . '_json'] ?? '');
     $decoded = json_decode($rawJson, true);
 
-    if ($action === 'countries' && is_array($decoded)) {
+    if ($action === 'scoring') {
+        // Aggregation weights, documented publicly on /methodology
+        $pw = (float) str_replace(',', '.', (string)($_POST['peak_weight'] ?? '0.3'));
+        $hl = (int) ($_POST['recency_halflife'] ?? 14);
+        if ($pw < 0 || $pw > 1) {
+            $saveErr = 'Peak weight must be between 0 and 1.';
+        } elseif ($hl < 0 || $hl > 90) {
+            $saveErr = 'Recency half-life must be between 0 and 90 days.';
+        } else {
+            set_setting('heatmap_peak_weight', (string) round($pw, 2), $uid);
+            set_setting('heatmap_recency_halflife', (string) $hl, $uid);
+            $saved = 'scoring';
+        }
+
+    } elseif ($action === 'country_groups' && is_array($decoded)) {
+        // Monitoring regions: names must match the content-form country list,
+        // or reports tagged with that country would never reach the region.
+        $canon = [];
+        foreach (african_countries() as $c) $canon[mb_strtolower($c)] = $c;
+        $clean = []; $unknown = [];
+        foreach ($decoded as $g) {
+            $name = trim((string)($g['name'] ?? ''));
+            if ($name === '') continue;
+            $cs = [];
+            foreach ((array)($g['countries'] ?? []) as $c) {
+                $c = trim((string)$c);
+                if ($c === '') continue;
+                $k = mb_strtolower($c);
+                if (isset($canon[$k])) { if (!in_array($canon[$k], $cs, true)) $cs[] = $canon[$k]; }
+                else $unknown[] = $c;
+            }
+            if ($cs) $clean[] = ['name' => $name, 'countries' => $cs];
+        }
+        set_setting('heatmap_country_groups', json_encode($clean, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES), $uid);
+        $saved = 'country_groups';
+        if ($unknown) {
+            $saveErr = 'Saved, but these names were not recognised and were left out: '
+                     . implode(', ', array_unique($unknown))
+                     . '. Use the country names exactly as they appear in the content form.';
+        }
+
+    } elseif ($action === 'countries' && is_array($decoded)) {
         $clean = [];
         foreach ($decoded as $c) {
             $name = trim($c['name'] ?? '');
@@ -190,6 +231,15 @@ $defaultIssueMap = [
 ];
 
 // Load from DB with fallbacks
+$countryGroups        = hm_country_groups();
+$defaultCountryGroups = hm_default_country_groups();
+$aggSettings          = hm_agg_settings();
+if ($saved === 'scoring') {
+    // get_setting() caches per request: show what was just stored
+    $aggSettings = ['peak_weight' => round((float)$_POST['peak_weight'], 2), 'half_life' => (int)$_POST['recency_halflife']];
+}
+if ($saved === 'country_groups') $countryGroups = $clean;
+
 $countries  = json_decode(get_setting('heatmap_countries',  ''), true) ?: $defaultCountries;
 $regions    = json_decode(get_setting('heatmap_regions',    ''), true) ?: $defaultRegions;
 $categories = json_decode(get_setting('heatmap_categories', ''), true) ?: $defaultCategories;
@@ -223,7 +273,7 @@ $adminPageSub   = 'Manage countries, regions and categories for the conflict mon
 <?php if ($saved): ?>
 <div id="save-toast" style="position:fixed;bottom:24px;right:24px;z-index:9999;background:#0D0102;color:#fff;font-size:13px;font-weight:600;padding:12px 20px;border-radius:50px;border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 32px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px">
   <svg width="14" height="14" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-  <?= ['countries'=>'Countries saved','regions'=>'Regions saved','categories'=>'Categories saved','issue_map'=>'Issue mapping saved'][$saved] ?? 'Saved' ?>
+  <?= ['countries'=>'Countries saved','regions'=>'Regions saved','categories'=>'Categories saved','issue_map'=>'Issue mapping saved','country_groups'=>'Monitoring regions saved','scoring'=>'Scoring settings saved'][$saved] ?? 'Saved' ?>
 </div>
 <script>setTimeout(function(){ var t=document.getElementById('save-toast'); if(t){t.style.transition='opacity .4s';t.style.opacity='0';} }, 2500);</script>
 <?php endif; ?>
@@ -244,6 +294,8 @@ $adminPageSub   = 'Manage countries, regions and categories for the conflict mon
     'regions'    => 'Regions ('    . count($regions)    . ')',
     'categories' => 'Categories (' . count($categories) . ')',
     'issue_map'  => 'Issue Mapping (' . count($issueMap) . ')',
+    'country_groups' => 'Monitoring Regions (' . count($countryGroups) . ')',
+    'scoring'    => 'Scoring',
   ];
   foreach ($tabs as $id => $label): ?>
     <button id="tab-btn-<?= $id ?>" onclick="showTab('<?= $id ?>')"
@@ -429,6 +481,90 @@ $adminPageSub   = 'Manage countries, regions and categories for the conflict mon
   </div>
 </div>
 
+<!-- ── MONITORING REGIONS ──────────────────────────────────────── -->
+<div id="tab-country_groups" class="tab-panel hidden">
+  <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div>
+        <h2 class="font-outfit font-black text-base text-slate-900">Monitoring Regions</h2>
+        <p class="text-xs text-slate-400">Groups of countries shown as rows in the public Regional Overview. Regions may overlap.</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="resetTab('country_groups')" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors">Reset Defaults</button>
+        <button onclick="addRow('country_groups')" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white" style="background:#750B25">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+          Add Region
+        </button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm" style="border-collapse:collapse">
+        <thead style="background:#f8fafc">
+          <tr>
+            <th class="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400 w-64">Region Name</th>
+            <th class="text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400">Member Countries <span class="normal-case font-semibold text-slate-300">(one per line, as named in the content form)</span></th>
+            <th class="w-12"></th>
+          </tr>
+        </thead>
+        <tbody id="country_groups-tbody"></tbody>
+      </table>
+    </div>
+    <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+      <span class="text-xs text-slate-400">A report counts once per region, however many member countries it concerns.</span>
+      <form method="POST" onsubmit="return serializeTab('country_groups')">
+        <input type="hidden" name="action" value="country_groups">
+        <input type="hidden" name="country_groups_json" id="country_groups-json">
+        <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-opacity" style="background:#750B25">
+          Save Regions
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCORING ──────────────────────────────────────────────────── -->
+<div id="tab-scoring" class="tab-panel hidden">
+  <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h2 class="font-outfit font-black text-base text-slate-900">Scoring &amp; Aggregation</h2>
+      <p class="text-xs text-slate-400">How report scores combine into heat-map cells. Both values are published on
+        <a href="/methodology" target="_blank" rel="noopener" class="font-semibold underline" style="color:#750B25">/methodology</a>,
+        and a change applies to every cycle, past ones included.</p>
+    </div>
+    <form method="POST" class="px-6 py-5 space-y-6">
+      <input type="hidden" name="action" value="scoring">
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Peak weight (0 &ndash; 1)</label>
+          <input type="number" name="peak_weight" min="0" max="1" step="0.05" value="<?= h((string)$aggSettings['peak_weight']) ?>"
+                 class="w-32 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold focus:outline-none">
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Share of a cell's score taken from its single most severe report. 0 is a pure weighted average;
+            higher values stop one critical event from being averaged away by routine reports. Default 0.3.
+          </p>
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Recency half-life (days)</label>
+          <input type="number" name="recency_halflife" min="0" max="90" step="1" value="<?= (int)$aggSettings['half_life'] ?>"
+                 class="w-32 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold focus:outline-none">
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Within a cycle, a report this many days older than the cycle's end counts half as much
+            (never less than a quarter). 0 turns recency weighting off. Default 14.
+          </p>
+        </div>
+      </div>
+      <div class="rounded-2xl px-4 py-3 text-xs leading-relaxed" style="background:#F8F8F0;color:#475569">
+        <strong style="color:#750B25">Fixed by the methodology:</strong>
+        corroboration weight is 1 + 0.25 per extra independent source, up to 2&times; at five sources;
+        any report scored 9 or more always raises a critical flag on its cell.
+      </div>
+      <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-opacity" style="background:#750B25">
+        Save Scoring Settings
+      </button>
+    </form>
+  </div>
+</div>
+
 <!-- Hidden datalist for category autocomplete -->
 <datalist id="cat-names-dl"></datalist>
 
@@ -466,12 +602,14 @@ var DB = {
   regions:    <?= json_encode($regions,    JSON_UNESCAPED_UNICODE) ?>,
   categories: <?= json_encode($categories, JSON_UNESCAPED_UNICODE) ?>,
   issue_map:  <?= json_encode($issueMap,   JSON_UNESCAPED_UNICODE) ?>,
+  country_groups: <?= json_encode($countryGroups, JSON_UNESCAPED_UNICODE) ?>,
 };
 var DEFAULTS = {
   countries:  <?= json_encode($defaultCountries,  JSON_UNESCAPED_UNICODE) ?>,
   regions:    <?= json_encode($defaultRegions,    JSON_UNESCAPED_UNICODE) ?>,
   categories: <?= json_encode($defaultCategories, JSON_UNESCAPED_UNICODE) ?>,
   issue_map:  <?= json_encode($defaultIssueMap,   JSON_UNESCAPED_UNICODE) ?>,
+  country_groups: <?= json_encode($defaultCountryGroups, JSON_UNESCAPED_UNICODE) ?>,
 };
 
 function esc(s) {
@@ -568,7 +706,23 @@ function renderIssueMap() {
   }).join('');
 }
 
+function renderCountryGroups() {
+  var tbody = document.getElementById('country_groups-tbody');
+  tbody.innerHTML = DB.country_groups.map(function(g, i) {
+    return '<tr>'
+      + '<td class="px-4 py-2 align-top">' + ci(g.name, 'e.g. East Africa') + '</td>'
+      + '<td class="px-4 py-2 align-top">'
+      +   '<textarea class="grp-countries cell-input" rows="4" placeholder="One country per line"'
+      +   ' style="width:100%;resize:vertical;line-height:1.5;font-family:inherit">'
+      +   esc((g.countries || []).join('\n')) + '</textarea>'
+      + '</td>'
+      + '<td class="px-4 py-2 align-top">' + delBtn('country_groups', i) + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
 function renderTab(tab) {
+  if (tab === 'country_groups') renderCountryGroups();
   if (tab === 'countries')  renderCountries();
   if (tab === 'regions')    renderRegions();
   if (tab === 'categories') { renderCategories(); renderIssueMap(); }
@@ -600,6 +754,7 @@ var emptyRow = {
   regions:   {name:'',lat:0,lng:0},
   categories:{name:'',color:'#94a3b8',elements:[]},
   issue_map: {from:'',to:''},
+  country_groups: {name:'',countries:[]},
 };
 function addRow(tab) {
   DB[tab].push(JSON.parse(JSON.stringify(emptyRow[tab])));
@@ -641,6 +796,12 @@ function serializeTab(tab) {
       });
     } else if (tab === 'issue_map') {
       arr.push({from:inputs[0].value.trim(), to:inputs[1].value.trim()});
+    } else if (tab === 'country_groups') {
+      var gta = tr.querySelector('textarea.grp-countries');
+      arr.push({
+        name: inputs[0].value.trim(),
+        countries: gta ? gta.value.split('\n').map(function(x){ return x.trim(); }).filter(function(x){ return x !== ''; }) : []
+      });
     }
   });
   document.getElementById(tab + '-json').value = JSON.stringify(arr);
@@ -653,7 +814,8 @@ document.addEventListener('DOMContentLoaded', function() {
   renderRegions();
   renderCategories();
   renderIssueMap();
-  showTab('countries');
+  renderCountryGroups();
+  showTab(<?= json_encode(in_array($saved ?: ($_POST['action'] ?? ''), ['countries','regions','categories','issue_map','country_groups','scoring'], true) ? ($saved ?: $_POST['action']) : 'countries') ?>);
 });
 </script>
 

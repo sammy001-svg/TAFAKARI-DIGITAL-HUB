@@ -10,8 +10,15 @@
  * post_intensity_scores() / heatmap_category_scores().
  */
 
-function intensity_scoring_fields(array $current = []): void {
+/**
+ * @param array    $current     element => score
+ * @param int      $sourceCount independent corroborating sources (>= 1)
+ * @param array    $provenance  ['source' => ?string, 'by' => ?string name, 'at' => ?string]
+ *                              from the stored post; [] when creating
+ */
+function intensity_scoring_fields(array $current = [], int $sourceCount = 1, array $provenance = []): void {
     $tax = heatmap_taxonomy();
+    $sourceCount = max(1, min(99, $sourceCount));
     ?>
     <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
       <div class="flex items-start justify-between gap-4 mb-2">
@@ -22,8 +29,31 @@ function intensity_scoring_fields(array $current = []): void {
       <p class="text-xs text-slate-400 mb-6 leading-relaxed">
         Score each element from 1 (minimal) to 10 (severe / critical). Leave an element at
         &ldquo;&mdash;&rdquo; if it was not assessed &mdash; it is excluded from the average.
-        Each category cell on the heat map shows the average of its scored elements.
+        Each category cell on the heat map combines these scores across reports, weighted by
+        corroboration and recency &mdash; see <a href="/methodology" target="_blank" rel="noopener"
+        class="font-semibold underline" style="color:#750B25">the published methodology</a>.
       </p>
+
+      <?php if (!empty($provenance['source']) || !empty($provenance['at'])): ?>
+        <p class="text-[11px] text-slate-500 mb-5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
+          <span class="font-bold"><?= h(score_source_label($provenance['source'] ?? null)) ?></span>
+          <?php if (!empty($provenance['by'])): ?> &middot; last set by <?= h($provenance['by']) ?><?php endif; ?>
+          <?php if (!empty($provenance['at'])): ?> &middot; <?= h(format_date($provenance['at'], 'j M Y, H:i')) ?><?php endif; ?>
+        </p>
+      <?php endif; ?>
+
+      <div class="flex flex-wrap items-center gap-3 mb-6 px-4 py-3 rounded-2xl border border-slate-200">
+        <label for="int-sources" class="text-xs font-bold text-slate-700 flex-1 min-w-[220px] leading-snug">
+          Independent corroborating sources
+          <span class="block font-normal text-slate-400 mt-0.5">
+            How many separate, independent sources report this. More corroboration gives the
+            report more weight (up to double, at 5 or more).
+          </span>
+        </label>
+        <input type="number" id="int-sources" name="sourceCount" min="1" max="99" step="1"
+               value="<?= (int)$sourceCount ?>"
+               class="w-24 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-center focus:outline-none">
+      </div>
 
       <div class="space-y-3">
         <?php foreach ($tax as $cat):
@@ -162,6 +192,100 @@ function intensity_scoring_scripts(): void {
       document.querySelectorAll('.int-cat').forEach(intRecalc);
       intOverall();
     });
+    </script>
+    <?php
+}
+
+/** Corroborating-source count from a form submission, clamped to 1..99. */
+function source_count_from_post(array $src): int {
+    $n = (int)($src['sourceCount'] ?? 1);
+    return max(1, min(99, $n));
+}
+
+/**
+ * "Also concerns" multi-select for cross-border items.
+ *
+ * Rendered beside the primary Country select, whose element id must be
+ * `primary-country` so the primary can be hidden from this list.
+ *
+ * @param string[] $selected countries currently attributed beyond the primary
+ */
+function additional_countries_field(array $selected, string $primary = ''): void {
+    ?>
+    <div>
+      <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+        Also concerns <span class="normal-case font-semibold tracking-normal text-slate-300">(optional, cross-border items)</span>
+      </label>
+      <div class="relative" id="ac-ms-wrap">
+        <button type="button" onclick="acMsToggle()"
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-left flex items-center justify-between focus:outline-none">
+          <span id="ac-ms-label" class="text-slate-400">No other countries</span>
+          <svg width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="ac-ms-dropdown" class="hidden absolute z-50 mt-1 w-full bg-white rounded-xl border border-slate-200 shadow-lg">
+          <div class="p-2 border-b border-slate-100">
+            <input type="text" placeholder="Search countries…" oninput="acMsSearch(this.value)"
+                   class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
+          </div>
+          <div class="overflow-y-auto max-h-52 p-1.5">
+            <?php foreach (african_countries() as $c): ?>
+              <label class="ac-ms-opt flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                     data-name="<?= h($c) ?>"<?= $c === $primary ? ' style="display:none"' : '' ?>>
+                <input type="checkbox" name="additionalCountries[]" value="<?= h($c) ?>"
+                       <?= (in_array($c, $selected, true) && $c !== $primary) ? 'checked' : '' ?>
+                       onchange="acMsUpdate()" class="w-4 h-4 rounded" style="accent-color:#750B25">
+                <span class="text-sm text-slate-700"><?= h($c) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+        For items about more than one country, such as cross-border armed groups, displacement or a
+        regional peace initiative. The item counts towards every country selected, and once towards
+        each monitoring region.
+      </p>
+    </div>
+    <script>
+    (function () {
+      function q(s) { return document.querySelector(s); }
+      window.acMsToggle = function () { q('#ac-ms-dropdown').classList.toggle('hidden'); };
+      window.acMsSearch = function (v) {
+        v = v.toLowerCase();
+        document.querySelectorAll('.ac-ms-opt').forEach(function (o) {
+          if (o.dataset.hiddenPrimary === '1') return;
+          o.style.display = o.dataset.name.toLowerCase().indexOf(v) === -1 ? 'none' : '';
+        });
+      };
+      window.acMsUpdate = function () {
+        var picked = [];
+        document.querySelectorAll('.ac-ms-opt input:checked').forEach(function (i) { picked.push(i.value); });
+        var l = q('#ac-ms-label');
+        l.textContent = picked.length ? picked.join(', ') : 'No other countries';
+        l.className = picked.length ? 'text-slate-800 truncate' : 'text-slate-400';
+      };
+      // The primary country can never also be an additional one
+      window.acMsSyncPrimary = function () {
+        var p = q('#primary-country');
+        var primary = p ? p.value : '';
+        document.querySelectorAll('.ac-ms-opt').forEach(function (o) {
+          var isP = o.dataset.name === primary;
+          o.dataset.hiddenPrimary = isP ? '1' : '';
+          o.style.display = isP ? 'none' : '';
+          if (isP) o.querySelector('input').checked = false;
+        });
+        acMsUpdate();
+      };
+      document.addEventListener('click', function (e) {
+        var w = q('#ac-ms-wrap');
+        if (w && !w.contains(e.target)) q('#ac-ms-dropdown').classList.add('hidden');
+      });
+      document.addEventListener('DOMContentLoaded', function () {
+        var p = q('#primary-country');
+        if (p) p.addEventListener('change', acMsSyncPrimary);
+        acMsSyncPrimary();
+      });
+    })();
     </script>
     <?php
 }

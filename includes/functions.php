@@ -289,9 +289,13 @@ function byline_label(string $type): string {
  * the table again. The outcome is now recorded in SiteSetting so the DDL runs
  * once and never again.
  *
+ * The guard key is versioned: v2 added the multi-country and score-provenance
+ * columns (migrations/005), so installs that recorded v1 get exactly one more
+ * attempt for the new columns.
+ *
  * To retry after fixing the underlying cause, delete the
- * `schema_post_columns_v1` row from SiteSetting, or just apply
- * migrations/003 and migrations/004 by hand.
+ * `schema_post_columns_v2` row from SiteSetting, or just apply
+ * migrations/003, 004 and 005 by hand.
  */
 function ensure_post_columns(): void {
     static $checked = false;
@@ -300,7 +304,7 @@ function ensure_post_columns(): void {
 
     // Already attempted in a previous request (successfully or not) - do not
     // touch DDL again.
-    if (get_setting('schema_post_columns_v1', '') !== '') return;
+    if (get_setting('schema_post_columns_v2', '') !== '') return;
 
     try {
         $pdo  = db();
@@ -309,27 +313,61 @@ function ensure_post_columns(): void {
         foreach ($rows as $r) $have[$r['Field']] = true;
 
         $missing = [];
-        if (!isset($have['byline']))          $missing[] = 'ADD COLUMN `byline` VARCHAR(255) NULL';
-        if (!isset($have['intensityScores'])) $missing[] = 'ADD COLUMN `intensityScores` TEXT NULL';
+        foreach (post_optional_columns() as $col => $ddl) {
+            if (!isset($have[$col])) $missing[] = 'ADD COLUMN ' . $ddl;
+        }
 
         if (!$missing) {
-            set_setting('schema_post_columns_v1', 'ok');   // nothing to do
+            set_setting('schema_post_columns_v2', 'ok');   // nothing to do
             return;
         }
 
         // Record the attempt BEFORE running it: if this request dies mid-ALTER,
         // the next one must not start another table rebuild on top of it.
-        set_setting('schema_post_columns_v1', 'attempted');
+        set_setting('schema_post_columns_v2', 'attempted');
 
         // One statement = one table rebuild, rather than one per column
         $pdo->exec('ALTER TABLE `Post` ' . implode(', ', $missing));
 
-        set_setting('schema_post_columns_v1', 'ok');
+        set_setting('schema_post_columns_v2', 'ok');
     } catch (Throwable $e) {
         error_log('[ensure_post_columns] schema update failed: ' . $e->getMessage()
-                . ' - apply migrations/003 and migrations/004 manually.');
-        set_setting('schema_post_columns_v1', 'failed');
+                . ' - apply migrations/003, 004 and 005 manually.');
+        set_setting('schema_post_columns_v2', 'failed');
     }
+}
+
+/**
+ * Post columns added after the original schema, with their DDL.
+ * Single source of truth for ensure_post_columns() and migrations/005.
+ */
+function post_optional_columns(): array {
+    return [
+        'byline'              => '`byline` VARCHAR(255) NULL',
+        'intensityScores'     => '`intensityScores` TEXT NULL',
+        'additionalCountries' => '`additionalCountries` TEXT NULL',
+        'sourceCount'         => '`sourceCount` SMALLINT NULL',
+        'scoreSource'         => '`scoreSource` VARCHAR(16) NULL',
+        'scoredBy'            => '`scoredBy` VARCHAR(191) NULL',
+        'scoredAt'            => '`scoredAt` DATETIME(3) NULL',
+    ];
+}
+
+/**
+ * True when the Post table has $col. Cached per request, so pages can read
+ * newer columns without breaking on a database that has not been migrated.
+ */
+function post_has_column(string $col): bool {
+    static $cols = null;
+    if ($cols === null) {
+        $cols = [];
+        try {
+            foreach (db()->query('SHOW COLUMNS FROM `Post`')->fetchAll() as $r) {
+                $cols[$r['Field']] = true;
+            }
+        } catch (Throwable $e) {}
+    }
+    return isset($cols[$col]);
 }
 
 // ── JSON API helpers ─────────────────────────────────────────────
@@ -689,6 +727,235 @@ function post_intensity_scores(?string $json): array {
         if ($el !== '' && $v >= 1 && $v <= 10) $out[$el] = $v;
     }
     return $out;
+}
+
+// ── Multi-country attribution ────────────────────────────────────
+//
+// Post.country stays the PRIMARY country (required, and what every listing,
+// search and detail page already reads). Cross-border items also carry
+// Post.additionalCountries, a JSON array of further countries. The heat map
+// attributes such an item to every country it names, so transnational
+// developments are not understated; regional aggregates count it once.
+
+/** Decode Post.additionalCountries into a clean list (primary excluded). */
+function post_additional_countries(?string $json, string $primary = ''): array {
+    if ($json === null || trim($json) === '') return [];
+    $d = json_decode($json, true);
+    if (!is_array($d)) return [];
+    $out = [];
+    foreach ($d as $c) {
+        $c = trim((string)$c);
+        if ($c !== '' && $c !== $primary && !in_array($c, $out, true)) $out[] = $c;
+    }
+    return $out;
+}
+
+/** Every country a post is attributed to, primary first. */
+function post_countries(array $post): array {
+    $primary = trim((string)($post['country'] ?? ''));
+    $all     = $primary !== '' ? [$primary] : [];
+    foreach (post_additional_countries($post['additionalCountries'] ?? null, $primary) as $c) {
+        $all[] = $c;
+    }
+    return $all;
+}
+
+/**
+ * Read the additional-countries multi-select from a form submission.
+ * Only known country names are kept, and the primary is never repeated.
+ *
+ * @return string|null JSON for Post.additionalCountries, or null when none
+ */
+function additional_countries_from_post(array $src, string $primary): ?string {
+    $valid = african_countries();
+    $out   = [];
+    foreach ((array)($src['additionalCountries'] ?? []) as $c) {
+        $c = trim((string)$c);
+        if ($c !== '' && $c !== $primary && in_array($c, $valid, true) && !in_array($c, $out, true)) {
+            $out[] = $c;
+        }
+    }
+    return $out ? json_encode($out, JSON_UNESCAPED_UNICODE) : null;
+}
+
+// ── Monitoring regions (groups of countries) ─────────────────────
+//
+// Distinct from the `heatmap_regions` setting, which holds sub-national
+// places used to position map pins. A monitoring region is a named group of
+// countries ("East Africa") that gets its own aggregate intensity row.
+// Groups may overlap: Kenya can sit in both East Africa and the Great Lakes.
+
+/** Built-in groups, used until Admin > Heatmap Config > Monitoring Regions is saved. */
+function hm_default_country_groups(): array {
+    return [
+        ['name' => 'East Africa',    'countries' => ['Burundi','DR Congo','Kenya','Rwanda','Somalia','South Sudan','Tanzania','Uganda']],
+        ['name' => 'Horn of Africa', 'countries' => ['Djibouti','Eritrea','Ethiopia','Somalia','South Sudan','Sudan']],
+        ['name' => 'Great Lakes',    'countries' => ['Burundi','DR Congo','Kenya','Rwanda','Tanzania','Uganda']],
+        ['name' => 'Sahel',          'countries' => ['Burkina Faso','Chad','Mali','Mauritania','Niger']],
+    ];
+}
+
+/** Configured monitoring regions: list of ['name' => string, 'countries' => string[]]. */
+function hm_country_groups(): array {
+    static $cached = null;
+    if ($cached !== null) return $cached;
+
+    $out = [];
+    try {
+        $rows = json_decode(get_setting('heatmap_country_groups', ''), true);
+        if (is_array($rows)) {
+            foreach ($rows as $r) {
+                if (!is_array($r)) continue;
+                $name = trim((string)($r['name'] ?? ''));
+                $cs   = array_values(array_unique(array_filter(array_map(
+                    fn($c) => trim((string)$c), (array)($r['countries'] ?? [])
+                ))));
+                if ($name !== '' && $cs) $out[] = ['name' => $name, 'countries' => $cs];
+            }
+        }
+    } catch (Throwable $e) {}
+
+    // An explicitly saved empty list means "no regional rows": only fall back
+    // to the defaults when nothing has ever been saved.
+    if (!$out && get_setting('heatmap_country_groups', '') === '') $out = hm_default_country_groups();
+
+    $cached = $out;
+    return $cached;
+}
+
+// ── Score provenance ─────────────────────────────────────────────
+//
+// Who produced a post's intensity scores. Kept alongside the scores so the
+// published methodology can state, for every number, how it was arrived at.
+//   ANALYST      scored by a CRTP analyst in the admin forms
+//   AI           proposed by the Tafakari Agent, not yet changed by an analyst
+//   AI_REVIEWED  proposed by the agent, then adjusted by an analyst
+
+function score_source_label(?string $src): string {
+    return match ($src) {
+        'ANALYST'     => 'Analyst-scored',
+        'AI'          => 'AI-proposed',
+        'AI_REVIEWED' => 'AI-proposed, analyst-reviewed',
+        default       => 'Scored (source not recorded)',
+    };
+}
+
+/**
+ * Provenance to store after an analyst saves a post's scoring.
+ *
+ * @param  array $prev   the stored Post row ([] when creating)
+ * @param  array $scores the newly submitted element => score map
+ * @param  int   $sources the newly submitted corroborating-source count
+ * @return array{changed:bool,source:?string} changed=false means leave the
+ *         stored provenance as it is
+ */
+function score_provenance_after_edit(array $prev, array $scores, int $sources): array {
+    $old = post_intensity_scores($prev['intensityScores'] ?? null);
+    ksort($old);
+    ksort($scores);
+    $oldSources = max(1, (int)($prev['sourceCount'] ?? 1));
+
+    if ($old === $scores && $oldSources === $sources) {
+        return ['changed' => false, 'source' => $prev['scoreSource'] ?? null];
+    }
+    if (!$scores) return ['changed' => true, 'source' => null];   // scoring cleared
+
+    $was = $prev['scoreSource'] ?? null;
+    $src = ($was === 'AI' || $was === 'AI_REVIEWED') ? 'AI_REVIEWED' : 'ANALYST';
+    return ['changed' => true, 'source' => $src];
+}
+
+// ── Intensity aggregation ────────────────────────────────────────
+//
+// How individual report scores become one heat-map cell (a country, or a
+// monitoring region, x category x cycle). Documented for end users on
+// /methodology, which reads the same settings, so the two cannot drift.
+//
+//  1. Report score: the average of the report's scored elements in that
+//     category (1-10), as before.
+//  2. Report weight = corroboration x recency
+//       corroboration = 1 + 0.25 x (independent sources - 1), capped at 2.0
+//                       (1 source = 1.0, 5 or more = 2.0)
+//       recency       = 0.5 ^ (days before the cycle's end / half-life),
+//                       never below 0.25. Off for the all-time view, which
+//                       is an overall record rather than a current reading.
+//  3. Weighted mean M = sum(weight x score) / sum(weight)
+//  4. Cell score = (1 - p) x M + p x Peak, where Peak is the highest single
+//     report score and p is the peak weight. Without this, one critical event
+//     reported once is diluted by several routine reports.
+//  5. Critical flag: raised whenever any report in the cell scores 9 or
+//     more, whatever the blended score, so critical events stay visible.
+
+/** Aggregation settings, clamped to safe ranges. */
+function hm_agg_settings(): array {
+    $p = (float) get_setting('heatmap_peak_weight', '0.3');
+    if ($p < 0) $p = 0.0;
+    if ($p > 1) $p = 1.0;
+
+    $hl = (int) get_setting('heatmap_recency_halflife', '14');
+    if ($hl < 0)  $hl = 0;      // 0 = recency weighting off
+    if ($hl > 90) $hl = 90;
+
+    return ['peak_weight' => round($p, 2), 'half_life' => $hl];
+}
+
+/** Corroboration factor for a report backed by $sources independent sources. */
+function hm_corroboration_factor(int $sources): float {
+    $s = max(1, $sources);
+    return 1.0 + 0.25 * min($s - 1, 4);
+}
+
+/**
+ * Recency factor for a report dated $date, read at $refDate (Y-m-d).
+ * Returns 1.0 when recency weighting is off or $refDate is null.
+ */
+function hm_recency_factor(string $date, ?string $refDate): float {
+    $hl = hm_agg_settings()['half_life'];
+    if ($hl <= 0 || $refDate === null) return 1.0;
+    $age = (strtotime($refDate) - strtotime(substr($date, 0, 10))) / 86400;
+    if ($age <= 0) return 1.0;
+    return max(0.25, pow(0.5, $age / $hl));
+}
+
+/**
+ * The date recency is measured from for a cycle: its last day, or today while
+ * the cycle is still running.
+ */
+function hm_cycle_ref_date(array $cycle): string {
+    $today = date('Y-m-d');
+    return $cycle['end'] < $today ? $cycle['end'] : $today;
+}
+
+/**
+ * Combine report-level scores into one cell.
+ *
+ * @param  array $items list of ['score' => float, 'w' => float]
+ * @return array{score:float,mean:float,peak:float,n:int,critical:bool}|null
+ */
+function hm_aggregate(array $items): ?array {
+    $sw = 0.0; $sws = 0.0; $peak = 0.0; $n = 0;
+    foreach ($items as $it) {
+        $s = (float)$it['score'];
+        $w = max(0.0, (float)$it['w']);
+        if ($s < 1 || $s > 10 || $w <= 0) continue;
+        $sw  += $w;
+        $sws += $w * $s;
+        if ($s > $peak) $peak = $s;
+        $n++;
+    }
+    if ($n === 0) return null;
+
+    $mean  = $sws / $sw;
+    $p     = hm_agg_settings()['peak_weight'];
+    $score = (1 - $p) * $mean + $p * $peak;
+
+    return [
+        'score'    => round($score, 1),
+        'mean'     => round($mean, 1),
+        'peak'     => round($peak, 1),
+        'n'        => $n,
+        'critical' => $peak >= 9,
+    ];
 }
 
 // ── Status / type badge HTML ─────────────────────────────────────

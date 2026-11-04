@@ -77,11 +77,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $intensityJson = $intensityScores ? json_encode($intensityScores, JSON_UNESCAPED_UNICODE) : null;
     $id     = generate_id();
         $status = ($isSuper && isset($_POST['_publish'])) ? 'PUBLISHED' : 'DRAFT';
+
+        // Cross-border attribution, corroboration and score provenance.
+        // Written only where migrations/005 has been applied, so an
+        // un-migrated database still saves the rest of the item.
+        $cols = ['id','title','byline','type','description','content','thumbnailUrl','mediaUrl','country','region','issueCategory','intensityScores','status','authorId'];
+        $vals = [$id,$title,$byline,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$status,$uid];
+        $extra = [
+            'additionalCountries' => additional_countries_from_post($_POST, $country),
+            'sourceCount'         => source_count_from_post($_POST),
+            'scoreSource'         => $intensityScores ? 'ANALYST' : null,
+            'scoredBy'            => $intensityScores ? $uid : null,
+            'scoredAt'            => $intensityScores ? date('Y-m-d H:i:s') : null,
+        ];
+        foreach ($extra as $col => $val) {
+            if (post_has_column($col)) { $cols[] = $col; $vals[] = $val; }
+        }
         try {
             db()->prepare(
-                'INSERT INTO Post (id,title,byline,type,description,content,thumbnailUrl,mediaUrl,country,region,issueCategory,intensityScores,status,authorId,viewCount,downloadCount,createdAt,updatedAt)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,NOW(3),NOW(3))'
-            )->execute([$id,$title,$byline,$type,$description,$content,$thumbnailUrl,$mediaUrl,$country,$region,$issueCategory,$intensityJson,$status,$uid]);
+                'INSERT INTO Post (' . implode(',', $cols) . ',viewCount,downloadCount,createdAt,updatedAt)
+                 VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ',0,0,NOW(3),NOW(3))'
+            )->execute($vals);
 
             $redirect = match($type) {
                 'ARTICLE'      => '/admin/content/articles',
@@ -370,13 +386,17 @@ $adminPageSub   = $cfg['sub'];
       <div class="space-y-5">
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Country *</label>
-          <select name="country" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
+          <select name="country" id="primary-country" required class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none">
             <option value="">Select country</option>
             <?php foreach (african_countries() as $c): ?>
               <option value="<?= h($c) ?>" <?= (($_POST['country'] ?? '') === $c) ? 'selected' : '' ?>><?= h($c) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
+        <?php additional_countries_field(
+            array_map('strval', (array)($_POST['additionalCountries'] ?? [])),
+            (string)($_POST['country'] ?? '')
+        ); ?>
         <div>
           <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Region / County / State *</label>
           <input type="text" name="region" required value="<?= h($_POST['region'] ?? '') ?>"
@@ -416,7 +436,10 @@ $adminPageSub   = $cfg['sub'];
     </div>
 
     <!-- Intensity Assessment -->
-    <?php intensity_scoring_fields(array_map('intval', (array)($_POST['intensity'] ?? []))); ?>
+    <?php intensity_scoring_fields(
+        array_map('intval', (array)($_POST['intensity'] ?? [])),
+        source_count_from_post($_POST)
+    ); ?>
 
     <div class="flex gap-4 pb-8">
       <?php if ($isSuper): ?>
