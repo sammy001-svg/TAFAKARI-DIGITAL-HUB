@@ -4,7 +4,7 @@
   var TRANSLATIONS = {
     en: {
       /* Navbar */
-      home: 'Home', aboutUs: 'About Us', ourPurpose: 'Our Purpose', ourMission: 'Our Mission',
+      home: 'Home', aboutUs: 'About Us', ourPurpose: 'Our Purpose', ourMission: 'Our Mission', ourPartners: 'Our Partners',
       whatWeDo: 'What We Do', coverageArea: 'Coverage Area', heatmap: 'Heatmap', gallery: 'Gallery',
       news: 'News', podcasts: 'Podcasts', videos: 'Videos', documents: 'Documents',
       policyBriefs: 'Policy Briefs', more: 'More',
@@ -357,7 +357,7 @@
       countryKenya: 'Kenya', countryEthiopia: 'Ethiopia', countryDrc: 'DR Congo',
     },
     sw: {
-      home: 'Nyumbani', aboutUs: 'Kuhusu Sisi', ourPurpose: 'Kusudi Letu', ourMission: 'Dhamira Yetu',
+      home: 'Nyumbani', aboutUs: 'Kuhusu Sisi', ourPurpose: 'Kusudi Letu', ourMission: 'Dhamira Yetu', ourPartners: 'Washirika Wetu',
       whatWeDo: 'Tunachofanya', coverageArea: 'Eneo la Huduma', heatmap: 'Ramani ya Joto', gallery: 'Picha',
       news: 'Habari', podcasts: 'Podikasti', videos: 'Video', documents: 'Nyaraka',
       policyBriefs: 'Muhtasari wa Sera', more: 'Zaidi',
@@ -698,7 +698,7 @@
       countryKenya: 'Kenya', countryEthiopia: 'Ethiopia', countryDrc: 'DRC',
     },
     fr: {
-      home: 'Accueil', aboutUs: 'À propos', ourPurpose: 'Notre objectif', ourMission: 'Notre mission',
+      home: 'Accueil', aboutUs: 'À propos', ourPurpose: 'Notre objectif', ourMission: 'Notre mission', ourPartners: 'Nos partenaires',
       whatWeDo: 'Ce que nous faisons', coverageArea: 'Zone de couverture', heatmap: 'Carte thermique', gallery: 'Galerie',
       news: 'Actualités', podcasts: 'Podcasts', videos: 'Vidéos', documents: 'Documents',
       policyBriefs: 'Notes Politiques', more: 'Plus',

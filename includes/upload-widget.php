@@ -24,7 +24,7 @@ function uw_img(string $id, string $fieldName, string $label, string $hint = '',
     $reqAttr = $req ? ' data-uw-req="' . $eid . '"' : '';
     ?>
 <?php if ($label !== ''): ?><div>
-  <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px"><?= $elbl ?></label>
+  <label class="uw-label" style="display:block;font:700 13px/1.3 Inter,sans-serif;color:#18120F;margin-bottom:8px"><?= $elbl ?></label>
 <?php endif; ?>
   <div style="position:relative">
     <input type="text" name="<?= $efn ?>" id="<?= $valId ?>" value="<?= $ecur ?>"<?= $reqAttr ?>
@@ -135,7 +135,7 @@ function uw_media(string $id, string $fieldName, string $label, string $fileType
     $existingName   = $isUploadedPath ? htmlspecialchars(basename($current), ENT_QUOTES) : '';
     ?>
 <?php if ($label !== ''): ?><div>
-  <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px"><?= $elbl ?></label>
+  <label class="uw-label" style="display:block;font:700 13px/1.3 Inter,sans-serif;color:#18120F;margin-bottom:8px"><?= $elbl ?></label>
 <?php endif; ?>
   <div style="position:relative">
     <input type="text" name="<?= $efn ?>" id="<?= $valId ?>" value="<?= $ecur ?>"<?= $reqAttr ?>

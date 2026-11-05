@@ -38,6 +38,7 @@ RewriteRule ^sitemap\.xml$                sitemap.php          [L]
 
 # ── Public pages ─────────────────────────────────────────────────
 RewriteRule ^about/?$                     about.php            [L]
+RewriteRule ^partners/?$                  partners.php         [L]
 RewriteRule ^search/?$                    search.php           [L]
 RewriteRule ^contact/?$                   contact.php          [L]
 RewriteRule ^news/([^/]+)/?$              news-detail.php?id=$1 [L,QSA]

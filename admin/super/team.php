@@ -67,7 +67,7 @@ $adminPageTitle = 'Team';
 $adminPageSub   = count($members) . ' member' . (count($members) !== 1 ? 's' : '') . ' · shown on the About page';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -75,6 +75,7 @@ $adminPageSub   = count($members) . ' member' . (count($members) !== 1 ? 's' : '
 <?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
+<?php admin_page_head('Super authority'); ?>
 
 <?php if ($saved): ?>
   <div id="save-toast"

@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 require_once dirname(__DIR__, 2) . '/includes/intensity-scoring.php';
+require_once dirname(__DIR__, 2) . '/includes/editor-panel.php';
 
 ensure_post_columns();   // self-healing: byline + intensityScores
 
@@ -228,7 +229,7 @@ $adminPageTitle = $cfg['heading'];
 $adminPageSub   = $cfg['sub'];
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -250,7 +251,8 @@ $adminPageSub   = $cfg['sub'];
     <div class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm font-medium"><?= h($error) ?></div>
   <?php endif; ?>
 
-  <form method="POST" id="content-form" class="max-w-3xl space-y-6" onsubmit="return uwCheckRequired(this)">
+  <form method="POST" id="content-form" class="tk-editor" onsubmit="return uwCheckRequired(this)">
+  <div class="tk-editor__main">
 
     <!-- Step 1: Type + Basic Info -->
     <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
@@ -441,16 +443,19 @@ $adminPageSub   = $cfg['sub'];
         source_count_from_post($_POST)
     ); ?>
 
-    <div class="flex gap-4 pb-8">
+  </div><!-- /.tk-editor__main -->
+  <?php
+    ob_start(); ?>
       <?php if ($isSuper): ?>
-        <button type="submit" name="_publish" value="1"
-                class="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
-                style="background:#16a34a">Publish Now</button>
+        <button type="submit" name="_publish" value="1" class="tk-btn tk-btn--publish">Publish now</button>
       <?php endif; ?>
-      <button type="submit" class="btn-primary" id="submit-btn" style="padding:.7rem 1.75rem">Save as Draft</button>
-      <a href="<?= h($cfg['backHref']) ?>" id="cancel-link"
-         class="inline-flex items-center px-6 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>
-    </div>
+      <button type="submit" class="tk-btn tk-btn--primary" id="submit-btn">Save as Draft</button>
+      <a href="<?= h($cfg['backHref']) ?>" id="cancel-link" class="tk-btn tk-btn--outline">Cancel</a>
+  <?php
+    editor_panel('New content', $isSuper
+        ? 'Save it as a draft, or publish it straight away.'
+        : 'It is saved as a draft. Submit it from the editor when it is ready for approval.', ob_get_clean());
+  ?>
   </form>
 
 </main>

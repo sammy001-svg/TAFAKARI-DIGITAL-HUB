@@ -93,7 +93,7 @@ $adminPageSub   = 'Manage your account information and security settings.';
   }
 </style>
 
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__) . '/includes/admin-sidebar.php'; ?>
 
@@ -101,6 +101,7 @@ $adminPageSub   = 'Manage your account information and security settings.';
 <?php include dirname(__DIR__) . '/includes/admin-topbar.php'; ?>
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
+<?php admin_page_head('Workspace'); ?>
 <div class="max-w-5xl">
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">

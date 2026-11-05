@@ -82,7 +82,7 @@ $adminPageTitle = 'Analysis Report';
 $adminPageSub   = report_kind_label($report['kind']);
 ?>
 <?php include dirname(__DIR__) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__) . '/includes/admin-sidebar.php'; ?>
 <div class="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -92,7 +92,7 @@ $adminPageSub   = report_kind_label($report['kind']);
 <a href="/admin/reports" class="text-xs font-bold text-slate-500 hover:underline">&larr; All reports</a>
 
 <?php if ($flash): ?>
-  <div class="mt-4 px-4 py-3 rounded-2xl text-sm font-medium border <?= $flashErr ? 'text-red-800 bg-red-50 border-red-200' : 'text-emerald-800 bg-emerald-50 border-emerald-200' ?>"><?= h($flash) ?></div>
+  <div class="tk-alert <?= $flashErr ? 'tk-alert--danger' : 'tk-alert--ok' ?>" role="status" style="margin-top:16px"><?= h($flash) ?></div>
 <?php endif; ?>
 
 <div class="flex flex-wrap items-start justify-between gap-4 mt-4 mb-6">

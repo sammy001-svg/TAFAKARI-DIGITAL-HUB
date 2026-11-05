@@ -98,7 +98,7 @@ $adminPageTitle = 'Policy Briefs';
 $adminPageSub   = $total . ' brief' . ($total !== 1 ? 's' : '') . ($statusFilter !== 'ALL' ? ' · ' . strtolower($statusFilter) : '');
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -130,7 +130,7 @@ $adminPageSub   = $total . ' brief' . ($total !== 1 ? 's' : '') . ($statusFilter
     <?php
     $stats = [
       ['label'=>'Briefs',     'val'=>$total,                          'color'=>'#750B25'],
-      ['label'=>'Published',  'val'=>$statusCounts['PUBLISHED'] ?? 0, 'color'=>'#16a34a'],
+      ['label'=>'Published',  'val'=>$statusCounts['PUBLISHED'] ?? 0, 'color'=>'#047857'],
       ['label'=>'Downloads',  'val'=>number_format($totalDownloads),  'color'=>'#E7952A'],
       ['label'=>'Drafts',     'val'=>$statusCounts['DRAFT'] ?? 0,     'color'=>'#64748b'],
     ];
@@ -394,7 +394,7 @@ function postAction(url, method, btn, confirmMsg) {
     <div style="display:flex;gap:12px;padding-top:4px;padding-bottom:8px">
       <?php if ($isSuper): ?>
         <button type="submit" name="_publish" value="1"
-                style="flex:1;padding:13px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
+                style="flex:1;padding:13px;border:none;border-radius:12px;background:#047857;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s"
                 onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
           Publish Now
         </button>
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function(){
   var isPub = <?= json_encode($_GET['created'] === 'pub') ?>;
   var b = document.createElement('div');
   b.textContent = isPub ? 'Policy brief published successfully.' : 'Policy brief saved as draft.';
-  b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);color:#fff;background:' + (isPub ? '#16a34a' : '#0f172a');
+  b.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);color:#fff;background:' + (isPub ? '#047857' : '#0f172a');
   document.body.appendChild(b);
   setTimeout(function(){ b.remove(); }, 3500);
 });

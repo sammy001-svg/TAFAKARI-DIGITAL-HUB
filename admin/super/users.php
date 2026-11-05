@@ -20,7 +20,7 @@ $adminPageTitle = 'User Management';
 $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') . ' total';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -28,6 +28,7 @@ $adminPageSub   = count($users) . ' account' . (count($users) !== 1 ? 's' : '') 
 <?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
+<?php admin_page_head('Super authority'); ?>
 
   <!-- Toolbar -->
   <div class="flex flex-wrap items-center gap-3 mb-6">

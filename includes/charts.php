@@ -56,14 +56,16 @@ function ch_styles(): string {
     return '<style>
 .ch-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
 .ch-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:12px 14px 8px; break-inside:avoid; }
-.ch-card h4 { display:flex; align-items:center; gap:7px; font:700 12px/1.3 Inter,sans-serif; color:' . CH_TEXT . '; margin:0 0 4px; }
+.ch-card h4 { display:flex; align-items:flex-start; gap:7px; font:700 12px/1.3 Inter,sans-serif; color:' . CH_TEXT . '; margin:0 0 4px; min-height:2.6em; }
+.ch-swatch { margin-top:3px; }
 .ch-swatch { width:9px; height:9px; border-radius:3px; flex-shrink:0; }
 .ch-svg { display:block; width:100%; height:auto; overflow:visible; }
+.ch-bars { max-width:720px; }
 .ch-svg text { font-family:Inter,sans-serif; font-variant-numeric:tabular-nums; }
 .ch-hit { fill:transparent; cursor:default; }
 .ch-hit:hover, .ch-hit:focus { fill:rgba(117,11,37,.06); outline:none; }
 .ch-bar:hover { opacity:.82; }
-.ch-legend { display:flex; flex-wrap:wrap; gap:14px; font:600 11px Inter,sans-serif; color:' . CH_TEXT_2 . '; margin:6px 0 2px; }
+.ch-legend { display:flex; flex-wrap:wrap; gap:14px; font:600 11px Inter,sans-serif; color:' . CH_TEXT_2 . '; margin:4px 0 12px; }
 .ch-legend span { display:inline-flex; align-items:center; gap:6px; }
 .ch-key-bar { width:14px; height:8px; border-radius:2px; background:' . CH_ACCENT . '; }
 .ch-key-tick { width:2px; height:12px; background:' . CH_PREV . '; }
@@ -93,7 +95,9 @@ function ch_styles(): string {
  * @param array<string,string> $swatches   category => colour (identity swatch beside the title)
  */
 function chart_small_multiples(array $labels, array $series, array $swatches, string $caption): string {
-    $W = 300; $H = 150; $L = 24; $R = 34; $T = 12; $B = 26;
+    $W = 240; $H = 140; $L = 22; $R = 30; $T = 10; $B = 24;
+    // Axis shows each cycle's start date; tooltips and the table keep the full range
+    $axis = fn(string $l) => explode(' – ', $l)[0];
     $pw = $W - $L - $R; $ph = $H - $T - $B;
     $n  = count($labels);
     $x  = fn(int $i) => $L + ($n <= 1 ? $pw / 2 : $pw * $i / ($n - 1));
@@ -114,13 +118,13 @@ function chart_small_multiples(array $labels, array $series, array $swatches, st
         // Grid and y ticks
         foreach ([0, 5, 10] as $t) {
             $s .= sprintf('<line x1="%d" x2="%d" y1="%.1f" y2="%.1f" stroke="%s" stroke-width="1"/>', $L, $W - $R, $y($t), $y($t), CH_GRID);
-            $s .= sprintf('<text x="%d" y="%.1f" font-size="9" fill="%s" text-anchor="end" dominant-baseline="middle">%d</text>', $L - 6, $y($t), CH_MUTED, $t);
+            $s .= sprintf('<text x="%d" y="%.1f" font-size="10" fill="%s" text-anchor="end" dominant-baseline="middle">%d</text>', $L - 6, $y($t), CH_MUTED, $t);
         }
         // Critical threshold
         $s .= sprintf('<line x1="%d" x2="%d" y1="%.1f" y2="%.1f" stroke="%s" stroke-opacity=".45" stroke-width="1"/>', $L, $W - $R, $y(9), $y(9), CH_CRIT);
         // X labels: first and last only, so they never collide
-        $s .= sprintf('<text x="%.1f" y="%d" font-size="9" fill="%s" text-anchor="start">%s</text>', $x(0) - 4, $H - 6, CH_MUTED, ch_e($labels[0]));
-        if ($n > 1) $s .= sprintf('<text x="%.1f" y="%d" font-size="9" fill="%s" text-anchor="end">%s</text>', $x($n - 1) + 4, $H - 6, CH_MUTED, ch_e($labels[$n - 1]));
+        $s .= sprintf('<text x="%.1f" y="%d" font-size="10" fill="%s" text-anchor="start">%s</text>', $x(0) - 4, $H - 6, CH_MUTED, ch_e($axis($labels[0])));
+        if ($n > 1) $s .= sprintf('<text x="%.1f" y="%d" font-size="10" fill="%s" text-anchor="end">%s</text>', $x($n - 1) + 4, $H - 6, CH_MUTED, ch_e($axis($labels[$n - 1])));
         // Line, broken across cycles with no score
         $seg = [];
         foreach ($vals as $i => $v) {
@@ -134,7 +138,7 @@ function chart_small_multiples(array $labels, array $series, array $swatches, st
             $s .= sprintf('<circle cx="%.1f" cy="%.1f" r="4" fill="%s" stroke="%s" stroke-width="2"/>', $x($i), $y($v), CH_ACCENT, CH_SURFACE);
         }
         if ($last !== null) {
-            $s .= sprintf('<text x="%.1f" y="%.1f" font-size="11" font-weight="700" fill="%s" dominant-baseline="middle">%s</text>',
+            $s .= sprintf('<text x="%.1f" y="%.1f" font-size="12" font-weight="700" fill="%s" dominant-baseline="middle">%s</text>',
                 $x($last) + 8, $y($vals[$last]), CH_TEXT, ch_e(ch_num($vals[$last])));
         }
         // Hover bands, one per cycle, wider than the marks
@@ -179,7 +183,7 @@ function chart_score_bars(array $rows, string $caption, string $prevLabel = 'Pre
     $x  = fn(float $v) => $labW + $pw * $v / 10;
     $hasPrev = (bool) array_filter($rows, fn($r) => ($r['prev'] ?? null) !== null);
 
-    $s = '<svg class="ch-svg" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="' . ch_e($caption) . '">';
+    $s = '<svg class="ch-svg ch-bars" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="' . ch_e($caption) . '">';
     foreach ([0, 5, 10] as $t) {
         $s .= sprintf('<line x1="%.1f" x2="%.1f" y1="0" y2="%d" stroke="%s" stroke-width="1"/>', $x($t), $x($t), $H - 18, CH_GRID);
         $s .= sprintf('<text x="%.1f" y="%d" font-size="10" fill="%s" text-anchor="middle">%d</text>', $x($t), $H - 4, CH_MUTED, $t);
@@ -220,24 +224,25 @@ function chart_score_bars(array $rows, string $caption, string $prevLabel = 'Pre
  *
  * @param array $rows list of ['label' => string, 'count' => int, 'pct' => int], pre-sorted
  */
-function chart_share_bars(array $rows, int $total, string $caption): string {
+function chart_share_bars(array $rows, int $total, string $caption, int $W = 640, string $unit = 'report', string $units = 'reports'): string {
     if (!$rows || $total === 0) return '<p class="ch-empty">No scored reports in this period.</p>';
-    $labW = 230; $valW = 150; $barH = 16; $gap = 14; $W = 640;
+    // $W is the design width: pass the card's real width (e.g. 360) so text renders at its intended size
+    $labW = (int) round($W * 0.34); $valW = (int) round($W * 0.24); $barH = 16; $gap = 14;
     $pw = $W - $labW - $valW;
     $H  = count($rows) * ($barH + $gap) + 4;
-    $s  = '<svg class="ch-svg" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="' . ch_e($caption) . '">';
+    $s  = '<svg class="ch-svg ch-bars" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="' . ch_e($caption) . '">';
     $s .= sprintf('<line x1="%d" x2="%d" y1="0" y2="%d" stroke="%s" stroke-width="1"/>', $labW, $labW, $H, CH_GRID);
     foreach ($rows as $i => $r) {
         $y0 = $i * ($barH + $gap) + 4;
         $w  = $pw * $r['pct'] / 100;
-        $tip = sprintf('%s: %d of %d reports (%d%%)', $r['label'], $r['count'], $total, $r['pct']);
+        $tip = sprintf('%s: %d of %d %s (%d%%)', $r['label'], $r['count'], $total, $units, $r['pct']);
         $s .= sprintf('<text x="0" y="%.1f" font-size="12" fill="%s" dominant-baseline="middle">%s</text>', $y0 + $barH / 2, CH_TEXT_2, ch_e($r['label']));
         $s .= '<path class="ch-bar" d="' . ch_bar_path($labW, $y0, max($w, 2), $barH) . '" fill="' . CH_ACCENT . '"><title>' . ch_e($tip) . '</title></path>';
-        $s .= sprintf('<text x="%.1f" y="%.1f" font-size="11" font-weight="700" fill="%s" dominant-baseline="middle">%d%% <tspan font-weight="500" fill="%s">%d report%s</tspan></text>',
-            $labW + max($w, 2) + 8, $y0 + $barH / 2, CH_TEXT, $r['pct'], CH_TEXT_2, $r['count'], $r['count'] === 1 ? '' : 's');
+        $s .= sprintf('<text x="%.1f" y="%.1f" font-size="11" font-weight="700" fill="%s" dominant-baseline="middle">%d%% <tspan font-weight="500" fill="%s">%d %s</tspan></text>',
+            $labW + max($w, 2) + 8, $y0 + $barH / 2, CH_TEXT, $r['pct'], CH_TEXT_2, $r['count'], ch_e($r['count'] === 1 ? $unit : $units));
         $s .= sprintf('<rect class="ch-hit" x="0" y="%.1f" width="%d" height="%d" tabindex="0" aria-label="%s"><title>%s</title></rect>',
             $y0 - $gap / 2, $W, $barH + $gap, ch_e($tip), ch_e($tip));
     }
     $s .= '</svg>';
-    return $s . ch_table(['Category', 'Reports', 'Share'], array_map(fn($r) => [$r['label'], $r['count'], $r['pct'] . '%'], $rows), $caption);
+    return $s . ch_table(['Category', ucfirst($units), 'Share'], array_map(fn($r) => [$r['label'], $r['count'], $r['pct'] . '%'], $rows), $caption);
 }

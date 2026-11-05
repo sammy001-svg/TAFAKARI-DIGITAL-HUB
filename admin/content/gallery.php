@@ -61,7 +61,7 @@ $adminPageTitle = 'Gallery';
 $adminPageSub   = $total . ' image' . ($total !== 1 ? 's' : '') . ($statusFilter !== 'ALL' ? ' · ' . strtolower($statusFilter) : '');
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -113,7 +113,7 @@ $adminPageSub   = $total . ' image' . ($total !== 1 ? 's' : '') . ($statusFilter
     <?php
     $stats = [
       ['label'=>'Total',     'val'=>$total,                           'color'=>'#750B25'],
-      ['label'=>'Published', 'val'=>$statusCounts['PUBLISHED'] ?? 0, 'color'=>'#16a34a'],
+      ['label'=>'Published', 'val'=>$statusCounts['PUBLISHED'] ?? 0, 'color'=>'#047857'],
       ['label'=>'Pending',   'val'=>$statusCounts['PENDING'] ?? 0,   'color'=>'#E7952A'],
       ['label'=>'Drafts',    'val'=>$statusCounts['DRAFT'] ?? 0,     'color'=>'#64748b'],
     ];

@@ -150,7 +150,8 @@ function report_render(array $report, bool $public): void {
 
   <section class="rr-sec">
     <h3>Intensity by category</h3>
-    <p class="rr-lead">Combined score for <?= rr_e($s['scope']['label']) ?> in each category, against <?= rr_e(strtolower($prevLabel)) ?>.
+    <p class="rr-lead">Combined score for <?= rr_e($s['scope']['type'] === 'ALL' ? 'all monitored countries' : $s['scope']['label']) ?> in each category,
+      against the previous period (<?= rr_e($s['prev']['label']) ?>).
       Each report counts once, however many countries it concerns.</p>
     <?= chart_score_bars(array_map(fn($c) => ['label' => $c['name'], 'value' => $s['total'][$c['name']]['score'] ?? null,
                                               'prev' => $s['totalPrev'][$c['name']]['score'] ?? null], $cats),

@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 require_once dirname(__DIR__, 2) . '/includes/upload-widget.php';
 require_once dirname(__DIR__, 2) . '/includes/intensity-scoring.php';
+require_once dirname(__DIR__, 2) . '/includes/editor-panel.php';
 
 ensure_post_columns();   // self-healing: byline + intensityScores
 
@@ -185,7 +186,7 @@ $adminPageTitle = 'Edit Content';
 $adminPageSub   = h($post['title'] ?? '');
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -231,7 +232,8 @@ $adminPageSub   = h($post['title'] ?? '');
     </div>
   <?php endif; ?>
 
-  <form method="POST" class="max-w-3xl space-y-8">
+  <form method="POST" class="tk-editor">
+  <div class="tk-editor__main">
     <!-- Basic Info -->
     <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
       <h2 class="font-outfit font-bold text-lg mb-6 text-slate-900">Basic Information</h2>
@@ -381,22 +383,31 @@ $adminPageSub   = h($post['title'] ?? '');
       ]);
     ?>
 
-    <div class="flex gap-3 flex-wrap">
+  </div><!-- /.tk-editor__main -->
+  <?php
+    ob_start(); ?>
+      <?php if ($isSuper && in_array($post['status'], ['DRAFT','PENDING','REJECTED'])): ?>
+        <button type="submit" name="save_publish" class="tk-btn tk-btn--publish">Save &amp; publish</button>
+      <?php endif; ?>
       <?php if (!$lockedMsg): ?>
-        <button type="submit" name="save_draft" class="btn-primary" style="padding:.7rem 1.75rem">
-          <?= $willRequeue ? 'Save &amp; Resubmit for Approval' : 'Save Changes' ?>
+        <button type="submit" name="save_draft" class="tk-btn tk-btn--primary">
+          <?= $willRequeue ? 'Save &amp; resubmit for approval' : 'Save changes' ?>
         </button>
       <?php endif; ?>
-      <?php if ($isSuper && in_array($post['status'], ['DRAFT','PENDING','REJECTED'])): ?>
-        <button type="submit" name="save_publish"
-                class="inline-flex items-center px-6 py-3 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
-                style="background:#16a34a">Save & Publish</button>
-      <?php endif; ?>
       <?php if ($canSubmit && !$isSuper): ?>
-        <button type="submit" name="save_submit" class="btn-secondary" style="padding:.7rem 1.75rem">Save & Submit for Approval</button>
+        <button type="submit" name="save_submit" class="tk-btn tk-btn--accent">Save &amp; submit for approval</button>
       <?php endif; ?>
-      <a href="<?= h($moduleBack[0]) ?>" class="inline-flex items-center px-6 py-3 rounded-full border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>
-    </div>
+      <a href="<?= h($moduleBack[0]) ?>" class="tk-btn tk-btn--outline">Cancel</a>
+  <?php
+    $_st = ['DRAFT' => ['tk-badge--muted', 'Draft'], 'PENDING' => ['tk-badge--warn', 'Awaiting approval'], 'PUBLISHED' => ['tk-badge--ok', 'Published'],
+            'REJECTED' => ['tk-badge--danger', 'Changes requested'], 'ARCHIVED' => ['tk-badge--muted', 'Archived']][$post['status']] ?? ['tk-badge--muted', $post['status']];
+    editor_panel('Edit content',
+        $lockedMsg !== '' ? $lockedMsg
+          : ($willRequeue ? 'This item is live. Saving your changes sends it back for approval.'
+          : ($isSuper ? 'Save changes, or publish them straight away.' : 'Save changes, then submit for approval when ready.')),
+        ob_get_clean(),
+        '<span class="tk-badge ' . $_st[0] . '">' . h($_st[1]) . '</span>');
+  ?>
   </form>
 
 </main>

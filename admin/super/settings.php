@@ -116,7 +116,7 @@ $adminPageTitle = 'Site Settings';
 $adminPageSub   = 'Control the homepage, carousel, announcement banner and section visibility';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -124,6 +124,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
 <?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
+<?php admin_page_head('Super authority'); ?>
 
 <?php if ($saved): ?>
   <div id="save-toast"
@@ -148,8 +149,8 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
     <!-- Site Branding -->
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
       <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#0EA5E918">
-          <svg width="16" height="16" fill="none" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(117,11,37,.08)">
+          <svg width="16" height="16" fill="none" stroke="#750B25" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         </div>
         <div>
           <h2 class="font-outfit font-black text-base text-slate-900">Site Branding</h2>
@@ -161,7 +162,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
         <?php uw_img('site-logo', 'site_logo_url', 'Site Logo', 'Shown in the navbar, footer, and structured data. A transparent PNG works best.', $siteLogoUrl); ?>
         <?php uw_img('site-og', 'site_og_image_url', 'Default Social Share Image', 'Shown when a page is shared on Facebook, X, or LinkedIn without its own image. 1200×630 recommended.', $siteOgImageUrl); ?>
         <div class="flex justify-end pt-1">
-          <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90" style="background:#0EA5E9">
+          <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90" style="background:#750B25">
             Save Branding
           </button>
         </div>
@@ -298,8 +299,8 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
     <!-- Section Visibility -->
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
       <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#6366F118">
-          <svg width="16" height="16" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(231,149,42,.14)">
+          <svg width="16" height="16" fill="none" stroke="#9A5B0F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
         <div>
           <h2 class="font-outfit font-black text-base text-slate-900">Section Visibility</h2>
@@ -322,7 +323,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
           </label>
         <?php endforeach; ?>
         <div class="flex justify-end pt-2">
-          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white" style="background:#6366F1">
+          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white" style="background:#750B25">
             Save Visibility
           </button>
         </div>
@@ -332,8 +333,8 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
     <!-- Homepage Carousel -->
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
       <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:#10B98118">
-          <svg width="16" height="16" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(74,68,64,.08)">
+          <svg width="16" height="16" fill="none" stroke="#4A4440" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
         </div>
         <div>
           <h2 class="font-outfit font-black text-base text-slate-900">Hero Carousel</h2>
@@ -351,7 +352,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
           <input type="hidden" name="action" value="carousel">
           <input type="hidden" name="carousel_slides" id="carousel-json" value="">
           <button type="submit" onclick="serializeCarousel()"
-                  class="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90" style="background:#10B981">
+                  class="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90" style="background:#750B25">
             Save Carousel
           </button>
         </form>

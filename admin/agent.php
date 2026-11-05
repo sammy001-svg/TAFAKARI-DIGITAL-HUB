@@ -160,7 +160,7 @@ $adminPageTitle = 'Tafakari Agent';
 $adminPageSub   = 'AI-proposed findings awaiting analyst review';
 ?>
 <?php include dirname(__DIR__) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__) . '/includes/admin-sidebar.php'; ?>
 
@@ -178,33 +178,29 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
 </style>
 
 <?php if ($flash): ?>
-  <div class="mb-5 px-4 py-3 rounded-2xl text-sm font-medium border <?= $flash['err'] ? 'text-red-800 bg-red-50 border-red-200' : 'text-emerald-800 bg-emerald-50 border-emerald-200' ?>">
+  <div class="tk-alert <?= $flash['err'] ? 'tk-alert--danger' : 'tk-alert--ok' ?>" role="status">
     <?= h($flash['msg']) ?>
   </div>
 <?php endif; ?>
 
-<div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+<header class="tk-page-head">
   <div>
-    <h1 class="font-outfit font-black text-2xl text-slate-900">Tafakari Agent</h1>
-    <p class="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
-      The agent searches public sources and proposes findings with intensity scores. Nothing here is public:
-      a finding reaches the heat map only after an analyst turns it into a report and a super admin approves it.
-    </p>
+    <span class="tk-eyebrow">Monitoring</span>
+    <h1 class="tk-h1" style="margin-top:12px">Tafakari Agent</h1>
+    <p class="tk-lead">The agent searches public sources and proposes findings with intensity scores. Nothing here is public:
+      a finding reaches the heat map only after an analyst turns it into a report and a super admin approves it.</p>
   </div>
-  <div class="flex flex-wrap gap-2">
-    <span class="ag-chip" style="<?= $settings['enabled'] ? 'background:#05966915;color:#059669' : 'background:#f1f5f9;color:#64748b' ?>">
-      <?= $settings['enabled'] ? 'Scheduled runs on' : 'Scheduled runs off' ?></span>
+  <div class="tk-page-head__actions">
+    <span class="tk-badge <?= $settings['enabled'] ? 'tk-badge--ok' : 'tk-badge--muted' ?>"><?= $settings['enabled'] ? 'Scheduled runs on' : 'Scheduled runs off' ?></span>
     <?php if ($isSuper): ?>
-      <span class="ag-chip" style="<?= $sdkOk && $keyOk ? 'background:#05966915;color:#059669' : 'background:#ED1C2415;color:#ED1C24' ?>">
-        <?= !$sdkOk ? 'SDK not installed' : ($keyOk ? 'API key configured' : 'API key missing') ?></span>
-      <span class="ag-chip" style="background:#E7952A1f;color:#9a5b0f">
-        <?= h(sprintf('$%.2f of $%.2f this month (est.)', $spent, $settings['monthly_budget'])) ?></span>
+      <span class="tk-badge <?= $sdkOk && $keyOk ? 'tk-badge--ok' : 'tk-badge--danger' ?>"><?= !$sdkOk ? 'SDK not installed' : ($keyOk ? 'API key configured' : 'API key missing') ?></span>
+      <span class="tk-badge tk-badge--amber tk-badge--plain"><?= h(sprintf('$%.2f of $%.2f this month (est.)', $spent, $settings['monthly_budget'])) ?></span>
     <?php endif; ?>
   </div>
-</div>
+</header>
 
 <!-- Tabs -->
-<div class="flex flex-wrap gap-1 mb-6 p-1 rounded-2xl w-fit" style="background:rgba(0,0,0,.06)">
+<nav class="tk-segment" aria-label="Agent sections" style="margin-bottom:20px;flex-wrap:wrap">
   <?php
   $tabLabels = [
       'queue'    => 'Review queue (' . $counts['PROPOSED'] . ')',
@@ -215,16 +211,15 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
   ];
   foreach ($validTabs as $t): ?>
     <a href="/admin/agent?<?= h(http_build_query(array_filter(['tab' => $t, 'country' => $filterCountry]))) ?>"
-       class="px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap"
-       style="<?= $t === $tab ? 'background:#750B25;color:#fff' : 'color:#64748b' ?>"><?= h($tabLabels[$t]) ?></a>
+       class="<?= $t === $tab ? 'is-active' : '' ?>"<?= $t === $tab ? ' aria-current="page"' : '' ?>><?= h($tabLabels[$t]) ?></a>
   <?php endforeach; ?>
-</div>
+</nav>
 
 <?php if (isset($statusFor[$tab])): ?>
   <!-- ── Findings ───────────────────────────────────────────────── -->
   <form method="GET" class="flex flex-wrap items-center gap-2 mb-5">
     <input type="hidden" name="tab" value="<?= h($tab) ?>">
-    <select name="country" onchange="this.form.submit()" class="ag-input" style="width:auto;min-width:200px">
+    <select name="country" onchange="this.form.submit()" class="tk-select" style="width:auto;min-width:220px" aria-label="Filter by country">
       <option value="">All countries</option>
       <?php foreach (african_countries() as $c): ?>
         <option value="<?= h($c) ?>" <?= $c === $filterCountry ? 'selected' : '' ?>><?= h($c) ?></option>

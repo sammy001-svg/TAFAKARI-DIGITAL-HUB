@@ -152,7 +152,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
   .kpi-card { cursor: pointer; }
 </style>
 
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__) . '/includes/admin-sidebar.php'; ?>
 
@@ -236,8 +236,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         'meta'     => $pendingPosts > 0 ? 'Needs attention' : 'Queue clear',
         'href'     => '/admin/content?status=PENDING',
         'icon'     => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-        'ic_bg'    => 'rgba(245,158,11,.1)',
-        'ic_col'   => '#F59E0B',
+        'ic_bg'    => 'rgba(231,149,42,.12)',
+        'ic_col'   => '#E7952A',
         'trend'    => $pendingPosts > 0 ? '!' : '✓',
         'trendcls' => $pendingPosts > 0 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700',
       ],
@@ -247,10 +247,10 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         'meta'     => format_number($totalDL) . ' downloads',
         'href'     => '/admin/content',
         'icon'     => 'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-        'ic_bg'    => 'rgba(99,102,241,.1)',
-        'ic_col'   => '#6366F1',
+        'ic_bg'    => 'rgba(117,11,37,.08)',
+        'ic_col'   => '#750B25',
         'trend'    => 'Impressions',
-        'trendcls' => 'bg-indigo-50 text-indigo-700',
+        'trendcls' => 'bg-[#F7EDEF] text-[#750B25]',
       ],
       [
         'label'    => 'Comments',
@@ -258,8 +258,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         'meta'     => $pendingComments > 0 ? $pendingComments . ' pending moderation' : ($flagged > 0 ? $flagged . ' flagged' : 'All moderated'),
         'href'     => '/admin/super/moderation',
         'icon'     => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
-        'ic_bg'    => ($pendingComments > 0 || $flagged > 0) ? 'rgba(239,68,68,.1)' : 'rgba(16,185,129,.1)',
-        'ic_col'   => ($pendingComments > 0 || $flagged > 0) ? '#EF4444' : '#10B981',
+        'ic_bg'    => ($pendingComments > 0 || $flagged > 0) ? 'rgba(237,28,36,.1)' : 'rgba(16,185,129,.1)',
+        'ic_col'   => ($pendingComments > 0 || $flagged > 0) ? '#ED1C24' : '#10B981',
         'trend'    => $pendingComments > 0 ? '!' : ($flagged > 0 ? 'Flagged' : '✓'),
         'trendcls' => ($pendingComments > 0 || $flagged > 0) ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700',
       ],
@@ -297,7 +297,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
       ['label'=>'Draft',     'value'=>$draftPosts,     'href'=>'/admin/content?status=DRAFT',     'bg'=>'bg-slate-50',   'border'=>'border-slate-200',  'txt'=>'text-slate-700',  'num'=>'text-slate-900'],
       ['label'=>'Pending',   'value'=>$pendingPosts,   'href'=>'/admin/content?status=PENDING',   'bg'=>'bg-amber-50',   'border'=>'border-amber-200',  'txt'=>'text-amber-700',  'num'=>'text-amber-900'],
       ['label'=>'Published', 'value'=>$publishedPosts, 'href'=>'/admin/content?status=PUBLISHED', 'bg'=>'bg-emerald-50', 'border'=>'border-emerald-200','txt'=>'text-emerald-700','num'=>'text-emerald-900'],
-      ['label'=>'Users',     'value'=>$totalUsers,     'href'=>'/admin/super/users',              'bg'=>'bg-indigo-50',  'border'=>'border-indigo-200', 'txt'=>'text-indigo-700', 'num'=>'text-indigo-900'],
+      ['label'=>'Users',     'value'=>$totalUsers,     'href'=>'/admin/super/users',              'bg'=>'bg-[#F7EDEF]',  'border'=>'border-[#EFD9DE]', 'txt'=>'text-[#750B25]', 'num'=>'text-[#5E081D0'],
     ];
     foreach ($breakdown as $b): ?>
       <a href="<?= h($b['href']) ?>"
@@ -341,8 +341,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
             'GALLERY_IMAGE' => ['path'=>'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', 'ic'=>'#10B981', 'ib'=>'rgba(16,185,129,.07)'],
             'PODCAST'       => ['path'=>'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', 'ic'=>'#E7952A', 'ib'=>'rgba(231,149,42,.07)'],
             'VIDEO'         => ['path'=>'M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z', 'ic'=>'#ED1C24', 'ib'=>'rgba(237,28,36,.07)'],
-            'DOCUMENT'      => ['path'=>'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', 'ic'=>'#6366F1', 'ib'=>'rgba(99,102,241,.07)'],
-            'POLICY_BRIEF'  => ['path'=>'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2', 'ic'=>'#8B5CF6', 'ib'=>'rgba(139,92,246,.07)'],
+            'DOCUMENT'      => ['path'=>'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', 'ic'=>'#4A4440', 'ib'=>'rgba(74,68,64,.07)'],
+            'POLICY_BRIEF'  => ['path'=>'M9 17h6M9 13h6M9 9h1m3-6H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2', 'ic'=>'#9A5B0F', 'ib'=>'rgba(231,149,42,.1)'],
           ];
           foreach ($recentPosts as $p):
             $author  = $p['authorName'] ?? $p['authorUsername'] ?? '—';
@@ -386,12 +386,12 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
         $actions = [
           ['href'=>'/admin/content/new?type=ARTICLE', 'label'=>'Write Article', 'sub'=>'New article draft', 'svg'=>'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h2', 'ic'=>'#750B25', 'ib'=>'rgba(117,11,37,.08)'],
           ['href'=>'/admin/content/new',               'label'=>'New Content',   'sub'=>'Any content type',  'svg'=>'M12 4v16m8-8H4', 'ic'=>'#ED1C24', 'ib'=>'rgba(237,28,36,.08)'],
-          ['href'=>'/admin/content',                   'label'=>'All Content',   'sub'=>'Browse & manage',   'svg'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'ic'=>'#6366F1', 'ib'=>'rgba(99,102,241,.08)'],
+          ['href'=>'/admin/content',                   'label'=>'All Content',   'sub'=>'Browse & manage',   'svg'=>'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'ic'=>'#750B25', 'ib'=>'rgba(117,11,37,.08)'],
           ['href'=>'/admin/profile',                   'label'=>'My Profile',    'sub'=>'Update info',       'svg'=>'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'ic'=>'#64748b', 'ib'=>'rgba(100,116,139,.08)'],
         ];
         if ($isSuper) {
             $actions[] = ['href'=>'/admin/super/users',     'label'=>'Users',         'sub'=>'Manage accounts',  'svg'=>'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', 'ic'=>'#E7952A', 'ib'=>'rgba(231,149,42,.08)'];
-            $actions[] = ['href'=>'/admin/super/approvals', 'label'=>'Approvals',     'sub'=>$pendingPosts . ' waiting',  'svg'=>'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', 'ic'=>($pendingPosts > 0 ? '#EF4444' : '#10B981'), 'ib'=>($pendingPosts > 0 ? 'rgba(239,68,68,.08)' : 'rgba(16,185,129,.08)')];
+            $actions[] = ['href'=>'/admin/super/approvals', 'label'=>'Approvals',     'sub'=>$pendingPosts . ' waiting',  'svg'=>'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', 'ic'=>($pendingPosts > 0 ? '#ED1C24' : '#10B981'), 'ib'=>($pendingPosts > 0 ? 'rgba(237,28,36,.08)' : 'rgba(16,185,129,.08)')];
         }
         ?>
         <div class="grid grid-cols-2 gap-2">
@@ -486,15 +486,24 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
       <canvas id="monthlyChart" height="100"></canvas>
     </div>
 
-    <!-- Content Types Doughnut Chart -->
+    <!-- Content types: ranked bars, one hue (the honest form of a pie) -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
       <div class="mb-4">
         <h3 class="font-outfit font-bold text-[15px] text-slate-900">Content Types</h3>
-        <p class="text-[11px] text-slate-400 mt-0.5">Distribution by category</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Share of all content, by type</p>
       </div>
       <?php $hasTypeData = array_sum($typeStats) > 0; ?>
       <?php if ($hasTypeData): ?>
-        <canvas id="typeChart" height="180"></canvas>
+        <?php
+          require_once dirname(__DIR__) . '/includes/charts.php';
+          $_typeNames = ['ARTICLE'=>'Articles','VIDEO'=>'Videos','PODCAST'=>'Podcasts','DOCUMENT'=>'Documents','GALLERY_IMAGE'=>'Gallery','POLICY_BRIEF'=>'Policy briefs'];
+          $_tot  = array_sum($typeStats);
+          $_rows = [];
+          foreach ($typeStats as $_k => $_n) if ($_n > 0) $_rows[] = ['label' => $_typeNames[$_k] ?? $_k, 'count' => (int)$_n, 'pct' => (int) round(100 * $_n / $_tot)];
+          usort($_rows, fn($a, $b) => $b['count'] <=> $a['count']);
+          echo ch_styles();
+          echo chart_share_bars($_rows, $_tot, 'Content by type', 360, 'item', 'items');
+        ?>
       <?php else: ?>
         <div class="flex flex-col items-center justify-center h-40 text-center">
           <p class="text-sm text-slate-400">No content yet</p>
@@ -519,8 +528,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
       </div>
       <?php if (empty($topContent)): ?>
         <div class="flex flex-col items-center justify-center py-14 text-center px-6">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:rgba(99,102,241,.08)">
-            <svg width="18" height="18" fill="none" stroke="#6366F1" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:rgba(117,11,37,.07)">
+            <svg width="18" height="18" fill="none" stroke="#750B25" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24">
               <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
           </div>
@@ -530,7 +539,8 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
       <?php else:
         $maxEngagement = max(array_map(fn($r) => (int)$r['viewCount'] + (int)$r['downloadCount'], $topContent));
         $maxEngagement = max($maxEngagement, 1);
-        $typeColors = ['ARTICLE'=>'#750B25','VIDEO'=>'#ED1C24','PODCAST'=>'#E7952A','DOCUMENT'=>'#6366F1','GALLERY_IMAGE'=>'#10B981','POLICY_BRIEF'=>'#8B5CF6'];
+        // One hue for every bar: the type is named in its chip, not encoded in colour
+        $typeColors = [];
         $typeLabels = ['ARTICLE'=>'Article','VIDEO'=>'Video','PODCAST'=>'Podcast','DOCUMENT'=>'Doc','GALLERY_IMAGE'=>'Gallery','POLICY_BRIEF'=>'Brief'];
       ?>
         <div class="divide-y divide-slate-50">
@@ -544,7 +554,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
               <!-- Rank -->
               <span class="w-5 text-center text-[11px] font-black text-slate-300 shrink-0"><?= $rank + 1 ?></span>
               <!-- Type badge -->
-              <span class="text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shrink-0 text-white" style="background:<?= $tcol ?>"><?= $tlabel ?></span>
+              <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg shrink-0" style="background:#F1EFEC;color:#4A4440"><?= h($tlabel) ?></span>
               <!-- Title + bar -->
               <div class="flex-1 min-w-0">
                 <p class="text-[12px] font-semibold text-slate-800 truncate mb-1.5"><?= h($tc['title']) ?></p>
@@ -625,10 +635,10 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
           <?php
           $avgViews = $publishedPosts > 0 ? round($totalViews / $publishedPosts, 1) : 0;
           $engagementItems = [
-            ['label'=>'Avg. Views per Post',  'value'=> number_format($avgViews, 1), 'icon'=>'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z', 'col'=>'#6366F1'],
+            ['label'=>'Avg. Views per Post',  'value'=> number_format($avgViews, 1), 'icon'=>'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z', 'col'=>'#750B25'],
             ['label'=>'Total Downloads',       'value'=> format_number($totalDL),    'icon'=>'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4',                                                                                                                                                                                                                                        'col'=>'#10B981'],
-            ['label'=>'Total Comments',        'value'=> format_number($totalComments),   'icon'=>'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', 'col'=>'#F59E0B'],
-            ['label'=>'Pending Moderation',    'value'=> $pendingComments,            'icon'=>'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',                                                                                                                                                                 'col'=>'#EF4444'],
+            ['label'=>'Total Comments',        'value'=> format_number($totalComments),   'icon'=>'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', 'col'=>'#E7952A'],
+            ['label'=>'Pending Moderation',    'value'=> $pendingComments,            'icon'=>'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',                                                                                                                                                                 'col'=>'#ED1C24'],
           ];
           foreach ($engagementItems as $ei): ?>
             <div class="flex items-center gap-3">
@@ -672,7 +682,7 @@ $adminPageSub   = $greeting . ', ' . ($user['name'] ?? $user['username']) . '. H
                   <div class="flex items-center gap-2 mb-1 flex-wrap">
                     <span class="text-[11px] font-bold text-slate-800"><?= h($cm['name'] ?: 'Anonymous') ?></span>
                     <?php if ($cm['isFlagged']): ?>
-                      <span class="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white" style="background:#EF4444">Flagged</span>
+                      <span class="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white" style="background:#ED1C24">Flagged</span>
                     <?php endif; ?>
                     <span class="text-[10px] text-slate-400"><?= format_relative_time($cm['createdAt']) ?></span>
                   </div>
@@ -726,37 +736,7 @@ ctx.font = '13px Inter, sans-serif'; ctx.fillStyle = '#94a3b8'; ctx.textAlign = 
 ctx.fillText('No posts in the last 6 months', ctx.canvas.width / 2, 60);
 <?php endif; ?>
 
-<?php if ($hasTypeData): ?>
-new Chart(document.getElementById('typeChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Article','Video','Podcast','Document','Gallery','Policy Brief'],
-    datasets: [{
-      data: [
-        <?= $typeStats['ARTICLE'] ?>,
-        <?= $typeStats['VIDEO'] ?>,
-        <?= $typeStats['PODCAST'] ?>,
-        <?= $typeStats['DOCUMENT'] ?>,
-        <?= $typeStats['GALLERY_IMAGE'] ?>,
-        <?= $typeStats['POLICY_BRIEF'] ?>
-      ],
-      backgroundColor: ['#750B25','#ED1C24','#E7952A','#6366F1','#10B981','#8B5CF6'],
-      borderWidth: 0,
-      hoverOffset: 8
-    }]
-  },
-  options: {
-    cutout: '68%',
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { boxWidth: 10, boxHeight: 10, padding: 16, font: { size: 11 }, color: '#64748b' }
-      }
-    },
-    responsive: true, maintainAspectRatio: false
-  }
-});
-<?php endif; ?>
+
 </script>
 </body>
 </html>

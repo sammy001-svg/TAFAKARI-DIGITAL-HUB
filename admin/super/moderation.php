@@ -31,7 +31,7 @@ $adminPageTitle = 'Comment Moderation';
 $adminPageSub   = $pendingCount . ' pending · ' . $totalComments . ' total comments';
 ?>
 <?php include dirname(__DIR__, 2) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 
@@ -39,6 +39,7 @@ $adminPageSub   = $pendingCount . ' pending · ' . $totalComments . ' total comm
 <?php include dirname(__DIR__, 2) . '/includes/admin-topbar.php'; ?>
 
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
+<?php admin_page_head('Super authority'); ?>
   <div class="flex items-center gap-3 mb-6">
     <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-200">Active Moderation</span>
   </div>

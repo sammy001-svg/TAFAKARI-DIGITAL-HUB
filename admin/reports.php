@@ -62,24 +62,28 @@ $adminPageTitle = 'Analysis Reports';
 $adminPageSub   = 'Bi-weekly and quarterly reports built from the heat-map data';
 ?>
 <?php include dirname(__DIR__) . '/includes/head.php'; ?>
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__) . '/includes/admin-sidebar.php'; ?>
 <div class="flex-1 flex flex-col overflow-hidden min-w-0">
 <?php include dirname(__DIR__) . '/includes/admin-topbar.php'; ?>
 <main class="flex-1 overflow-y-auto p-6 md:p-8">
 
-<div class="mb-6">
-  <h1 class="font-outfit font-black text-2xl text-slate-900">Analysis Reports</h1>
-  <p class="text-sm text-slate-500 mt-1 max-w-3xl leading-relaxed">
+<header class="tk-page-head">
+  <div>
+  <span class="tk-eyebrow">Monitoring</span>
+  <h1 class="tk-h1" style="margin-top:12px">Analysis Reports</h1>
+  <p class="tk-lead">
     Each report freezes the heat-map data for one period and scope, with charts, comparisons with the previous period,
     critical flags and country profiles. Add a narrative, written by hand or drafted by the Tafakari Agent, then submit it.
     A super admin publishes it to the public <a href="/reports" class="font-semibold underline" style="color:#750B25">Reports</a> page.
   </p>
-</div>
+  </div>
+  <div class="tk-page-head__actions"><a href="/reports" target="_blank" rel="noopener" class="tk-btn tk-btn--outline">View public reports</a></div>
+</header>
 
 <?php if ($error): ?>
-  <div class="mb-5 px-4 py-3 rounded-2xl text-sm font-medium text-red-800 bg-red-50 border border-red-200"><?= h($error) ?></div>
+  <div class="tk-alert tk-alert--danger" role="alert"><?= h($error) ?></div>
 <?php endif; ?>
 
 <div class="grid xl:grid-cols-3 gap-6">
@@ -133,12 +137,11 @@ $adminPageSub   = 'Bi-weekly and quarterly reports built from the heat-map data'
   <div class="xl:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-100">
       <h2 class="font-outfit font-black text-base text-slate-900">Reports</h2>
-      <div class="flex flex-wrap gap-1">
+      <nav class="tk-segment" aria-label="Filter by status">
         <?php foreach (['' => 'All', 'DRAFT' => 'Drafts', 'PENDING' => 'Awaiting approval', 'PUBLISHED' => 'Published'] as $v => $l): ?>
-          <a href="/admin/reports<?= $v ? '?status=' . $v : '' ?>" class="px-3 py-1.5 rounded-lg text-xs font-bold"
-             style="<?= $status === $v ? 'background:#750B25;color:#fff' : 'color:#64748b' ?>"><?= h($l) ?></a>
+          <a href="/admin/reports<?= $v ? '?status=' . $v : '' ?>" class="<?= $status === $v ? 'is-active' : '' ?>"><?= h($l) ?></a>
         <?php endforeach; ?>
-      </div>
+      </nav>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm" style="border-collapse:collapse;min-width:680px">

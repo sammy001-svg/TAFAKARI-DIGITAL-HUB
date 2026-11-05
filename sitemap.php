@@ -39,6 +39,7 @@ $static = [
     ['/methodology', '0.5', 'monthly'],
     ['/reports',   '0.6', 'weekly'],
     ['/about',     '0.5', 'monthly'],
+    ['/partners',  '0.5', 'monthly'],
 ];
 foreach ($static as [$path, $pri, $freq]) {
     echo sitemapUrl($root . $path, $now, $freq, $pri);

@@ -147,7 +147,7 @@ $adminPageSub   = 'Edit the public About Us page content without touching code';
             letter-spacing:.1em; color:#94a3b8; margin-bottom:6px; }
 </style>
 
-<body class="antialiased font-inter" style="background:#F4F6F8">
+<body class="antialiased font-inter tk-admin" style="background:var(--tk-canvas)">
 <div class="flex h-screen overflow-hidden">
 <?php include dirname(__DIR__, 2) . '/includes/admin-sidebar.php'; ?>
 

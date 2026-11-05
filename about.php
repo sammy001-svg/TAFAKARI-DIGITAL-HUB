@@ -23,12 +23,13 @@ try {
 
 // ── Live partners list (falls back to default content below if empty) ──────────
 $dbPartners = [];
+$dbPartnerTotal = 0;
 try {
-    ensure_partners_table();
-    $dbPartners = db()->query(
-        "SELECT * FROM Partner WHERE isActive = 1 ORDER BY sortOrder ASC, createdAt ASC"
-    )->fetchAll();
-} catch (Exception $e) { /* DB not ready */ }
+    require_once __DIR__ . '/includes/partners.php';
+    $_allPartners   = partners_public(true);
+    $dbPartnerTotal = count($_allPartners);
+    $dbPartners     = array_slice($_allPartners, 0, 6);   // featured first; the rest on /partners
+} catch (Throwable $e) { /* DB not ready */ }
 
 // ── Live team list (falls back to default content below if empty) ──────────────
 $dbTeam = [];
@@ -307,33 +308,34 @@ $pageKeywords = 'CRTP, Centre for Research Training Policy, Africa peace researc
       </p>
     </div>
     <?php if (!empty($dbPartners)): ?>
-      <!-- Live partners from admin/super/partners -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <?php foreach ($dbPartners as $partner): ?>
-          <div class="rounded-2xl border border-amber-100 p-6 text-center" style="background:#F8F8F0">
-            <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center overflow-hidden bg-white shadow-sm">
-              <?php if (!empty($partner['logoUrl'])): ?>
-                <img src="<?= h($partner['logoUrl']) ?>" alt="<?= h($partner['name']) ?>"
-                     class="w-full h-full object-contain p-1.5"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                <div class="hidden w-full h-full items-center justify-center font-outfit font-black text-xl text-white" style="background:#750B25"><?= h(strtoupper(substr($partner['name'], 0, 1))) ?></div>
-              <?php else: ?>
-                <div class="w-full h-full flex items-center justify-center font-outfit font-black text-xl text-white" style="background:#750B25"><?= h(strtoupper(substr($partner['name'], 0, 1))) ?></div>
+      <!-- Live partners from admin/super/partners (featured first) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 text-left">
+        <?php foreach ($dbPartners as $partner): $_web = partner_safe_url($partner['websiteUrl'] ?? ''); ?>
+          <article class="tk-card tk-card--hover" style="padding:22px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:14px;align-items:center">
+              <?= partner_logo_html($partner) ?>
+              <div style="min-width:0">
+                <h3 class="tk-h3"><?= h($partner['name']) ?></h3>
+                <?php if (!empty($partner['subtitle'])): ?>
+                  <p class="tk-clamp-2" style="font:500 12.5px/1.45 var(--tk-font);color:var(--tk-text-3);margin:4px 0 0"><?= h($partner['subtitle']) ?></p>
+                <?php endif; ?>
+              </div>
+            </div>
+            <?php if (!empty($partner['description'])): ?>
+              <p class="tk-clamp-3" style="font:400 13.5px/1.65 var(--tk-font);color:var(--tk-text-2);margin:0"><?= h($partner['description']) ?></p>
+            <?php endif; ?>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:auto">
+              <span class="tk-chip"><?= h($partner['typeLabel']) ?></span>
+              <?php if ($_web): ?>
+                <a href="<?= h($_web) ?>" target="_blank" rel="noopener noreferrer" style="margin-left:auto;font:700 12.5px var(--tk-font);color:var(--tk-brand);text-decoration:none">
+                  <?= h(partner_host($_web)) ?> &nearr;</a>
               <?php endif; ?>
             </div>
-            <h3 class="font-outfit font-bold text-lg text-slate-900 mb-1"><?= h($partner['name']) ?></h3>
-            <?php if (!empty($partner['subtitle'])): ?>
-              <p class="text-xs text-amber-800 font-bold uppercase tracking-widest mb-3"><?= h($partner['subtitle']) ?></p>
-            <?php endif; ?>
-            <?php if (!empty($partner['description'])): ?>
-              <p class="text-slate-500 text-sm"><?= h($partner['description']) ?></p>
-            <?php endif; ?>
-            <?php if (!empty($partner['websiteUrl'])): ?>
-              <a href="<?= h($partner['websiteUrl']) ?>" target="_blank" rel="noopener noreferrer"
-                 class="inline-block mt-3 text-xs font-bold hover:underline" style="color:#750B25">Visit Website →</a>
-            <?php endif; ?>
-          </div>
+          </article>
         <?php endforeach; ?>
+      </div>
+      <div class="text-center" style="margin-top:28px">
+        <a href="/partners" class="tk-btn tk-btn--outline">View all <?= (int) $dbPartnerTotal ?> partners &rarr;</a>
       </div>
     <?php else: ?>
       <!-- Default content until partners are added via admin/super/partners -->

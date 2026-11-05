@@ -108,7 +108,22 @@
       <p class="text-[10px] font-black uppercase tracking-[.18em] text-white/30 mb-6 text-center" data-i18n="footer.partnersNetwork">Our Partners &amp; Network Members</p>
       <div class="flex flex-wrap items-center justify-center gap-10">
 
-        <!-- Hekima University College -->
+        <?php
+          $_footPartners = [];
+          try { require_once __DIR__ . '/partners.php'; $_footPartners = partners_public(true, 6); } catch (Throwable $e) {}
+        ?>
+        <?php if ($_footPartners): ?>
+          <?php foreach ($_footPartners as $_fp): ?>
+            <a href="/partners" class="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity" title="<?= h($_fp['name']) ?>">
+              <?= partner_logo_html($_fp, 'sm') ?>
+              <span class="flex flex-col leading-tight" style="max-width:190px">
+                <span class="text-[12px] font-bold text-white/80 leading-snug"><?= h($_fp['name']) ?></span>
+                <span class="text-[9px] text-white/40 uppercase tracking-widest mt-0.5"><?= h($_fp['typeLabel']) ?></span>
+              </span>
+            </a>
+          <?php endforeach; ?>
+        <?php else: ?>
+        <!-- Hekima University College (shown until partners are added in Admin) -->
         <div class="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
           <div class="bg-white rounded-xl p-1.5 shadow-sm">
             <img src="/public/hekima-logo.jpg" alt="Hekima University College"
@@ -123,6 +138,8 @@
             <span class="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">Institute of Peace Studies &amp; International Relations</span>
           </div>
         </div>
+
+        <?php endif; ?>
 
         <!-- Become a partner -->
         <a href="/contact" class="flex items-center gap-2 opacity-40 hover:opacity-80 transition-opacity">

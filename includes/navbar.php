@@ -14,10 +14,11 @@ $_aboutLinks = [
   ['/about#purpose',    'Our Purpose', 'ourPurpose'],
   ['/about#mission',    'Our Mission', 'ourMission'],
   ['/about#what-we-do', 'What We Do',  'whatWeDo'],
+  ['/partners',         'Our Partners', 'ourPartners'],
 ];
 $_currentPath = strtok($_SERVER['REQUEST_URI'] ?? '/', '?');
 $_homeActive  = ($_currentPath === '/');
-$_aboutActive = (strpos($_currentPath, '/about') === 0);
+$_aboutActive = (strpos($_currentPath, '/about') === 0 || $_currentPath === '/partners');
 $_moreActive  = in_array($_currentPath, array_column($_moreLinks, 0), true);
 $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
 ?>

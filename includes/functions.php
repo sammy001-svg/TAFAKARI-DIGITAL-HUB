@@ -1058,3 +1058,18 @@ function type_badge(string $type): string {
     $label = str_replace('_', ' ', $type);
     return '<span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-400">' . $icon . ' ' . h($label) . '</span>';
 }
+
+// ── Admin page header (design system) ───────────────────────────
+
+/**
+ * Standard admin page header: eyebrow, title and one-line summary, from the
+ * same $adminPageTitle / $adminPageSub the top bar uses.
+ */
+function admin_page_head(string $eyebrow, ?string $title = null, ?string $sub = null): void {
+    $title = $title ?? ($GLOBALS['adminPageTitle'] ?? '');
+    $sub   = $sub   ?? ($GLOBALS['adminPageSub'] ?? '');
+    echo '<header class="tk-page-head"><div><span class="tk-eyebrow">' . h($eyebrow) . '</span>'
+       . '<h1 class="tk-h1" style="margin-top:12px">' . h($title) . '</h1>'
+       . ($sub !== '' ? '<p class="tk-lead">' . h($sub) . '</p>' : '')
+       . '</div></header>';
+}

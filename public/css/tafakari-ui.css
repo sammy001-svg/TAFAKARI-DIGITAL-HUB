@@ -1,0 +1,352 @@
+/* ==========================================================================
+   Tafakari UI - the shared design system for the admin portal and public site
+   --------------------------------------------------------------------------
+   Brand: CRTP's four colours (#750B25 burgundy, #ED1C24 scarlet, #E7952A amber,
+   #F8F8F0 off-white) plus near-black and neutrals. No gradients, by brand
+   rule: depth comes from layered shadows, fine warm borders and spacing.
+
+   Every class is prefixed tk- so it never collides with Tailwind or existing
+   page styles. Pages opt in component by component.
+   ========================================================================== */
+
+:root {
+  /* Brand */
+  --tk-brand:        #750B25;
+  --tk-brand-700:    #5E081D;
+  --tk-brand-50:     #F7EDEF;
+  --tk-brand-100:    #EFD9DE;
+  --tk-scarlet:      #ED1C24;
+  --tk-amber:        #E7952A;
+  --tk-amber-700:    #9A5B0F;
+  --tk-amber-50:     #FCF3E6;
+  --tk-cream:        #F8F8F0;
+  --tk-ink:          #0D0102;
+
+  /* Neutrals (warm-leaning, to sit with the cream) */
+  --tk-text:         #18120F;
+  --tk-text-2:       #4A4440;
+  --tk-text-3:       #8A837D;
+  --tk-line:         #ECE7E1;
+  --tk-line-2:       #DED7CF;
+  --tk-surface:      #FFFFFF;
+  --tk-surface-2:    #FBFAF7;
+  --tk-canvas:       #F5F3EF;
+
+  /* Status (reserved meaning; always paired with a label or icon) */
+  --tk-ok:           #047857;
+  --tk-ok-50:        #ECF7F2;
+  --tk-warn:         #9A5B0F;
+  --tk-warn-50:      #FCF3E6;
+  --tk-danger:       #B91C1C;
+  --tk-danger-50:    #FDEEEE;
+
+  /* Shape and depth */
+  --tk-r-sm: 10px;
+  --tk-r:    14px;
+  --tk-r-lg: 20px;
+  --tk-r-xl: 28px;
+  --tk-shadow-1: 0 1px 2px rgba(13,1,2,.04), 0 1px 1px rgba(13,1,2,.02);
+  --tk-shadow-2: 0 1px 2px rgba(13,1,2,.04), 0 10px 28px -14px rgba(13,1,2,.18);
+  --tk-shadow-3: 0 2px 4px rgba(13,1,2,.04), 0 24px 56px -24px rgba(13,1,2,.32);
+  --tk-ring:     0 0 0 3px rgba(117,11,37,.16);
+
+  --tk-font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --tk-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --tk-ease: cubic-bezier(.2,.7,.2,1);
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────── */
+.tk-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 800 11px/1 var(--tk-font); letter-spacing: .16em; text-transform: uppercase;
+  color: var(--tk-amber-700);
+}
+.tk-eyebrow::before { content: ""; width: 22px; height: 2px; border-radius: 2px; background: var(--tk-amber); }
+.tk-eyebrow--light { color: var(--tk-amber); }
+.tk-h1 { font: 900 clamp(26px, 3vw, 34px)/1.12 var(--tk-font-display); color: var(--tk-text); letter-spacing: -.01em; margin: 0; }
+.tk-h2 { font: 800 20px/1.25 var(--tk-font-display); color: var(--tk-text); margin: 0; }
+.tk-h3 { font: 700 16px/1.3 var(--tk-font-display); color: var(--tk-text); margin: 0; }
+.tk-lead { font: 400 15px/1.65 var(--tk-font); color: var(--tk-text-2); margin: 0; max-width: 68ch; }
+.tk-muted { color: var(--tk-text-3); }
+.tk-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tk-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ── Page header (admin) ─────────────────────────────────────────────────── */
+.tk-page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin-bottom: 24px; }
+.tk-page-head .tk-lead { margin-top: 8px; font-size: 14px; }
+.tk-page-head__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.tk-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 42px; padding: 0 18px; border-radius: 12px; border: 1px solid transparent;
+  font: 700 13.5px/1 var(--tk-font); text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: background .18s var(--tk-ease), border-color .18s var(--tk-ease), box-shadow .18s var(--tk-ease), transform .18s var(--tk-ease), color .18s;
+}
+.tk-btn:active { transform: translateY(1px); }
+.tk-btn:focus-visible { outline: none; box-shadow: var(--tk-ring); }
+.tk-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.tk-btn--primary { background: var(--tk-brand); color: #fff; box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 6px 16px -8px rgba(117,11,37,.7); }
+.tk-btn--primary:hover { background: var(--tk-brand-700); }
+.tk-btn--accent { background: var(--tk-amber); color: var(--tk-ink); box-shadow: 0 6px 16px -8px rgba(231,149,42,.8); }
+.tk-btn--accent:hover { background: #D9861B; }
+.tk-btn--outline { background: var(--tk-surface); color: var(--tk-text); border-color: var(--tk-line-2); box-shadow: var(--tk-shadow-1); }
+.tk-btn--outline:hover { border-color: var(--tk-brand); color: var(--tk-brand); }
+.tk-btn--ghost { background: transparent; color: var(--tk-text-2); }
+.tk-btn--ghost:hover { background: rgba(13,1,2,.05); color: var(--tk-text); }
+.tk-btn--danger { background: var(--tk-danger); color: #fff; }
+.tk-btn--danger:hover { background: #991B1B; }
+.tk-btn--sm { height: 34px; padding: 0 12px; border-radius: 10px; font-size: 12.5px; }
+.tk-btn--block { width: 100%; }
+.tk-btn--onbrand { background: transparent; color: #fff; border-color: rgba(255,255,255,.35); }
+.tk-btn--onbrand:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.6); }
+.tk-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px;
+  border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--tk-text-3); cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.tk-icon-btn:hover { background: var(--tk-canvas); color: var(--tk-text); }
+.tk-icon-btn:focus-visible { outline: none; box-shadow: var(--tk-ring); }
+.tk-icon-btn svg { width: 16px; height: 16px; }
+.tk-icon-btn.is-on { color: var(--tk-amber); }
+.tk-icon-btn--danger:hover { background: var(--tk-danger-50); color: var(--tk-danger); }
+
+/* ── Cards and surfaces ─────────────────────────────────────────────────── */
+.tk-card { background: var(--tk-surface); border: 1px solid var(--tk-line); border-radius: var(--tk-r-lg); box-shadow: var(--tk-shadow-1); }
+.tk-card--pad { padding: 22px; }
+.tk-card--hover { transition: transform .22s var(--tk-ease), box-shadow .22s var(--tk-ease), border-color .22s; }
+.tk-card--hover:hover { transform: translateY(-2px); box-shadow: var(--tk-shadow-2); border-color: var(--tk-line-2); }
+.tk-divider { height: 1px; background: var(--tk-line); border: 0; margin: 0; }
+
+/* ── Stat tiles ─────────────────────────────────────────────────────────── */
+.tk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.tk-stat { background: var(--tk-surface); border: 1px solid var(--tk-line); border-radius: var(--tk-r-lg); padding: 16px 18px; box-shadow: var(--tk-shadow-1); display: flex; gap: 14px; align-items: center; }
+.tk-stat__icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--tk-brand-50); color: var(--tk-brand); flex-shrink: 0; }
+.tk-stat__icon svg { width: 20px; height: 20px; }
+.tk-stat__icon--amber { background: var(--tk-amber-50); color: var(--tk-amber-700); }
+.tk-stat__icon--ok { background: var(--tk-ok-50); color: var(--tk-ok); }
+.tk-stat__icon--ink { background: #F1EFEC; color: var(--tk-text-2); }
+.tk-stat__label { font: 600 12px/1.2 var(--tk-font); color: var(--tk-text-3); margin: 0; }
+.tk-stat__value { font: 800 24px/1.1 var(--tk-font); color: var(--tk-text); margin: 3px 0 0; }
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+.tk-badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; font: 700 11.5px/1 var(--tk-font); white-space: nowrap; }
+.tk-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .85; }
+.tk-badge--plain::before { display: none; }
+.tk-badge--ok { background: var(--tk-ok-50); color: var(--tk-ok); }
+.tk-badge--muted { background: #F1EFEC; color: var(--tk-text-3); }
+.tk-badge--warn { background: var(--tk-warn-50); color: var(--tk-warn); }
+.tk-badge--danger { background: var(--tk-danger-50); color: var(--tk-danger); }
+.tk-badge--brand { background: var(--tk-brand-50); color: var(--tk-brand); }
+.tk-badge--amber { background: var(--tk-amber-50); color: var(--tk-amber-700); }
+.tk-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--tk-line-2); background: var(--tk-surface); font: 600 12px/1 var(--tk-font); color: var(--tk-text-2); }
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+.tk-field { display: flex; flex-direction: column; gap: 7px; }
+.tk-label { font: 700 12.5px/1.2 var(--tk-font); color: var(--tk-text); }
+.tk-label small { font-weight: 500; color: var(--tk-text-3); margin-left: 4px; }
+.tk-help { font: 400 12px/1.5 var(--tk-font); color: var(--tk-text-3); margin: 0; }
+.tk-input, .tk-select, .tk-textarea {
+  width: 100%; box-sizing: border-box; border: 1px solid var(--tk-line-2); border-radius: 12px;
+  background: var(--tk-surface); color: var(--tk-text); font: 500 14px/1.4 var(--tk-font);
+  transition: border-color .15s, box-shadow .15s, background .15s; outline: none;
+}
+.tk-input, .tk-select { height: 44px; padding: 0 14px; }
+.tk-textarea { padding: 11px 14px; resize: vertical; min-height: 96px; }
+.tk-input::placeholder, .tk-textarea::placeholder { color: #B3ACA5; }
+.tk-input:hover, .tk-select:hover, .tk-textarea:hover { border-color: #CFC6BC; }
+.tk-input:focus, .tk-select:focus, .tk-textarea:focus { border-color: var(--tk-brand); box-shadow: var(--tk-ring); }
+.tk-select { appearance: none; padding-right: 38px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238A837D' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; }
+.tk-input-icon { position: relative; }
+.tk-input-icon svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--tk-text-3); pointer-events: none; }
+.tk-input-icon .tk-input { padding-left: 38px; }
+.tk-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { .tk-grid-2 { grid-template-columns: 1fr; } }
+
+/* Switch */
+.tk-switch { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--tk-line); border-radius: 14px; background: var(--tk-surface-2); cursor: pointer; }
+.tk-switch__text strong { display: block; font: 700 13.5px/1.3 var(--tk-font); color: var(--tk-text); }
+.tk-switch__text span { display: block; font: 400 12px/1.45 var(--tk-font); color: var(--tk-text-3); margin-top: 2px; }
+.tk-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.tk-switch__track { position: relative; width: 40px; height: 24px; border-radius: 999px; background: #D9D2CA; flex-shrink: 0; transition: background .2s; }
+.tk-switch__track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(13,1,2,.25); transition: transform .2s var(--tk-ease); }
+.tk-switch input:checked + .tk-switch__track { background: var(--tk-brand); }
+.tk-switch input:checked + .tk-switch__track::after { transform: translateX(16px); }
+.tk-switch input:focus-visible + .tk-switch__track { box-shadow: var(--tk-ring); }
+
+/* ── Toolbar and segmented control ──────────────────────────────────────── */
+.tk-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px; margin-bottom: 18px; }
+.tk-toolbar .tk-input-icon { flex: 1 1 240px; }
+.tk-segment { display: inline-flex; padding: 3px; gap: 2px; background: var(--tk-canvas); border: 1px solid var(--tk-line); border-radius: 12px; }
+.tk-segment button, .tk-segment a {
+  height: 34px; padding: 0 13px; border: 0; border-radius: 9px; background: transparent; cursor: pointer;
+  font: 700 12.5px/1 var(--tk-font); color: var(--tk-text-3); display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+}
+.tk-segment button:hover, .tk-segment a:hover { color: var(--tk-text); }
+.tk-segment .is-active { background: var(--tk-surface); color: var(--tk-text); box-shadow: var(--tk-shadow-1); }
+.tk-segment svg { width: 15px; height: 15px; }
+.tk-segment .tk-count { font-weight: 600; color: var(--tk-text-3); }
+
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.tk-table-wrap { overflow-x: auto; }
+.tk-table { width: 100%; border-collapse: separate; border-spacing: 0; font: 500 13.5px/1.4 var(--tk-font); color: var(--tk-text-2); }
+.tk-table thead th { text-align: left; padding: 12px 16px; font: 700 11px/1 var(--tk-font); text-transform: uppercase; letter-spacing: .08em; color: var(--tk-text-3); background: var(--tk-surface-2); border-bottom: 1px solid var(--tk-line); white-space: nowrap; }
+.tk-table tbody td { padding: 14px 16px; border-bottom: 1px solid var(--tk-line); vertical-align: middle; }
+.tk-table tbody tr:last-child td { border-bottom: 0; }
+.tk-table tbody tr { transition: background .15s; }
+.tk-table tbody tr:hover { background: var(--tk-surface-2); }
+
+/* ── Logo tile / monogram ───────────────────────────────────────────────── */
+.tk-logo { width: 56px; height: 56px; border-radius: 16px; background: #fff; border: 1px solid var(--tk-line); box-shadow: var(--tk-shadow-1); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+.tk-logo img { width: 100%; height: 100%; object-fit: contain; padding: 7px; box-sizing: border-box; }
+.tk-logo--lg { width: 84px; height: 84px; border-radius: 22px; }
+.tk-logo--sm { width: 40px; height: 40px; border-radius: 12px; }
+.tk-mono { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--tk-brand); color: #fff; font: 800 18px/1 var(--tk-font-display); letter-spacing: .02em; }
+.tk-logo--lg .tk-mono { font-size: 26px; }
+.tk-logo--sm .tk-mono { font-size: 14px; }
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.tk-empty { text-align: center; padding: 56px 24px; }
+.tk-empty__icon { width: 60px; height: 60px; border-radius: 18px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; background: var(--tk-brand-50); color: var(--tk-brand); }
+.tk-empty__icon svg { width: 26px; height: 26px; }
+
+/* ── Drawer, modal, backdrop ────────────────────────────────────────────── */
+.tk-backdrop { position: fixed; inset: 0; z-index: 900; background: rgba(13,1,2,.42); opacity: 0; pointer-events: none; transition: opacity .25s var(--tk-ease); backdrop-filter: blur(2px); }
+.tk-backdrop.is-open { opacity: 1; pointer-events: auto; }
+.tk-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 950; width: min(560px, 100vw); background: var(--tk-surface); box-shadow: var(--tk-shadow-3); transform: translateX(102%); transition: transform .32s var(--tk-ease); display: flex; flex-direction: column; }
+.tk-drawer.is-open { transform: translateX(0); }
+.tk-drawer__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 18px; border-bottom: 1px solid var(--tk-line); }
+.tk-drawer__body { flex: 1; overflow-y: auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 22px; }
+.tk-drawer__foot { display: flex; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--tk-line); background: var(--tk-surface-2); }
+.tk-section-title { font: 800 11px/1 var(--tk-font); letter-spacing: .14em; text-transform: uppercase; color: var(--tk-text-3); margin: 0 0 12px; }
+.tk-modal { position: fixed; inset: 0; z-index: 960; display: flex; align-items: center; justify-content: center; padding: 16px; pointer-events: none; }
+.tk-modal__box { width: min(440px, 100%); background: var(--tk-surface); border-radius: var(--tk-r-lg); box-shadow: var(--tk-shadow-3); padding: 24px; transform: translateY(10px) scale(.98); opacity: 0; transition: transform .22s var(--tk-ease), opacity .22s; }
+.tk-modal.is-open { pointer-events: auto; }
+.tk-modal.is-open .tk-modal__box { transform: none; opacity: 1; }
+
+/* ── Toast ──────────────────────────────────────────────────────────────── */
+.tk-toast { position: fixed; right: 24px; bottom: 24px; z-index: 990; display: flex; align-items: center; gap: 10px; padding: 12px 18px 12px 14px; border-radius: 14px; background: var(--tk-ink); color: #fff; font: 600 13px/1.3 var(--tk-font); box-shadow: var(--tk-shadow-3); transform: translateY(12px); opacity: 0; transition: transform .25s var(--tk-ease), opacity .25s; pointer-events: none; }
+.tk-toast.is-shown { transform: none; opacity: 1; }
+.tk-toast__dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(16,185,129,.18); color: #34D399; }
+.tk-toast--error .tk-toast__dot { background: rgba(237,28,36,.2); color: #FCA5A5; }
+
+/* ── Alert ──────────────────────────────────────────────────────────────── */
+.tk-alert { display: flex; gap: 10px; padding: 12px 16px; border-radius: 14px; font: 500 13.5px/1.5 var(--tk-font); margin-bottom: 18px; }
+.tk-alert--danger { background: var(--tk-danger-50); color: var(--tk-danger); border: 1px solid #F6CACA; }
+.tk-alert--ok { background: var(--tk-ok-50); color: var(--tk-ok); border: 1px solid #BFE5D4; }
+
+/* ── Drag and drop ordering ─────────────────────────────────────────────── */
+.tk-drag-handle { cursor: grab; color: #C4BCB3; }
+.tk-drag-handle:hover { color: var(--tk-text-2); }
+.is-dragging { opacity: .45; }
+.is-drop-target { box-shadow: 0 0 0 2px var(--tk-amber), var(--tk-shadow-2) !important; }
+
+/* ── Public: hero band and sections ─────────────────────────────────────── */
+.tk-hero { background: var(--tk-brand); color: #fff; position: relative; overflow: hidden; }
+.tk-hero__inner { max-width: 1200px; margin: 0 auto; padding: 64px 24px 72px; position: relative; }
+.tk-hero__title { font: 900 clamp(34px, 5vw, 56px)/1.04 var(--tk-font-display); letter-spacing: -.015em; margin: 16px 0 0; }
+.tk-hero__lead { font: 400 17px/1.65 var(--tk-font); color: rgba(255,255,255,.8); margin: 18px 0 0; max-width: 62ch; }
+.tk-hero__rings { position: absolute; right: -120px; top: -120px; width: 520px; height: 520px; border-radius: 50%; border: 1px solid rgba(255,255,255,.08); pointer-events: none; }
+.tk-hero__rings::before, .tk-hero__rings::after { content: ""; position: absolute; border-radius: 50%; border: 1px solid rgba(255,255,255,.07); }
+.tk-hero__rings::before { inset: 70px; }
+.tk-hero__rings::after { inset: 140px; border-color: rgba(231,149,42,.22); }
+.tk-hero__meta { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 32px; }
+.tk-hero__meta div strong { display: block; font: 800 30px/1 var(--tk-font-display); color: var(--tk-amber); }
+.tk-hero__meta div span { display: block; font: 600 11px/1.3 var(--tk-font); letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.6); margin-top: 8px; }
+.tk-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.tk-section { padding: 56px 0; }
+.tk-section__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+.tk-section__head .tk-h1 { margin-top: 12px; font-size: clamp(24px, 2.6vw, 32px); }
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .tk-card--hover, .tk-btn, .tk-drawer, .tk-modal__box, .tk-toast, .tk-backdrop { transition: none !important; }
+  .tk-card--hover:hover { transform: none; }
+}
+
+/* ==========================================================================
+   Admin theme layer
+   --------------------------------------------------------------------------
+   Pages built before the design system use Tailwind utilities directly. Under
+   body.tk-admin, the common patterns are mapped onto the design tokens, so
+   every admin page shares one look without rewriting its markup. Two-class
+   selectors outrank Tailwind's single-class utilities.
+   ========================================================================== */
+
+/* Neutrals: warm the cool slate greys */
+.tk-admin main .border-slate-100 { border-color: var(--tk-line); }
+.tk-admin main .border-slate-200 { border-color: var(--tk-line-2); }
+.tk-admin main .border-slate-50,
+.tk-admin main .divide-slate-50 > :not(:first-child),
+.tk-admin main .divide-slate-100 > :not(:first-child) { border-color: var(--tk-line); }
+.tk-admin main .bg-slate-50 { background-color: var(--tk-surface-2); }
+.tk-admin main .hover\:bg-slate-50:hover { background-color: var(--tk-surface-2); }
+.tk-admin main .bg-slate-100 { background-color: #F1EFEC; }
+.tk-admin main .text-slate-900 { color: var(--tk-text); }
+.tk-admin main .text-slate-800 { color: #2A2320; }
+.tk-admin main .text-slate-700 { color: #3A3330; }
+.tk-admin main .text-slate-600 { color: var(--tk-text-2); }
+.tk-admin main .text-slate-500 { color: #6E6762; }
+.tk-admin main .text-slate-400 { color: var(--tk-text-3); }
+.tk-admin main .text-slate-300 { color: #B3ACA5; }
+
+/* Cards: fine warm borders and layered depth */
+.tk-admin main .bg-white.shadow-sm { box-shadow: var(--tk-shadow-1); }
+.tk-admin main .bg-white.rounded-3xl,
+.tk-admin main .bg-white.rounded-2xl { border-color: var(--tk-line); }
+.tk-admin main .rounded-3xl.bg-white { border-radius: var(--tk-r-lg); }
+
+/* Form controls: white fields, brand focus ring */
+.tk-admin main input[type="text"].rounded-xl, .tk-admin main input[type="url"].rounded-xl,
+.tk-admin main input[type="email"].rounded-xl, .tk-admin main input[type="number"].rounded-xl,
+.tk-admin main input[type="search"].rounded-xl, .tk-admin main input[type="password"].rounded-xl,
+.tk-admin main input[type="date"].rounded-xl, .tk-admin main select.rounded-xl, .tk-admin main textarea.rounded-xl {
+  background-color: var(--tk-surface); border-color: var(--tk-line-2); border-radius: 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.tk-admin main input.rounded-xl:hover, .tk-admin main select.rounded-xl:hover, .tk-admin main textarea.rounded-xl:hover { border-color: #CFC6BC; }
+.tk-admin main input.rounded-xl:focus, .tk-admin main select.rounded-xl:focus, .tk-admin main textarea.rounded-xl:focus {
+  border-color: var(--tk-brand); box-shadow: var(--tk-ring); outline: none;
+}
+.tk-admin main input::placeholder, .tk-admin main textarea::placeholder { color: #B3ACA5; }
+
+/* Field labels: legible sentence case instead of tiny spaced capitals */
+.tk-admin main label.uppercase.tracking-widest.font-black {
+  text-transform: none; letter-spacing: 0; font: 700 13px/1.3 var(--tk-font); color: var(--tk-text);
+}
+.tk-admin main label.uppercase.tracking-widest.font-black .text-slate-300 { font-weight: 500; color: var(--tk-text-3); text-transform: none; }
+
+/* Buttons: one shape language with the tk buttons */
+.tk-admin main .btn-primary, .tk-admin main .btn-secondary, .tk-admin main .btn-gold {
+  border-radius: 12px; height: 42px; padding: 0 18px !important; font-size: 13.5px;
+  transition: background .18s var(--tk-ease), box-shadow .18s var(--tk-ease);
+}
+.tk-admin main .btn-primary { box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 6px 16px -8px rgba(117,11,37,.7); }
+.tk-admin main .btn-primary:hover { transform: none; background: var(--tk-brand-700); box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(117,11,37,.75); }
+.tk-admin main .btn-secondary:hover, .tk-admin main .btn-gold:hover { transform: none; }
+
+/* Page titles keep the display face, slightly tighter */
+.tk-admin main h1.font-outfit { letter-spacing: -.01em; }
+
+/* ── Two-column editor with a sticky publishing panel ───────────────────── */
+.tk-editor { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (min-width: 1200px) { .tk-editor { grid-template-columns: minmax(0, 1fr) 320px; } }
+.tk-editor__main { min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+.tk-editor__side { display: flex; flex-direction: column; gap: 16px; }
+@media (min-width: 1200px) { .tk-editor__side { position: sticky; top: 8px; } }
+.tk-publish { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.tk-publish__actions { display: flex; flex-direction: column; gap: 8px; }
+.tk-publish__actions > * { width: 100%; justify-content: center; }
+.tk-check { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.tk-check li { display: flex; align-items: center; gap: 10px; font: 500 13px/1.3 var(--tk-font); color: var(--tk-text-3); }
+.tk-check li::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--tk-line-2); flex-shrink: 0; box-sizing: border-box; }
+.tk-check li.is-done { color: var(--tk-text); }
+.tk-check li.is-done::before { border-color: var(--tk-ok); background: var(--tk-ok) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/11px no-repeat; }
+.tk-check li.is-optional::after { content: "optional"; margin-left: auto; font-size: 11px; color: var(--tk-text-3); }
+.tk-meter { height: 6px; border-radius: 999px; background: #EDE8E2; overflow: hidden; }
+.tk-meter > span { display: block; height: 100%; background: var(--tk-brand); border-radius: 999px; transition: width .3s var(--tk-ease); }
+.tk-btn--publish { background: var(--tk-ok); color: #fff; box-shadow: 0 6px 16px -8px rgba(4,120,87,.7); }
+.tk-btn--publish:hover { background: #036146; }
+.tk-check li[hidden] { display: none; }
