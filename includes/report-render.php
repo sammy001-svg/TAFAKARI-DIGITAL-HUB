@@ -231,6 +231,36 @@ function report_render(array $report, bool $public): void {
                          (int) $k['reports'], 'Reports by category, ' . $s['period']['label']) ?>
   </section>
 
+  <?php if ($s['share']):
+      $order = array_flip(array_column($s['categories'], 'name'));
+      $slices = $s['share'];
+      usort($slices, fn($a, $b) => ($order[$a['category']] ?? 99) <=> ($order[$b['category']] ?? 99));
+  ?>
+    <section class="rr-sec">
+      <h3>How attention divides</h3>
+      <p class="rr-lead">Each slice is that category's share of all category scores recorded in the period, so the slices add up to 100%.</p>
+      <?= chart_pie(array_map(fn($r) => ['label' => $r['category'], 'count' => $r['reports'], 'slot' => $order[$r['category']] ?? 99], $slices),
+                    'Share of category scores, ' . $s['period']['label']) ?>
+    </section>
+  <?php endif; ?>
+
+  <?php if (!empty($s['elements'])): ?>
+    <section class="rr-sec">
+      <h3>Scores by element</h3>
+      <p class="rr-lead">The component elements behind each category, on the same 1 to 10 scale. Only elements scored in the period are shown.</p>
+      <div class="ch-grid" style="grid-template-columns:repeat(auto-fill,minmax(min(420px,100%),1fr))">
+        <?php foreach ($s['categories'] as $cat): if (empty($s['elements'][$cat['name']])) continue;
+            $els = $s['elements'][$cat['name']]; arsort($els); ?>
+          <div class="ch-card">
+            <h4 style="min-height:0;margin-bottom:8px"><?= rr_e($cat['name']) ?></h4>
+            <?= chart_score_bars(array_map(fn($el, $c) => ['label' => $el, 'value' => $c['score'], 'prev' => $s['elementsPrev'][$cat['name']][$el]['score'] ?? null, 'critical' => $c['critical'] ?? false], array_keys($els), array_values($els)),
+                                 'Scores by element, ' . $cat['name'], $s['prev']['label']) ?>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </section>
+  <?php endif; ?>
+
   <?php if ($s['countries']): ?>
     <section class="rr-sec">
       <h3><?= $s['scope']['type'] === 'COUNTRY' ? 'Country detail' : 'Country profiles' ?></h3>
@@ -298,6 +328,13 @@ function report_csv(array $report): string {
     $emit('Total', ['name' => $s['scope']['label'], 'cells' => $s['total'], 'prev' => $s['totalPrev'], 'overall' => null, 'overallPrev' => null]);
     foreach ($s['regions'] as $r) $emit('Region', $r);
     foreach ($s['countries'] as $r) $emit('Country', $r);
+    if (!empty($s['elements'])) {
+        fputcsv($fh, []);
+        fputcsv($fh, ['Category', 'Element', 'Score', 'Score (previous)', 'Reports']);
+        foreach ($s['elements'] as $cat => $els) {
+            foreach ($els as $el => $c) fputcsv($fh, [$cat, $el, $c['score'], $s['elementsPrev'][$cat][$el]['score'] ?? '', $c['n']]);
+        }
+    }
     rewind($fh);
     $csv = stream_get_contents($fh);
     fclose($fh);

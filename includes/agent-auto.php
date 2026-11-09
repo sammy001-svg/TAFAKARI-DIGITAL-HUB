@@ -14,7 +14,7 @@ require_once __DIR__ . '/agent-articles.php';
 require_once __DIR__ . '/agent-videos.php';
 
 const AGENT_AUTO_ARTICLES_PER_DAY = 2;
-const AGENT_AUTO_FINDINGS_PER_DAY = 4;
+const AGENT_AUTO_FINDINGS_PER_DAY = 8;
 
 /** How many runs of each kind have started today. */
 function agent_auto_today(): array {

@@ -22,6 +22,9 @@ const CH_TEXT_2  = '#475569';   // secondary text
 const CH_MUTED   = '#94a3b8';   // muted text
 const CH_SURFACE = '#ffffff';   // chart surface (ring + gap colour)
 const CH_CRIT    = '#ED1C24';   // status: critical (threshold rule only)
+// Fixed categorical order, validated for colour-blind separation; assigned by
+// category position, never by rank. Red is left out: it means "critical" here.
+const CH_PIE     = ['#A8324F', '#E7952A', '#8A6A00', '#D9738C', '#B5541C'];
 
 function ch_e(string $s): string { return htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8'); }
 function ch_num(?float $v): string { return $v === null ? '—' : rtrim(rtrim(number_format($v, 1), '0'), '.'); }
@@ -307,4 +310,59 @@ function chart_forecast_multiples(array $labels, string $nextLabel, array $serie
         $rows[] = [$cat, $fc ? ch_num($fc['last']) : '—', $fc ? ch_num($fc['next']) : '—', $fc ? ch_num($fc['low']) . ' to ' . ch_num($fc['high']) : '—', $fc['direction'] ?? '—', $fc['confidence'] ?? '—'];
     }
     return $html . ch_table(['Category', 'Last observed', 'Projected', 'Likely range', 'Direction', 'Confidence'], $rows, $caption);
+}
+
+/**
+ * Part-to-whole ring. Colour follows each row's fixed slot; every slice is named
+ * with its value in the legend, so identity never rests on colour alone.
+ *
+ * @param array $rows list of ['label' => string, 'count' => int, 'slot' => int]
+ */
+function chart_pie(array $rows, string $caption): string {
+    $rows = array_values(array_filter($rows, fn($r) => $r['count'] > 0));
+    if (count($rows) > count(CH_PIE)) {      // never invent a colour: the rest fold into Other
+        $rest = array_splice($rows, count(CH_PIE) - 1);
+        $rows[] = ['label' => 'Other', 'count' => array_sum(array_column($rest, 'count')), 'slot' => -1];
+    }
+    $total = array_sum(array_column($rows, 'count'));
+    if ($total === 0) return '<p class="ch-empty">No scored reports in this period.</p>';
+
+    // Largest remainder, so the printed shares always total exactly 100
+    $exact = array_map(fn($r) => $r['count'] * 100 / $total, $rows);
+    $pcts  = array_map(fn($v) => (int) floor($v), $exact);
+    $left  = 100 - array_sum($pcts);
+    $order = array_keys($exact);
+    usort($order, fn($a, $b) => ($exact[$b] - floor($exact[$b])) <=> ($exact[$a] - floor($exact[$a])));
+    foreach (array_slice($order, 0, $left) as $i) $pcts[$i]++;
+
+    $S = 220; $cx = $cy = $S / 2; $R = 104; $r0 = 66;
+    $color = fn(array $r) => CH_PIE[$r['slot']] ?? CH_MUTED;
+    $pt = fn(float $rad, float $a) => sprintf('%.2f %.2f', $cx + $rad * sin($a), $cy - $rad * cos($a));
+    $s = '<svg class="ch-svg" style="width:220px;flex:none" viewBox="0 0 ' . $S . ' ' . $S . '" role="img" aria-label="' . ch_e($caption) . '">';
+    $a0 = 0.0;
+    foreach ($rows as $i => $r) {
+        $tip = sprintf('%s: %d%% (%d of %d)', $r['label'], $pcts[$i], $r['count'], $total);
+        if (count($rows) === 1) {
+            $s .= sprintf('<circle cx="%d" cy="%d" r="%d" fill="none" stroke="%s" stroke-width="%d" tabindex="0"><title>%s</title></circle>', $cx, $cy, ($R + $r0) / 2, $color($r), $R - $r0, ch_e($tip));
+            break;
+        }
+        $a1 = $a0 + 2 * M_PI * $r['count'] / $total;
+        $large = $a1 - $a0 > M_PI ? 1 : 0;
+        $d = 'M' . $pt($R, $a0) . " A{$R} {$R} 0 {$large} 1 " . $pt($R, $a1) . ' L' . $pt($r0, $a1) . " A{$r0} {$r0} 0 {$large} 0 " . $pt($r0, $a0) . ' Z';
+        $s .= '<path class="ch-bar" d="' . $d . '" fill="' . $color($r) . '" stroke="' . CH_SURFACE . '" stroke-width="2" tabindex="0" aria-label="' . ch_e($tip) . '"><title>' . ch_e($tip) . '</title></path>';
+        $a0 = $a1;
+    }
+    $s .= sprintf('<text x="%d" y="%d" text-anchor="middle" font-size="26" font-weight="800" fill="%s">%d</text>', $cx, $cy + 4, CH_TEXT, $total);
+    $s .= sprintf('<text x="%d" y="%d" text-anchor="middle" font-size="11" fill="%s">category scores</text>', $cx, $cy + 22, CH_TEXT_2);
+    $s .= '</svg>';
+
+    $legend = '<ul style="list-style:none;margin:0;padding:0;flex:1;min-width:220px;display:grid;gap:9px">';
+    foreach ($rows as $i => $r) {
+        $legend .= '<li style="display:flex;align-items:center;gap:9px;font:500 13px Inter,sans-serif;color:' . CH_TEXT_2 . '">'
+                 . '<span class="ch-swatch" style="margin:0;background:' . $color($r) . '"></span><span style="flex:1">' . ch_e($r['label']) . '</span>'
+                 . '<strong style="color:' . CH_TEXT . '">' . $pcts[$i] . '%</strong></li>';
+    }
+    $legend .= '</ul>';
+    return '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:28px;max-width:640px">' . $s . $legend . '</div>'
+         . ch_table(['Category', 'Scores', 'Share'], array_map(fn($r, $pct) => [$r['label'], $r['count'], $pct . '%'], $rows, $pcts), $caption);
 }

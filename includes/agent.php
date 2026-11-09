@@ -36,6 +36,7 @@ const AGENT_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 const AGENT_MAX_TOKENS    = 16000;   // per API call (non-streaming)
 const AGENT_MAX_CALLS     = 6;       // pause_turn continuations + one nudge
 const AGENT_TOOL_NAME     = 'submit_findings';
+const AGENT_ALERT_SCORE   = 9;       // a proposed element score at or above this emails the super admins
 const AGENT_HTTP_TIMEOUT  = 600;     // seconds, per API call
 
 // Cost ESTIMATES in USD for Claude Opus 5.5 at first-party API rates. They
@@ -756,6 +757,10 @@ function agent_run_country(string $country, string $triggeredBy, ?string $userId
         if ($result['reasons']) {
             $notes = trim($notes . "\n\nDiscarded by validation: " . implode('; ', array_unique($result['reasons'])));
         }
+        if ($result['critical']) {
+            $sent  = agent_send_critical_alert($country, $result['critical']);
+            $notes = trim($notes . "\n\n" . ($sent > 0 ? "Critical alert emailed to {$sent} super admin(s)." : 'Critical finding: the alert email could not be sent.'));
+        }
         $out['status'] = 'OK';
     } catch (Throwable $e) {
         $error = agent_api_error($e);
@@ -895,7 +900,7 @@ function agent_validate_item(array $raw, array $seenUrls, ?string $windowStart =
  * @return array{proposed:int,duplicate:int,discarded:int,reasons:string[]}
  */
 function agent_store_items(string $runId, string $country, array $items, array $seenUrls, array $settings): array {
-    $res = ['proposed' => 0, 'duplicate' => 0, 'discarded' => 0, 'reasons' => []];
+    $res = ['proposed' => 0, 'duplicate' => 0, 'discarded' => 0, 'reasons' => [], 'critical' => []];
     $pdo = db();
     $items = array_slice(array_values($items), 0, $settings['max_items']);
 
@@ -933,6 +938,7 @@ function agent_store_items(string $runId, string $country, array $items, array $
             foreach ($hashes as $h) $ins->execute([$h, $id]);
             $pdo->commit();
             $res['proposed']++;
+            if (max($it['scores']) >= AGENT_ALERT_SCORE) $res['critical'][] = $it;
         } catch (Throwable $e) {
             $pdo->rollBack();
             $res['discarded']++;
@@ -1031,6 +1037,41 @@ function agent_promote_item(string $itemId, string $uid): string {
         throw $e;
     }
     return $id;
+}
+
+/** Email the super admins about proposed findings scored critical. Returns how many were sent. */
+function agent_send_critical_alert(string $country, array $items): int {
+    try {
+        $to = array_filter(db()->query("SELECT email FROM User WHERE role = 'SUPER_ADMIN'")->fetchAll(PDO::FETCH_COLUMN), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
+    } catch (Throwable $e) {
+        error_log('[tafakari-agent] alert recipients: ' . $e->getMessage());
+        return 0;
+    }
+    if (!$to) return 0;
+
+    $base = defined('APP_URL') ? rtrim((string) constant('APP_URL'), '/') : '';
+    $host = (string) (parse_url($base, PHP_URL_HOST) ?: 'localhost');
+    $subject = 'Tafakari alert: ' . count($items) . ' critical finding' . (count($items) === 1 ? '' : 's') . ' in ' . $country;
+    $body = "The Tafakari Agent has proposed a finding scored critical (9 or above). It is AI-proposed and has not been verified.\n\n";
+    foreach ($items as $it) {
+        $top = max($it['scores']);
+        $body .= $it['title'] . "\n" . implode(', ', $it['countries']) . ($it['region'] !== '' ? ' - ' . $it['region'] : '')
+               . "\nHighest score: {$top}/10 (" . array_search($top, $it['scores'], true) . "). Confidence: {$it['confidence']}. Independent sources: {$it['sourceCount']}.\n"
+               . $it['summary'] . "\n\n";
+    }
+    $body .= "Review it: {$base}/admin/agent\n";
+    $headers = "From: Tafakari Agent <noreply@{$host}>\r\nContent-Type: text/plain; charset=UTF-8\r\nX-Auto-Response-Suppress: All";
+    $send = $GLOBALS['agent_mailer'] ?? 'mail';
+    $sent = 0;
+    foreach ($to as $addr) {
+        try {
+            // $country is validated against the country list, so no header can be injected through the subject
+            if ($send($addr, mb_encode_mimeheader($subject, 'UTF-8'), $body, $headers)) $sent++;
+        } catch (Throwable $e) {
+            error_log('[tafakari-agent] alert mail: ' . $e->getMessage());
+        }
+    }
+    return $sent;
 }
 
 /** Reject, mark duplicate, or return a reviewed finding to the queue. */

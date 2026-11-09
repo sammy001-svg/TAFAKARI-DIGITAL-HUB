@@ -366,6 +366,54 @@ $regionMatrixMeta  = $aggActive['region'];
 $regionCompareMeta = $aggCompare['region'];
 $scoreMatrixAvg = array_map(fn($byCat) => array_map(fn($c) => $c['score'], $byCat), $scoreMatrixMeta);
 
+// ── Map layer: real published scores only ──────────────────────────────
+// One point per country and indicator, fanned out around the country's centre
+// so they do not hide each other. Points are country-level, not exact places.
+$realMapData = [];
+$realDeesc   = [];
+$countryTrend = [];
+$_periodName  = $isAllTime ? 'all cycles' : $activeCycle['label'];
+$_fan = function (array $at, int $i, int $n): array {
+    if ($n < 2) return [$at[0], $at[1]];
+    $a = 2 * M_PI * $i / $n;
+    return [round($at[0] + 0.45 * cos($a), 3), round($at[1] + 0.45 * sin($a), 3)];
+};
+foreach ($scoreMatrixMeta as $_ctry => $_byCat) {
+    if (!isset($countryCoords[$_ctry])) continue;
+    $_i = 0; $_n = count($_byCat);
+    foreach ($_byCat as $_cat => $_cell) {
+        [$_lat, $_lng] = $_fan($countryCoords[$_ctry], $_i++, $_n);
+        $realMapData[] = ['lat' => $_lat, 'lng' => $_lng, 'name' => $_ctry, 'country' => $countryCoords[$_ctry][2], 'category' => $_cat,
+                          'intensity' => round((float) $_cell['score'], 1),
+                          'desc' => sprintf('%s: %s out of 10 in %s, combined from %d published report%s. Shown at country level.', $_cat, number_format((float) $_cell['score'], 1), $_periodName, $_cell['n'], $_cell['n'] == 1 ? '' : 's')];
+    }
+}
+// Change from the previous cycle: what is improving, and each country's direction
+if (!$isAllTime) {
+    $_prevCells = hm_build_cells($scoredReports, hm_cycle_shift($activeCycle['start'], -1)['start'])['country'];
+    foreach ($scoreMatrixMeta as $_ctry => $_byCat) {
+        if (!isset($countryCoords[$_ctry], $_prevCells[$_ctry])) continue;
+        $_i = 0; $_n = count($_byCat); $_deltas = [];
+        foreach ($_byCat as $_cat => $_cell) {
+            [$_lat, $_lng] = $_fan($countryCoords[$_ctry], $_i++, $_n);
+            if (!isset($_prevCells[$_ctry][$_cat])) continue;
+            $_drop = round((float) $_prevCells[$_ctry][$_cat]['score'] - (float) $_cell['score'], 1);
+            $_deltas[] = $_drop;
+            if ($_drop >= 0.5) {
+                $realDeesc[] = ['lat' => $_lat, 'lng' => $_lng, 'name' => $_ctry, 'country' => $countryCoords[$_ctry][2], 'category' => $_cat,
+                                'deescLevel' => $_drop >= 2 ? 3 : ($_drop >= 1 ? 2 : 1),
+                                'desc' => sprintf('%s fell from %s to %s out of 10 compared with the previous monitoring cycle.', $_cat, number_format((float) $_prevCells[$_ctry][$_cat]['score'], 1), number_format((float) $_cell['score'], 1))];
+            }
+        }
+        if ($_deltas) {
+            $_m = array_sum($_deltas) / count($_deltas);
+            $countryTrend[$countryCoords[$_ctry][2]] = $_m >= 0.25 ? 'Decreasing' : ($_m <= -0.25 ? 'Increasing' : 'Stable');
+        }
+    }
+}
+// Filters must also list the indicators the scores use
+foreach (heatmap_taxonomy() as $_c) if (!isset($cats[$_c['name']])) $cats[$_c['name']] = $_c['color'];
+
 $currentCycle = hm_cycle_current();
 $hmAgg        = hm_agg_settings();
 
@@ -1230,6 +1278,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
           </tbody>
         </table>
       </div>
+      <?php include __DIR__ . '/includes/heatmap-periods.php'; ?>
     <?php endif; ?>
   </div>
 
@@ -1238,7 +1287,7 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
     <div class="flex items-center justify-between mb-5">
       <div>
         <h2 id="table-title" class="font-outfit font-black text-xl text-slate-900">Top Flashpoints</h2>
-        <p id="table-sub" class="text-sm text-slate-400 mt-0.5">Highest-intensity locations currently visible — click any row to zoom in</p>
+        <p id="table-sub" class="text-sm text-slate-400 mt-0.5">Highest-intensity scores currently visible — click any row to zoom in</p>
       </div>
       <span class="text-[10px] font-black uppercase tracking-widest text-slate-300" data-i18n="heatmapPage.sortedBySeverity">Sorted by severity</span>
     </div>
@@ -1295,99 +1344,12 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 /* ── Map data ─────────────────────────────────────────────────────── */
-var mapData = [
-  // ── Kenya
-  {lat:1.286,  lng:36.817, name:"Nairobi",        country:"KE", category:"Health",       intensity:8,  desc:"Urban health services strain and informal settlement conditions."},
-  {lat:-1.286, lng:36.823, name:"Kiambu",          country:"KE", category:"Education",    intensity:6,  desc:"School access challenges in peri-urban areas."},
-  {lat:-4.043, lng:39.668, name:"Mombasa",         country:"KE", category:"Security",     intensity:7,  desc:"Coastal security incidents and radicalisation concerns."},
-  {lat:0.517,  lng:35.270, name:"Eldoret",         country:"KE", category:"Agriculture",  intensity:5,  desc:"Crop failure due to drought in North Rift."},
-  {lat:-0.102, lng:34.761, name:"Kisumu",          country:"KE", category:"Health",       intensity:7,  desc:"Malaria and waterborne disease prevalence."},
-  {lat:0.283,  lng:37.454, name:"Meru",            country:"KE", category:"Climate",      intensity:6,  desc:"Deforestation and water catchment concerns."},
-  {lat:-0.670, lng:37.147, name:"Thika",           country:"KE", category:"Policy",       intensity:4,  desc:"Land use disputes and urban expansion."},
-  {lat:3.119,  lng:35.597, name:"Turkana",         country:"KE", category:"Human Rights", intensity:9,  desc:"Pastoralist resource conflict and drought displacement."},
-  {lat:1.750,  lng:41.120, name:"Mandera",         country:"KE", category:"Security",     intensity:8,  desc:"Cross-border insecurity and Al-Shabaab incursions."},
-  // ── Ethiopia
-  {lat:9.024,  lng:38.747, name:"Addis Ababa",     country:"ET", category:"Policy",       intensity:7,  desc:"Political reforms and governance transition."},
-  {lat:14.495, lng:39.475, name:"Mekelle",         country:"ET", category:"Human Rights", intensity:9,  desc:"Post-conflict humanitarian situation in Tigray."},
-  {lat:9.593,  lng:41.867, name:"Dire Dawa",       country:"ET", category:"Security",     intensity:6,  desc:"Inter-ethnic tensions and border security."},
-  {lat:7.678,  lng:36.832, name:"Hawassa",         country:"ET", category:"Education",    intensity:5,  desc:"Educational infrastructure gaps in SNNPR."},
-  {lat:11.593, lng:37.391, name:"Bahir Dar",       country:"ET", category:"Climate",      intensity:7,  desc:"Lake Tana water levels and agricultural stress."},
-  {lat:9.313,  lng:42.118, name:"Jijiga",          country:"ET", category:"Health",       intensity:8,  desc:"Healthcare access crisis in the Somali region."},
-  {lat:8.550,  lng:39.268, name:"Adama",           country:"ET", category:"Agriculture",  intensity:5,  desc:"Irrigation infrastructure challenges."},
-  {lat:6.033,  lng:37.559, name:"Amhara West",     country:"ET", category:"Security",     intensity:9,  desc:"Fano militia activity and displacement."},
-  // ── DR Congo
-  {lat:-4.322, lng:15.322, name:"Kinshasa",        country:"CD", category:"Policy",       intensity:7,  desc:"Urban governance challenges and political instability."},
-  {lat:-1.678, lng:29.217, name:"Goma",            country:"CD", category:"Security",     intensity:10, desc:"M23 armed conflict and mass civilian displacement."},
-  {lat:-11.663,lng:27.479, name:"Lubumbashi",      country:"CD", category:"Human Rights", intensity:8,  desc:"Mining sector human rights abuses and labour exploitation."},
-  {lat:-3.381, lng:29.361, name:"Bukavu",          country:"CD", category:"Health",       intensity:8,  desc:"Healthcare crisis and gender-based violence."},
-  {lat:4.316,  lng:18.033, name:"Kisangani",       country:"CD", category:"Education",    intensity:6,  desc:"Education access deficits in Orientale province."},
-  {lat:-2.499, lng:28.860, name:"Uvira",           country:"CD", category:"Displacement", intensity:9,  desc:"Flooding and armed group-driven displacement."},
-  {lat:0.518,  lng:25.196, name:"Beni",            country:"CD", category:"Security",     intensity:10, desc:"ADF militia attacks and civilian casualties."},
-  // ── South Sudan
-  {lat:4.859,  lng:31.571, name:"Juba",            country:"SS", category:"Policy",       intensity:8,  desc:"Political fragility and peace deal implementation stall."},
-  {lat:7.699,  lng:28.031, name:"Wau",             country:"SS", category:"Displacement", intensity:9,  desc:"Intercommunal violence and IDP camps."},
-  {lat:9.533,  lng:31.661, name:"Malakal",         country:"SS", category:"Security",     intensity:9,  desc:"Upper Nile conflict and UNMISS protection site."},
-  {lat:9.209,  lng:29.796, name:"Bentiu",          country:"SS", category:"Health",       intensity:8,  desc:"Flooding, cholera outbreaks and food insecurity."},
-  {lat:8.490,  lng:30.660, name:"Rumbek",          country:"SS", category:"Human Rights", intensity:7,  desc:"Cattle raiding and gender-based violence."},
-  // ── Sudan
-  {lat:15.551, lng:32.532, name:"Khartoum",        country:"SD", category:"Security",     intensity:10, desc:"RSF–SAF urban warfare with civilian mass casualties."},
-  {lat:13.634, lng:25.349, name:"El Fasher",       country:"SD", category:"Human Rights", intensity:10, desc:"Darfur genocide warnings and siege conditions."},
-  {lat:19.616, lng:37.217, name:"Port Sudan",      country:"SD", category:"Displacement", intensity:7,  desc:"IDP influx and humanitarian bottleneck at sea port."},
-  {lat:12.861, lng:30.217, name:"Sennar",          country:"SD", category:"Health",       intensity:6,  desc:"Healthcare collapse and disease outbreak."},
-  {lat:11.459, lng:27.912, name:"Nyala",           country:"SD", category:"Security",     intensity:9,  desc:"South Darfur ethnic violence and looting."},
-  // ── Mozambique
-  {lat:-25.891,lng:32.605, name:"Maputo",          country:"MZ", category:"Policy",       intensity:5,  desc:"Governance challenges and post-election tensions."},
-  {lat:-11.706,lng:40.513, name:"Pemba",           country:"MZ", category:"Security",     intensity:9,  desc:"Cabo Delgado insurgency — Ansar al-Sunna jihadist attacks."},
-  {lat:-13.368,lng:40.337, name:"Mocímboa",        country:"MZ", category:"Displacement", intensity:10, desc:"Insurgent occupation and mass displacement."},
-  {lat:-15.116,lng:39.268, name:"Nampula",         country:"MZ", category:"Agriculture",  intensity:6,  desc:"Food insecurity and climate stress in the north."},
-  {lat:-19.823,lng:34.838, name:"Beira",           country:"MZ", category:"Climate",      intensity:7,  desc:"Cyclone Idai legacy: infrastructure and recovery gaps."},
-  // ── Burkina Faso
-  {lat:12.362, lng:-1.534, name:"Ouagadougou",     country:"BF", category:"Security",     intensity:9,  desc:"Junta rule, jihadist attacks and press freedom crisis."},
-  {lat:13.450, lng:-0.900, name:"Kaya",            country:"BF", category:"Displacement", intensity:9,  desc:"Sahel region displacement — over 2 million IDPs."},
-  {lat:14.300, lng:-0.056, name:"Dori",            country:"BF", category:"Human Rights", intensity:10, desc:"JNIM siege — humanitarian access blocked."},
-  {lat:11.177, lng:-4.297, name:"Bobo-Dioulasso",  country:"BF", category:"Security",     intensity:7,  desc:"Southern security deterioration and military incidents."},
-  // ── Somalia
-  {lat:2.046,  lng:45.341, name:"Mogadishu",       country:"SO", category:"Security",     intensity:9,  desc:"Al-Shabaab urban attacks and political instability."},
-  {lat:-0.359, lng:42.545, name:"Kismayo",         country:"SO", category:"Human Rights", intensity:8,  desc:"Clan conflict and displacement in Jubbaland."},
-  {lat:11.284, lng:49.183, name:"Bosaso",          country:"SO", category:"Security",     intensity:7,  desc:"Puntland ISIS activity and piracy networks."},
-  {lat:2.044,  lng:45.341, name:"Lower Shabelle",  country:"SO", category:"Displacement", intensity:9,  desc:"Al-Shabaab territorial control and civilian displacement."},
-  // ── Mali
-  {lat:12.650, lng:-8.000, name:"Bamako",          country:"ML", category:"Policy",       intensity:7,  desc:"Military junta governance and anti-Western posture."},
-  {lat:16.270, lng:-0.042, name:"Gao",             country:"ML", category:"Security",     intensity:9,  desc:"JNIM and IS Sahel armed group presence."},
-  {lat:20.000, lng:-1.700, name:"Kidal",           country:"ML", category:"Security",     intensity:10, desc:"Tuareg CMA–Wagner conflict and army loss of control."},
-  {lat:16.770, lng:-3.008, name:"Timbuktu",        country:"ML", category:"Displacement", intensity:8,  desc:"Jihadist blockade and mass civilian flight."},
-  // ── Niger
-  {lat:13.513, lng:2.113,  name:"Niamey",          country:"NE", category:"Policy",       intensity:8,  desc:"Post-coup junta instability and ECOWAS standoff."},
-  {lat:16.964, lng:7.994,  name:"Agadez",          country:"NE", category:"Security",     intensity:8,  desc:"Sahara smuggling routes and IS Sahel recruitment."},
-  {lat:14.212, lng:1.458,  name:"Tillabéri",       country:"NE", category:"Security",     intensity:9,  desc:"Tri-border area jihadist attacks on civilians."},
-  // ── Central African Republic
-  {lat:4.361,  lng:18.555, name:"Bangui",          country:"CF", category:"Security",     intensity:8,  desc:"Wagner-backed government and anti-Balaka/CPC conflict."},
-  {lat:5.771,  lng:20.680, name:"Bambari",         country:"CF", category:"Human Rights", intensity:9,  desc:"UPC militia control and severe humanitarian crisis."},
-  {lat:8.582,  lng:16.074, name:"Ndélé",           country:"CF", category:"Displacement", intensity:7,  desc:"FPRC armed group presence and displacement."},
-  // ── Chad
-  {lat:12.105, lng:15.044, name:"N'Djamena",       country:"TD", category:"Policy",       intensity:7,  desc:"Post-Déby transitional instability and rebel activity."},
-  {lat:13.017, lng:13.450, name:"Lac Chad",        country:"TD", category:"Security",     intensity:9,  desc:"Boko Haram / ISWAP attacks across Lake Chad basin."},
-  {lat:8.592,  lng:16.078, name:"Sarh",            country:"TD", category:"Displacement", intensity:7,  desc:"South Chad intercommunal violence and displacement."},
-  // ── Nigeria (Northeast)
-  {lat:11.843, lng:13.150, name:"Maiduguri",       country:"NG", category:"Security",     intensity:9,  desc:"Boko Haram / ISWAP epicentre — 13+ years of conflict."},
-  {lat:11.996, lng:14.984, name:"Borno State",     country:"NG", category:"Displacement", intensity:9,  desc:"2+ million IDPs — largest displacement crisis in West Africa."},
-  {lat:10.523, lng:7.440,  name:"Zamfara",         country:"NG", category:"Security",     intensity:8,  desc:"Bandit armed groups, mass kidnappings and farmer-herder crisis."},
-  // ── Cameroon
-  {lat:4.154,  lng:9.242,  name:"Buea",            country:"CM", category:"Security",     intensity:8,  desc:"Anglophone Ambazonia separatist conflict and ghost towns."},
-  {lat:5.960,  lng:10.158, name:"Bamenda",         country:"CM", category:"Human Rights", intensity:9,  desc:"Ambazonia armed group atrocities and school shutdowns."},
-];
+// One point per country and indicator, from published scores in the period viewed
+var mapData = <?= json_encode($realMapData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 
 /* ── De-escalating situations data ────────────────────────────────── */
-var deescData = [
-  {lat:-1.940,  lng:29.874, name:"Rwanda",               country:"RW", category:"Policy",       deescLevel:3, desc:"Post-genocide reconciliation model — sustained governance stability and a regional leadership benchmark recognised internationally."},
-  {lat:14.032,  lng:38.316, name:"Tigray (Ceasefire)",   country:"ET", category:"Security",     deescLevel:2, desc:"2022 Pretoria Agreement cessation of hostilities; humanitarian corridors reopening and reconstruction gradually underway."},
-  {lat:-11.706, lng:40.513, name:"Cabo Delgado",         country:"MZ", category:"Security",     deescLevel:2, desc:"SAMIM and FADM joint operations have recaptured key towns; insurgent activity declining across the province since 2022."},
-  {lat:4.154,   lng:9.242,  name:"SW Cameroon (Talks)",  country:"CM", category:"Human Rights", deescLevel:1, desc:"Localised dialogue initiatives and amnesty schemes are reducing some armed group activity in Anglophone regions."},
-  {lat:8.490,   lng:30.660, name:"Lakes State (SS)",     country:"SS", category:"Displacement", deescLevel:1, desc:"Ceasefire monitoring showing reduced inter-communal cattle-raiding violence around Rumbek; IDP returns beginning."},
-  {lat:7.946,   lng:-1.024, name:"Ghana",                country:"GH", category:"Policy",       deescLevel:3, desc:"Stable democratic transfers of power — a benchmark for West African governance and institutional resilience over two decades."},
-  {lat:-15.416, lng:28.283, name:"Lusaka",               country:"ZM", category:"Policy",       deescLevel:2, desc:"Zambia debt restructuring progress improving fiscal governance; economic stabilisation reducing social tension indicators."},
-  {lat:0.347,   lng:32.583, name:"Kampala",              country:"UG", category:"Policy",       deescLevel:1, desc:"Post-election tensions cooling; civil society dialogue channels restored and media environment gradually stabilising."},
-];
+var deescData = <?= json_encode($realDeesc, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+var COUNTRY_TREND = <?= json_encode($countryTrend, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
 
 /* ── Lookup maps ──────────────────────────────────────────────────── */
 var CAT_COLORS = <?= json_encode($cats,    JSON_UNESCAPED_UNICODE) ?>;
@@ -1607,7 +1569,7 @@ function setLegTab(tab) {
   if (titleEl) titleEl.textContent = isDesc ? 'Improving Situations' : 'Top Flashpoints';
   if (subEl)   subEl.textContent   = isDesc
     ? 'De-escalating situations currently visible — click any row to zoom in'
-    : 'Highest-intensity locations currently visible — click any row to zoom in';
+    : 'Highest-intensity scores currently visible — click any row to zoom in';
 
   applyFilters();
 }
@@ -1739,11 +1701,7 @@ function getCountryCategories(code) {
   return result;
 }
 function getCountryTrend(code) {
-  if (deescData.some(function(d){ return d.country === code; })) return 'Decreasing';
-  var mx = getCountryMaxIntensity(code);
-  if (mx >= 8) return 'Increasing';
-  if (mx >= 4) return 'Stable';
-  return 'Stable';
+  return COUNTRY_TREND[code] || 'Stable';
 }
 function intensityColor(v) {
   if (v >= 9) return '#ED1C24';
@@ -1824,7 +1782,7 @@ function openCountryPanel(code) {
     // Stats grid
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">'
     + _stat('Reports', countryPosts.length, intCol)
-    + _stat('Locations', locations.length || '—', '#64748b')
+    + _stat('Indicators scored', locations.length || '—', '#64748b')
     + _stat('Peak Intensity', maxInt > 0 ? intLbl : '—', intCol)
     + _stat('Trend', trendIcon + ' ' + trend, trendCol)
     + '</div>'
@@ -1914,7 +1872,7 @@ function showCountryHoverCard(e, code) {
     + '</div>'
     + (cats ? '<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:3px">' + cats + '</div>' : '')
     + '<div style="display:flex;justify-content:space-between;align-items:center">'
-    + '<span style="font-size:9px;color:#64748b">' + (rep > 0 ? rep + ' reports' : mapData.filter(function(d){ return d.country===code; }).length + ' locations') + '</span>'
+    + '<span style="font-size:9px;color:#64748b">' + (rep > 0 ? rep + ' reports' : mapData.filter(function(d){ return d.country===code; }).length + ' indicators') + '</span>'
     + '<span style="font-size:9px;font-weight:700;color:#750B25">Click for details →</span>'
     + '</div>';
 
@@ -2153,7 +2111,7 @@ function applyFilters() {
       var lat = pts.reduce(function(s,d){ return s+d.lat; },0)/pts.length;
       var lng = pts.reduce(function(s,d){ return s+d.lng; },0)/pts.length;
       var m = L.marker([lat, lng], { icon: makeCountryIcon(code, mx), zIndexOffset: 100 })
-        .bindTooltip(esc(CNAME[code]||code) + ' · ' + pts.length + ' locations · Peak: ' + mx + '/10',
+        .bindTooltip(esc(CNAME[code]||code) + ' · ' + pts.length + ' indicators · Peak: ' + mx + '/10',
                      { direction: 'right', opacity: 1 });
       m.on('click', (function(c){ return function(){ openCountryPanel(c); }; })(code));
       m.addTo(map);
@@ -2325,15 +2283,15 @@ function applyFilters() {
 function renderTable(data, realPosts) {
   var tbody = document.getElementById('hotspot-tbody');
 
-  // Real published posts first (most recent), then demo intensity data
+  // Real published posts first (most recent), then country scores
   // fills any remaining rows up to 15 total.
   var realRows = (realPosts || []).slice()
     .sort(function(a,b){ return (b.dateRaw||'').localeCompare(a.dateRaw||''); });
-  var demoRows = data.slice()
+  var scoreRows = data.slice()
     .sort(function(a,b){ return b.intensity - a.intensity; })
     .slice(0, Math.max(0, 15 - realRows.length));
 
-  if (!realRows.length && !demoRows.length) {
+  if (!realRows.length && !scoreRows.length) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-slate-300 text-sm">No locations match the current filters.</td></tr>';
     return;
   }
@@ -2367,7 +2325,7 @@ function renderTable(data, realPosts) {
       + '</tr>';
   });
 
-  demoRows.forEach(function(d) {
+  scoreRows.forEach(function(d) {
     rank++;
     var col  = d.intensity > 7 ? '#ED1C24' : d.intensity > 4 ? '#E7952A' : '#94a3b8';
     var catC = CAT_COLORS[d.category] || '#94a3b8';

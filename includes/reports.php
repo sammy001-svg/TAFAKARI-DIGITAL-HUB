@@ -184,9 +184,10 @@ function report_load_scored(string $fromDate): array {
 
     $out = [];
     foreach ($st->fetchAll() as $p) {
-        $cats = [];
+        $cats = []; $els = [];
         foreach (heatmap_category_scores(post_intensity_scores($p['intensityScores'] ?? null)) as $cn => $cs) {
             $cats[$cn] = $cs['avg'];
+            foreach ($cs['elements'] as $el => $v) $els[$cn][$el] = (float) $v;
         }
         if (!$cats) continue;
         $cycle = hm_cycle_bounds($p['createdAt']);
@@ -203,8 +204,27 @@ function report_load_scored(string $fromDate): array {
             'wc'          => $wc,
             'wr'          => round($wc * hm_recency_factor($p['createdAt'], hm_cycle_ref_date($cycle)), 4),
             'cats'        => $cats,
+            'els'         => $els,
             'scoreSource' => $p['scoreSource'] ?? null,
         ];
+    }
+    return $out;
+}
+
+/** Scores for each component element: category => element => aggregated cell. */
+function report_element_cells(array $reports, string $wkey): array {
+    $acc = [];
+    foreach ($reports as $r) {
+        foreach ($r['els'] ?? [] as $cat => $byEl) {
+            foreach ($byEl as $el => $v) $acc[$cat][$el][] = ['score' => $v, 'w' => $r[$wkey]];
+        }
+    }
+    $out = [];
+    foreach ($acc as $cat => $byEl) {
+        foreach ($byEl as $el => $items) {
+            $cell = hm_aggregate($items);
+            if ($cell !== null) $out[$cat][$el] = $cell;
+        }
     }
     return $out;
 }
@@ -372,6 +392,8 @@ function report_compute(string $kind, string $periodDate, string $scopeKey, ?arr
         ],
         'total'       => $cNow['total'],
         'totalPrev'   => $cPrev['total'],
+        'elements'     => report_element_cells($now, $wkey),
+        'elementsPrev' => report_element_cells($prev, $wkey),
         'regions'     => $regions,
         'countries'   => $countries,
         'movers'      => ['up' => array_slice($up, 0, 10), 'down' => array_slice($down, 0, 10)],
