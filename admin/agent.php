@@ -19,6 +19,7 @@ ensure_assistant_table();
 
 if (empty($_SESSION['agent_csrf'])) $_SESSION['agent_csrf'] = bin2hex(random_bytes(16));
 $csrf = $_SESSION['agent_csrf'];
+$keyReady = agent_api_key() !== '';
 
 $validTabs = $isSuper ? ['queue', 'promoted', 'rejected', 'runs', 'settings'] : ['queue', 'promoted', 'rejected'];
 $tab = in_array($_GET['tab'] ?? '', $validTabs, true) ? $_GET['tab'] : 'queue';
@@ -74,8 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'save_api_key':
                 if (!$isSuper) $back('queue', 'Only a super admin can change the API key.', true);
-                agent_save_key((string) ($_POST['api_key'] ?? ''), $uid);
-                $back('settings', 'Claude API key saved.');
+                $newKey = trim((string) ($_POST['api_key'] ?? ''));
+                if ($newKey === '' && !$keyReady) throw new RuntimeException('Paste your Claude API key first.');
+                if ($newKey !== '') agent_save_key($newKey, $uid);
+                $ws = agent_save_workspace((string) ($_POST['workspace_id'] ?? ''), $uid);
+                if (!agent_sdk_available()) $back('settings', 'Claude API key saved.');
+                // get_setting() caches per request, so test the values just entered
+                $check = agent_check_connection($newKey !== '' ? $newKey : null, $ws);
+                $back('settings', $check['ok'] ? 'Saved. Claude accepted this key and is ready.' : 'Saved, but Claude did not accept it. ' . $check['message'], !$check['ok']);
 
             case 'remove_api_key':
                 if (!$isSuper) $back('queue', 'Only a super admin can change the API key.', true);
@@ -420,8 +427,11 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
           <input type="hidden" name="action" value="save_api_key">
           <label class="ag-label" for="ag-key">API key</label>
-          <input id="ag-key" type="password" name="api_key" required autocomplete="new-password" spellcheck="false" class="ag-input" placeholder="sk-ant-...">
-          <button type="submit" class="ag-btn text-white w-full justify-center" style="background:#750B25">Save key</button>
+          <input id="ag-key" type="password" name="api_key" <?= $keyOk ? '' : 'required' ?> autocomplete="new-password" spellcheck="false" class="ag-input" placeholder="<?= $keyOk ? 'Leave blank to keep the current key' : 'sk-ant-...' ?>">
+          <label class="ag-label" for="ag-ws">Workspace ID <span style="text-transform:none;letter-spacing:0;font-weight:600">(if Claude asks for one)</span></label>
+          <input id="ag-ws" type="text" name="workspace_id" spellcheck="false" class="ag-input" value="<?= h($isSuper ? agent_workspace_id() : '') ?>" placeholder="wrkspc_...">
+          <p class="text-xs text-slate-400">Find it in the Anthropic Console under Workspaces. Leave blank if your key was created inside a workspace.</p>
+          <button type="submit" class="ag-btn text-white w-full justify-center" style="background:#750B25">Save and test</button>
         </form>
         <?php if ($savedKey !== ''): ?>
           <form method="POST">

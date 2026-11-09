@@ -633,16 +633,8 @@ function report_draft_narrative(string $id, string $uid, mixed $transporter = nu
         }
         $text = trim(strip_tags($text));
         if ($text === '') throw new RuntimeException('The model returned no text.');
-    } catch (\Anthropic\Core\Exceptions\AuthenticationException $e) {
-        $error = 'The API key was rejected. Check the Claude API key in Tafakari Agent > Settings.';
-    } catch (\Anthropic\Core\Exceptions\RateLimitException $e) {
-        $error = 'Rate limited by the API. Try again in a few minutes.';
-    } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {
-        $error = 'API error: ' . $e->getMessage();
-    } catch (\Anthropic\Core\Exceptions\APIConnectionException $e) {
-        $error = 'Could not reach the Anthropic API: ' . $e->getMessage();
     } catch (Throwable $e) {
-        $error = $e->getMessage();
+        $error = agent_api_error($e);
     }
 
     $cost = agent_estimate_cost($usage);
@@ -689,7 +681,17 @@ function report_generate_due(bool $narrative, callable $log, mixed $transporter 
         try {
             $r = report_create($kind, $start, 'ALL', null);
             $p = report_period($kind, $start);
-            if (!$r['created']) continue;
+            if (!$r['created']) {
+                // A draft whose first attempt at commentary failed gets another try
+                if ($narrative) {
+                    $existing = report_get($r['id']);
+                    if ($existing && $existing['status'] === 'DRAFT' && trim((string) ($existing['narrative'] ?? '')) === '') {
+                        $n = report_draft_narrative($r['id'], 'cron', $transporter);
+                        $log(report_kind_label($kind) . ' commentary retried: ' . $n['message']);
+                    }
+                }
+                continue;
+            }
             $log('Created draft ' . report_kind_label($kind) . " for {$p['label']}.");
             if ($narrative) {
                 $n = report_draft_narrative($r['id'], 'cron', $transporter);

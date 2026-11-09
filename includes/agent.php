@@ -61,6 +61,7 @@ function agent_sdk_available(): bool {
 }
 
 const AGENT_KEY_SETTING = 'agent_api_key_enc';
+const AGENT_WORKSPACE_SETTING = 'agent_workspace_id';
 
 /**
  * The API key: the one saved in Admin > Tafakari Agent > Settings if there is
@@ -122,6 +123,41 @@ function agent_remove_key(string $uid): void {
     set_setting(AGENT_KEY_SETTING, '', $uid);
 }
 
+/** The Anthropic workspace to bill and scope requests to, when the key itself has none. */
+function agent_workspace_id(): string {
+    try {
+        $id = trim(get_setting(AGENT_WORKSPACE_SETTING, ''));
+    } catch (Throwable $e) {
+        $id = '';
+    }
+    return $id !== '' ? $id : trim((string) getenv('ANTHROPIC_WORKSPACE_ID'));
+}
+
+/** Validate and store a workspace ID. Blank clears it. Returns the clean value. */
+function agent_save_workspace(string $id, string $uid): string {
+    $id = trim($id);
+    if ($id !== '' && !preg_match('/^wrkspc_[A-Za-z0-9_-]{4,120}$/', $id)) {
+        throw new RuntimeException('That does not look like a workspace ID. They start with wrkspc_.');
+    }
+    set_setting(AGENT_WORKSPACE_SETTING, $id, $uid);
+    return $id;
+}
+
+/**
+ * A free request that shows whether Claude accepts this key and workspace.
+ *
+ * @return array{ok:bool,message:string}
+ */
+function agent_check_connection(?string $key = null, ?string $workspace = null, mixed $transporter = null): array {
+    if (!agent_sdk_available()) return ['ok' => false, 'message' => 'The Claude software is missing from the server.'];
+    try {
+        agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => 20, 'connect_timeout' => 10]), $key, $workspace)->models->retrieve(AGENT_MODEL);
+        return ['ok' => true, 'message' => 'Connected to Claude.'];
+    } catch (Throwable $e) {
+        return ['ok' => false, 'message' => agent_api_error($e)];
+    }
+}
+
 /** Enough to recognise a saved key without revealing it. */
 function agent_key_hint(string $key): string {
     return 'sk-ant-…' . substr($key, -4);
@@ -130,13 +166,15 @@ function agent_key_hint(string $key): string {
 /**
  * @param mixed $transporter optional PSR-18 client (tests use a mock)
  */
-function agent_client(mixed $transporter = null): Client {
+function agent_client(mixed $transporter = null, ?string $key = null, ?string $workspace = null): Client {
     // The SDK's own 'timeout' option is advisory: it leaves enforcement to the
     // HTTP client. Without this, a hung request would wait forever and keep
     // the cron lock, so every later run would skip itself.
     $transporter ??= new \GuzzleHttp\Client(['timeout' => AGENT_HTTP_TIMEOUT, 'connect_timeout' => 20]);
     $opts = ['maxRetries' => 2, 'transporter' => $transporter];
-    $key = agent_api_key();
+    $key ??= agent_api_key();
+    $workspace ??= agent_workspace_id();
+    if ($workspace !== '') $opts['extraHeaders'] = ['anthropic-workspace-id' => $workspace];
     return $key !== ''
         ? new Client(apiKey: $key, requestOptions: $opts)
         : new Client(requestOptions: $opts);
@@ -561,14 +599,29 @@ function agent_research_loop(Client $client, array $system, array $tools, array 
     return ['submission' => $submission, 'seenUrls' => $seenUrls];
 }
 
+/** The API's own sentence from an exception, rather than its full JSON dump. */
+function agent_api_detail(Throwable $e): string {
+    $m = $e->getMessage();
+    $at = strpos($m, '{');
+    if ($at !== false) {
+        $d = json_decode(substr($m, $at), true);
+        $text = is_array($d) ? ($d['body']['error']['message'] ?? null) : null;
+        if (is_string($text) && $text !== '') return $text;
+    }
+    return $m;
+}
+
 /** A plain-language message for anything a run can throw. */
 function agent_api_error(Throwable $e): string {
+    if (str_contains($e->getMessage(), 'anthropic-workspace-id')) {
+        return 'This Claude API key is not linked to a workspace. In Tafakari Agent > Settings, add your Workspace ID, or save a key created inside a workspace in the Anthropic Console.';
+    }
     return match (true) {
         $e instanceof AuthenticationException   => 'The API key was rejected. Check the Claude API key in Tafakari Agent > Settings.',
-        $e instanceof PermissionDeniedException => 'The API key is not permitted to use this model or feature: ' . $e->getMessage(),
+        $e instanceof PermissionDeniedException => 'The API key is not permitted to use this model or feature: ' . agent_api_detail($e),
         $e instanceof RateLimitException        => 'Rate limited by the API after retries. The next scheduled run will try again.',
-        $e instanceof BadRequestException       => 'The API rejected the request: ' . $e->getMessage(),
-        $e instanceof APIStatusException        => 'API error: ' . $e->getMessage(),
+        $e instanceof BadRequestException       => 'The API rejected the request: ' . agent_api_detail($e),
+        $e instanceof APIStatusException        => 'API error: ' . agent_api_detail($e),
         $e instanceof APITimeoutException       => 'The API request timed out.',
         $e instanceof APIConnectionException    => 'Could not reach the Anthropic API: ' . $e->getMessage(),
         default                                 => $e->getMessage(),
@@ -628,7 +681,7 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
         $model  = $client->models->retrieve(AGENT_MODEL);
         $line($model->id === AGENT_MODEL, 'API key accepted; model available', $model->id);
     } catch (Throwable $e) {
-        $line(false, 'API key accepted; model available', $e->getMessage());
+        $line(false, 'API key accepted; model available', agent_api_error($e));
         return false;
     }
     if (!$live) {
@@ -669,7 +722,7 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
             $messages[] = ['role' => 'assistant', 'content' => $resp->content];
         }
     } catch (Throwable $e) {
-        $error = $e->getMessage();
+        $error = agent_api_error($e);
     }
     $cost = agent_estimate_cost($usage);
     $now  = date('Y-m-d H:i:s');
@@ -695,7 +748,7 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
             $d = json_decode($text, true);
             $line(is_array($d) && isset($d['answer'], $d['found']), 'Assistant request returned the required format');
         } catch (Throwable $e) {
-            $line(false, 'Assistant request returned the required format', $e->getMessage());
+            $line(false, 'Assistant request returned the required format', agent_api_error($e));
         }
     }
     return $ok;
