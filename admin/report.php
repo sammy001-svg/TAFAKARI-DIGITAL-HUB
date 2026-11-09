@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 session_write_close();
                 $r = report_draft_narrative($id, $uid);
                 session_start();
-                $back($r['message'] . ($r['cost'] > 0 ? sprintf(' (estimated cost $%.4f)', $r['cost']) : ''), !$r['ok']);
+                $back($r['message'], !$r['ok']);
             case 'submit': case 'publish': case 'unpublish':
                 report_transition($id, $action, $uid, $isSuper);
                 $back(['submit' => 'Submitted for approval.', 'publish' => 'Published. It is now on the public Reports page.',

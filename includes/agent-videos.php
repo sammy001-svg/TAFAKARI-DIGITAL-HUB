@@ -161,12 +161,6 @@ function agent_video_run(array $group, mixed $transporter = null): array {
     $settings = agent_settings();
     $out = ['status' => 'FAILED', 'runId' => null, 'proposed' => 0, 'cost' => 0.0, 'message' => ''];
     if (!agent_sdk_available()) { $out['message'] = 'The Claude software (SDK) is not installed on the server.'; return $out; }
-    $spent = agent_month_spend();
-    if ($settings['monthly_budget'] <= 0 || $spent >= $settings['monthly_budget']) {
-        $out['status']  = 'SKIPPED';
-        $out['message'] = 'Monthly budget reached. No API call was made.';
-        return $out;
-    }
 
     $runId = generate_id();
     $out['runId'] = $runId;

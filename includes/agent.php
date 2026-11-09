@@ -15,7 +15,6 @@ declare(strict_types=1);
  *   - publish anything, or create anything other than queue entries;
  *   - cite a source it did not actually retrieve in that run: every URL is
  *     checked against the search/fetch results the API returned;
- *   - spend beyond the monthly budget set in Admin > Tafakari Agent.
  *
  * Requires includes/functions.php (and therefore config.php + db.php).
  * Uses the official Anthropic PHP SDK (composer: anthropic-ai/sdk).
@@ -40,7 +39,7 @@ const AGENT_TOOL_NAME     = 'submit_findings';
 const AGENT_HTTP_TIMEOUT  = 600;     // seconds, per API call
 
 // Cost ESTIMATES in USD for Claude Opus 5.5 at first-party API rates. They
-// drive the monthly budget guard; the Anthropic Console bill is authoritative.
+// are recorded in the run log only.
 // A request rescued by a fallback model is billed at that model's rates,
 // which this estimate does not distinguish.
 const AGENT_PRICE_INPUT       = 4.00 / 1000000;
@@ -262,7 +261,6 @@ function agent_settings(): array {
         'max_searches'    => $int('agent_max_searches', 6, 1, 20),
         'max_fetches'     => $int('agent_max_fetches', 4, 0, 20),
         'max_items'       => $int('agent_max_items', 8, 1, 20),
-        'monthly_budget'  => max(0.0, (float) get_setting('agent_monthly_budget', '50')),
         'effort'          => in_array($effort, ['low', 'medium', 'high', 'xhigh'], true) ? $effort : 'high',
         'allowed_domains' => agent_clean_domains($list('agent_allowed_domains', [])),
         'blocked_domains' => agent_clean_domains($list('agent_blocked_domains', [])),
@@ -286,17 +284,6 @@ function agent_clean_domains(array $in): array {
         }
     }
     return array_slice($out, 0, 64);
-}
-
-/** Estimated spend this calendar month (USD), from the run log. */
-function agent_month_spend(): float {
-    try {
-        $st = db()->prepare('SELECT COALESCE(SUM(costUsd), 0) FROM AgentRun WHERE startedAt >= ?');
-        $st->execute([date('Y-m-01 00:00:00')]);
-        return (float) $st->fetchColumn();
-    } catch (Throwable $e) {
-        return 0.0;
-    }
 }
 
 /** Estimated cost of one run's usage totals. */
@@ -632,7 +619,6 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
         if (!post_has_column($col)) $line(false, "Post column {$col}", 'apply migrations/005');
     }
     $settings = agent_settings();
-    $line($settings['monthly_budget'] > 0, 'Monthly budget above zero', sprintf('$%.2f', $settings['monthly_budget']));
     $line((bool) $settings['countries'], 'Monitored countries', count($settings['countries']) . ' configured');
     if (!$sdk || !$key) return false;
 
@@ -650,11 +636,6 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
     }
 
     // One genuine request with the production prompt and tool definitions
-    $spent = agent_month_spend();
-    if ($spent >= $settings['monthly_budget']) {
-        $line(false, 'Monthly budget has room', sprintf('$%.2f already used', $spent));
-        return false;
-    }
     $settings['max_searches'] = 1;
     $settings['max_fetches']  = 1;
     $settings['max_items']    = 1;
@@ -702,7 +683,7 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
     $line($error === null, 'Agent request accepted by the API', $error ?? "stop reason {$stop}, served by {$served}");
     $line($urls > 0, 'Web search returned results', "{$urls} results; if 0, enable web search in the Anthropic Console");
     $line(is_array($submitted) && array_key_exists('items', $submitted), 'Findings returned in the required format');
-    echo sprintf('Live request: %d in / %d out tokens, %d search(es), est. $%.4f', $usage['input'], $usage['output'], $usage['searches'], $cost) . PHP_EOL;
+    echo sprintf('Live request: %d in / %d out tokens, %d search(es)', $usage['input'], $usage['output'], $usage['searches']) . PHP_EOL;
 
     // The public assistant uses a different request shape (structured output)
     if (function_exists('assistant_call_model')) {
@@ -737,12 +718,6 @@ function agent_run_country(string $country, string $triggeredBy, ?string $userId
     }
     if (!in_array($country, african_countries(), true)) {
         $out['message'] = "Unknown country: {$country}.";
-        return $out;
-    }
-    $spent = agent_month_spend();
-    if ($settings['monthly_budget'] <= 0 || $spent >= $settings['monthly_budget']) {
-        $out['status']  = 'SKIPPED';
-        $out['message'] = sprintf('Monthly budget reached (estimated $%.2f of $%.2f). No API call was made.', $spent, $settings['monthly_budget']);
         return $out;
     }
 

@@ -7,8 +7,7 @@ declare(strict_types=1);
  *   php cron/agent-preflight.php          free checks: PHP, SDK, key, database,
  *                                         and that the key can see the model
  *   php cron/agent-preflight.php --live   also one real agent request (one web
- *                                         search, a few US cents), logged in
- *                                         the run log and counted in the budget
+ *                                         search), logged in the run log
  *
  * Exit codes: 0 all passed, 1 something failed.
  */

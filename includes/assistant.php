@@ -9,7 +9,7 @@ declare(strict_types=1);
  * model cannot invent one.
  *
  * Because anyone can reach it, it is off by default and bounded by a per-visitor
- * limit, a site-wide daily cap and its own monthly budget. Questions are not
+ * limit, and a site-wide daily cap. Questions are not
  * stored: people may disclose sensitive information in a conflict setting. Only
  * counts, token usage and a daily-salted hash of the IP address are kept.
  *
@@ -54,7 +54,6 @@ function assistant_settings(): array {
     $int = fn(string $k, int $d, int $min, int $max) => max($min, min($max, (int) get_setting($k, (string) $d)));
     return [
         'enabled'        => get_setting('assistant_enabled', '0') === '1',
-        'monthly_budget' => max(0.0, (float) get_setting('assistant_monthly_budget', '20')),
         'per_hour'       => $int('assistant_per_hour', 10, 1, 100),
         'per_day'        => $int('assistant_per_day', 300, 1, 5000),
     ];
@@ -70,20 +69,9 @@ function assistant_ip_hash(string $ip): string {
     return hash_hmac('sha256', date('Y-m-d') . '|' . $ip, $secret);
 }
 
-function assistant_month_spend(): float {
-    try {
-        $st = db()->prepare('SELECT COALESCE(SUM(costUsd), 0) FROM AssistantLog WHERE createdAt >= ?');
-        $st->execute([date('Y-m-01 00:00:00')]);
-        return (float) $st->fetchColumn();
-    } catch (Throwable $e) {
-        return 0.0;
-    }
-}
-
 /** A message for the visitor when a limit is reached, or null when clear. */
 function assistant_limit_message(string $ipHash, array $settings): ?string {
     $busy = 'The assistant has reached its limit for now. Please try again later, or browse the published reports.';
-    if ($settings['monthly_budget'] <= 0 || assistant_month_spend() >= $settings['monthly_budget']) return $busy;
     $n = db()->prepare('SELECT COUNT(*) FROM AssistantLog WHERE createdAt >= ?');
     $n->execute([date('Y-m-d 00:00:00')]);
     if ((int) $n->fetchColumn() >= $settings['per_day']) return $busy;

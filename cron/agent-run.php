@@ -89,9 +89,8 @@ foreach ($countries as $c) {
     } catch (Throwable $e) {
         $r = ['status' => 'FAILED', 'cost' => 0.0, 'message' => $e->getMessage()];
     }
-    $log(sprintf('%s: %s (est. $%.4f) %s', $c, $r['status'], $r['cost'], $r['message']));
+    $log("{$c}: {$r['status']} {$r['message']}");
     if ($r['status'] === 'FAILED') $failed = true;
-    if ($r['status'] === 'SKIPPED') break;   // budget reached: stop for this invocation
 }
 
 flock($lock, LOCK_UN);

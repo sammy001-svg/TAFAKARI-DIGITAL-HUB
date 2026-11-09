@@ -5,7 +5,7 @@ declare(strict_types=1);
  *
  * One hourly job calls agent_auto_tick(), which does one piece of work: the
  * day's report drafts, a YouTube search, an article, or a monitoring run.
- * Spending is paced across the month, so the budget is never used up early.
+ * Daily limits keep the volume steady.
  * Nothing here publishes: everything lands in a queue for people to approve.
  */
 
@@ -15,11 +15,6 @@ require_once __DIR__ . '/agent-videos.php';
 
 const AGENT_AUTO_ARTICLES_PER_DAY = 2;
 const AGENT_AUTO_FINDINGS_PER_DAY = 4;
-
-/** True when this month's estimated spend is ahead of an even daily share of the budget. */
-function agent_auto_ahead_of_budget(float $spent, float $budget): bool {
-    return $spent >= $budget * ((int) date('j') / (int) date('t'));
-}
 
 /** How many runs of each kind have started today. */
 function agent_auto_today(): array {
@@ -59,7 +54,7 @@ function agent_auto_plan(bool $force): array {
 /**
  * Do one piece of work.
  *
- * @param bool $force true for the "Run now" button: ignores the off switch and daily pacing, never the monthly budget
+ * @param bool $force true for the "Run now" button: ignores the off switch and daily limits
  * @return array{status:string,task:?string,message:string}
  */
 function agent_auto_tick(bool $force = false, mixed $transporter = null): array {
@@ -71,14 +66,6 @@ function agent_auto_tick(bool $force = false, mixed $transporter = null): array 
     ensure_agent_tables();
     ensure_agent_article_table();
     ensure_agent_video_table();
-
-    $spent = agent_month_spend();
-    if ($settings['monthly_budget'] <= 0 || $spent >= $settings['monthly_budget']) {
-        return ['status' => 'SKIPPED', 'task' => null, 'message' => 'The monthly budget has been reached. The agent resumes on the 1st.'];
-    }
-    if (!$force && agent_auto_ahead_of_budget($spent, $settings['monthly_budget'])) {
-        return ['status' => 'IDLE', 'task' => null, 'message' => "Today's share of the budget is used. The agent continues tomorrow."];
-    }
 
     foreach (agent_auto_plan($force) as $task) {
         switch ($task) {

@@ -552,7 +552,7 @@ function report_narrative_input(array $snap, array $reports): string {
 
 /**
  * Ask Claude to draft the narrative from the report's frozen data. Shares the
- * agent's API key, monthly budget and run log (trigger REPORT).
+ * agent's API key and run log (trigger REPORT).
  *
  * @param mixed $transporter optional PSR-18 client (tests)
  * @return array{ok:bool,message:string,cost:float}
@@ -567,10 +567,6 @@ function report_draft_narrative(string $id, string $uid, mixed $transporter = nu
     if (!agent_sdk_available()) return ['ok' => false, 'message' => 'The Anthropic PHP SDK is not installed (composer install).', 'cost' => 0.0];
 
     $settings = agent_settings();
-    $spent = agent_month_spend();
-    if ($settings['monthly_budget'] <= 0 || $spent >= $settings['monthly_budget']) {
-        return ['ok' => false, 'message' => sprintf('The monthly AI budget is used up (estimated $%.2f of $%.2f).', $spent, $settings['monthly_budget']), 'cost' => 0.0];
-    }
 
     $snap = $r['snapshotData'];
     $sc   = $snap['scope']['countries'] ?? null;

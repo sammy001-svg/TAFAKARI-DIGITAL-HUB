@@ -342,7 +342,7 @@ function agent_article_previous_titles(array $pair): array {
  * Research and draft one article. Never publishes.
  *
  * status: OK (draft stored, or the agent declined), HELD (a draft for this
- * pair still awaits review; no API call), SKIPPED (budget), FAILED.
+ * pair still awaits review; no API call), FAILED.
  *
  * @return array{status:string,runId:?string,articleId:?string,cost:float,message:string}
  */
@@ -362,12 +362,6 @@ function agent_article_run(array $pair, ?string $userId = null, mixed $transport
         $out['status']    = 'HELD';
         $out['articleId'] = $held;
         $out['message']   = "A draft for {$label} is still waiting to be verified. No new article was written.";
-        return $out;
-    }
-    $spent = agent_month_spend();
-    if ($settings['monthly_budget'] <= 0 || $spent >= $settings['monthly_budget']) {
-        $out['status']  = 'SKIPPED';
-        $out['message'] = sprintf('Monthly budget reached (estimated $%.2f of $%.2f). No API call was made.', $spent, $settings['monthly_budget']);
         return $out;
     }
 

@@ -64,13 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'save_settings':
                 if (!$isSuper) $back('queue', 'Only a super admin can change agent settings.', true);
-                $budget = (float) str_replace(',', '.', (string) ($_POST['monthly_budget'] ?? '0'));
-                if ($budget < 0 || $budget > 10000) $back('settings', 'Monthly budget must be between 0 and 10,000 USD.', true);
                 set_setting('agent_enabled',        isset($_POST['enabled']) ? '1' : '0', $uid);
-                set_setting('agent_monthly_budget', (string) round($budget, 2), $uid);
                 set_setting('assistant_enabled',    isset($_POST['assistant_enabled']) ? '1' : '0', $uid);
                 // Options from the older, longer form must not keep applying unseen
-                $old = ['agent_countries', 'agent_lookback_days', 'agent_max_searches', 'agent_max_fetches', 'agent_max_items', 'agent_effort', 'agent_allowed_domains', 'agent_blocked_domains',
+                $old = ['agent_monthly_budget', 'agent_countries', 'agent_lookback_days', 'agent_max_searches', 'agent_max_fetches', 'agent_max_items', 'agent_effort', 'agent_allowed_domains', 'agent_blocked_domains',
                         'assistant_monthly_budget', 'assistant_per_hour', 'assistant_per_day'];
                 db()->prepare('DELETE FROM SiteSetting WHERE `key` IN (' . implode(',', array_fill(0, count($old), '?')) . ')')->execute($old);
                 $back('settings', 'Settings saved.');
@@ -111,7 +108,6 @@ $settings = agent_settings();
 $sdkOk    = agent_sdk_available();
 $keyOk    = agent_api_key() !== '';
 $savedKey = $isSuper ? agent_saved_key() : '';
-$spent    = agent_month_spend();
 
 $statusFor = ['queue' => ['PROPOSED'], 'promoted' => ['PROMOTED'], 'rejected' => ['REJECTED', 'DUPLICATE']];
 $counts = ['PROPOSED' => 0, 'PROMOTED' => 0, 'REJECTED' => 0, 'DUPLICATE' => 0];
@@ -348,12 +344,12 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
         <tr class="text-left text-[10px] font-black uppercase tracking-wider text-slate-400">
           <th class="px-4 py-3">Started</th><th class="px-4 py-3">Country</th><th class="px-4 py-3">Trigger</th>
           <th class="px-4 py-3">Status</th><th class="px-4 py-3">Findings</th><th class="px-4 py-3">Searches</th>
-          <th class="px-4 py-3">Tokens in / out</th><th class="px-4 py-3">Est. cost</th><th class="px-4 py-3">Details</th>
+          <th class="px-4 py-3">Tokens in / out</th><th class="px-4 py-3">Details</th>
         </tr>
       </thead>
       <tbody>
         <?php if (!$runs): ?>
-          <tr><td colspan="9" class="px-4 py-10 text-center text-slate-400">No runs yet.</td></tr>
+          <tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">No runs yet.</td></tr>
         <?php endif; ?>
         <?php foreach ($runs as $r):
             $sc = ['OK' => '#059669', 'FAILED' => '#ED1C24', 'RUNNING' => '#9a5b0f'][$r['status']] ?? '#64748b'; ?>
@@ -367,7 +363,6 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
             <td class="px-4 py-3 text-xs text-slate-600"><?= (int) $r['webSearches'] ?> / <?= (int) $r['webFetches'] ?> fetch</td>
             <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
               <?= h(number_format((int) $r['inputTokens'] + (int) $r['cacheReadTokens'] + (int) $r['cacheWriteTokens'])) ?> / <?= h(number_format((int) $r['outputTokens'])) ?></td>
-            <td class="px-4 py-3 text-xs font-bold text-slate-700">$<?= h(number_format((float) $r['costUsd'], 4)) ?></td>
             <td class="px-4 py-3 text-xs text-slate-500 max-w-sm">
               <?php if (!empty($r['servedBy']) && $r['servedBy'] !== $r['model']): ?>
                 <span class="block">Served by <?= h($r['servedBy']) ?> (fallback)</span>
@@ -380,7 +375,6 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
       </tbody>
     </table>
   </div>
-  <p class="text-xs text-slate-400 mt-3">Costs are estimates at Claude Opus 5.5 list prices plus $0.01 per web search. The Anthropic Console bill is authoritative.</p>
 
 <?php elseif ($tab === 'settings'):
     $_as = assistant_settings();
@@ -399,11 +393,6 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
             <span class="block text-xs text-slate-500">It monitors your regions, writes articles and finds YouTube videos by itself. It never publishes.</span>
           </span>
         </label>
-        <div>
-          <label class="ag-label" for="ag-budget">Monthly budget (USD)</label>
-          <input id="ag-budget" type="number" name="monthly_budget" min="0" max="10000" step="1" value="<?= h((string) $settings['monthly_budget']) ?>" class="ag-input">
-          <p class="text-xs text-slate-400 mt-1.5"><?= h(sprintf('Estimated $%.2f used this month.', $spent)) ?> The agent spreads this across the month and does as much as it allows.</p>
-        </div>
         <label class="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" name="assistant_enabled" value="1" <?= $_as['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
           <span>
