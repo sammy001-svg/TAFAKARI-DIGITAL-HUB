@@ -340,6 +340,7 @@ function assistant_answer(string $question, string $ipHash, mixed $transporter =
             ->execute([$status, $nSources, $u['input'], $u['output'], $u['cache_read'], $u['cache_write'], agent_estimate_cost($u), $id]);
     };
 
+    if ($transporter === null) agent_ensure_workspace();
     $history = assistant_clean_history($history);
     // A short follow-up ("tell me more") searches with the visitor's previous message too
     $search = $question;

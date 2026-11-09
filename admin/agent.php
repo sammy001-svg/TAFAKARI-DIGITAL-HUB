@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!agent_sdk_available()) $back('settings', 'Claude API key saved.');
                 // get_setting() caches per request, so test the values just entered
                 $check = agent_check_connection($newKey !== '' ? $newKey : null, $ws);
-                $back('settings', $check['ok'] ? 'Saved. Claude accepted this key and is ready.' : 'Saved, but Claude did not accept it. ' . $check['message'], !$check['ok']);
+                $back('settings', $check['ok'] ? 'Saved. ' . $check['message'] . ' The agent is ready.' : 'Saved, but Claude did not accept it. ' . $check['message'], !$check['ok']);
 
             case 'remove_api_key':
                 if (!$isSuper) $back('queue', 'Only a super admin can change the API key.', true);
@@ -428,9 +428,9 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <input type="hidden" name="action" value="save_api_key">
           <label class="ag-label" for="ag-key">API key</label>
           <input id="ag-key" type="password" name="api_key" <?= $keyOk ? '' : 'required' ?> autocomplete="new-password" spellcheck="false" class="ag-input" placeholder="<?= $keyOk ? 'Leave blank to keep the current key' : 'sk-ant-...' ?>">
-          <label class="ag-label" for="ag-ws">Workspace ID <span style="text-transform:none;letter-spacing:0;font-weight:600">(if Claude asks for one)</span></label>
-          <input id="ag-ws" type="text" name="workspace_id" spellcheck="false" class="ag-input" value="<?= h($isSuper ? agent_workspace_id() : '') ?>" placeholder="wrkspc_...">
-          <p class="text-xs text-slate-400">Find it in the Anthropic Console under Workspaces. Leave blank if your key was created inside a workspace.</p>
+          <label class="ag-label" for="ag-ws">Workspace ID <span style="text-transform:none;letter-spacing:0;font-weight:600">(optional)</span></label>
+          <input id="ag-ws" type="text" name="workspace_id" spellcheck="false" class="ag-input" value="<?= h($isSuper ? agent_workspace_id() : '') ?>" placeholder="Found automatically">
+          <p class="text-xs text-slate-400">Leave this blank and the system finds it for you.</p>
           <button type="submit" class="ag-btn text-white w-full justify-center" style="background:#750B25">Save and test</button>
         </form>
         <?php if ($savedKey !== ''): ?>

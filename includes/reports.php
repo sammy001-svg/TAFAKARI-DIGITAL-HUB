@@ -580,6 +580,7 @@ function report_narrative_input(array $snap, array $reports): string {
  * @return array{ok:bool,message:string,cost:float}
  */
 function report_draft_narrative(string $id, string $uid, mixed $transporter = null): array {
+    if ($transporter === null && function_exists('agent_ensure_workspace')) agent_ensure_workspace();
     require_once __DIR__ . '/agent.php';
     ensure_agent_tables();
 

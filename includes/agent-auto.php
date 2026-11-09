@@ -66,6 +66,7 @@ function agent_auto_tick(bool $force = false, mixed $transporter = null): array 
     ensure_agent_tables();
     ensure_agent_article_table();
     ensure_agent_video_table();
+    if ($transporter === null) agent_ensure_workspace();
 
     foreach (agent_auto_plan($force) as $task) {
         switch ($task) {

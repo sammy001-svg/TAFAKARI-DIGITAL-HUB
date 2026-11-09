@@ -123,13 +123,20 @@ function agent_remove_key(string $uid): void {
     set_setting(AGENT_KEY_SETTING, '', $uid);
 }
 
+/** Read straight from the database: get_setting() keeps the first value it saw in a request. */
+function agent_setting_fresh(string $key): string {
+    try {
+        $st = db()->prepare('SELECT `value` FROM SiteSetting WHERE `key` = ? LIMIT 1');
+        $st->execute([$key]);
+        return (string) $st->fetchColumn();
+    } catch (Throwable $e) {
+        return '';
+    }
+}
+
 /** The Anthropic workspace to bill and scope requests to, when the key itself has none. */
 function agent_workspace_id(): string {
-    try {
-        $id = trim(get_setting(AGENT_WORKSPACE_SETTING, ''));
-    } catch (Throwable $e) {
-        $id = '';
-    }
+    $id = trim(agent_setting_fresh(AGENT_WORKSPACE_SETTING));
     return $id !== '' ? $id : trim((string) getenv('ANTHROPIC_WORKSPACE_ID'));
 }
 
@@ -144,18 +151,69 @@ function agent_save_workspace(string $id, string $uid): string {
 }
 
 /**
- * A free request that shows whether Claude accepts this key and workspace.
+ * Ask Anthropic which workspaces this key can use, and choose one: the Default
+ * Workspace if it can be recognised by name, otherwise the oldest active one.
+ * Keys that are not tied to one workspace are allowed to list them.
+ *
+ * @return array{id:string,name:string}|null null when the key may not list workspaces
+ */
+function agent_discover_workspace(?string $key = null, mixed $transporter = null): ?array {
+    try {
+        $client = agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => 20, 'connect_timeout' => 10]), $key, '');
+        $active = array_values(array_filter($client->beta->organization->workspaces->list(includeDefault: true, limit: 100)->getItems(), fn($w) => $w->archivedAt === null));
+    } catch (Throwable $e) {
+        error_log('[tafakari-agent] workspace lookup: ' . agent_api_detail($e));
+        return null;
+    }
+    if (!$active) return null;
+    usort($active, function ($a, $b) {
+        $da = stripos($a->name, 'default') !== false ? 0 : 1;
+        $db = stripos($b->name, 'default') !== false ? 0 : 1;
+        return $da <=> $db ?: $a->createdAt <=> $b->createdAt;
+    });
+    return ['id' => $active[0]->id, 'name' => $active[0]->name];
+}
+
+/**
+ * A free request that shows whether Claude accepts this key. If the key needs a
+ * workspace and none is set, one is found and saved automatically.
  *
  * @return array{ok:bool,message:string}
  */
 function agent_check_connection(?string $key = null, ?string $workspace = null, mixed $transporter = null): array {
     if (!agent_sdk_available()) return ['ok' => false, 'message' => 'The Claude software is missing from the server.'];
+    $http = $transporter ?? new \GuzzleHttp\Client(['timeout' => 20, 'connect_timeout' => 10]);
+    $workspace ??= agent_workspace_id();
     try {
-        agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => 20, 'connect_timeout' => 10]), $key, $workspace)->models->retrieve(AGENT_MODEL);
+        agent_client($http, $key, $workspace)->models->retrieve(AGENT_MODEL);
         return ['ok' => true, 'message' => 'Connected to Claude.'];
     } catch (Throwable $e) {
-        return ['ok' => false, 'message' => agent_api_error($e)];
+        if ($workspace !== '' || !str_contains($e->getMessage(), 'anthropic-workspace-id')) return ['ok' => false, 'message' => agent_api_error($e)];
+        $found = agent_discover_workspace($key, $http);
+        if ($found === null) return ['ok' => false, 'message' => agent_api_error($e)];
+        try {
+            agent_client($http, $key, $found['id'])->models->retrieve(AGENT_MODEL);
+        } catch (Throwable $e2) {
+            return ['ok' => false, 'message' => agent_api_error($e2)];
+        }
+        agent_save_workspace($found['id'], '');
+        return ['ok' => true, 'message' => "Connected to Claude, using your \"{$found['name']}\" workspace."];
     }
+}
+
+/**
+ * Before real work: make sure a key that needs a workspace has one, so a saved
+ * key just works. Does its one free check once per key.
+ */
+function agent_ensure_workspace(mixed $transporter = null): void {
+    if (agent_workspace_id() !== '' || !agent_sdk_available()) return;
+    $key = agent_api_key();
+    if ($key === '') return;
+    $mark = sha1($key);
+    if (agent_setting_fresh('agent_workspace_checked') === $mark) return;
+    $r = agent_check_connection($key, '', $transporter);
+    // A network problem is worth another try; a definite answer is not
+    if ($r['ok'] || str_contains($r['message'], 'workspace')) set_setting('agent_workspace_checked', $mark);
 }
 
 /** Enough to recognise a saved key without revealing it. */
@@ -614,7 +672,7 @@ function agent_api_detail(Throwable $e): string {
 /** A plain-language message for anything a run can throw. */
 function agent_api_error(Throwable $e): string {
     if (str_contains($e->getMessage(), 'anthropic-workspace-id')) {
-        return 'This Claude API key is not linked to a workspace. In Tafakari Agent > Settings, add your Workspace ID, or save a key created inside a workspace in the Anthropic Console.';
+        return 'This Claude API key needs a workspace, and one could not be found for it automatically. In Tafakari Agent > Settings, paste your Workspace ID (it starts with wrkspc_) and click Save and test.';
     }
     return match (true) {
         $e instanceof AuthenticationException   => 'The API key was rejected. Check the Claude API key in Tafakari Agent > Settings.',
