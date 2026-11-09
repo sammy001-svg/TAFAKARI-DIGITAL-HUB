@@ -564,7 +564,7 @@ function report_draft_narrative(string $id, string $uid, mixed $transporter = nu
     $r = report_get($id);
     if (!$r) return ['ok' => false, 'message' => 'Report not found.', 'cost' => 0.0];
     if ($r['status'] === 'PUBLISHED') return ['ok' => false, 'message' => 'Return the report to draft first.', 'cost' => 0.0];
-    if (!agent_sdk_available()) return ['ok' => false, 'message' => 'The Anthropic PHP SDK is not installed (composer install).', 'cost' => 0.0];
+    if (!agent_sdk_available()) return ['ok' => false, 'message' => 'The Claude software (the vendor folder) is missing from the server. Deploy the latest code from git.', 'cost' => 0.0];
 
     $settings = agent_settings();
 

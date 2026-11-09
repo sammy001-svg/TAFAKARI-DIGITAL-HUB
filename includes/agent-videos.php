@@ -160,7 +160,7 @@ function agent_video_run(array $group, mixed $transporter = null): array {
     ensure_agent_video_table();
     $settings = agent_settings();
     $out = ['status' => 'FAILED', 'runId' => null, 'proposed' => 0, 'cost' => 0.0, 'message' => ''];
-    if (!agent_sdk_available()) { $out['message'] = 'The Claude software (SDK) is not installed on the server.'; return $out; }
+    if (!agent_sdk_available()) { $out['message'] = 'The Claude software (the vendor folder) is missing from the server. Deploy the latest code from git.'; return $out; }
 
     $runId = generate_id();
     $out['runId'] = $runId;

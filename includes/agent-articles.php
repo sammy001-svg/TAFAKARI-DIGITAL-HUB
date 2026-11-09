@@ -355,7 +355,7 @@ function agent_article_run(array $pair, ?string $userId = null, mixed $transport
     $label = mb_substr($pair['region'] . ' · ' . $pair['category'], 0, 100);
 
     if (!agent_sdk_available()) {
-        $out['message'] = 'The Anthropic PHP SDK is not installed. Run "composer install --no-dev" in the site root.';
+        $out['message'] = 'The Claude software (the vendor folder) is missing from the server. Deploy the latest code from git.';
         return $out;
     }
     if (($held = agent_article_pending_for($pair)) !== null) {

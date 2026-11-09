@@ -274,7 +274,7 @@ $_schemaJson = json_encode(array_filter($_schema, fn($v) => $v !== null), JSON_U
     :focus-visible { outline: 2px solid #E7952A; outline-offset: 2px; }
   </style>
   <!-- ── Tafakari UI design system (tk- components, shared by admin and public) -->
-  <link rel="stylesheet" href="/public/css/tafakari-ui.css?v=3">
+  <link rel="stylesheet" href="/public/css/tafakari-ui.css?v=4">
 <?php if (!empty($extraHead)) echo "\n" . $extraHead . "\n"; ?>
   <!-- ── PWA prompt + service worker ──────────────────────────────────────── -->
   <script src="/public/pwa.js" defer></script>

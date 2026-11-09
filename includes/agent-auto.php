@@ -61,7 +61,7 @@ function agent_auto_tick(bool $force = false, mixed $transporter = null): array 
     if (!$force) set_setting('agent_auto_last_tick', date('Y-m-d H:i:s'));
     $settings = agent_settings();
     if (!$force && !$settings['enabled'])       return ['status' => 'IDLE', 'task' => null, 'message' => 'The agent is switched off.'];
-    if (!agent_sdk_available())                 return ['status' => 'FAILED', 'task' => null, 'message' => 'The Claude software (SDK) is not installed on the server.'];
+    if (!agent_sdk_available())                 return ['status' => 'FAILED', 'task' => null, 'message' => 'The Claude software (the vendor folder) is missing from the server. Deploy the latest code from git.'];
     if (agent_api_key() === '')                 return ['status' => 'FAILED', 'task' => null, 'message' => 'Add your Claude API key in Tafakari Agent > Settings.'];
     ensure_agent_tables();
     ensure_agent_article_table();

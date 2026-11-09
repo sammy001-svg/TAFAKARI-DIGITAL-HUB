@@ -396,8 +396,8 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
         <label class="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" name="assistant_enabled" value="1" <?= $_as['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
           <span>
-            <span class="block text-sm font-bold text-slate-800">Ask Tafakari on the public site</span>
-            <span class="block text-xs text-slate-500">Answers visitors from your published work only.</span>
+            <span class="block text-sm font-bold text-slate-800">Chat button on the website</span>
+            <span class="block text-xs text-slate-500">Welcomes visitors and answers in English or Kiswahili, from your published work only.</span>
           </span>
         </label>
         <button type="submit" class="ag-btn text-white" style="background:#750B25">Save</button>

@@ -50,7 +50,7 @@ const AGENT_PRICE_WEB_SEARCH  = 10.00 / 1000;     // per search
 
 // ── Availability ─────────────────────────────────────────────────
 
-/** Load Composer's autoloader once. False when `composer install` has not been run. */
+/** Load the bundled libraries (vendor/, committed to git) once. False when the folder is missing. */
 function agent_sdk_available(): bool {
     static $ok = null;
     if ($ok !== null) return $ok;
@@ -590,7 +590,7 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
     $line(PHP_VERSION_ID >= 80100, 'PHP 8.1 or newer', PHP_VERSION);
     foreach (['curl', 'mbstring', 'openssl', 'pdo_mysql', 'zip'] as $ext) $line(extension_loaded($ext), "PHP extension {$ext}");
     $sdk = agent_sdk_available();
-    $line($sdk, 'Anthropic PHP SDK', $sdk ? '' : 'run "composer install --no-dev" in the site root');
+    $line($sdk, 'Anthropic PHP SDK', $sdk ? '' : 'the vendor folder is missing: deploy the latest code from git');
     $key = agent_api_key() !== '';
     $line($key, 'Claude API key set', $key ? '' : 'add it in Admin > Tafakari Agent > Settings');
 
@@ -713,7 +713,7 @@ function agent_run_country(string $country, string $triggeredBy, ?string $userId
     $out      = ['status' => 'FAILED', 'runId' => null, 'proposed' => 0, 'duplicate' => 0, 'discarded' => 0, 'cost' => 0.0, 'message' => ''];
 
     if (!agent_sdk_available()) {
-        $out['message'] = 'The Anthropic PHP SDK is not installed. Run "composer install --no-dev" in the site root.';
+        $out['message'] = 'The Claude software (the vendor folder) is missing from the server. Deploy the latest code from git.';
         return $out;
     }
     if (!in_array($country, african_countries(), true)) {

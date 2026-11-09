@@ -41,7 +41,7 @@ if (!$dryRun && !$settings['enabled']) {
     exit(0);
 }
 if (!agent_sdk_available()) {
-    $log('The Anthropic PHP SDK is not installed. Run "composer install --no-dev" in ' . $root . '.');
+    $log('The Claude software (the vendor folder) is missing from the server. Deploy the latest code from git.');
     exit(2);
 }
 if (!$dryRun && agent_api_key() === '') {

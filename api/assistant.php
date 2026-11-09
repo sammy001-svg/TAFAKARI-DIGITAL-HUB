@@ -20,5 +20,5 @@ session_write_close();
 @set_time_limit(120);
 
 $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');   // never a client-supplied header
-$r  = assistant_answer((string) ($body['question'] ?? ''), assistant_ip_hash($ip));
+$r  = assistant_answer((string) ($body['question'] ?? ''), assistant_ip_hash($ip), null, (array) ($body['history'] ?? []));
 json_response(['ok' => $r['ok'], 'answer' => $r['answer'], 'sources' => $r['sources']]);

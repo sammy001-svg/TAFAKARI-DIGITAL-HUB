@@ -267,10 +267,9 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
 
     <?php if (assistant_settings()['enabled']): ?>
     <section class="mt-step">
-      <h2 class="mb-3">The Ask Tafakari assistant</h2>
+      <h2 class="mb-3">The Tafakari chat assistant</h2>
       <p>
-        Ask Tafakari answers visitors' questions using only material CRTP has already published: reports, articles, documents and heat-map
-        scores. It links to the items it relied on and says so when the published record does not cover a question. It cannot publish,
+        The chat assistant answers visitors in English or Kiswahili using only what CRTP says about itself and material it has already published: reports, articles, documents and heat-map scores. It links to the items it relied on and says so when the published record does not cover a question. It cannot publish,
         change a score or make a judgement on CRTP's behalf. Questions and answers are not stored; we keep only usage counts, to limit cost and misuse.
       </p>
     </section>
