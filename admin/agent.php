@@ -94,6 +94,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ? 'Settings saved. Not recognised, and left out: ' . implode(', ', $unknown) . '.'
                     : 'Settings saved.', (bool) $unknown);
 
+            case 'save_api_key':
+                if (!$isSuper) $back('queue', 'Only a super admin can change the API key.', true);
+                agent_save_key((string) ($_POST['api_key'] ?? ''), $uid);
+                $back('settings', 'Claude API key saved.');
+
+            case 'remove_api_key':
+                if (!$isSuper) $back('queue', 'Only a super admin can change the API key.', true);
+                agent_remove_key($uid);
+                $back('settings', 'Claude API key removed.');
+
             case 'run_now':
                 if (!$isSuper) $back('queue', 'Only a super admin can start a run.', true);
                 $country = (string) ($_POST['run_country'] ?? '');
@@ -111,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (Throwable $e) {
         error_log('[admin/agent] ' . $action . ': ' . $e->getMessage());
-        $back($retTab, $e->getMessage(), true, $keep);
+        $back($action === 'save_api_key' ? 'settings' : $retTab, $e->getMessage(), true, $keep);
     }
 }
 
@@ -122,6 +132,7 @@ unset($_SESSION['agent_flash']);
 $settings = agent_settings();
 $sdkOk    = agent_sdk_available();
 $keyOk    = agent_api_key() !== '';
+$savedKey = $isSuper ? agent_saved_key() : '';
 $spent    = agent_month_spend();
 
 $statusFor = ['queue' => ['PROPOSED'], 'promoted' => ['PROMOTED'], 'rejected' => ['REJECTED', 'DUPLICATE']];
@@ -198,10 +209,6 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
   </div>
   <div class="tk-page-head__actions">
     <span class="tk-badge <?= $settings['enabled'] ? 'tk-badge--ok' : 'tk-badge--muted' ?>"><?= $settings['enabled'] ? 'Scheduled runs on' : 'Scheduled runs off' ?></span>
-    <?php if ($isSuper): ?>
-      <span class="tk-badge <?= $sdkOk && $keyOk ? 'tk-badge--ok' : 'tk-badge--danger' ?>"><?= !$sdkOk ? 'SDK not installed' : ($keyOk ? 'API key configured' : 'API key missing') ?></span>
-      <span class="tk-badge tk-badge--amber tk-badge--plain"><?= h(sprintf('$%.2f of $%.2f this month (est.)', $spent, $settings['monthly_budget'])) ?></span>
-    <?php endif; ?>
   </div>
 </header>
 
@@ -385,7 +392,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <tr class="border-t border-slate-100 align-top">
             <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-600"><?= h(format_date($r['startedAt'], 'j M Y, H:i')) ?></td>
             <td class="px-4 py-3 font-bold text-slate-800"><?= h($r['country']) ?></td>
-            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', 'PREFLIGHT' => 'Readiness check', default => 'Scheduled' }) ?></td>
+            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', 'PREFLIGHT' => 'Readiness check', 'ARTICLE' => 'Article writer', default => 'Scheduled' }) ?></td>
             <td class="px-4 py-3"><span class="ag-chip" style="background:<?= $sc ?>15;color:<?= $sc ?>"><?= h($r['status']) ?></span></td>
             <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
               <?= (int) $r['itemsProposed'] ?> new · <?= (int) $r['itemsDuplicate'] ?> dup · <?= (int) $r['itemsDiscarded'] ?> discarded</td>
@@ -450,7 +457,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
                 <?php endforeach; ?>
               </select></div>
           </div>
-          <p class="text-xs text-slate-400 leading-relaxed">When the estimated spend for the month reaches the budget, runs stop until the 1st. Set it to 0 to stop all runs.</p>
+          <p class="text-xs text-slate-400 leading-relaxed"><?= h(sprintf('Estimated $%.2f used this month.', $spent)) ?> When the estimated spend reaches the budget, runs stop until the 1st. Set it to 0 to stop all runs.</p>
         </div>
       </div>
 
@@ -489,6 +496,33 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
     </form>
 
     <div class="space-y-6">
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+        <h2 class="font-outfit font-black text-base text-slate-900">Claude API key</h2>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          <?php if ($savedKey !== ''): ?>
+            A key is saved: <span class="font-bold text-slate-700"><?= h(agent_key_hint($savedKey)) ?></span>. Enter a new one to replace it.
+          <?php elseif ($keyOk): ?>
+            A key is set on the server. A key saved here will be used instead.
+          <?php else: ?>
+            Paste your key from the Anthropic Console. It is stored encrypted and never shown again in full.
+          <?php endif; ?>
+        </p>
+        <form method="POST" class="space-y-3">
+          <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="save_api_key">
+          <label class="ag-label" for="ag-key">API key</label>
+          <input id="ag-key" type="password" name="api_key" required autocomplete="new-password" spellcheck="false" class="ag-input" placeholder="sk-ant-...">
+          <button type="submit" class="ag-btn text-white w-full justify-center" style="background:#750B25">Save key</button>
+        </form>
+        <?php if ($savedKey !== ''): ?>
+          <form method="POST">
+            <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+            <input type="hidden" name="action" value="remove_api_key">
+            <button type="submit" class="text-xs font-bold underline" style="color:#ED1C24;background:none;border:0;cursor:pointer">Remove saved key</button>
+          </form>
+        <?php endif; ?>
+      </div>
+
       <form method="POST" class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4"
             onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Running… this can take a few minutes';">
         <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
@@ -508,7 +542,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
       <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 text-xs text-slate-600 leading-relaxed space-y-3">
         <h2 class="font-outfit font-black text-base text-slate-900">Server setup</h2>
         <p><strong>1. SDK.</strong> <?= $sdkOk ? 'Installed.' : 'Not installed: run <code>composer install --no-dev</code> in the site root.' ?></p>
-        <p><strong>2. API key.</strong> <?= $keyOk ? 'Configured.' : 'Set <code>ANTHROPIC_API_KEY</code> as an environment variable, or add <code>define(\'ANTHROPIC_API_KEY\', \'…\');</code> to config.php on the server. Never commit it.' ?></p>
+        <p><strong>2. API key.</strong> <?= $keyOk ? 'Configured.' : 'Add it in the Claude API key box above.' ?></p>
         <p><strong>3. Schedule.</strong> cPanel → Cron Jobs:<br>
           <code class="block mt-1 p-2 rounded-lg bg-slate-50 break-all">php <?= h(dirname(__DIR__)) ?>/cron/agent-run.php</code></p>
         <p class="text-slate-400">Model: <?= h(AGENT_MODEL) ?>, with automatic fallback if a request is declined.</p>

@@ -16,7 +16,7 @@ $allowed = [
 if (request_method() === 'GET') {
     $rows = [];
     try {
-        $rows = db()->query('SELECT `key`, `value` FROM SiteSetting')->fetchAll(PDO::FETCH_KEY_PAIR);
+        $rows = db()->query("SELECT `key`, `value` FROM SiteSetting WHERE `key` <> 'agent_api_key_enc'")->fetchAll(PDO::FETCH_KEY_PAIR);
     } catch (Exception $e) {}
     json_response(['settings' => $rows]);
 }

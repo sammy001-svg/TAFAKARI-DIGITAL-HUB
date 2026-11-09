@@ -616,7 +616,7 @@ function report_draft_narrative(string $id, string $uid, mixed $transporter = nu
         $text = trim(strip_tags($text));
         if ($text === '') throw new RuntimeException('The model returned no text.');
     } catch (\Anthropic\Core\Exceptions\AuthenticationException $e) {
-        $error = 'The API key was rejected. Check ANTHROPIC_API_KEY on the server.';
+        $error = 'The API key was rejected. Check the Claude API key in Tafakari Agent > Settings.';
     } catch (\Anthropic\Core\Exceptions\RateLimitException $e) {
         $error = 'Rate limited by the API. Try again in a few minutes.';
     } catch (\Anthropic\Core\Exceptions\APIStatusException $e) {

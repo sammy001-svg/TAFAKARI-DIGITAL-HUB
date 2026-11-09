@@ -24,6 +24,7 @@ require_once $root . '/includes/db.php';
 require_once $root . '/includes/functions.php';
 require_once $root . '/includes/reports.php';
 require_once $root . '/includes/agent.php';
+require_once $root . '/includes/agent-articles.php';
 require_once $root . '/includes/assistant.php';
 
 $opt = getopt('', ['live', 'country:']);

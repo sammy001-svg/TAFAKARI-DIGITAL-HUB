@@ -103,7 +103,8 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
         <?php if ($agentOn): $_ag = agent_settings(); ?>
           The Tafakari Agent also searches institutional and official statements, news, scholarly work, policy briefs and verifiable
           official social media accounts. It checks the <?= count($_ag['countries']) ?> monitored countries in rotation, looking back
-          <?= (int)$_ag['lookback_days'] ?> days each time, and an analyst reviews everything it finds.
+          <?= (int)$_ag['lookback_days'] ?> days each time, and an analyst reviews everything it finds. It also drafts sourced articles
+          for each monitoring region and indicator; none is published until a CRTP admin has verified it, and each says it was drafted with AI assistance.
         <?php endif; ?>
         Reports are read in <strong><?= (int)$cycLen ?>-day monitoring cycles</strong>. Scores are refreshed
         every cycle, and earlier cycles are kept, never overwritten: any past cycle can be reopened from the

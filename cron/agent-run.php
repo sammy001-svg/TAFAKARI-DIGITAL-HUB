@@ -45,7 +45,7 @@ if (!agent_sdk_available()) {
     exit(2);
 }
 if (!$dryRun && agent_api_key() === '') {
-    $log('ANTHROPIC_API_KEY is not set (environment variable, or define it in config.php).');
+    $log('No Claude API key is set. Add it in Admin > Tafakari Agent > Settings.');
     exit(2);
 }
 

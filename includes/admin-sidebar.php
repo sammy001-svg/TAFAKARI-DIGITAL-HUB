@@ -35,6 +35,7 @@ $_navSuper = [
 
 $_navMonitor = [
   ['href' => '/admin/agent',       'label' => 'Tafakari Agent', 'svg' => 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z'],
+  ['href' => '/admin/agent/articles', 'label' => 'AI Articles', 'svg' => 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z'],
   ['href' => '/admin/reports',     'label' => 'Analysis Reports', 'svg' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
 ];
 if ($_role === 'SUPER_ADMIN') {
@@ -44,6 +45,10 @@ if ($_role === 'SUPER_ADMIN') {
 $_pendingCount = 0;
 // Findings waiting in the Tafakari Agent queue (table may not exist yet)
 $_agentCount = 0;
+$_articleCount = 0;
+try {
+    $_articleCount = (int)db()->query("SELECT COUNT(*) FROM AgentArticle WHERE status='PROPOSED'")->fetchColumn();
+} catch (Throwable $e) {}
 try {
     $_agentCount = (int)db()->query("SELECT COUNT(*) FROM AgentItem WHERE status='PROPOSED'")->fetchColumn();
 } catch (Throwable $e) {}
@@ -56,6 +61,7 @@ if ($_role === 'SUPER_ADMIN') {
 function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
     global $_contentModulePaths;
     $isActive = ($currentPath === $item['href']) ||
+                ($item['href'] === '/admin/agent/articles' && str_starts_with($currentPath, '/admin/agent/articles/')) ||
                 ($item['href'] === '/admin/content'
                     && str_starts_with($currentPath, '/admin/content')
                     && $currentPath !== '/admin/content/new'
@@ -206,7 +212,7 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
         Monitoring
       </p>
       <div class="space-y-0.5">
-        <?php foreach ($_navMonitor as $item): _sidebarItem($item, $_path, $item['href'] === '/admin/agent' ? $_agentCount : 0); endforeach; ?>
+        <?php foreach ($_navMonitor as $item): _sidebarItem($item, $_path, $item['href'] === '/admin/agent' ? $_agentCount : ($item['href'] === '/admin/agent/articles' ? $_articleCount : 0)); endforeach; ?>
       </div>
     </div>
 

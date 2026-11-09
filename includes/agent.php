@@ -60,18 +60,71 @@ function agent_sdk_available(): bool {
     return $ok = class_exists(Client::class);
 }
 
+const AGENT_KEY_SETTING = 'agent_api_key_enc';
+
 /**
- * The API key, from the ANTHROPIC_API_KEY environment variable or an
- * ANTHROPIC_API_KEY constant defined in config.php on the server.
- * Never stored in the database and never sent to the browser.
+ * The API key: the one saved in Admin > Tafakari Agent > Settings if there is
+ * one, otherwise the ANTHROPIC_API_KEY environment variable or a constant of
+ * that name in config.php. Never sent to the browser.
  */
 function agent_api_key(): string {
+    $saved = agent_saved_key();
+    if ($saved !== '') return $saved;
     $k = getenv('ANTHROPIC_API_KEY');
     if (is_string($k) && trim($k) !== '') return trim($k);
     if (defined('ANTHROPIC_API_KEY') && is_string(constant('ANTHROPIC_API_KEY'))) {
         return trim((string) constant('ANTHROPIC_API_KEY'));
     }
     return '';
+}
+
+/** Derived from server-only secrets, so a copy of the database alone cannot reveal the key. */
+function agent_key_cipher_secret(): string {
+    $parts = [defined('APP_SECRET') ? (string) constant('APP_SECRET') : '', defined('DB_PASS') ? (string) constant('DB_PASS') : ''];
+    return hash('sha256', 'tafakari-api-key|' . implode('|', $parts), true);
+}
+
+function agent_encrypt_key(string $key): string {
+    $iv = random_bytes(12);
+    $tag = '';
+    $ct = openssl_encrypt($key, 'aes-256-gcm', agent_key_cipher_secret(), OPENSSL_RAW_DATA, $iv, $tag);
+    if ($ct === false) throw new RuntimeException('The key could not be encrypted on this server.');
+    return 'v1:' . base64_encode($iv . $tag . $ct);
+}
+
+/** The plain key, or '' when it is missing, altered, or the server secrets have changed. */
+function agent_decrypt_key(string $stored): string {
+    if (!str_starts_with($stored, 'v1:')) return '';
+    $raw = base64_decode(substr($stored, 3), true);
+    if ($raw === false || strlen($raw) <= 28) return '';
+    $plain = openssl_decrypt(substr($raw, 28), 'aes-256-gcm', agent_key_cipher_secret(), OPENSSL_RAW_DATA, substr($raw, 0, 12), substr($raw, 12, 16));
+    return is_string($plain) ? $plain : '';
+}
+
+function agent_saved_key(): string {
+    try {
+        return agent_decrypt_key(get_setting(AGENT_KEY_SETTING, ''));
+    } catch (Throwable $e) {
+        return '';
+    }
+}
+
+/** Validate and store a key entered in the admin panel. */
+function agent_save_key(string $key, string $uid): void {
+    $key = trim($key);
+    if (strlen($key) > 300 || !preg_match('/^sk-ant-[A-Za-z0-9_-]{10,}$/', $key)) {
+        throw new RuntimeException('That does not look like a Claude API key. Keys start with sk-ant-.');
+    }
+    set_setting(AGENT_KEY_SETTING, agent_encrypt_key($key), $uid);
+}
+
+function agent_remove_key(string $uid): void {
+    set_setting(AGENT_KEY_SETTING, '', $uid);
+}
+
+/** Enough to recognise a saved key without revealing it. */
+function agent_key_hint(string $key): string {
+    return 'sk-ant-…' . substr($key, -4);
 }
 
 /**
@@ -319,8 +372,8 @@ function agent_task_message(string $country, array $settings, array $known): str
     return $msg;
 }
 
-/** Tool definitions: web search, web fetch and the strict submission tool. */
-function agent_tools(array $settings): array {
+/** The web search and web fetch tools, under the configured domain rules. */
+function agent_web_tools(array $settings): array {
     $domainRule = [];
     if ($settings['allowed_domains']) {
         $domainRule = ['allowedDomains' => $settings['allowed_domains']];
@@ -334,7 +387,12 @@ function agent_tools(array $settings): array {
     if ($settings['max_fetches'] > 0) {
         $tools[] = ['type' => 'web_fetch_20260209', 'name' => 'web_fetch', 'maxUses' => $settings['max_fetches']] + $domainRule;
     }
+    return $tools;
+}
 
+/** Tool definitions: web search, web fetch and the strict submission tool. */
+function agent_tools(array $settings): array {
+    $tools    = agent_web_tools($settings);
     $elements = array_keys(heatmap_element_index());
     $str      = ['type' => 'string'];
     $tools[]  = [
@@ -434,6 +492,99 @@ function agent_create_message(Client $client, array $system, array $tools, array
 }
 
 /**
+ * Run a research conversation until the model calls the submission tool.
+ * Handles server-tool pauses and one nudge, and records every URL the API
+ * actually returned, which is what citations are later checked against.
+ *
+ * @param array $usage  running totals, updated in place
+ * @return array{submission:array,seenUrls:array<string,bool>}
+ */
+function agent_research_loop(Client $client, array $system, array $tools, array $messages, string $effort, string $toolName, string $nudge, array &$usage, ?string &$served, ?string &$stop): array {
+    $seenUrls   = [];   // urlKey => true, for every URL the API actually returned
+    $nudged     = false;
+    $submission = null;
+
+    while ($submission === null) {
+        if ($usage['calls'] >= AGENT_MAX_CALLS) {
+            throw new RuntimeException('Stopped after ' . AGENT_MAX_CALLS . ' API calls without a submission.');
+        }
+        $usage['calls']++;
+
+        $resp = agent_create_message($client, $system, $tools, $messages, $effort);
+
+        $served = $resp->model;
+        $stop   = $resp->stopReason;
+        $u      = $resp->usage;
+        $usage['input']       += (int) $u->inputTokens;
+        $usage['output']      += (int) $u->outputTokens;
+        $usage['cache_read']  += (int) ($u->cacheReadInputTokens ?? 0);
+        $usage['cache_write'] += (int) ($u->cacheCreationInputTokens ?? 0);
+        if ($u->serverToolUse !== null) {
+            $usage['searches'] += (int) $u->serverToolUse->webSearchRequests;
+            $usage['fetches']  += (int) $u->serverToolUse->webFetchRequests;
+        }
+
+        $toolInput = null;
+        foreach ($resp->content as $block) {
+            $type = $block->type ?? '';
+            if ($type === 'web_search_tool_result' && is_array($block->content)) {
+                // A list of results on success; an error object otherwise
+                foreach ($block->content as $res) {
+                    $k = isset($res->url) ? agent_url_key((string) $res->url) : null;
+                    if ($k !== null) $seenUrls[$k] = true;
+                }
+            } elseif ($type === 'web_fetch_tool_result' && isset($block->content->url)) {
+                $k = agent_url_key((string) $block->content->url);
+                if ($k !== null) $seenUrls[$k] = true;
+            } elseif ($type === 'tool_use' && ($block->name ?? '') === $toolName) {
+                $toolInput = is_array($block->input) ? $block->input : null;
+            }
+        }
+
+        if ($stop === 'refusal') {
+            $cat = $resp->stopDetails?->category;
+            throw new RuntimeException('The request was declined by the model\'s safety classifiers'
+                . ($cat ? " (category: {$cat})" : '') . ', and no fallback model completed it.');
+        }
+        if ($toolInput !== null) {
+            $submission = $toolInput;
+            break;
+        }
+        if ($stop === 'pause_turn') {
+            // Server-side tool loop paused: resend as-is and it resumes
+            $messages[] = ['role' => 'assistant', 'content' => $resp->content];
+            continue;
+        }
+        if ($stop === 'max_tokens') {
+            throw new RuntimeException('The response hit the output limit before the results were submitted.');
+        }
+        if (!$nudged) {
+            // Ended without calling the tool: ask once, explicitly
+            $nudged = true;
+            $messages[] = ['role' => 'assistant', 'content' => $resp->content];
+            $messages[] = ['role' => 'user', 'content' => $nudge];
+            continue;
+        }
+        throw new RuntimeException('The model finished without submitting its results (stop reason: ' . ($stop ?? 'none') . ').');
+    }
+    return ['submission' => $submission, 'seenUrls' => $seenUrls];
+}
+
+/** A plain-language message for anything a run can throw. */
+function agent_api_error(Throwable $e): string {
+    return match (true) {
+        $e instanceof AuthenticationException   => 'The API key was rejected. Check the Claude API key in Tafakari Agent > Settings.',
+        $e instanceof PermissionDeniedException => 'The API key is not permitted to use this model or feature: ' . $e->getMessage(),
+        $e instanceof RateLimitException        => 'Rate limited by the API after retries. The next scheduled run will try again.',
+        $e instanceof BadRequestException       => 'The API rejected the request: ' . $e->getMessage(),
+        $e instanceof APIStatusException        => 'API error: ' . $e->getMessage(),
+        $e instanceof APITimeoutException       => 'The API request timed out.',
+        $e instanceof APIConnectionException    => 'Could not reach the Anthropic API: ' . $e->getMessage(),
+        default                                 => $e->getMessage(),
+    };
+}
+
+/**
  * Readiness check (cron/agent-preflight.php). Prints one line per check.
  *
  * @param mixed $transporter optional PSR-18 client (tests)
@@ -447,11 +598,11 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
     };
 
     $line(PHP_VERSION_ID >= 80100, 'PHP 8.1 or newer', PHP_VERSION);
-    foreach (['curl', 'mbstring', 'openssl', 'pdo_mysql'] as $ext) $line(extension_loaded($ext), "PHP extension {$ext}");
+    foreach (['curl', 'mbstring', 'openssl', 'pdo_mysql', 'zip'] as $ext) $line(extension_loaded($ext), "PHP extension {$ext}");
     $sdk = agent_sdk_available();
     $line($sdk, 'Anthropic PHP SDK', $sdk ? '' : 'run "composer install --no-dev" in the site root');
     $key = agent_api_key() !== '';
-    $line($key, 'ANTHROPIC_API_KEY set', $key ? '' : 'environment variable, or define it in config.php');
+    $line($key, 'Claude API key set', $key ? '' : 'add it in Admin > Tafakari Agent > Settings');
 
     ensure_agent_tables();
     foreach (['AgentRun', 'AgentItem', 'AgentSourceKey'] as $table) {
@@ -460,6 +611,15 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
             $line(true, "Database table {$table}");
         } catch (Throwable $e) {
             $line(false, "Database table {$table}", 'apply migrations/006');
+        }
+    }
+    if (function_exists('ensure_agent_article_table')) {
+        ensure_agent_article_table();
+        try {
+            db()->query('SELECT 1 FROM `AgentArticle` LIMIT 1');
+            $line(true, 'Database table AgentArticle');
+        } catch (Throwable $e) {
+            $line(false, 'Database table AgentArticle', 'apply migrations/010');
         }
     }
     foreach (['additionalCountries', 'sourceCount', 'scoreSource', 'scoredBy', 'scoredAt'] as $col) {
@@ -599,73 +759,13 @@ function agent_run_country(string $country, string $triggeredBy, ?string $userId
         $system   = [['type' => 'text', 'text' => agent_system_prompt($settings), 'cacheControl' => ['type' => 'ephemeral']]];
         $tools    = agent_tools($settings);
         $messages = [['role' => 'user', 'content' => agent_task_message($country, $settings, agent_known_items($country))]];
-        $seenUrls = [];   // urlKey => true, for every URL the API actually returned
-        $nudged   = false;
-
-        while ($submission === null) {
-            if ($usage['calls'] >= AGENT_MAX_CALLS) {
-                throw new RuntimeException('Stopped after ' . AGENT_MAX_CALLS . ' API calls without a submission.');
-            }
-            $usage['calls']++;
-
-            $resp = agent_create_message($client, $system, $tools, $messages, $settings['effort']);
-
-            $served = $resp->model;
-            $stop   = $resp->stopReason;
-            $u      = $resp->usage;
-            $usage['input']       += (int) $u->inputTokens;
-            $usage['output']      += (int) $u->outputTokens;
-            $usage['cache_read']  += (int) ($u->cacheReadInputTokens ?? 0);
-            $usage['cache_write'] += (int) ($u->cacheCreationInputTokens ?? 0);
-            if ($u->serverToolUse !== null) {
-                $usage['searches'] += (int) $u->serverToolUse->webSearchRequests;
-                $usage['fetches']  += (int) $u->serverToolUse->webFetchRequests;
-            }
-
-            $toolInput = null;
-            foreach ($resp->content as $block) {
-                $type = $block->type ?? '';
-                if ($type === 'web_search_tool_result' && is_array($block->content)) {
-                    // A list of results on success; an error object otherwise
-                    foreach ($block->content as $res) {
-                        $k = isset($res->url) ? agent_url_key((string) $res->url) : null;
-                        if ($k !== null) $seenUrls[$k] = true;
-                    }
-                } elseif ($type === 'web_fetch_tool_result' && isset($block->content->url)) {
-                    $k = agent_url_key((string) $block->content->url);
-                    if ($k !== null) $seenUrls[$k] = true;
-                } elseif ($type === 'tool_use' && ($block->name ?? '') === AGENT_TOOL_NAME) {
-                    $toolInput = is_array($block->input) ? $block->input : null;
-                }
-            }
-
-            if ($stop === 'refusal') {
-                $cat = $resp->stopDetails?->category;
-                throw new RuntimeException('The request was declined by the model\'s safety classifiers'
-                    . ($cat ? " (category: {$cat})" : '') . ', and no fallback model completed it.');
-            }
-            if ($toolInput !== null) {
-                $submission = $toolInput;
-                break;
-            }
-            if ($stop === 'pause_turn') {
-                // Server-side tool loop paused: resend as-is and it resumes
-                $messages[] = ['role' => 'assistant', 'content' => $resp->content];
-                continue;
-            }
-            if ($stop === 'max_tokens') {
-                throw new RuntimeException('The response hit the output limit before findings were submitted.');
-            }
-            if (!$nudged) {
-                // Ended without calling the tool: ask once, explicitly
-                $nudged = true;
-                $messages[] = ['role' => 'assistant', 'content' => $resp->content];
-                $messages[] = ['role' => 'user', 'content' =>
-                    'Please call submit_findings now with your findings, or with an empty items list and an explanation in notes.'];
-                continue;
-            }
-            throw new RuntimeException('The model finished without submitting findings (stop reason: ' . ($stop ?? 'none') . ').');
-        }
+        $done = agent_research_loop(
+            $client, $system, $tools, $messages, $settings['effort'], AGENT_TOOL_NAME,
+            'Please call submit_findings now with your findings, or with an empty items list and an explanation in notes.',
+            $usage, $served, $stop
+        );
+        $submission = $done['submission'];
+        $seenUrls   = $done['seenUrls'];
 
         $notes  = agent_clean_text((string) ($submission['notes'] ?? ''), 2000);
         $result = agent_store_items($runId, $country, (array) ($submission['items'] ?? []), $seenUrls, $settings);
@@ -676,22 +776,8 @@ function agent_run_country(string $country, string $triggeredBy, ?string $userId
             $notes = trim($notes . "\n\nDiscarded by validation: " . implode('; ', array_unique($result['reasons'])));
         }
         $out['status'] = 'OK';
-    } catch (AuthenticationException $e) {
-        $error = 'The API key was rejected. Check ANTHROPIC_API_KEY on the server.';
-    } catch (PermissionDeniedException $e) {
-        $error = 'The API key is not permitted to use this model or feature: ' . $e->getMessage();
-    } catch (RateLimitException $e) {
-        $error = 'Rate limited by the API after retries. The next scheduled run will try again.';
-    } catch (BadRequestException $e) {
-        $error = 'The API rejected the request: ' . $e->getMessage();
-    } catch (APIStatusException $e) {
-        $error = 'API error: ' . $e->getMessage();
-    } catch (APITimeoutException $e) {
-        $error = 'The API request timed out.';
-    } catch (APIConnectionException $e) {
-        $error = 'Could not reach the Anthropic API: ' . $e->getMessage();
     } catch (Throwable $e) {
-        $error = $e->getMessage();
+        $error = agent_api_error($e);
     }
 
     $cost = agent_estimate_cost($usage);
