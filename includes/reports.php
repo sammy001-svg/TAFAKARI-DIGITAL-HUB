@@ -649,3 +649,38 @@ function report_narrative_label(?string $src): string {
         default       => '',
     };
 }
+
+/**
+ * Create the DRAFT reports that are due: the latest closed cycle and quarter,
+ * and the Outlook for the cycle now running. Safe to call often (one report
+ * per period). Never publishes.
+ *
+ * @param callable(string):void $log
+ * @return bool false if any report failed
+ */
+function report_generate_due(bool $narrative, callable $log, mixed $transporter = null): bool {
+    ensure_report_tables();
+    $today = date('Y-m-d');
+    $jobs  = [
+        ['CYCLE', report_period('CYCLE', $today)['prev']['start']],
+        ['QUARTER', report_period('QUARTER', $today)['prev']['start']],
+        ['OUTLOOK', $today],
+    ];
+    $ok = true;
+    foreach ($jobs as [$kind, $start]) {
+        try {
+            $r = report_create($kind, $start, 'ALL', null);
+            $p = report_period($kind, $start);
+            if (!$r['created']) continue;
+            $log('Created draft ' . report_kind_label($kind) . " for {$p['label']}.");
+            if ($narrative) {
+                $n = report_draft_narrative($r['id'], 'cron', $transporter);
+                $log($n['message']);
+            }
+        } catch (Throwable $e) {
+            $ok = false;
+            $log("FAILED {$kind} {$start}: " . $e->getMessage());
+        }
+    }
+    return $ok;
+}

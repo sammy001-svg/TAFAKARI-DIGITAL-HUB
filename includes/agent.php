@@ -234,7 +234,10 @@ function agent_table_ddl(): array {
 // ── Settings ─────────────────────────────────────────────────────
 
 function agent_default_countries(): array {
-    return ['Kenya', 'Ethiopia', 'DR Congo', 'South Sudan', 'Sudan', 'Somalia', 'Uganda', 'Burundi', 'Rwanda', 'Tanzania'];
+    // Every country in the monitoring regions set in Heatmap Config
+    $all = [];
+    foreach (hm_country_groups() as $g) foreach ($g['countries'] as $c) if (!in_array($c, $all, true)) $all[] = $c;
+    return $all;
 }
 
 /** All agent settings, clamped to safe ranges. */
@@ -615,11 +618,14 @@ function agent_preflight(bool $live, string $country, mixed $transporter = null)
     }
     if (function_exists('ensure_agent_article_table')) {
         ensure_agent_article_table();
-        try {
-            db()->query('SELECT 1 FROM `AgentArticle` LIMIT 1');
-            $line(true, 'Database table AgentArticle');
-        } catch (Throwable $e) {
-            $line(false, 'Database table AgentArticle', 'apply migrations/010');
+        ensure_agent_video_table();
+        foreach (['AgentArticle' => '010', 'AgentVideo' => '011'] as $table => $mig) {
+            try {
+                db()->query("SELECT 1 FROM `{$table}` LIMIT 1");
+                $line(true, "Database table {$table}");
+            } catch (Throwable $e) {
+                $line(false, "Database table {$table}", "apply migrations/{$mig}");
+            }
         }
     }
     foreach (['additionalCountries', 'sourceCount', 'scoreSource', 'scoredBy', 'scoredAt'] as $col) {

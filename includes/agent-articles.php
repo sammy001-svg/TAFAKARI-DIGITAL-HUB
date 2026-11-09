@@ -66,12 +66,7 @@ function agent_article_table_ddl(): string {
 }
 
 function agent_article_settings(): array {
-    $int = fn(string $k, int $d, int $min, int $max) => max($min, min($max, (int) get_setting($k, (string) $d)));
-    return [
-        'enabled'      => get_setting('article_enabled', '0') === '1',
-        'max_searches' => $int('article_max_searches', 10, 1, 20),
-        'max_fetches'  => $int('article_max_fetches', 6, 0, 20),
-    ];
+    return ['max_searches' => 10, 'max_fetches' => 6];
 }
 
 // ── What to cover ────────────────────────────────────────────────
@@ -580,15 +575,4 @@ function agent_article_docx(array $a): string {
         'sources'    => $sources,
         'closing'    => $published ? AGENT_ARTICLE_DISCLOSURE : 'Drafted with AI assistance (Tafakari Agent) from public sources.',
     ]);
-}
-
-/** @return array<string,array<string,array>> region => category => latest non-rejected article */
-function agent_article_coverage(): array {
-    $out = [];
-    try {
-        foreach (db()->query("SELECT id, regionName, category, status, createdAt FROM AgentArticle WHERE status<>'REJECTED' ORDER BY createdAt DESC")->fetchAll() as $r) {
-            $out[$r['regionName']][$r['category']] ??= $r;
-        }
-    } catch (Throwable $e) {}
-    return $out;
 }

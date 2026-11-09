@@ -5,6 +5,8 @@ require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/includes/agent-articles.php';
+require_once dirname(__DIR__) . '/includes/agent-videos.php';
+require_once dirname(__DIR__) . '/includes/agent-nav.php';
 
 $me      = require_auth();
 $isSuper = is_super_admin();
@@ -70,25 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 agent_article_restore($id);
                 $back($self, 'Returned for review.');
 
-            case 'write':
-                if (!$isSuper) $back($self, 'Only a super admin can start the article writer.', true);
-                $pair = agent_article_find_pair((string) ($_POST['region'] ?? ''), (string) ($_POST['category'] ?? ''));
-                if (!$pair) $back($self, 'Choose a region and an indicator from the lists.', true);
-                @set_time_limit(900);
-                ignore_user_abort(true);   // finish and log the run even if the browser gives up
-                session_write_close();     // a run takes minutes: don't lock the user's other tabs
-                $r = agent_article_run($pair, $uid);
-                session_start();
-                $msg = $r['message'] . ($r['status'] === 'HELD' ? '' : sprintf(' (estimated cost $%.4f)', $r['cost']));
-                $back($r['articleId'] ? '/admin/agent/articles/' . rawurlencode($r['articleId']) : '/admin/agent/articles', $msg, !in_array($r['status'], ['OK', 'HELD'], true));
-
-            case 'settings':
-                if (!$isSuper) $back($self, 'Only a super admin can change these settings.', true);
-                set_setting('article_enabled',      isset($_POST['enabled']) ? '1' : '0', $uid);
-                set_setting('article_max_searches', (string) max(1, min(20, (int) ($_POST['max_searches'] ?? 10))), $uid);
-                set_setting('article_max_fetches',  (string) max(0, min(20, (int) ($_POST['max_fetches'] ?? 6))), $uid);
-                $back('/admin/agent/articles', 'Settings saved.');
-
             default:
                 $back($self, 'Unknown action.', true);
         }
@@ -130,16 +113,10 @@ if ($article && !empty($article['reviewedBy'])) {
     } catch (Throwable $e) {}
 }
 
-$artSet   = agent_article_settings();
-$settings = agent_settings();
-$regions  = hm_country_groups();
-$cats     = heatmap_taxonomy();
-$coverage = agent_article_coverage();
-$canRun   = agent_sdk_available() && agent_api_key() !== '';
 $confBadge = ['high' => 'tk-badge--ok', 'medium' => 'tk-badge--warn', 'low' => 'tk-badge--danger'];
 
-$pageTitle      = 'AI Articles | Tafakari Admin';
-$adminPageTitle = 'AI Articles';
+$pageTitle      = 'Articles | Tafakari Agent';
+$adminPageTitle = 'Tafakari Agent';
 $adminPageSub   = 'Drafts by the Tafakari Agent, awaiting verification';
 ?>
 <?php include dirname(__DIR__) . '/includes/head.php'; ?>
@@ -162,7 +139,7 @@ $adminPageSub   = 'Drafts by the Tafakari Agent, awaiting verification';
   <!-- ── Verify one article ─────────────────────────────────────── -->
   <header class="tk-page-head">
     <div>
-      <a href="/admin/agent/articles" class="text-xs font-bold" style="color:#750B25">&larr; All AI articles</a>
+      <a href="/admin/agent/articles" class="text-xs font-bold" style="color:#750B25">&larr; All articles</a>
       <h1 class="tk-h1" style="margin-top:10px"><?= $open ? 'Verify this article' : h($article['title']) ?></h1>
       <p class="tk-lead"><?= h($article['regionName']) ?> · <?= h($article['category']) ?> · drafted <?= h(format_relative_time($article['createdAt'])) ?></p>
     </div>
@@ -275,20 +252,17 @@ $adminPageSub   = 'Drafts by the Tafakari Agent, awaiting verification';
   <header class="tk-page-head">
     <div>
       <span class="tk-eyebrow">Monitoring</span>
-      <h1 class="tk-h1" style="margin-top:12px">AI Articles</h1>
-      <p class="tk-lead">The agent researches each monitoring region against each indicator and drafts a sourced article with a Word version.
-        Nothing reaches the site until an admin or super admin has verified it and chosen to publish.</p>
-    </div>
-    <div class="tk-page-head__actions">
-      <span class="tk-badge <?= $artSet['enabled'] ? 'tk-badge--ok' : 'tk-badge--muted' ?>"><?= $artSet['enabled'] ? 'Scheduled writing on' : 'Scheduled writing off' ?></span>
+      <h1 class="tk-h1" style="margin-top:12px">Articles</h1>
+      <p class="tk-lead">Articles the agent wrote on your regions and indicators. Check them, then publish or reject.</p>
     </div>
   </header>
 
-  <nav class="tk-segment" aria-label="Article status" style="margin-bottom:20px;flex-wrap:wrap">
+  <?php agent_nav('articles', $isSuper); ?>
+  <div class="flex flex-wrap gap-4 mb-5 text-sm font-bold">
     <?php foreach ($validTabs as $k => $l): ?>
-      <a href="/admin/agent/articles?status=<?= h($k) ?>" class="<?= $k === $tab ? 'is-active' : '' ?>"<?= $k === $tab ? ' aria-current="page"' : '' ?>><?= h($l) ?> (<?= (int) $counts[$k] ?>)</a>
+      <a href="/admin/agent/articles?status=<?= h($k) ?>" style="color:<?= $k === $tab ? '#750B25' : '#64748b' ?>"<?= $k === $tab ? ' aria-current="true"' : '' ?>><?= h($l) ?> (<?= (int) $counts[$k] ?>)</a>
     <?php endforeach; ?>
-  </nav>
+  </div>
 
   <?php if (!$rows): ?>
     <div class="tk-card tk-empty"><p class="text-sm font-semibold text-slate-600"><?= $tab === 'PROPOSED' ? 'No articles are waiting to be verified.' : 'Nothing here yet.' ?></p></div>
@@ -313,64 +287,6 @@ $adminPageSub   = 'Drafts by the Tafakari Agent, awaiting verification';
     </div>
   <?php endif; ?>
 
-  <section style="margin-top:28px">
-    <h2 class="font-outfit font-black text-lg text-slate-900" style="margin-bottom:4px">Coverage by region and indicator</h2>
-    <p class="tk-help" style="margin-bottom:12px">The latest article for each combination. A combination with a draft waiting is skipped until that draft is decided, so unreviewed work does not pile up or cost more.</p>
-    <div class="tk-card tk-table-wrap">
-      <table class="tk-table">
-        <thead><tr><th>Region</th><?php foreach ($cats as $c): ?><th style="min-width:130px;line-height:1.3;text-transform:none;letter-spacing:0"><?= h($c['name']) ?></th><?php endforeach; ?></tr></thead>
-        <tbody>
-          <?php foreach ($regions as $g): ?>
-            <tr>
-              <td class="font-bold text-slate-900 whitespace-nowrap"><?= h($g['name']) ?></td>
-              <?php foreach ($cats as $c): $cell = $coverage[$g['name']][$c['name']] ?? null; ?>
-                <td class="whitespace-nowrap">
-                  <?php if (!$cell): ?><span class="text-slate-400">Not yet</span>
-                  <?php else: ?><a href="/admin/agent/articles/<?= h(rawurlencode($cell['id'])) ?>" class="tk-badge <?= $cell['status'] === 'PROPOSED' ? 'tk-badge--warn' : 'tk-badge--ok' ?>"><?= $cell['status'] === 'PROPOSED' ? 'To verify' : h(format_date($cell['createdAt'], 'j M')) ?></a><?php endif; ?>
-                </td>
-              <?php endforeach; ?>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <?php if ($isSuper): ?>
-    <div class="grid md:grid-cols-2 gap-6" style="margin-top:28px">
-      <form method="POST" class="tk-card tk-card--pad" style="display:flex;flex-direction:column;gap:14px"
-            onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Writing… this can take a few minutes';">
-        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-        <input type="hidden" name="action" value="write">
-        <h2 class="font-outfit font-black text-base text-slate-900">Write one now</h2>
-        <div class="tk-field"><label class="tk-label" for="ar-r">Monitoring region</label>
-          <select id="ar-r" name="region" class="tk-select"><?php foreach ($regions as $g): ?><option><?= h($g['name']) ?></option><?php endforeach; ?></select></div>
-        <div class="tk-field"><label class="tk-label" for="ar-c">Indicator</label>
-          <select id="ar-c" name="category" class="tk-select"><?php foreach ($cats as $c): ?><option><?= h($c['name']) ?></option><?php endforeach; ?></select></div>
-        <p class="tk-help"><?= h(sprintf('Counts against the agent\'s monthly budget: an estimated $%.2f of $%.2f used so far.', agent_month_spend(), $settings['monthly_budget'])) ?></p>
-        <button type="submit" class="tk-btn tk-btn--accent" <?= $canRun ? '' : 'disabled title="Install the SDK and set the API key first"' ?>>Write the article</button>
-      </form>
-
-      <form method="POST" class="tk-card tk-card--pad" style="display:flex;flex-direction:column;gap:14px">
-        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-        <input type="hidden" name="action" value="settings">
-        <h2 class="font-outfit font-black text-base text-slate-900">Schedule</h2>
-        <label class="flex items-start gap-3 cursor-pointer">
-          <input type="checkbox" name="enabled" value="1" <?= $artSet['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
-          <span>
-            <span class="block text-sm font-bold text-slate-800">Write articles on schedule</span>
-            <span class="block text-xs text-slate-500">Works through all <?= count($regions) * count($cats) ?> region and indicator combinations in turn. Every draft still needs verification.</span>
-          </span>
-        </label>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="tk-field"><label class="tk-label" for="ar-s">Web searches per article</label><input id="ar-s" type="number" name="max_searches" min="1" max="20" value="<?= (int) $artSet['max_searches'] ?>" class="tk-input"></div>
-          <div class="tk-field"><label class="tk-label" for="ar-f">Page reads per article</label><input id="ar-f" type="number" name="max_fetches" min="0" max="20" value="<?= (int) $artSet['max_fetches'] ?>" class="tk-input"></div>
-        </div>
-        <p class="tk-help">cPanel &rarr; Cron Jobs: <code class="break-all">php <?= h(dirname(__DIR__)) ?>/cron/agent-articles.php --count=3</code></p>
-        <button type="submit" class="tk-btn tk-btn--primary">Save settings</button>
-      </form>
-    </div>
-  <?php endif; ?>
 <?php endif; ?>
 
 </main>

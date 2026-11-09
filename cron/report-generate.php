@@ -27,31 +27,4 @@ require_once $root . '/includes/reports.php';
 
 $opt  = getopt('', ['narrative']);
 $log  = fn(string $m) => fwrite(STDOUT, '[' . date('Y-m-d H:i:s') . '] ' . $m . PHP_EOL);
-ensure_report_tables();
-
-// The most recent CLOSED cycle and quarter (the ones containing yesterday's
-// predecessor period end); a period in progress is never drafted automatically.
-$jobs = [];
-$cycle = report_period('CYCLE', date('Y-m-d'));
-$jobs[] = ['CYCLE', $cycle['prev']['start']];
-$quarter = report_period('QUARTER', date('Y-m-d'));
-$jobs[] = ['QUARTER', $quarter['prev']['start']];
-$jobs[] = ['OUTLOOK', date('Y-m-d')];   // looks ahead at the cycle now running
-
-$failed = false;
-foreach ($jobs as [$kind, $start]) {
-    try {
-        $r = report_create($kind, $start, 'ALL', null);
-        $p = report_period($kind, $start);
-        if (!$r['created']) { $log(report_kind_label($kind) . " for {$p['label']} already exists."); continue; }
-        $log('Created draft ' . report_kind_label($kind) . " for {$p['label']} (id {$r['id']}).");
-        if (isset($opt['narrative'])) {
-            $n = report_draft_narrative($r['id'], 'cron');
-            $log('  Narrative: ' . $n['message'] . sprintf(' (est. $%.4f)', $n['cost']));
-        }
-    } catch (Throwable $e) {
-        $failed = true;
-        $log("FAILED {$kind} {$start}: " . $e->getMessage());
-    }
-}
-exit($failed ? 1 : 0);
+exit(report_generate_due(isset($opt['narrative']), $log) ? 0 : 1);

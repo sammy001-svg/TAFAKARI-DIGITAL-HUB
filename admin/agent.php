@@ -6,6 +6,8 @@ require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/includes/agent.php';
 require_once dirname(__DIR__) . '/includes/assistant.php';
+require_once dirname(__DIR__) . '/includes/agent-auto.php';
+require_once dirname(__DIR__) . '/includes/agent-nav.php';
 
 $me      = require_auth();
 $isSuper = is_super_admin();
@@ -62,37 +64,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'save_settings':
                 if (!$isSuper) $back('queue', 'Only a super admin can change agent settings.', true);
-                $lines = fn(string $k) => array_values(array_filter(array_map('trim', preg_split('/\R/', (string) ($_POST[$k] ?? '')))));
-                $canon = [];
-                foreach (african_countries() as $c) $canon[mb_strtolower($c)] = $c;
-                $countries = []; $unknown = [];
-                foreach ($lines('countries') as $c) {
-                    if (isset($canon[mb_strtolower($c)])) { if (!in_array($canon[mb_strtolower($c)], $countries, true)) $countries[] = $canon[mb_strtolower($c)]; }
-                    else $unknown[] = $c;
-                }
-                $allowed = agent_clean_domains($lines('allowed_domains'));
-                $blocked = agent_clean_domains($lines('blocked_domains'));
-                $budget  = (float) str_replace(',', '.', (string) ($_POST['monthly_budget'] ?? '0'));
+                $budget = (float) str_replace(',', '.', (string) ($_POST['monthly_budget'] ?? '0'));
                 if ($budget < 0 || $budget > 10000) $back('settings', 'Monthly budget must be between 0 and 10,000 USD.', true);
-                if ($allowed && $blocked)             $back('settings', 'Use either allowed domains or blocked domains, not both.', true);
-
-                set_setting('agent_enabled',         isset($_POST['enabled']) ? '1' : '0', $uid);
-                set_setting('agent_countries',       json_encode($countries, JSON_UNESCAPED_UNICODE), $uid);
-                set_setting('agent_lookback_days',   (string) max(1, min(31, (int) ($_POST['lookback_days'] ?? 14))), $uid);
-                set_setting('agent_max_searches',    (string) max(1, min(20, (int) ($_POST['max_searches'] ?? 6))), $uid);
-                set_setting('agent_max_fetches',     (string) max(0, min(20, (int) ($_POST['max_fetches'] ?? 4))), $uid);
-                set_setting('agent_max_items',       (string) max(1, min(20, (int) ($_POST['max_items'] ?? 8))), $uid);
-                set_setting('agent_effort',          in_array($_POST['effort'] ?? '', ['low', 'medium', 'high', 'xhigh'], true) ? $_POST['effort'] : 'high', $uid);
-                set_setting('agent_monthly_budget',  (string) round($budget, 2), $uid);
-                set_setting('agent_allowed_domains', json_encode($allowed), $uid);
-                set_setting('agent_blocked_domains', json_encode($blocked), $uid);
-                set_setting('assistant_enabled',        isset($_POST['assistant_enabled']) ? '1' : '0', $uid);
-                set_setting('assistant_monthly_budget', (string) max(0, min(10000, round((float) ($_POST['assistant_monthly_budget'] ?? 20), 2))), $uid);
-                set_setting('assistant_per_hour',       (string) max(1, min(100, (int) ($_POST['assistant_per_hour'] ?? 10))), $uid);
-                set_setting('assistant_per_day',        (string) max(1, min(5000, (int) ($_POST['assistant_per_day'] ?? 300))), $uid);
-                $back('settings', $unknown
-                    ? 'Settings saved. Not recognised, and left out: ' . implode(', ', $unknown) . '.'
-                    : 'Settings saved.', (bool) $unknown);
+                set_setting('agent_enabled',        isset($_POST['enabled']) ? '1' : '0', $uid);
+                set_setting('agent_monthly_budget', (string) round($budget, 2), $uid);
+                set_setting('assistant_enabled',    isset($_POST['assistant_enabled']) ? '1' : '0', $uid);
+                // Options from the older, longer form must not keep applying unseen
+                $old = ['agent_countries', 'agent_lookback_days', 'agent_max_searches', 'agent_max_fetches', 'agent_max_items', 'agent_effort', 'agent_allowed_domains', 'agent_blocked_domains',
+                        'assistant_monthly_budget', 'assistant_per_hour', 'assistant_per_day'];
+                db()->prepare('DELETE FROM SiteSetting WHERE `key` IN (' . implode(',', array_fill(0, count($old), '?')) . ')')->execute($old);
+                $back('settings', 'Settings saved.');
 
             case 'save_api_key':
                 if (!$isSuper) $back('queue', 'Only a super admin can change the API key.', true);
@@ -106,15 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'run_now':
                 if (!$isSuper) $back('queue', 'Only a super admin can start a run.', true);
-                $country = (string) ($_POST['run_country'] ?? '');
                 @set_time_limit(900);
                 ignore_user_abort(true);   // finish and log the run even if the browser gives up
                 session_write_close();     // a run takes minutes: don't lock the user's other tabs
-                $r = agent_run_country($country, 'MANUAL', $uid);
+                $r = agent_auto_tick(true);
                 session_start();
-                $back($r['status'] === 'OK' ? 'queue' : 'runs',
-                    sprintf('%s: %s %s (estimated cost $%.4f)', $country, $r['status'], $r['message'], $r['cost']),
-                    $r['status'] !== 'OK');
+                $back('runs', $r['message'], $r['status'] === 'FAILED');
 
             default:
                 $back($retTab, 'Unknown action.', true);
@@ -204,32 +182,22 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
   <div>
     <span class="tk-eyebrow">Monitoring</span>
     <h1 class="tk-h1" style="margin-top:12px">Tafakari Agent</h1>
-    <p class="tk-lead">The agent searches public sources and proposes findings with intensity scores. Nothing here is public:
-      a finding reaches the heat map only after an analyst turns it into a report and a super admin approves it.</p>
+    <p class="tk-lead">The agent works by itself: it monitors your regions, writes articles and finds videos. People only approve what goes on the site.</p>
   </div>
   <div class="tk-page-head__actions">
-    <span class="tk-badge <?= $settings['enabled'] ? 'tk-badge--ok' : 'tk-badge--muted' ?>"><?= $settings['enabled'] ? 'Scheduled runs on' : 'Scheduled runs off' ?></span>
+    <span class="tk-badge <?= $settings['enabled'] ? 'tk-badge--ok' : 'tk-badge--muted' ?>"><?= $settings['enabled'] ? 'Agent on' : 'Agent off' ?></span>
   </div>
 </header>
 
-<!-- Tabs -->
-<nav class="tk-segment" aria-label="Agent sections" style="margin-bottom:20px;flex-wrap:wrap">
-  <?php
-  $tabLabels = [
-      'queue'    => 'Review queue (' . $counts['PROPOSED'] . ')',
-      'promoted' => 'Promoted (' . $counts['PROMOTED'] . ')',
-      'rejected' => 'Rejected (' . ($counts['REJECTED'] + $counts['DUPLICATE']) . ')',
-      'runs'     => 'Run log',
-      'settings' => 'Settings',
-  ];
-  foreach ($validTabs as $t): ?>
-    <a href="/admin/agent?<?= h(http_build_query(array_filter(['tab' => $t, 'country' => $filterCountry]))) ?>"
-       class="<?= $t === $tab ? 'is-active' : '' ?>"<?= $t === $tab ? ' aria-current="page"' : '' ?>><?= h($tabLabels[$t]) ?></a>
-  <?php endforeach; ?>
-</nav>
+<?php agent_nav(isset($statusFor[$tab]) ? 'findings' : $tab, $isSuper); ?>
 
 <?php if (isset($statusFor[$tab])): ?>
   <!-- ── Findings ───────────────────────────────────────────────── -->
+  <div class="flex flex-wrap gap-4 mb-4 text-sm font-bold">
+    <?php foreach (['queue' => 'Waiting (' . $counts['PROPOSED'] . ')', 'promoted' => 'Turned into reports (' . $counts['PROMOTED'] . ')', 'rejected' => 'Rejected (' . ($counts['REJECTED'] + $counts['DUPLICATE']) . ')'] as $_t => $_l): ?>
+      <a href="/admin/agent?<?= h(http_build_query(array_filter(['tab' => $_t, 'country' => $filterCountry]))) ?>" style="color:<?= $_t === $tab ? '#750B25' : '#64748b' ?>"><?= h($_l) ?></a>
+    <?php endforeach; ?>
+  </div>
   <form method="GET" class="flex flex-wrap items-center gap-2 mb-5">
     <input type="hidden" name="tab" value="<?= h($tab) ?>">
     <select name="country" onchange="this.form.submit()" class="tk-select" style="width:auto;min-width:220px" aria-label="Filter by country">
@@ -392,7 +360,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <tr class="border-t border-slate-100 align-top">
             <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-600"><?= h(format_date($r['startedAt'], 'j M Y, H:i')) ?></td>
             <td class="px-4 py-3 font-bold text-slate-800"><?= h($r['country']) ?></td>
-            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', 'PREFLIGHT' => 'Readiness check', 'ARTICLE' => 'Article writer', default => 'Scheduled' }) ?></td>
+            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', 'PREFLIGHT' => 'Readiness check', 'ARTICLE' => 'Article writer', 'VIDEO' => 'Video search', default => 'Scheduled' }) ?></td>
             <td class="px-4 py-3"><span class="ag-chip" style="background:<?= $sc ?>15;color:<?= $sc ?>"><?= h($r['status']) ?></span></td>
             <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
               <?= (int) $r['itemsProposed'] ?> new · <?= (int) $r['itemsDuplicate'] ?> dup · <?= (int) $r['itemsDiscarded'] ?> discarded</td>
@@ -414,89 +382,41 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
   </div>
   <p class="text-xs text-slate-400 mt-3">Costs are estimates at Claude Opus 5.5 list prices plus $0.01 per web search. The Anthropic Console bill is authoritative.</p>
 
-<?php elseif ($tab === 'settings'): ?>
-  <!-- ── Settings + run now ─────────────────────────────────────── -->
-  <div class="grid xl:grid-cols-3 gap-6">
-    <form method="POST" class="xl:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
-      <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-      <input type="hidden" name="action" value="save_settings">
-      <h2 class="font-outfit font-black text-base text-slate-900">Settings</h2>
-
-      <label class="flex items-start gap-3 cursor-pointer">
-        <input type="checkbox" name="enabled" value="1" <?= $settings['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
-        <span>
-          <span class="block text-sm font-bold text-slate-800">Run on schedule</span>
-          <span class="block text-xs text-slate-500">When on, the cron job runs the agent for the next country in the list each time it fires.
-            Findings still need review; this never publishes anything.</span>
-        </span>
-      </label>
-
-      <div class="grid md:grid-cols-2 gap-6">
+<?php elseif ($tab === 'settings'):
+    $_as = assistant_settings();
+    $_auto = agent_auto_status();
+    $_ready = $sdkOk && $keyOk;
+?>
+  <div class="grid lg:grid-cols-2 gap-6" style="max-width:980px">
+    <div class="space-y-6">
+      <form method="POST" class="tk-card tk-card--pad space-y-5">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="save_settings">
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" name="enabled" value="1" <?= $settings['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
+          <span>
+            <span class="block text-sm font-bold text-slate-800">Agent on</span>
+            <span class="block text-xs text-slate-500">It monitors your regions, writes articles and finds YouTube videos by itself. It never publishes.</span>
+          </span>
+        </label>
         <div>
-          <label class="ag-label">Monitored countries (one per line, in rotation order)</label>
-          <textarea name="countries" rows="8" class="ag-input"><?= h(implode("\n", $settings['countries'])) ?></textarea>
+          <label class="ag-label" for="ag-budget">Monthly budget (USD)</label>
+          <input id="ag-budget" type="number" name="monthly_budget" min="0" max="10000" step="1" value="<?= h((string) $settings['monthly_budget']) ?>" class="ag-input">
+          <p class="text-xs text-slate-400 mt-1.5"><?= h(sprintf('Estimated $%.2f used this month.', $spent)) ?> The agent spreads this across the month and does as much as it allows.</p>
         </div>
-        <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-3">
-            <div><label class="ag-label">Look back (days)</label>
-              <input type="number" name="lookback_days" min="1" max="31" value="<?= (int) $settings['lookback_days'] ?>" class="ag-input"></div>
-            <div><label class="ag-label">Findings per run</label>
-              <input type="number" name="max_items" min="1" max="20" value="<?= (int) $settings['max_items'] ?>" class="ag-input"></div>
-            <div><label class="ag-label">Web searches per run</label>
-              <input type="number" name="max_searches" min="1" max="20" value="<?= (int) $settings['max_searches'] ?>" class="ag-input"></div>
-            <div><label class="ag-label">Page reads per run</label>
-              <input type="number" name="max_fetches" min="0" max="20" value="<?= (int) $settings['max_fetches'] ?>" class="ag-input"></div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div><label class="ag-label">Monthly budget (USD)</label>
-              <input type="number" name="monthly_budget" min="0" max="10000" step="1" value="<?= h((string) $settings['monthly_budget']) ?>" class="ag-input"></div>
-            <div><label class="ag-label">Analysis depth</label>
-              <select name="effort" class="ag-input">
-                <?php foreach (['low' => 'Low (cheapest)', 'medium' => 'Medium', 'high' => 'High (recommended)', 'xhigh' => 'Extra high'] as $v => $l): ?>
-                  <option value="<?= $v ?>" <?= $settings['effort'] === $v ? 'selected' : '' ?>><?= h($l) ?></option>
-                <?php endforeach; ?>
-              </select></div>
-          </div>
-          <p class="text-xs text-slate-400 leading-relaxed"><?= h(sprintf('Estimated $%.2f used this month.', $spent)) ?> When the estimated spend reaches the budget, runs stop until the 1st. Set it to 0 to stop all runs.</p>
-        </div>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6">
-        <div>
-          <label class="ag-label">Allowed source domains (optional)</label>
-          <textarea name="allowed_domains" rows="5" class="ag-input" placeholder="reliefweb.int&#10;un.org&#10;nation.africa"><?= h(implode("\n", $settings['allowed_domains'])) ?></textarea>
-          <p class="text-xs text-slate-400 mt-1.5">If set, the agent searches and reads only these sites (and their subdomains).</p>
-        </div>
-        <div>
-          <label class="ag-label">Blocked source domains (optional)</label>
-          <textarea name="blocked_domains" rows="5" class="ag-input"><?= h(implode("\n", $settings['blocked_domains'])) ?></textarea>
-          <p class="text-xs text-slate-400 mt-1.5">Used only when no allowed domains are set. Use one list or the other.</p>
-        </div>
-      </div>
-
-      <?php $_as = assistant_settings(); ?>
-      <div style="border-top:1px solid var(--tk-line);padding-top:20px" class="space-y-4">
-        <h3 class="font-outfit font-black text-base text-slate-900">Ask Tafakari (public assistant)</h3>
         <label class="flex items-start gap-3 cursor-pointer">
           <input type="checkbox" name="assistant_enabled" value="1" <?= $_as['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
           <span>
-            <span class="block text-sm font-bold text-slate-800">Show the assistant on the public site</span>
-            <span class="block text-xs text-slate-500">Answers only from published CRTP material, with links to its sources. Questions are not stored.
-              <?= h(sprintf('Estimated $%.2f of $%.2f used this month.', assistant_month_spend(), $_as['monthly_budget'])) ?></span>
+            <span class="block text-sm font-bold text-slate-800">Ask Tafakari on the public site</span>
+            <span class="block text-xs text-slate-500">Answers visitors from your published work only.</span>
           </span>
         </label>
-        <div class="grid grid-cols-3 gap-3">
-          <div><label class="ag-label">Monthly budget (USD)</label><input type="number" name="assistant_monthly_budget" min="0" max="10000" step="1" value="<?= h((string) $_as['monthly_budget']) ?>" class="ag-input"></div>
-          <div><label class="ag-label">Per visitor, per hour</label><input type="number" name="assistant_per_hour" min="1" max="100" value="<?= (int) $_as['per_hour'] ?>" class="ag-input"></div>
-          <div><label class="ag-label">Site-wide, per day</label><input type="number" name="assistant_per_day" min="1" max="5000" value="<?= (int) $_as['per_day'] ?>" class="ag-input"></div>
-        </div>
-      </div>
-
-      <button type="submit" class="ag-btn text-white" style="background:#750B25">Save settings</button>
-    </form>
+        <button type="submit" class="ag-btn text-white" style="background:#750B25">Save</button>
+      </form>
+    </div>
 
     <div class="space-y-6">
-      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+      <div class="tk-card tk-card--pad space-y-4">
         <h2 class="font-outfit font-black text-base text-slate-900">Claude API key</h2>
         <p class="text-xs text-slate-500 leading-relaxed">
           <?php if ($savedKey !== ''): ?>
@@ -523,29 +443,24 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
         <?php endif; ?>
       </div>
 
-      <form method="POST" class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4"
-            onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='Running… this can take a few minutes';">
-        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
-        <input type="hidden" name="action" value="run_now">
-        <h2 class="font-outfit font-black text-base text-slate-900">Run now</h2>
-        <p class="text-xs text-slate-500 leading-relaxed">Runs the agent once for one country, whether or not scheduled runs are on.
-          It counts against the monthly budget and usually takes one to five minutes.</p>
-        <select name="run_country" class="ag-input">
-          <?php foreach ($settings['countries'] ?: african_countries() as $c): ?>
-            <option value="<?= h($c) ?>"><?= h($c) ?></option>
-          <?php endforeach; ?>
-        </select>
-        <button type="submit" class="ag-btn text-white w-full justify-center" style="background:#E7952A;color:#0D0102"
-                <?= ($sdkOk && $keyOk) ? '' : 'disabled title="Install the SDK and set the API key first"' ?>>Run the agent</button>
-      </form>
-
-      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 text-xs text-slate-600 leading-relaxed space-y-3">
-        <h2 class="font-outfit font-black text-base text-slate-900">Server setup</h2>
-        <p><strong>1. SDK.</strong> <?= $sdkOk ? 'Installed.' : 'Not installed: run <code>composer install --no-dev</code> in the site root.' ?></p>
-        <p><strong>2. API key.</strong> <?= $keyOk ? 'Configured.' : 'Add it in the Claude API key box above.' ?></p>
-        <p><strong>3. Schedule.</strong> cPanel → Cron Jobs:<br>
-          <code class="block mt-1 p-2 rounded-lg bg-slate-50 break-all">php <?= h(dirname(__DIR__)) ?>/cron/agent-run.php</code></p>
-        <p class="text-slate-400">Model: <?= h(AGENT_MODEL) ?>, with automatic fallback if a request is declined.</p>
+      <div class="tk-card tk-card--pad space-y-3 text-sm text-slate-700">
+        <h2 class="font-outfit font-black text-base text-slate-900">Status</h2>
+        <?php if (!$sdkOk): ?>
+          <p>The Claude software still has to be installed on the server before the agent can work.</p>
+        <?php elseif (!$keyOk): ?>
+          <p>Add your Claude API key to finish.</p>
+        <?php endif; ?>
+        <?php if ($_auto['running']): ?>
+          <p>The hourly job is running. Last checked in <?= h(format_relative_time($_auto['lastTick'])) ?>.</p>
+        <?php else: ?>
+          <p>To let it run by itself, add this one line in cPanel &rarr; Cron Jobs, once:</p>
+          <code class="block p-2 rounded-lg bg-slate-50 break-all text-xs">0 * * * * /usr/local/bin/php <?= h(dirname(__DIR__)) ?>/cron/agent-auto.php</code>
+        <?php endif; ?>
+        <form method="POST" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Working… this can take a few minutes';">
+          <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+          <input type="hidden" name="action" value="run_now">
+          <button type="submit" class="ag-btn w-full justify-center" style="background:#E7952A;color:#0D0102" <?= $_ready ? '' : 'disabled' ?>>Run now</button>
+        </form>
       </div>
     </div>
   </div>
