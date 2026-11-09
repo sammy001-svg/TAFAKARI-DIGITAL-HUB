@@ -157,21 +157,28 @@ function agent_save_workspace(string $id, string $uid): string {
  *
  * @return array{id:string,name:string}|null null when the key may not list workspaces
  */
-function agent_discover_workspace(?string $key = null, mixed $transporter = null): ?array {
-    try {
-        $client = agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => 20, 'connect_timeout' => 10]), $key, '');
-        $active = array_values(array_filter($client->beta->organization->workspaces->list(includeDefault: true, limit: 100)->getItems(), fn($w) => $w->archivedAt === null));
-    } catch (Throwable $e) {
-        error_log('[tafakari-agent] workspace lookup: ' . agent_api_detail($e));
-        return null;
+function agent_discover_workspace(?string $key = null, mixed $transporter = null, ?string &$why = null): ?array {
+    $client = agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => 20, 'connect_timeout' => 10]), $key, '');
+    $items = null;
+    // The SDK offers this list on a stable and a beta route: use whichever answers
+    foreach ([fn() => $client->organization->workspaces, fn() => $client->beta->organization->workspaces] as $route) {
+        try {
+            $items = $route()->list(includeDefault: true, limit: 100)->getItems();
+            break;
+        } catch (Throwable $e) {
+            $why ??= mb_substr(strip_tags(agent_api_detail($e)), 0, 240);
+            error_log('[tafakari-agent] workspace lookup: ' . agent_api_detail($e));
+        }
     }
-    if (!$active) return null;
+    if ($items === null) return null;
+    $active = array_values(array_filter($items, fn($w) => ($w->archivedAt ?? null) === null && !empty($w->id)));
+    if (!$active) { $why = 'Anthropic returned no active workspaces for this key.'; return null; }
     usort($active, function ($a, $b) {
-        $da = stripos($a->name, 'default') !== false ? 0 : 1;
-        $db = stripos($b->name, 'default') !== false ? 0 : 1;
-        return $da <=> $db ?: $a->createdAt <=> $b->createdAt;
+        $da = stripos((string) ($a->name ?? ''), 'default') !== false ? 0 : 1;
+        $db = stripos((string) ($b->name ?? ''), 'default') !== false ? 0 : 1;
+        return $da <=> $db ?: ($a->createdAt ?? null) <=> ($b->createdAt ?? null);
     });
-    return ['id' => $active[0]->id, 'name' => $active[0]->name];
+    return ['id' => $active[0]->id, 'name' => (string) ($active[0]->name ?? 'workspace')];
 }
 
 /**
@@ -189,8 +196,13 @@ function agent_check_connection(?string $key = null, ?string $workspace = null, 
         return ['ok' => true, 'message' => 'Connected to Claude.'];
     } catch (Throwable $e) {
         if ($workspace !== '' || !str_contains($e->getMessage(), 'anthropic-workspace-id')) return ['ok' => false, 'message' => agent_api_error($e)];
-        $found = agent_discover_workspace($key, $http);
-        if ($found === null) return ['ok' => false, 'message' => agent_api_error($e)];
+        $why = null;
+        $found = agent_discover_workspace($key, $http, $why);
+        if ($found === null) {
+            return ['ok' => false, 'message' => 'This Claude API key needs a workspace, and Anthropic would not list workspaces for it'
+                . ($why ? " (Anthropic's reply: {$why})" : '')
+                . '. Paste your Workspace ID (it starts with wrkspc_) below, or save a key created inside a workspace in the Anthropic Console.'];
+        }
         try {
             agent_client($http, $key, $found['id'])->models->retrieve(AGENT_MODEL);
         } catch (Throwable $e2) {
