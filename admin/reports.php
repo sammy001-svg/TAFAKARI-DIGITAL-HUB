@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hash_equals($csrf, (string) ($_POST['csrf'] ?? ''))) {
         $error = 'Your session expired. Please try again.';
     } else {
-        $kind   = ($_POST['kind'] ?? '') === 'QUARTER' ? 'QUARTER' : 'CYCLE';
+        $kind   = in_array($_POST['kind'] ?? '', ['QUARTER', 'OUTLOOK'], true) ? $_POST['kind'] : 'CYCLE';
         $period = (string) ($_POST[$kind === 'QUARTER' ? 'quarter' : 'cycle'] ?? '');
         $valid  = array_column($kind === 'QUARTER' ? $quarters : $cycles, 'start');
         $scope  = (string) ($_POST['scope'] ?? 'ALL');
@@ -92,7 +92,7 @@ $adminPageSub   = 'Bi-weekly and quarterly reports built from the heat-map data'
     <h2 class="font-outfit font-black text-base text-slate-900">New report</h2>
 
     <fieldset class="flex gap-2" role="radiogroup" aria-label="Report type">
-      <?php foreach (['CYCLE' => 'Bi-weekly', 'QUARTER' => 'Quarterly'] as $v => $l): ?>
+      <?php foreach (['CYCLE' => 'Bi-weekly', 'QUARTER' => 'Quarterly', 'OUTLOOK' => 'Outlook'] as $v => $l): ?>
         <label class="flex-1 cursor-pointer">
           <input type="radio" name="kind" value="<?= $v ?>" class="peer sr-only" <?= $v === 'CYCLE' ? 'checked' : '' ?> onchange="rpKind()">
           <span class="block text-center px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 peer-checked:text-white peer-checked:border-transparent"

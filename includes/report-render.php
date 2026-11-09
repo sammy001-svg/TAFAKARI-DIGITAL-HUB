@@ -69,16 +69,7 @@ function rr_report_list(array $items, int $limit = 0): string {
  *
  * @param bool $public true on the public page (hides workflow details)
  */
-function report_render(array $report, bool $public): void {
-    $s    = $report['snapshotData'];
-    $cats = $s['categories'];
-    $swatch = [];
-    foreach ($cats as $c) $swatch[$c['name']] = $c['color'];
-    $k = $s['kpis'];
-    $prevLabel = 'Previous period (' . $s['prev']['label'] . ')';
-    $narr = trim((string) ($report['narrative'] ?? ''));
-
-    echo ch_styles();
+function report_render_styles(): void {
     ?>
 <style>
 .rr { color:#0f172a; font-family:Inter,sans-serif; }
@@ -122,6 +113,22 @@ function report_render(array $report, bool $public): void {
   .rr a { color:#0f172a; }
 }
 </style>
+<?php
+}
+
+function report_render(array $report, bool $public): void {
+    if (($report['snapshotData']['kind'] ?? '') === 'OUTLOOK') { forecast_render($report, $public); return; }
+    $s    = $report['snapshotData'];
+    $cats = $s['categories'];
+    $swatch = [];
+    foreach ($cats as $c) $swatch[$c['name']] = $c['color'];
+    $k = $s['kpis'];
+    $prevLabel = 'Previous period (' . $s['prev']['label'] . ')';
+    $narr = trim((string) ($report['narrative'] ?? ''));
+
+    echo ch_styles();
+    report_render_styles();
+    ?>
 <div class="rr">
 
   <div class="rr-kpis">
@@ -271,6 +278,7 @@ function report_render(array $report, bool $public): void {
 
 /** CSV of the country x category matrix (and regions), for download. */
 function report_csv(array $report): string {
+    if (($report['snapshotData']['kind'] ?? '') === 'OUTLOOK') return forecast_csv($report);
     $s = $report['snapshotData'];
     $cats = array_column($s['categories'], 'name');
     $fh = fopen('php://temp', 'r+');

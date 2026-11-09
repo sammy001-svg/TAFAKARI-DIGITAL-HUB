@@ -887,7 +887,8 @@ function score_provenance_after_edit(array $prev, array $scores, int $sources): 
 //
 //  1. Report score: the average of the report's scored elements in that
 //     category (1-10), as before.
-//  2. Report weight = corroboration x recency
+//  2. Report weight = corroboration x geographic spread x recency
+//       spread        = 1 + 0.1 x (countries concerned - 1), capped at 1.3
 //       corroboration = 1 + 0.25 x (independent sources - 1), capped at 2.0
 //                       (1 source = 1.0, 5 or more = 2.0)
 //       recency       = 0.5 ^ (days before the cycle's end / half-life),
@@ -917,6 +918,14 @@ function hm_agg_settings(): array {
 function hm_corroboration_factor(int $sources): float {
     $s = max(1, $sources);
     return 1.0 + 0.25 * min($s - 1, 4);
+}
+
+/**
+ * Geographic spread factor: a development affecting more countries carries
+ * more weight. 1.0 for one country, +0.1 per further country, capped at 1.3.
+ */
+function hm_spread_factor(int $countries): float {
+    return 1.0 + 0.1 * min(max($countries, 1) - 1, 3);
 }
 
 /**

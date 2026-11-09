@@ -5,6 +5,7 @@ require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/includes/agent.php';
+require_once dirname(__DIR__) . '/includes/assistant.php';
 
 $me      = require_auth();
 $isSuper = is_super_admin();
@@ -12,6 +13,7 @@ $uid     = $me['id'];
 
 ensure_settings_table();
 ensure_agent_tables();
+ensure_assistant_table();
 
 if (empty($_SESSION['agent_csrf'])) $_SESSION['agent_csrf'] = bin2hex(random_bytes(16));
 $csrf = $_SESSION['agent_csrf'];
@@ -84,6 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_setting('agent_monthly_budget',  (string) round($budget, 2), $uid);
                 set_setting('agent_allowed_domains', json_encode($allowed), $uid);
                 set_setting('agent_blocked_domains', json_encode($blocked), $uid);
+                set_setting('assistant_enabled',        isset($_POST['assistant_enabled']) ? '1' : '0', $uid);
+                set_setting('assistant_monthly_budget', (string) max(0, min(10000, round((float) ($_POST['assistant_monthly_budget'] ?? 20), 2))), $uid);
+                set_setting('assistant_per_hour',       (string) max(1, min(100, (int) ($_POST['assistant_per_hour'] ?? 10))), $uid);
+                set_setting('assistant_per_day',        (string) max(1, min(5000, (int) ($_POST['assistant_per_day'] ?? 300))), $uid);
                 $back('settings', $unknown
                     ? 'Settings saved. Not recognised, and left out: ' . implode(', ', $unknown) . '.'
                     : 'Settings saved.', (bool) $unknown);
@@ -379,7 +385,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <tr class="border-t border-slate-100 align-top">
             <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-600"><?= h(format_date($r['startedAt'], 'j M Y, H:i')) ?></td>
             <td class="px-4 py-3 font-bold text-slate-800"><?= h($r['country']) ?></td>
-            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', default => 'Scheduled' }) ?></td>
+            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', 'PREFLIGHT' => 'Readiness check', default => 'Scheduled' }) ?></td>
             <td class="px-4 py-3"><span class="ag-chip" style="background:<?= $sc ?>15;color:<?= $sc ?>"><?= h($r['status']) ?></span></td>
             <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
               <?= (int) $r['itemsProposed'] ?> new · <?= (int) $r['itemsDuplicate'] ?> dup · <?= (int) $r['itemsDiscarded'] ?> discarded</td>
@@ -458,6 +464,24 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <label class="ag-label">Blocked source domains (optional)</label>
           <textarea name="blocked_domains" rows="5" class="ag-input"><?= h(implode("\n", $settings['blocked_domains'])) ?></textarea>
           <p class="text-xs text-slate-400 mt-1.5">Used only when no allowed domains are set. Use one list or the other.</p>
+        </div>
+      </div>
+
+      <?php $_as = assistant_settings(); ?>
+      <div style="border-top:1px solid var(--tk-line);padding-top:20px" class="space-y-4">
+        <h3 class="font-outfit font-black text-base text-slate-900">Ask Tafakari (public assistant)</h3>
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" name="assistant_enabled" value="1" <?= $_as['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
+          <span>
+            <span class="block text-sm font-bold text-slate-800">Show the assistant on the public site</span>
+            <span class="block text-xs text-slate-500">Answers only from published CRTP material, with links to its sources. Questions are not stored.
+              <?= h(sprintf('Estimated $%.2f of $%.2f used this month.', assistant_month_spend(), $_as['monthly_budget'])) ?></span>
+          </span>
+        </label>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="ag-label">Monthly budget (USD)</label><input type="number" name="assistant_monthly_budget" min="0" max="10000" step="1" value="<?= h((string) $_as['monthly_budget']) ?>" class="ag-input"></div>
+          <div><label class="ag-label">Per visitor, per hour</label><input type="number" name="assistant_per_hour" min="1" max="100" value="<?= (int) $_as['per_hour'] ?>" class="ag-input"></div>
+          <div><label class="ag-label">Site-wide, per day</label><input type="number" name="assistant_per_day" min="1" max="5000" value="<?= (int) $_as['per_day'] ?>" class="ag-input"></div>
         </div>
       </div>
 

@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/reports.php';
 
-$kind = in_array($_GET['type'] ?? '', ['CYCLE', 'QUARTER'], true) ? $_GET['type'] : '';
+$kind = in_array($_GET['type'] ?? '', ['CYCLE', 'QUARTER', 'OUTLOOK'], true) ? $_GET['type'] : '';
 $rows = [];
 try {
     $sql = "SELECT id, kind, periodStart, periodEnd, scope, title, snapshot, publishedAt
@@ -17,7 +17,7 @@ try {
 } catch (Throwable $e) {}
 
 $pageTitle = 'Analysis Reports | Tafakari Digital Hub';
-$pageDesc  = 'Bi-weekly and quarterly conflict analysis reports from CRTP: intensity by category and country, changes over time, critical flags and cross-border developments.';
+$pageDesc  = 'Bi-weekly and quarterly conflict analysis reports and forward-looking outlooks from CRTP: intensity by category and country, changes over time, critical flags and cross-border developments.';
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
@@ -29,7 +29,7 @@ $pageDesc  = 'Bi-weekly and quarterly conflict analysis reports from CRTP: inten
       <p class="text-[11px] font-black uppercase tracking-[.14em] mb-3" style="color:#E7952A">Regional Conflict Dashboard</p>
       <h1 class="font-outfit font-black text-3xl md:text-5xl leading-tight">Analysis Reports</h1>
       <p class="mt-4 text-base md:text-lg leading-relaxed max-w-3xl" style="color:rgba(255,255,255,.82)">
-        Bi-weekly updates for each monitoring cycle and quarterly analyses, built from the heat-map data and reviewed by CRTP.
+        Bi-weekly updates for each monitoring cycle, quarterly analyses and forward-looking outlooks, built from the heat-map data and reviewed by CRTP.
       </p>
       <div class="flex flex-wrap gap-3 mt-6">
         <a href="/heatmap" class="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-bold" style="background:#E7952A;color:#0D0102">Open the heat map</a>
@@ -40,7 +40,7 @@ $pageDesc  = 'Bi-weekly and quarterly conflict analysis reports from CRTP: inten
 
   <div class="max-w-6xl mx-auto px-4 md:px-6 py-10">
     <div class="flex flex-wrap gap-1 mb-6 p-1 rounded-2xl w-fit" style="background:rgba(0,0,0,.06)">
-      <?php foreach (['' => 'All reports', 'CYCLE' => 'Bi-weekly', 'QUARTER' => 'Quarterly'] as $v => $l): ?>
+      <?php foreach (['' => 'All reports', 'CYCLE' => 'Bi-weekly', 'QUARTER' => 'Quarterly', 'OUTLOOK' => 'Outlook'] as $v => $l): ?>
         <a href="/reports<?= $v ? '?type=' . $v : '' ?>" class="px-4 py-2 rounded-xl text-sm font-bold"
            style="<?= $kind === $v ? 'background:#750B25;color:#fff' : 'color:#475569' ?>"><?= h($l) ?></a>
       <?php endforeach; ?>
@@ -68,7 +68,12 @@ $pageDesc  = 'Bi-weekly and quarterly conflict analysis reports from CRTP: inten
           <div class="flex flex-wrap gap-x-5 gap-y-1 mt-4 text-xs text-slate-600">
             <span><strong class="text-slate-900"><?= (int) ($k['reports'] ?? 0) ?></strong> reports</span>
             <span><strong class="text-slate-900"><?= (int) ($k['countries'] ?? 0) ?></strong> countries</span>
-            <span><strong class="text-slate-900"><?= (int) ($k['critical'] ?? 0) ?></strong> critical flags</span>
+            <?php if ($r['kind'] === 'OUTLOOK'): ?>
+              <span><strong class="text-slate-900"><?= (int) ($k['rising'] ?? 0) ?></strong> rising</span>
+              <span><strong class="text-slate-900"><?= (int) ($k['signals'] ?? 0) ?></strong> unusual patterns</span>
+            <?php else: ?>
+              <span><strong class="text-slate-900"><?= (int) ($k['critical'] ?? 0) ?></strong> critical flags</span>
+            <?php endif; ?>
           </div>
           <?php if ($top): ?>
             <p class="text-xs text-slate-500 mt-3">Highest: <?= h($top[0]) ?>

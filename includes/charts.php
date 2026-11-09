@@ -246,3 +246,65 @@ function chart_share_bars(array $rows, int $total, string $caption, int $W = 640
     $s .= '</svg>';
     return $s . ch_table(['Category', ucfirst($units), 'Share'], array_map(fn($r) => [$r['label'], $r['count'], $r['pct'] . '%'], $rows), $caption);
 }
+
+/**
+ * Small multiples of observed intensity with a one-cycle projection: observed
+ * in a solid line; the projection dashed, with a hollow marker and its likely
+ * range drawn as a bar, so it can never be mistaken for data.
+ *
+ * @param array<int,string> $labels observed cycles
+ * @param array $series    category => list of ?float
+ * @param array $forecasts category => forecast_series() result or null
+ */
+function chart_forecast_multiples(array $labels, string $nextLabel, array $series, array $forecasts, array $swatches, string $caption): string {
+    $W = 240; $H = 140; $L = 22; $R = 34; $T = 10; $B = 24;
+    $pw = $W - $L - $R; $ph = $H - $T - $B;
+    $n  = count($labels) + 1;
+    $x  = fn(int $i) => $L + $pw * $i / max(1, $n - 1);
+    $y  = fn(float $v) => $T + $ph * (1 - $v / 10);
+    $axis = fn(string $l) => explode(' – ', $l)[0];
+
+    $html = '<div class="ch-legend"><span><i class="ch-key-line"></i>Observed</span>'
+          . '<span><svg width="24" height="4" viewBox="0 0 24 4" aria-hidden="true"><line x1="1" y1="2" x2="23" y2="2" stroke="' . CH_ACCENT . '" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/></svg>Projected, with likely range</span></div><div class="ch-grid">';
+    foreach ($series as $cat => $vals) {
+        $vals = array_values($vals);
+        $fc   = $forecasts[$cat] ?? null;
+        $has  = array_filter($vals, fn($v) => $v !== null);
+        $html .= '<figure class="ch-card" style="margin:0"><h4><span class="ch-swatch" style="background:' . ch_e($swatches[$cat] ?? CH_MUTED) . '"></span>' . ch_e($cat) . '</h4>';
+        if (!$has) { $html .= '<p class="ch-empty">No scores in this window.</p></figure>'; continue; }
+        $aria = $cat . ($fc ? ': projected ' . ch_num($fc['next']) . ', ' . strtolower($fc['direction']) . ', ' . strtolower($fc['confidence']) . ' confidence' : ': not enough data to project');
+        $s = '<svg class="ch-svg" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="' . ch_e($aria) . '">';
+        foreach ([0, 5, 10] as $t) {
+            $s .= sprintf('<line x1="%d" x2="%d" y1="%.1f" y2="%.1f" stroke="%s" stroke-width="1"/>', $L, $W - $R, $y($t), $y($t), CH_GRID);
+            $s .= sprintf('<text x="%d" y="%.1f" font-size="10" fill="%s" text-anchor="end" dominant-baseline="middle">%d</text>', $L - 6, $y($t), CH_MUTED, $t);
+        }
+        $s .= sprintf('<line x1="%d" x2="%d" y1="%.1f" y2="%.1f" stroke="%s" stroke-opacity=".45" stroke-width="1"/>', $L, $W - $R, $y(9), $y(9), CH_CRIT);
+        $s .= sprintf('<text x="%.1f" y="%d" font-size="10" fill="%s">%s</text>', $x(0) - 4, $H - 6, CH_MUTED, ch_e($axis($labels[0])));
+        $s .= sprintf('<text x="%.1f" y="%d" font-size="10" fill="%s" text-anchor="end">%s</text>', $x($n - 1) + 4, $H - 6, CH_MUTED, ch_e($nextLabel));
+        $seg = []; $last = null;
+        foreach ($vals as $i => $v) {
+            if ($v === null) { if (count($seg) > 1) $s .= ch_polyline($seg); $seg = []; continue; }
+            $seg[] = [$x($i), $y($v)]; $last = $i;
+        }
+        if (count($seg) > 1) $s .= ch_polyline($seg);
+        foreach ($vals as $i => $v) {
+            if ($v !== null) $s .= sprintf('<circle cx="%.1f" cy="%.1f" r="4" fill="%s" stroke="%s" stroke-width="2"><title>%s: %s</title></circle>', $x($i), $y($v), CH_ACCENT, CH_SURFACE, ch_e($labels[$i]), ch_e(ch_num($v)));
+        }
+        if ($fc && $last !== null) {
+            $tx = $x($n - 1);
+            $tip = sprintf('%s: projected %s (likely %s to %s), %s, %s confidence', $nextLabel, ch_num($fc['next']), ch_num($fc['low']), ch_num($fc['high']), strtolower($fc['direction']), strtolower($fc['confidence']));
+            $s .= sprintf('<rect x="%.1f" y="%.1f" width="10" height="%.1f" rx="4" fill="%s" fill-opacity=".14"/>', $tx - 5, $y($fc['high']), max(2, $y($fc['low']) - $y($fc['high'])), CH_ACCENT);
+            $s .= sprintf('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="2" stroke-dasharray="4 3" stroke-linecap="round"/>', $x($last), $y($vals[$last]), $tx, $y($fc['next']), CH_ACCENT);
+            $s .= sprintf('<circle cx="%.1f" cy="%.1f" r="4" fill="%s" stroke="%s" stroke-width="2"><title>%s</title></circle>', $tx, $y($fc['next']), CH_SURFACE, CH_ACCENT, ch_e($tip));
+            $s .= sprintf('<text x="%.1f" y="%.1f" font-size="12" font-weight="700" fill="%s" dominant-baseline="middle">%s</text>', $tx + 8, $y($fc['next']), CH_TEXT, ch_e(ch_num($fc['next'])));
+        }
+        $html .= $s . '</svg>' . ($fc ? '' : '<p class="ch-empty" style="padding:4px 0 6px">Not enough recent data to project.</p>') . '</figure>';
+    }
+    $html .= '</div>';
+    $rows = [];
+    foreach ($series as $cat => $vals) {
+        $fc = $forecasts[$cat] ?? null;
+        $rows[] = [$cat, $fc ? ch_num($fc['last']) : '—', $fc ? ch_num($fc['next']) : '—', $fc ? ch_num($fc['low']) . ' to ' . ch_num($fc['high']) : '—', $fc['direction'] ?? '—', $fc['confidence'] ?? '—'];
+    }
+    return $html . ch_table(['Category', 'Last observed', 'Projected', 'Likely range', 'Direction', 'Confidence'], $rows, $caption);
+}

@@ -37,6 +37,7 @@ const AGENT_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 const AGENT_MAX_TOKENS    = 16000;   // per API call (non-streaming)
 const AGENT_MAX_CALLS     = 6;       // pause_turn continuations + one nudge
 const AGENT_TOOL_NAME     = 'submit_findings';
+const AGENT_HTTP_TIMEOUT  = 600;     // seconds, per API call
 
 // Cost ESTIMATES in USD for Claude Opus 5.5 at first-party API rates. They
 // drive the monthly budget guard; the Anthropic Console bill is authoritative.
@@ -77,8 +78,11 @@ function agent_api_key(): string {
  * @param mixed $transporter optional PSR-18 client (tests use a mock)
  */
 function agent_client(mixed $transporter = null): Client {
-    $opts = ['timeout' => 600.0, 'maxRetries' => 2];
-    if ($transporter !== null) $opts['transporter'] = $transporter;
+    // The SDK's own 'timeout' option is advisory: it leaves enforcement to the
+    // HTTP client. Without this, a hung request would wait forever and keep
+    // the cron lock, so every later run would skip itself.
+    $transporter ??= new \GuzzleHttp\Client(['timeout' => AGENT_HTTP_TIMEOUT, 'connect_timeout' => 20]);
+    $opts = ['maxRetries' => 2, 'transporter' => $transporter];
     $key = agent_api_key();
     return $key !== ''
         ? new Client(apiKey: $key, requestOptions: $opts)
@@ -283,7 +287,7 @@ Score each relevant element from 1 to 10 for the severity of what the sources re
 Score only the elements the evidence actually addresses; leave the others out. Give each score a one- or two-sentence rationale naming the specific facts behind it. For peace-process and engagement elements, a higher score means the situation they describe is more acute (for example, a collapsing ceasefire), not that the effort is larger.
 
 ## Sources
-Prefer reputable sources: UN agencies and ReliefWeb, regional bodies (AU, IGAD, EAC, ECOWAS, SADC), government and armed-group statements reported by credible outlets, established national and international media, research and policy institutes, and recognised faith-based and civil-society organisations. Use social media only for official accounts. Every finding must cite at least one URL that you retrieved with web search or web fetch in this session: never cite from memory and never construct a URL. When several independent outlets report the same development, list each of them, since independent corroboration raises the weight of a finding. Do not list syndicated copies of the same wire story as separate sources.
+Draw on every kind of reputable source: institutional statements (UN agencies and ReliefWeb, AU, IGAD, EAC, ECOWAS, SADC), official government statements, armed-group statements as reported by credible outlets, established national, local and international news, published scholarly and academic articles and books, policy briefs from research institutes, and recognised faith-based and civil-society organisations. Include social media posts only from verifiable official or institutional accounts, and only when corroborated or clearly attributed. Search in the languages used locally (for example French, Arabic, Swahili, Amharic or Somali) as well as English, because local reporting often appears first there, and write your findings in English. Every finding must cite at least one URL that you retrieved with web search or web fetch in this session: never cite from memory and never construct a URL. When several independent outlets report the same development, list each of them, since independent corroboration raises the weight of a finding. Do not list syndicated copies of the same wire story as separate sources.
 
 ## Accuracy
 Include only developments that took place, or were first reported, within the monitoring window. Attribute claims ("according to ...") and distinguish allegations from confirmed facts. Report casualty and displacement figures only as the sources give them; when sources disagree, say so. Use confidence "high" only when independent reputable sources agree, "low" when a finding rests on a single or partisan source.
@@ -414,6 +418,141 @@ function agent_url_host(string $url): string {
     return preg_replace('/^www\./', '', strtolower((string) parse_url($url, PHP_URL_HOST)));
 }
 
+/** The one place a research request is sent: runs and the preflight share it. */
+function agent_create_message(Client $client, array $system, array $tools, array $messages, string $effort): mixed {
+    return $client->beta->messages->create(
+        model: AGENT_MODEL,
+        maxTokens: AGENT_MAX_TOKENS,
+        system: $system,
+        tools: $tools,
+        messages: $messages,
+        thinking: ['type' => 'adaptive'],
+        outputConfig: ['effort' => $effort],
+        fallbacks: 'default',
+        betas: [AGENT_FALLBACK_BETA],
+    );
+}
+
+/**
+ * Readiness check (cron/agent-preflight.php). Prints one line per check.
+ *
+ * @param mixed $transporter optional PSR-18 client (tests)
+ * @return bool true when every check passed
+ */
+function agent_preflight(bool $live, string $country, mixed $transporter = null): bool {
+    $ok   = true;
+    $line = function (bool $pass, string $name, string $detail = '') use (&$ok): void {
+        if (!$pass) $ok = false;
+        echo ($pass ? '[ OK ] ' : '[FAIL] ') . $name . ($detail !== '' ? " - {$detail}" : '') . PHP_EOL;
+    };
+
+    $line(PHP_VERSION_ID >= 80100, 'PHP 8.1 or newer', PHP_VERSION);
+    foreach (['curl', 'mbstring', 'openssl', 'pdo_mysql'] as $ext) $line(extension_loaded($ext), "PHP extension {$ext}");
+    $sdk = agent_sdk_available();
+    $line($sdk, 'Anthropic PHP SDK', $sdk ? '' : 'run "composer install --no-dev" in the site root');
+    $key = agent_api_key() !== '';
+    $line($key, 'ANTHROPIC_API_KEY set', $key ? '' : 'environment variable, or define it in config.php');
+
+    ensure_agent_tables();
+    foreach (['AgentRun', 'AgentItem', 'AgentSourceKey'] as $table) {
+        try {
+            db()->query("SELECT 1 FROM `{$table}` LIMIT 1");
+            $line(true, "Database table {$table}");
+        } catch (Throwable $e) {
+            $line(false, "Database table {$table}", 'apply migrations/006');
+        }
+    }
+    foreach (['additionalCountries', 'sourceCount', 'scoreSource', 'scoredBy', 'scoredAt'] as $col) {
+        if (!post_has_column($col)) $line(false, "Post column {$col}", 'apply migrations/005');
+    }
+    $settings = agent_settings();
+    $line($settings['monthly_budget'] > 0, 'Monthly budget above zero', sprintf('$%.2f', $settings['monthly_budget']));
+    $line((bool) $settings['countries'], 'Monitored countries', count($settings['countries']) . ' configured');
+    if (!$sdk || !$key) return false;
+
+    try {
+        $client = agent_client($transporter);
+        $model  = $client->models->retrieve(AGENT_MODEL);
+        $line($model->id === AGENT_MODEL, 'API key accepted; model available', $model->id);
+    } catch (Throwable $e) {
+        $line(false, 'API key accepted; model available', $e->getMessage());
+        return false;
+    }
+    if (!$live) {
+        echo 'Free checks finished. Add --live for one real agent request.' . PHP_EOL;
+        return $ok;
+    }
+
+    // One genuine request with the production prompt and tool definitions
+    $spent = agent_month_spend();
+    if ($spent >= $settings['monthly_budget']) {
+        $line(false, 'Monthly budget has room', sprintf('$%.2f already used', $spent));
+        return false;
+    }
+    $settings['max_searches'] = 1;
+    $settings['max_fetches']  = 1;
+    $settings['max_items']    = 1;
+    $system = [['type' => 'text', 'text' => agent_system_prompt($settings), 'cacheControl' => ['type' => 'ephemeral']]];
+    $tools  = agent_tools($settings);
+    $messages = [['role' => 'user', 'content' => agent_task_message($country, $settings, [])
+        . "\n\nThis is a connectivity test: run one web search, then call submit_findings with at most one finding."]];
+    $usage = ['input' => 0, 'output' => 0, 'cache_read' => 0, 'cache_write' => 0, 'searches' => 0, 'fetches' => 0, 'calls' => 0];
+    $submitted = null; $urls = 0; $stop = null; $served = null; $error = null;
+    try {
+        for ($i = 0; $i < 3 && $submitted === null; $i++) {
+            $resp = agent_create_message($client, $system, $tools, $messages, 'low');
+            $usage['calls']++;
+            $stop = $resp->stopReason; $served = $resp->model;
+            $u = $resp->usage;
+            $usage['input']       += (int) $u->inputTokens;
+            $usage['output']      += (int) $u->outputTokens;
+            $usage['cache_read']  += (int) ($u->cacheReadInputTokens ?? 0);
+            $usage['cache_write'] += (int) ($u->cacheCreationInputTokens ?? 0);
+            if ($u->serverToolUse !== null) {
+                $usage['searches'] += (int) $u->serverToolUse->webSearchRequests;
+                $usage['fetches']  += (int) $u->serverToolUse->webFetchRequests;
+            }
+            foreach ($resp->content as $b) {
+                $type = $b->type ?? '';
+                if ($type === 'web_search_tool_result' && is_array($b->content)) $urls += count($b->content);
+                if ($type === 'tool_use' && ($b->name ?? '') === AGENT_TOOL_NAME) $submitted = $b->input;
+            }
+            if ($stop !== 'pause_turn') break;
+            $messages[] = ['role' => 'assistant', 'content' => $resp->content];
+        }
+    } catch (Throwable $e) {
+        $error = $e->getMessage();
+    }
+    $cost = agent_estimate_cost($usage);
+    $now  = date('Y-m-d H:i:s');
+    try {
+        db()->prepare('INSERT INTO AgentRun (id, triggeredBy, country, status, startedAt, finishedAt, model, servedBy, apiCalls, inputTokens, outputTokens,
+                       cacheReadTokens, cacheWriteTokens, webSearches, webFetches, costUsd, stopReason, error, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([generate_id(), 'PREFLIGHT', $country, $error === null && $submitted !== null ? 'OK' : 'FAILED', $now, $now, AGENT_MODEL, $served,
+                       $usage['calls'], $usage['input'], $usage['output'], $usage['cache_read'], $usage['cache_write'], $usage['searches'], $usage['fetches'],
+                       $cost, $stop, $error, 'Readiness check; no findings stored.']);
+    } catch (Throwable $e) {}
+
+    $line($error === null, 'Agent request accepted by the API', $error ?? "stop reason {$stop}, served by {$served}");
+    $line($urls > 0, 'Web search returned results', "{$urls} results; if 0, enable web search in the Anthropic Console");
+    $line(is_array($submitted) && array_key_exists('items', $submitted), 'Findings returned in the required format');
+    echo sprintf('Live request: %d in / %d out tokens, %d search(es), est. $%.4f', $usage['input'], $usage['output'], $usage['searches'], $cost) . PHP_EOL;
+
+    // The public assistant uses a different request shape (structured output)
+    if (function_exists('assistant_call_model')) {
+        try {
+            $r = assistant_call_model($client, 'What does the source say?', [['title' => 'Test', 'date' => '', 'text' => 'CRTP is based in Nairobi.']]);
+            $text = '';
+            foreach ($r->content as $b) if (($b->type ?? '') === 'text') $text .= $b->text;
+            $d = json_decode($text, true);
+            $line(is_array($d) && isset($d['answer'], $d['found']), 'Assistant request returned the required format');
+        } catch (Throwable $e) {
+            $line(false, 'Assistant request returned the required format', $e->getMessage());
+        }
+    }
+    return $ok;
+}
+
 /**
  * Run the agent for one country.
  *
@@ -469,17 +608,7 @@ function agent_run_country(string $country, string $triggeredBy, ?string $userId
             }
             $usage['calls']++;
 
-            $resp = $client->beta->messages->create(
-                model: AGENT_MODEL,
-                maxTokens: AGENT_MAX_TOKENS,
-                system: $system,
-                tools: $tools,
-                messages: $messages,
-                thinking: ['type' => 'adaptive'],
-                outputConfig: ['effort' => $settings['effort']],
-                fallbacks: 'default',
-                betas: [AGENT_FALLBACK_BETA],
-            );
+            $resp = agent_create_message($client, $system, $tools, $messages, $settings['effort']);
 
             $served = $resp->model;
             $stop   = $resp->stopReason;
@@ -623,7 +752,7 @@ function agent_clean_text(string $s, int $max): string {
  * @param  array<string,bool> $seenUrls url keys returned by search/fetch
  * @return array{ok:bool,reason?:string,item?:array}
  */
-function agent_validate_item(array $raw, array $seenUrls): array {
+function agent_validate_item(array $raw, array $seenUrls, ?string $windowStart = null): array {
     $title = agent_clean_text((string) ($raw['title'] ?? ''), 255);
     if ($title === '') return ['ok' => false, 'reason' => 'missing title'];
     $summary = agent_clean_text((string) ($raw['summary'] ?? ''), 3000);
@@ -672,6 +801,9 @@ function agent_validate_item(array $raw, array $seenUrls): array {
     $date = trim((string) ($raw['event_date'] ?? ''));
     $dt   = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
     $date = ($dt && $dt->format('Y-m-d') === $date && $date <= date('Y-m-d')) ? $date : null;
+    if ($date !== null && $windowStart !== null && $date < $windowStart) {
+        return ['ok' => false, 'reason' => 'dated before the monitoring window'];
+    }
 
     $conf = (string) ($raw['confidence'] ?? '');
     return ['ok' => true, 'item' => [
@@ -701,7 +833,8 @@ function agent_store_items(string $runId, string $country, array $items, array $
     $items = array_slice(array_values($items), 0, $settings['max_items']);
 
     foreach ($items as $raw) {
-        $v = is_array($raw) ? agent_validate_item($raw, $seenUrls) : ['ok' => false, 'reason' => 'malformed item'];
+        $windowStart = date('Y-m-d', strtotime("-{$settings['lookback_days']} days"));
+        $v = is_array($raw) ? agent_validate_item($raw, $seenUrls, $windowStart) : ['ok' => false, 'reason' => 'malformed item'];
         if (!$v['ok']) { $res['discarded']++; $res['reasons'][] = $v['reason']; continue; }
         $it = $v['item'];
         $hashes = array_map('sha1', $it['sourceKeys']);
@@ -811,7 +944,9 @@ function agent_promote_item(string $itemId, string $uid): string {
     }
     $cols[] = 'viewCount';     $vals[] = 0;
     $cols[] = 'downloadCount'; $vals[] = 0;
-    $cols[] = 'createdAt';     $vals[] = $now;
+    // Cycles are assigned from createdAt: use the event's date, so a finding
+    // promoted a week late still counts in the cycle in which it happened.
+    $cols[] = 'createdAt';     $vals[] = !empty($it['eventDate']) ? $it['eventDate'] . ' 12:00:00' : $now;
     $cols[] = 'updatedAt';     $vals[] = $now;
 
     $pdo = db();

@@ -14,6 +14,9 @@ $groups  = hm_country_groups();
 $peakPct = (int) round($agg['peak_weight'] * 100);
 // The status note describes AI assistance only once the agent is switched on
 $agentOn = get_setting('agent_enabled', '0') === '1';
+require_once __DIR__ . '/includes/agent.php';
+require_once __DIR__ . '/includes/reports.php';
+require_once __DIR__ . '/includes/assistant.php';
 
 // Worked example: three reports on one country and category, same cycle
 $exReports = [
@@ -97,6 +100,11 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
         work and civil-society and faith-based reporting.
       </p>
       <p class="mt-3">
+        <?php if ($agentOn): $_ag = agent_settings(); ?>
+          The Tafakari Agent also searches institutional and official statements, news, scholarly work, policy briefs and verifiable
+          official social media accounts. It checks the <?= count($_ag['countries']) ?> monitored countries in rotation, looking back
+          <?= (int)$_ag['lookback_days'] ?> days each time, and an analyst reviews everything it finds.
+        <?php endif; ?>
         Reports are read in <strong><?= (int)$cycLen ?>-day monitoring cycles</strong>. Scores are refreshed
         every cycle, and earlier cycles are kept, never overwritten: any past cycle can be reopened from the
         dashboard and compared side by side with another.
@@ -150,6 +158,8 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
       <ul class="list-disc pl-6 mt-2 space-y-1">
         <li><strong>Corroboration.</strong> A report backed by more independent sources counts more:
             &times;1.0 for one source, rising by 0.25 for each further source, up to &times;2.0 at five or more.</li>
+        <li><strong>Geographic spread.</strong> A development concerning several countries counts more:
+            &times;1.0 for one country, rising by 0.1 for each further country, up to &times;1.3.</li>
         <li><strong>Recency.</strong>
           <?php if ($agg['half_life'] > 0): ?>
             Within a cycle, a report <?= (int)$agg['half_life'] ?> days older than the cycle's end counts half
@@ -236,6 +246,34 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
         written by CRTP analysts, or drafted by the Tafakari Agent from the report's own figures and then edited; every report says which.
       </p>
     </section>
+
+    <!-- Outlook -->
+    <section class="mt-step">
+      <h2 class="mb-3">Outlooks and projections</h2>
+      <p>
+        An Outlook projects each score one monitoring cycle ahead. The projection is calculated, not written by AI: it is a linear trend
+        through the last <?= (int) FORECAST_HISTORY ?> closed cycles, giving recent cycles more weight, and needs scores in at least
+        <?= (int) FORECAST_MIN_POINTS ?> of them. Each carries a likely range and a confidence level, and each Outlook states how accurate
+        the method has been when replayed on past cycles, compared with simply assuming no change.
+      </p>
+      <p class="mt-3">
+        Outlooks also flag unusual patterns in the latest cycle: sharp rises, new hotspots, early-warning scores running ahead of conflict
+        scores, surges in reporting, and several countries in a region rising together. Projections extend past reporting and cannot foresee
+        events. A rising score is a prompt for attention, not a prediction that violence will occur. Like every report, an Outlook is reviewed
+        and approved by CRTP before publication.
+      </p>
+    </section>
+
+    <?php if (assistant_settings()['enabled']): ?>
+    <section class="mt-step">
+      <h2 class="mb-3">The Ask Tafakari assistant</h2>
+      <p>
+        Ask Tafakari answers visitors' questions using only material CRTP has already published: reports, articles, documents and heat-map
+        scores. It links to the items it relied on and says so when the published record does not cover a question. It cannot publish,
+        change a score or make a judgement on CRTP's behalf. Questions and answers are not stored; we keep only usage counts, to limit cost and misuse.
+      </p>
+    </section>
+    <?php endif; ?>
 
     <!-- 5. Human validation -->
     <section class="mt-step">

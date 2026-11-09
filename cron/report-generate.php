@@ -36,6 +36,7 @@ $cycle = report_period('CYCLE', date('Y-m-d'));
 $jobs[] = ['CYCLE', $cycle['prev']['start']];
 $quarter = report_period('QUARTER', date('Y-m-d'));
 $jobs[] = ['QUARTER', $quarter['prev']['start']];
+$jobs[] = ['OUTLOOK', date('Y-m-d')];   // looks ahead at the cycle now running
 
 $failed = false;
 foreach ($jobs as [$kind, $start]) {

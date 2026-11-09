@@ -168,4 +168,5 @@
   </div>
 </footer>
 
+<?php include __DIR__ . '/assistant-widget.php'; ?>
 <?php include __DIR__ . '/i18n.php'; ?>

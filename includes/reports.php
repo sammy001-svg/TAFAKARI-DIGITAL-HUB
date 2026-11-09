@@ -17,6 +17,8 @@ declare(strict_types=1);
  * Requires includes/functions.php.
  */
 
+require_once __DIR__ . '/forecast.php';
+
 const REPORT_SNAPSHOT_VERSION = 1;
 const REPORT_TREND_CYCLES     = 6;   // cycles shown in a bi-weekly report's trend
 
@@ -91,8 +93,8 @@ function report_period(string $kind, string $date): array {
     $c = hm_cycle_bounds($date);
     $p = hm_cycle_shift($c['start'], -1);
     return [
-        'kind' => 'CYCLE', 'start' => $c['start'], 'end' => $c['end'], 'label' => $c['label'],
-        'inProgress' => $c['end'] >= date('Y-m-d'),
+        'kind' => $kind === 'OUTLOOK' ? 'OUTLOOK' : 'CYCLE', 'start' => $c['start'], 'end' => $c['end'], 'label' => $c['label'],
+        'inProgress' => $kind === 'OUTLOOK' ? false : $c['end'] >= date('Y-m-d'),
         'prev' => ['start' => $p['start'], 'end' => $p['end'], 'label' => $p['label']],
     ];
 }
@@ -151,11 +153,11 @@ function report_scope(string $scope): ?array {
 }
 
 function report_kind_label(string $kind): string {
-    return $kind === 'QUARTER' ? 'Quarterly report' : 'Bi-weekly report';
+    return ['QUARTER' => 'Quarterly report', 'OUTLOOK' => 'Outlook'][$kind] ?? 'Bi-weekly report';
 }
 
 function report_default_title(string $kind, array $period, array $scope): string {
-    return ($kind === 'QUARTER' ? 'Quarterly Conflict Analysis' : 'Bi-weekly Conflict Update')
+    return (['QUARTER' => 'Quarterly Conflict Analysis', 'OUTLOOK' => 'Outlook'][$kind] ?? 'Bi-weekly Conflict Update')
          . ': ' . $scope['label'] . ', ' . $period['label'];
 }
 
@@ -188,7 +190,7 @@ function report_load_scored(string $fromDate): array {
         }
         if (!$cats) continue;
         $cycle = hm_cycle_bounds($p['createdAt']);
-        $wc    = hm_corroboration_factor(max(1, (int) ($p['sourceCount'] ?? 1)));
+        $wc    = hm_corroboration_factor(max(1, (int) ($p['sourceCount'] ?? 1))) * hm_spread_factor(count(post_countries($p)));
         $out[] = [
             'id'          => $p['id'],
             'title'       => $p['title'],
@@ -226,6 +228,7 @@ function report_select(array $reports, string $from, string $to, ?array $scopeCo
  * of the current situation; their trend shows each cycle of the quarter.
  */
 function report_compute(string $kind, string $periodDate, string $scopeKey, ?array $preloaded = null): array {
+    if ($kind === 'OUTLOOK') return forecast_compute($periodDate, $scopeKey, $preloaded);
     $period = report_period($kind, $periodDate);
     $scope  = report_scope($scopeKey);
     if ($scope === null) throw new InvalidArgumentException('Unknown report scope.');
@@ -402,7 +405,7 @@ function report_get(string $id): ?array {
  * @return array{id:string,created:bool}
  */
 function report_create(string $kind, string $periodDate, string $scopeKey, ?string $uid): array {
-    $kind = $kind === 'QUARTER' ? 'QUARTER' : 'CYCLE';
+    $kind = in_array($kind, ['QUARTER', 'OUTLOOK'], true) ? $kind : 'CYCLE';
     $period = report_period($kind, $periodDate);
     $scope  = report_scope($scopeKey);
     if ($scope === null) throw new InvalidArgumentException('Unknown report scope.');
@@ -571,7 +574,10 @@ function report_draft_narrative(string $id, string $uid, mixed $transporter = nu
 
     $snap = $r['snapshotData'];
     $sc   = $snap['scope']['countries'] ?? null;
-    $reports = array_reverse(report_select(report_load_scored($snap['period']['start']), $snap['period']['start'], $snap['period']['end'], $sc));
+    // An Outlook looks ahead, so its context is the most recent closed cycle
+    $isOutlook = ($snap['kind'] ?? '') === 'OUTLOOK';
+    $window    = $isOutlook ? $snap['prev'] : $snap['period'];
+    $reports   = array_reverse(report_select(report_load_scored($window['start']), $window['start'], $window['end'], $sc));
 
     $runId = generate_id();
     $now   = date('Y-m-d H:i:s');
@@ -584,8 +590,8 @@ function report_draft_narrative(string $id, string $uid, mixed $transporter = nu
         $resp = agent_client($transporter)->beta->messages->create(
             model: AGENT_MODEL,
             maxTokens: AGENT_MAX_TOKENS,
-            system: [['type' => 'text', 'text' => report_narrative_system_prompt(), 'cacheControl' => ['type' => 'ephemeral']]],
-            messages: [['role' => 'user', 'content' => report_narrative_input($snap, $reports)]],
+            system: [['type' => 'text', 'text' => $isOutlook ? forecast_narrative_system_prompt() : report_narrative_system_prompt(), 'cacheControl' => ['type' => 'ephemeral']]],
+            messages: [['role' => 'user', 'content' => $isOutlook ? forecast_narrative_input($snap, $reports) : report_narrative_input($snap, $reports)]],
             thinking: ['type' => 'adaptive'],
             outputConfig: ['effort' => 'high'],
             fallbacks: 'default',

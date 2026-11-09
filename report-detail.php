@@ -28,7 +28,9 @@ if (($_GET['format'] ?? '') === 'csv') {
 $s = $report['snapshotData'];
 $pageTitle = $report['title'] . ' | Tafakari Digital Hub';
 $pageDesc  = report_kind_label($report['kind']) . ' for ' . $s['scope']['label'] . ', ' . $s['period']['label']
-           . ': intensity by category and country, changes from the previous period, critical flags and cross-border developments.';
+           . ($report['kind'] === 'OUTLOOK'
+              ? ': projected intensity by category and country for the next monitoring cycle, with likely ranges and measured accuracy.'
+              : ': intensity by category and country, changes from the previous period, critical flags and cross-border developments.');
 ?>
 <?php include __DIR__ . '/includes/head.php'; ?>
 <body class="antialiased min-h-screen flex flex-col font-inter" style="background:#F8F8F0">
@@ -51,7 +53,7 @@ $pageDesc  = report_kind_label($report['kind']) . ' for ' . $s['scope']['label']
       <p class="text-[11px] font-black uppercase tracking-[.14em] mt-4 mb-2" style="color:#E7952A"><?= h(report_kind_label($report['kind'])) ?> · CRTP, Hekima University College</p>
       <h1 class="font-outfit font-black text-3xl md:text-4xl leading-tight"><?= h($report['title']) ?></h1>
       <p class="mt-3 text-sm" style="color:rgba(255,255,255,.82)">
-        <?= h($s['scope']['label']) ?> · <?= h($s['period']['label']) ?> · compared with <?= h($s['prev']['label']) ?>
+        <?= h($s['scope']['label']) ?> · <?= h($s['period']['label']) ?> · <?= $report['kind'] === 'OUTLOOK' ? 'based on cycles up to' : 'compared with' ?> <?= h($s['prev']['label']) ?>
         · published <?= h(format_date($report['publishedAt'])) ?>
       </p>
       <div class="no-print flex flex-wrap gap-3 mt-6">

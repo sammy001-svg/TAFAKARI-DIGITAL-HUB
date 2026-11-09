@@ -555,7 +555,7 @@ $adminPageSub   = 'Manage countries, regions and categories for the conflict mon
       </div>
       <div class="rounded-2xl px-4 py-3 text-xs leading-relaxed" style="background:#F8F8F0;color:#475569">
         <strong style="color:#750B25">Fixed by the methodology:</strong>
-        corroboration weight is 1 + 0.25 per extra independent source, up to 2&times; at five sources;
+        corroboration weight is 1 + 0.25 per extra independent source, up to 2&times; at five sources; geographic spread adds 0.1 per further country, up to 1.3&times;;
         any report scored 9 or more always raises a critical flag on its cell.
       </div>
       <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-opacity" style="background:#750B25">

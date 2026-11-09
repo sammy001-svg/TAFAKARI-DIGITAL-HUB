@@ -350,3 +350,27 @@
 .tk-btn--publish { background: var(--tk-ok); color: #fff; box-shadow: 0 6px 16px -8px rgba(4,120,87,.7); }
 .tk-btn--publish:hover { background: #036146; }
 .tk-check li[hidden] { display: none; }
+
+/* ── Ask Tafakari (public assistant) ────────────────────────────────────── */
+.tk-ask-fab { position: fixed; right: 20px; bottom: 20px; z-index: 880; display: inline-flex; align-items: center; gap: 9px; height: 50px; padding: 0 20px; border: 0; border-radius: 999px; cursor: pointer; background: var(--tk-brand); color: #fff; font: 700 14px/1 var(--tk-font); box-shadow: var(--tk-shadow-3); }
+.tk-ask-fab:hover { background: var(--tk-brand-700); }
+.tk-ask-fab:focus-visible { outline: 2px solid var(--tk-amber); outline-offset: 2px; }
+.tk-ask-fab svg { width: 20px; height: 20px; }
+.tk-ask-fab[hidden] { display: none; }
+.tk-ask { position: fixed; right: 20px; bottom: 20px; z-index: 890; width: min(400px, calc(100vw - 24px)); height: min(600px, calc(100vh - 40px)); display: flex; flex-direction: column; background: var(--tk-surface); border-radius: var(--tk-r-lg); box-shadow: var(--tk-shadow-3); overflow: hidden; }
+.tk-ask[hidden] { display: none; }
+.tk-ask__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 14px 20px; background: var(--tk-brand); color: #fff; }
+.tk-ask__head h2 { font: 800 17px/1.2 var(--tk-font-display); margin: 0; }
+.tk-ask__head p { font: 400 12.5px/1.4 var(--tk-font); color: rgba(255,255,255,.78); margin: 3px 0 0; }
+.tk-ask__head .tk-icon-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+.tk-ask__body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--tk-surface-2); }
+.tk-ask__intro { font: 400 13.5px/1.6 var(--tk-font); color: var(--tk-text-2); margin: 0; }
+.tk-ask__msg { font: 400 14px/1.6 var(--tk-font); color: var(--tk-text); background: var(--tk-surface); border: 1px solid var(--tk-line); border-radius: 14px; padding: 10px 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tk-ask__msg--me { align-self: flex-end; max-width: 85%; background: var(--tk-brand); border-color: var(--tk-brand); color: #fff; }
+.tk-ask__msg--wait { color: var(--tk-text-3); font-style: italic; }
+.tk-ask__sources { margin: 0; padding: 0 0 0 22px; font: 500 12.5px/1.5 var(--tk-font); color: var(--tk-text-3); }
+.tk-ask__sources a { color: var(--tk-brand); font-weight: 600; }
+.tk-ask__form { display: flex; gap: 8px; align-items: flex-end; padding: 12px 12px 6px; border-top: 1px solid var(--tk-line); }
+.tk-ask__form .tk-textarea { resize: none; }
+.tk-ask__note { font: 400 11px/1.4 var(--tk-font); color: var(--tk-text-3); margin: 0; padding: 0 14px 10px; }
+@media print { .no-print, .tk-ask, .tk-ask-fab { display: none !important; } }

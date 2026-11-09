@@ -204,8 +204,15 @@ try {
         FROM Post
         WHERE status='PUBLISHED' AND type='DOCUMENT'
           AND country IS NOT NULL AND country != ''
-        ORDER BY createdAt DESC LIMIT 300
+        ORDER BY createdAt DESC
     ")->fetchAll();
+
+    // Every report feeds the scores and the archive. Only the map's dots are
+    // capped, to keep the page light: the newest reports plus any cycle asked for.
+    $markerCap   = 300;
+    $askedCycles = array_filter([trim($_GET['cycle'] ?? ''), trim($_GET['compare'] ?? '')],
+                                fn($d) => preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/', $d));
+    $askedCycles = array_map(fn($d) => hm_cycle_bounds($d)['start'], $askedCycles);
 
     foreach ($posts as $p) {
         $region     = trim($p['region'] ?? '');
@@ -238,7 +245,7 @@ try {
         // all-time view, corroboration x recency within the report's cycle.
         $pCycle  = hm_cycle_bounds($p['createdAt']);
         $sources = max(1, (int)($p['sourceCount'] ?? 1));
-        $wc      = hm_corroboration_factor($sources);
+        $wc      = hm_corroboration_factor($sources) * hm_spread_factor(count($pCountries));
         $wr      = round($wc * hm_recency_factor($p['createdAt'], hm_cycle_ref_date($pCycle)), 4);
 
         if ($catAvgs) {
@@ -263,6 +270,8 @@ try {
         if ($catAvgs) $cycleIndex[$pCycle['start']]['scored']++;
         // Overall score for this report = mean of its scored categories
         $postAvg = $catAvgs ? round(array_sum($catAvgs) / count($catAvgs), 1) : null;
+
+        if ($reportCount > $markerCap && !in_array($pCycle['start'], $askedCycles, true)) continue;
 
         foreach ($pCountries as $ci => $ctry) {
             $lat = $lng = null;
