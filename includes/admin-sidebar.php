@@ -234,8 +234,8 @@ function _sidebarItem(array $item, string $currentPath, int $badge = 0): void {
       </div>
       <div class="space-y-0.5">
         <?php foreach ($_navSuper as $item):
-            $badge = ($item['href'] === '/admin/super/approvals') ? $_pendingCount : 0;
-            _sidebarItem($item, $_path, $badge);
+            // Inline on purpose: this file shares its variables with the page that includes it
+            _sidebarItem($item, $_path, $item['href'] === '/admin/super/approvals' ? $_pendingCount : 0);
         endforeach; ?>
       </div>
     </div>
