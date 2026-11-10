@@ -44,6 +44,7 @@ Published reports are frozen and do not change when new data arrives.
 
 - **A page shows "Something went wrong" with a reference code.** Note the code. The full technical detail is in the server's error log under the same code (cPanel > Metrics > Errors, or the `error_log` file in the site folder). Send it to your developer.
 - **Settings says Claude did not accept the key.** Read the message: it gives Anthropic's reason. The usual fix is to create a key inside a workspace in the Anthropic Console (under API keys, not Admin keys), paste it, leave Workspace ID blank, and save it again.
+- **Activity says the account has no API credits.** The key is fine. The Anthropic API is paid for with prepaid credits in the Anthropic Console (Plans & Billing), separately from any Claude.ai subscription, which covers the Claude app only. Add credits, and turn on auto-reload so the agent does not stop mid-month.
 - **A fix does not seem to take effect.** Check the **Software version** at the bottom of Settings > Status. If it is older than the version your developer gave you, the new code has not reached the server: deploy again in cPanel > Git Version Control.
 - **No new items for several days.** Check **Activity** for errors, and **Settings > Status** to confirm the hourly job is running.
 

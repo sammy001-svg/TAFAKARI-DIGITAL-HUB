@@ -29,7 +29,7 @@ use Anthropic\Core\Exceptions\BadRequestException;
 use Anthropic\Core\Exceptions\PermissionDeniedException;
 use Anthropic\Core\Exceptions\RateLimitException;
 
-const AGENT_CODE_VERSION  = '2026-11-10.5';   // shown in Settings > Status: confirms a deploy reached the server
+const AGENT_CODE_VERSION  = '2026-11-10.6';   // shown in Settings > Status: confirms a deploy reached the server
 const AGENT_MODEL         = 'claude-opus-5-5';
 // Server-side refusal fallback: "default" lets the API route a declined
 // request to its recommended substitute model for that refusal category.
@@ -747,6 +747,9 @@ function agent_api_error(Throwable $e): string {
     }
     if (str_contains($e->getMessage(), 'anthropic-workspace-id')) {
         return 'This Claude API key needs a workspace, and one could not be found for it automatically. In Tafakari Agent > Settings, paste your Workspace ID (it starts with wrkspc_) and click Save and test.';
+    }
+    if (stripos(agent_api_detail($e), 'credit balance') !== false) {
+        return 'The key works, but the Anthropic account behind it has no API credits. A Claude.ai subscription does not cover the API: in the Anthropic Console, open Plans & Billing and add credits, then try again.';
     }
     return match (true) {
         $e instanceof AuthenticationException   => 'The API key was rejected. Check the Claude API key in Tafakari Agent > Settings.',
