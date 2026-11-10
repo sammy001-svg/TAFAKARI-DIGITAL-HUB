@@ -136,14 +136,23 @@ function agent_setting_fresh(string $key): string {
 
 /** The Anthropic workspace to bill and scope requests to, when the key itself has none. */
 function agent_workspace_id(): string {
+    // Only what Settings shows: no hidden fallback, so clearing the box really clears it.
+    // A value saved before IDs were checked, such as an organization ID, is ignored.
     $id = trim(agent_setting_fresh(AGENT_WORKSPACE_SETTING));
-    return $id !== '' ? $id : trim((string) getenv('ANTHROPIC_WORKSPACE_ID'));
+    return agent_is_workspace_id($id) ? $id : '';
+}
+
+function agent_is_workspace_id(string $id): bool {
+    return (bool) preg_match('/^wrkspc_[A-Za-z0-9_-]{4,120}$/', $id);
 }
 
 /** Validate and store a workspace ID. Blank clears it. Returns the clean value. */
 function agent_save_workspace(string $id, string $uid): string {
     $id = trim($id);
-    if ($id !== '' && !preg_match('/^(wrkspc_[A-Za-z0-9_-]{4,120}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i', $id)) {
+    if ($id !== '' && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id)) {
+        throw new RuntimeException('That looks like your Anthropic organization ID. The Workspace ID is different: it starts with wrkspc_. Leave the box blank if you are not sure.');
+    }
+    if ($id !== '' && !agent_is_workspace_id($id)) {
         throw new RuntimeException('That does not look like a workspace ID. They start with wrkspc_.');
     }
     set_setting(AGENT_WORKSPACE_SETTING, $id, $uid);
@@ -171,7 +180,7 @@ function agent_workspace_candidates(?string $key, mixed $http, ?string &$why = n
         }
     }
     if ($items === null) return [];
-    $active = array_values(array_filter($items, fn($w) => ($w->archivedAt ?? null) === null && !empty($w->id)));
+    $active = array_values(array_filter($items, fn($w) => ($w->archivedAt ?? null) === null && agent_is_workspace_id((string) ($w->id ?? ''))));
     if (!$active) { $why = 'Anthropic returned no active workspaces for this key.'; return []; }
     usort($active, function ($a, $b) {
         $da = stripos((string) ($a->name ?? ''), 'default') !== false ? 0 : 1;
@@ -209,8 +218,8 @@ function agent_check_connection(?string $key = null, ?string $workspace = null, 
         $why = null;
         $candidates = agent_workspace_candidates($key, $http, $why);
         if (!$candidates) {
-            return ['ok' => false, 'message' => $intro . ', and Anthropic would not list the workspaces this key can use'
-                . ($why ? " (Anthropic's reply: {$why})" : '') . '. ' . agent_workspace_advice()];
+            return ['ok' => false, 'message' => $intro . '. This key is not tied to a workspace, and it does not have permission to look up your workspaces'
+                . ($why ? " (Anthropic's reply: {$why})" : '') . ', so the right one cannot be found automatically. ' . agent_workspace_advice(true)];
         }
         $tried = [];
         foreach ($candidates as $c) {
@@ -234,8 +243,9 @@ function agent_check_connection(?string $key = null, ?string $workspace = null, 
 }
 
 /** The fix that always works, in plain words. */
-function agent_workspace_advice(): string {
-    return 'The reliable fix: in the Anthropic Console, create a new API key inside a workspace, paste it here, leave Workspace ID blank, and click Save and test.';
+function agent_workspace_advice(bool $orId = false): string {
+    return 'The reliable fix: in the Anthropic Console, create a new API key inside a workspace, paste it here, leave Workspace ID blank, and click Save and test.'
+        . ($orId ? ' Or copy the ID of the workspace your key belongs to (it starts with wrkspc_) from the Console, paste it as the Workspace ID, and click Save and test.' : '');
 }
 
 /**

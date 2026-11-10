@@ -429,7 +429,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <label class="ag-label" for="ag-key">API key</label>
           <input id="ag-key" type="password" name="api_key" <?= $keyOk ? '' : 'required' ?> autocomplete="new-password" spellcheck="false" class="ag-input" placeholder="<?= $keyOk ? 'Leave blank to keep the current key' : 'sk-ant-...' ?>">
           <label class="ag-label" for="ag-ws">Workspace ID <span style="text-transform:none;letter-spacing:0;font-weight:600">(optional)</span></label>
-          <input id="ag-ws" type="text" name="workspace_id" spellcheck="false" class="ag-input" value="<?= h($isSuper ? agent_workspace_id() : '') ?>" placeholder="Found automatically">
+          <input id="ag-ws" type="text" name="workspace_id" spellcheck="false" class="ag-input" value="<?= h($isSuper ? agent_workspace_id() : '') ?>" placeholder="wrkspc_... (found automatically when possible)">
           <p class="text-xs text-slate-400">Leave this blank and the system finds it for you.</p>
           <button type="submit" class="ag-btn text-white w-full justify-center" style="background:#750B25">Save and test</button>
         </form>
