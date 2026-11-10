@@ -37,6 +37,8 @@ $static = [
     ['/gallery',   '0.7', 'weekly'],
     ['/heatmap',   '0.7', 'daily'],
     ['/methodology', '0.5', 'monthly'],
+    ['/privacy', '0.2', 'yearly'],
+    ['/terms', '0.2', 'yearly'],
     ['/reports',   '0.6', 'weekly'],
     ['/about',     '0.5', 'monthly'],
     ['/partners',  '0.5', 'monthly'],

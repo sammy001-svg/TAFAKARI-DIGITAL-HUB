@@ -143,7 +143,7 @@ function agent_workspace_id(): string {
 /** Validate and store a workspace ID. Blank clears it. Returns the clean value. */
 function agent_save_workspace(string $id, string $uid): string {
     $id = trim($id);
-    if ($id !== '' && !preg_match('/^wrkspc_[A-Za-z0-9_-]{4,120}$/', $id)) {
+    if ($id !== '' && !preg_match('/^(wrkspc_[A-Za-z0-9_-]{4,120}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i', $id)) {
         throw new RuntimeException('That does not look like a workspace ID. They start with wrkspc_.');
     }
     set_setting(AGENT_WORKSPACE_SETTING, $id, $uid);
@@ -151,14 +151,14 @@ function agent_save_workspace(string $id, string $uid): string {
 }
 
 /**
- * Ask Anthropic which workspaces this key can use, and choose one: the Default
- * Workspace if it can be recognised by name, otherwise the oldest active one.
- * Keys that are not tied to one workspace are allowed to list them.
+ * Every active workspace this key can see, most likely first: one named
+ * Default, then the oldest. Keys that are not tied to one workspace are
+ * allowed to list them; a key may still see workspaces it cannot use.
  *
- * @return array{id:string,name:string}|null null when the key may not list workspaces
+ * @return list<array{id:string,name:string}> empty when the key may not list workspaces
  */
-function agent_discover_workspace(?string $key = null, mixed $transporter = null, ?string &$why = null): ?array {
-    $client = agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => 20, 'connect_timeout' => 10]), $key, '');
+function agent_workspace_candidates(?string $key, mixed $http, ?string &$why = null): array {
+    $client = agent_client($http, $key, '');
     $items = null;
     // The SDK offers this list on a stable and a beta route: use whichever answers
     foreach ([fn() => $client->organization->workspaces, fn() => $client->beta->organization->workspaces] as $route) {
@@ -170,20 +170,26 @@ function agent_discover_workspace(?string $key = null, mixed $transporter = null
             error_log('[tafakari-agent] workspace lookup: ' . agent_api_detail($e));
         }
     }
-    if ($items === null) return null;
+    if ($items === null) return [];
     $active = array_values(array_filter($items, fn($w) => ($w->archivedAt ?? null) === null && !empty($w->id)));
-    if (!$active) { $why = 'Anthropic returned no active workspaces for this key.'; return null; }
+    if (!$active) { $why = 'Anthropic returned no active workspaces for this key.'; return []; }
     usort($active, function ($a, $b) {
         $da = stripos((string) ($a->name ?? ''), 'default') !== false ? 0 : 1;
         $db = stripos((string) ($b->name ?? ''), 'default') !== false ? 0 : 1;
         return $da <=> $db ?: ($a->createdAt ?? null) <=> ($b->createdAt ?? null);
     });
-    return ['id' => $active[0]->id, 'name' => (string) ($active[0]->name ?? 'workspace')];
+    return array_map(fn($w) => ['id' => (string) $w->id, 'name' => (string) ($w->name ?? 'workspace')], array_slice($active, 0, 10));
+}
+
+/** True when Claude says the workspace that was sent does not exist for this key. */
+function agent_is_workspace_not_found(Throwable $e): bool {
+    return (bool) preg_match('/workspace\b[^.]*\bnot found/i', agent_api_detail($e));
 }
 
 /**
- * A free request that shows whether Claude accepts this key. If the key needs a
- * workspace and none is set, one is found and saved automatically.
+ * A free request that shows whether Claude accepts this key. When the key
+ * needs a workspace and none is set, or the one set is not recognised, every
+ * workspace the key can see is tried, and the first that works is saved.
  *
  * @return array{ok:bool,message:string}
  */
@@ -195,22 +201,41 @@ function agent_check_connection(?string $key = null, ?string $workspace = null, 
         agent_client($http, $key, $workspace)->models->retrieve(AGENT_MODEL);
         return ['ok' => true, 'message' => 'Connected to Claude.'];
     } catch (Throwable $e) {
-        if ($workspace !== '' || !str_contains($e->getMessage(), 'anthropic-workspace-id')) return ['ok' => false, 'message' => agent_api_error($e)];
+        $needsOne = $workspace === '' && str_contains($e->getMessage(), 'anthropic-workspace-id');
+        $wrongOne = $workspace !== '' && agent_is_workspace_not_found($e);
+        if (!$needsOne && !$wrongOne) return ['ok' => false, 'message' => agent_api_error($e)];
+        $intro = $wrongOne ? 'Claude does not recognise the Workspace ID in Settings' : 'This Claude API key needs a workspace';
+
         $why = null;
-        $found = agent_discover_workspace($key, $http, $why);
-        if ($found === null) {
-            return ['ok' => false, 'message' => 'This Claude API key needs a workspace, and Anthropic would not list workspaces for it'
-                . ($why ? " (Anthropic's reply: {$why})" : '')
-                . '. Paste your Workspace ID (it starts with wrkspc_) below, or save a key created inside a workspace in the Anthropic Console.'];
+        $candidates = agent_workspace_candidates($key, $http, $why);
+        if (!$candidates) {
+            return ['ok' => false, 'message' => $intro . ', and Anthropic would not list the workspaces this key can use'
+                . ($why ? " (Anthropic's reply: {$why})" : '') . '. ' . agent_workspace_advice()];
         }
-        try {
-            agent_client($http, $key, $found['id'])->models->retrieve(AGENT_MODEL);
-        } catch (Throwable $e2) {
-            return ['ok' => false, 'message' => agent_api_error($e2)];
+        $tried = [];
+        foreach ($candidates as $c) {
+            if ($c['id'] === $workspace) continue;
+            try {
+                agent_client($http, $key, $c['id'])->models->retrieve(AGENT_MODEL);
+            } catch (Throwable $e2) {
+                $tried[] = $c['name'];
+                if (!agent_is_workspace_not_found($e2) && !str_contains($e2->getMessage(), 'anthropic-workspace-id')) {
+                    return ['ok' => false, 'message' => agent_api_error($e2)];   // a different problem, such as the key itself
+                }
+                continue;
+            }
+            agent_save_workspace($c['id'], '');
+            return ['ok' => true, 'message' => ($wrongOne ? 'The Workspace ID you entered was not recognised, so the system switched to your' : 'Connected to Claude, using your')
+                . " \"{$c['name']}\" workspace" . ($wrongOne ? ', which works.' : '.')];
         }
-        agent_save_workspace($found['id'], '');
-        return ['ok' => true, 'message' => "Connected to Claude, using your \"{$found['name']}\" workspace."];
+        return ['ok' => false, 'message' => $intro . '. Claude refused every workspace this key can see ('
+            . implode(', ', array_map(fn($n) => "\"{$n}\"", $tried)) . '). ' . agent_workspace_advice()];
     }
+}
+
+/** The fix that always works, in plain words. */
+function agent_workspace_advice(): string {
+    return 'The reliable fix: in the Anthropic Console, create a new API key inside a workspace, paste it here, leave Workspace ID blank, and click Save and test.';
 }
 
 /**
@@ -683,6 +708,9 @@ function agent_api_detail(Throwable $e): string {
 
 /** A plain-language message for anything a run can throw. */
 function agent_api_error(Throwable $e): string {
+    if (agent_is_workspace_not_found($e)) {
+        return 'Claude does not recognise the Workspace ID saved in Tafakari Agent > Settings. Clear the Workspace ID box and click Save and test, and the system will find one that works.';
+    }
     if (str_contains($e->getMessage(), 'anthropic-workspace-id')) {
         return 'This Claude API key needs a workspace, and one could not be found for it automatically. In Tafakari Agent > Settings, paste your Workspace ID (it starts with wrkspc_) and click Save and test.';
     }

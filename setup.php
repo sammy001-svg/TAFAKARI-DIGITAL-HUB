@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/setup-guard.php';
+setup_guard();
 
 // Check DB status
 $dbConnected  = false;

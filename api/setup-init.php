@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
+require_once dirname(__DIR__) . '/includes/setup-guard.php';
+setup_guard(true);
 
 if (request_method() !== 'POST') json_error('Method not allowed', 405);
 

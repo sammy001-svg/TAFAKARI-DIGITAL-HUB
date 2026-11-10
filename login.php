@@ -36,7 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$username]);
             $row = $stmt->fetch();
 
-            if ($row && password_verify($password, $row['password'])) {
+            if ($row && password_verify($password, $row['password']) && password_is_published($password)) {
+                // Anyone can read this password online: never let it open the admin portal
+                $blockedDefault = true;
+                error_log('[Tafakari login] refused a published demo password for user ' . $username);
+            } elseif ($row && password_verify($password, $row['password'])) {
                 unset($row['password']);
                 session_regenerate_id(true);
                 $_SESSION['user'] = $row;
@@ -50,6 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($dbFailed) {
             $error = 'Database connection failed. Please check config.php on the server.';
+        } elseif (!empty($blockedDefault)) {
+            $error = 'This account still uses a demo password that is published online, so it has been blocked for safety. A super admin can set a new password under Users, or follow the account recovery steps.';
         } else {
             $error = 'Invalid username or password.';
         }
@@ -163,5 +169,6 @@ $pageTitle = 'Login | Tafakari Digital Hub';
   setInterval(function(){ go(cur+1); }, 4000);
 })();
 </script>
+<?php include __DIR__ . '/includes/assistant-widget.php'; ?>
 </body>
 </html>

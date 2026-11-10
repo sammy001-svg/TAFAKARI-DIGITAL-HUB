@@ -31,6 +31,7 @@ if ($method === 'POST') {
 
     if (!$name || !$email || !$username || !$password) json_error('All fields are required');
     if (strlen($password) < 8) json_error('Password must be at least 8 characters');
+    if (password_is_published($password)) json_error(PUBLISHED_PASSWORD_MESSAGE);
 
     $dup = $pdo->prepare('SELECT id FROM User WHERE email=? OR username=? LIMIT 1');
     $dup->execute([$email, $username]);

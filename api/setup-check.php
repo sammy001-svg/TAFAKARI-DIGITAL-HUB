@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
+require_once dirname(__DIR__) . '/includes/setup-guard.php';
+setup_guard(true);
 
 $required = ['User','Post','Comment','ContactMessage'];
 $result   = ['dbConnected'=>false,'tablesReady'=>false,'missingTables'=>[],'setupRequired'=>true,'userCount'=>0];

@@ -153,8 +153,8 @@
     <div class="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 gap-3">
       <p>&copy; <?= date('Y') ?> Tafakari Digital Hub &mdash; <span data-i18n="footer.rightsReserved">A CRTP Initiative. All rights reserved.</span></p>
       <div class="flex gap-8">
-        <a href="#" class="hover:text-white" data-i18n="footer.privacyPolicy">Privacy Policy</a>
-        <a href="#" class="hover:text-white" data-i18n="footer.termsOfService">Terms of Service</a>
+        <a href="/privacy" class="hover:text-white" data-i18n="footer.privacyPolicy">Privacy Policy</a>
+        <a href="/terms" class="hover:text-white" data-i18n="footer.termsOfService">Terms of Use</a>
       </div>
     </div>
 

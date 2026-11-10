@@ -8,6 +8,9 @@ declare(strict_types=1);
 
 // ── Bootstrap: only need config constants, not the full app ──────────────────
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/setup-guard.php';
+require_once __DIR__ . '/includes/functions.php';
+setup_guard();
 
 $step    = 'check';   // check | form | done | error
 $dbOk    = false;
@@ -52,6 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $dbOk) {
     elseif (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) $formErr = 'A valid email is required.';
     elseif (strlen($password) < 8)   $formErr = 'Password must be at least 8 characters.';
     elseif ($password !== $confirm)  $formErr = 'Passwords do not match.';
+    elseif (password_is_published($password)) $formErr = PUBLISHED_PASSWORD_MESSAGE;
     else {
         try {
             $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);

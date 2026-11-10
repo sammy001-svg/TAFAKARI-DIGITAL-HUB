@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $passErr = 'Password must be at least 8 characters.';
         } elseif ($newPass !== $confirm) {
             $passErr = 'Passwords do not match.';
+        } elseif (password_is_published($newPass)) {
+            $passErr = PUBLISHED_PASSWORD_MESSAGE;
         } else {
             $hashed = password_hash($newPass, PASSWORD_BCRYPT, ['cost' => 12]);
             $pdo->prepare('UPDATE User SET password=?, updatedAt=NOW(3) WHERE id=?')->execute([$hashed, $uid]);

@@ -44,6 +44,7 @@ if ($method === 'PUT') {
 
     if ($password) {
         if (strlen($password) < 8) json_error('Password must be at least 8 characters');
+        if (password_is_published($password)) json_error(PUBLISHED_PASSWORD_MESSAGE);
         $hashed = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         $pdo->prepare('UPDATE User SET name=?,email=?,username=?,password=?,role=?,updatedAt=NOW(3) WHERE id=?')
             ->execute([$name,$email,$username,$hashed,$role,$id]);

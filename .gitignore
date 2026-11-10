@@ -43,3 +43,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Opens the setup and recovery pages on the server; must never be committed
+/ENABLE_SETUP

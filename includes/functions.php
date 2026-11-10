@@ -1,9 +1,24 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/error-handler.php';
+
 function h(string $s): string {
     return htmlspecialchars($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 }
+
+/**
+ * True for the demo passwords that were published in this project's public
+ * repository. Compared by hash so they are not advertised again here.
+ */
+function password_is_published(string $password): bool {
+    return in_array(hash('sha256', $password), [
+        '70bf0b083217b068485ff8b2a3d963ef57427a139bd525885f8126fc4d6c98c0',
+        '1d0419225d12eded2de92105c0f6c79c22192ce46bc8f26b61fa1c6bdc5d78fa',
+    ], true);
+}
+
+const PUBLISHED_PASSWORD_MESSAGE = 'That password was published online as a demo password, so it cannot be used. Please choose a different one.';
 
 function generate_id(): string {
     return 'c' . bin2hex(random_bytes(12));

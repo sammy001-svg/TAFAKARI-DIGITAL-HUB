@@ -149,13 +149,13 @@ $_siteLogoUrl = get_setting('site_logo_url', '/public/crtp-logo.jpg');
 <!-- Mobile: dim backdrop -->
 <div id="nav-backdrop"
      onclick="_navClose()"
-     style="position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)">
+     style="position:fixed;inset:0;z-index:1650;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)">
 </div>
 
 <!-- Mobile: right-side drawer -->
 <div id="nav-drawer"
      role="dialog" aria-modal="true" aria-label="Navigation menu"
-     style="position:fixed;top:0;right:0;bottom:0;z-index:900;
+     style="position:fixed;top:0;right:0;bottom:0;z-index:1700;
             width:min(320px,90vw);background:#750B25;
             transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
             box-shadow:-8px 0 48px rgba(0,0,0,.4);overflow-y:auto;display:flex;flex-direction:column">

@@ -674,17 +674,21 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
         </div>
         <h1 class="font-outfit font-black text-2xl md:text-4xl leading-tight" data-i18n="heatmapPage.dashboardTitle">Regional Conflict Dashboard</h1>
         <p class="mt-1.5 text-xs md:text-sm leading-relaxed max-w-2xl hidden sm:block" style="color:rgba(248,248,240,.55)" data-i18n="heatmapPage.dashboardDesc">
-          Mapping conflict intensity, displacement, and humanitarian crises across 14 African nations. Click any marker for detailed intelligence.
+          Mapping conflict intensity, displacement, and humanitarian crises across the countries CRTP monitors. Click any marker for details.
         </p>
       </div>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 shrink-0">
         <?php
+        // Hotspots: countries with any indicator at High or above (7+) in the cycle shown
+        $hotspots  = count(array_filter($scoreMatrixMeta, fn($byCat) => $byCat && max(array_column($byCat, 'score')) >= 7));
+        $monitored = [];
+        foreach (hm_country_groups() as $g) foreach ($g['countries'] as $c) $monitored[$c] = true;
         $kpis = [
-          [format_number($totalReports),        'Total Reports',    '#E7952A', 'totalReports'],
-          [format_number($monthlyReports),       'This Month',       '#E7952A', 'thisMonth'],
-          [format_number(count($countryStats)),  'Active Hotspots',  '#ED1C24', 'activeHotspots'],
-          [format_number(count($_countriesData)),'Countries',        '#E7952A', 'countriesKpi'],
+          [format_number($totalReports),     'Total Reports',       '#E7952A', 'totalReports'],
+          [format_number($monthlyReports),   'This Month',          '#E7952A', 'thisMonth'],
+          [format_number($hotspots),         'Active Hotspots',     '#ED1C24', 'activeHotspots'],
+          [format_number(count($monitored)), 'Countries monitored', '#E7952A', 'countriesKpi'],
         ];
         foreach ($kpis as $i => [$val, $lbl, $col, $lblKey]): ?>
           <div class="rounded-xl md:rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-center" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)">
@@ -2096,7 +2100,6 @@ function applyFilters() {
       visibleDesc.length + ' improving situation' + (visibleDesc.length !== 1 ? 's' : '') + ' visible';
     var allHot = Object.keys(COUNTRY_STATS).length;
     var kpiEl  = document.getElementById('kpi-hotspots');
-    if (kpiEl) kpiEl.textContent = allHot;
     renderDeescTable(visibleDesc);
     return;
   }
@@ -2121,7 +2124,6 @@ function applyFilters() {
     document.getElementById('active-count').textContent = pill;
     var allHot = Object.keys(COUNTRY_STATS).length;
     var kpiEl  = document.getElementById('kpi-hotspots');
-    if (kpiEl) kpiEl.textContent = allHot;
     renderTable(visible);
     return;
   }
@@ -2273,7 +2275,7 @@ function applyFilters() {
   // (always from the full COUNTRY_STATS snapshot, not the current filter selection)
   var allHot = Object.keys(COUNTRY_STATS).length;
   var kpiEl  = document.getElementById('kpi-hotspots');
-  if (kpiEl) kpiEl.textContent = allHot;
+  /* the hotspot count is set by the server for the cycle shown */
 
   // Table
   renderTable(visible, visibleRealPosts);
