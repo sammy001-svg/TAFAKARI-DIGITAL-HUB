@@ -29,6 +29,7 @@ use Anthropic\Core\Exceptions\BadRequestException;
 use Anthropic\Core\Exceptions\PermissionDeniedException;
 use Anthropic\Core\Exceptions\RateLimitException;
 
+const AGENT_CODE_VERSION  = '2026-11-10.5';   // shown in Settings > Status: confirms a deploy reached the server
 const AGENT_MODEL         = 'claude-opus-5-5';
 // Server-side refusal fallback: "default" lets the API route a declined
 // request to its recommended substitute model for that refusal category.
@@ -110,9 +111,18 @@ function agent_saved_key(): string {
     }
 }
 
+/** What copying from a web page adds around a value: spaces, line breaks, invisible characters, quotes. */
+function agent_clean_pasted(string $v): string {
+    // Only the edges and invisible characters: a gap inside a value means a broken copy, which is refused
+    return trim((string) preg_replace('/[\x{200B}-\x{200D}\x{FEFF}"\'`]+/u', '', str_replace("\u{00A0}", ' ', $v)));
+}
+
 /** Validate and store a key entered in the admin panel. */
 function agent_save_key(string $key, string $uid): void {
-    $key = trim($key);
+    $key = agent_clean_pasted($key);
+    if (str_starts_with($key, 'sk-ant-admin')) {
+        throw new RuntimeException('That is an Admin API key, which manages an Anthropic account but cannot use Claude. In the Anthropic Console, open API keys (not Admin keys), create a key there, and paste that one.');
+    }
     if (strlen($key) > 300 || !preg_match('/^sk-ant-[A-Za-z0-9_-]{10,}$/', $key)) {
         throw new RuntimeException('That does not look like a Claude API key. Keys start with sk-ant-.');
     }
@@ -148,7 +158,10 @@ function agent_is_workspace_id(string $id): bool {
 
 /** Validate and store a workspace ID. Blank clears it. Returns the clean value. */
 function agent_save_workspace(string $id, string $uid): string {
-    $id = trim($id);
+    // Invisible characters and quotes go; a whole Console address, or a label
+    // around the ID, still gives just the ID
+    $id = agent_clean_pasted($id);
+    if (preg_match('/(?<![A-Za-z0-9_-])wrkspc_[A-Za-z0-9_-]{4,120}(?![A-Za-z0-9_-])/', $id, $m)) $id = $m[0];
     if ($id !== '' && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id)) {
         throw new RuntimeException('That looks like your Anthropic organization ID. The Workspace ID is different: it starts with wrkspc_. Leave the box blank if you are not sure.');
     }
@@ -213,6 +226,17 @@ function agent_check_connection(?string $key = null, ?string $workspace = null, 
         $needsOne = $workspace === '' && str_contains($e->getMessage(), 'anthropic-workspace-id');
         $wrongOne = $workspace !== '' && agent_is_workspace_not_found($e);
         if (!$needsOne && !$wrongOne) return ['ok' => false, 'message' => agent_api_error($e)];
+        if ($wrongOne) {
+            try {
+                agent_client($http, $key, '')->models->retrieve(AGENT_MODEL);
+                agent_save_workspace('', '');
+                return ['ok' => true, 'message' => 'Connected to Claude. This key already belongs to its workspace, so it needs no Workspace ID: the box has been cleared.'];
+            } catch (Throwable $e0) {
+                if (!str_contains($e0->getMessage(), 'anthropic-workspace-id')) {
+                    return ['ok' => false, 'message' => agent_api_error($e0)];   // a problem with the key itself
+                }
+            }
+        }
         $intro = $wrongOne ? 'Claude does not recognise the Workspace ID in Settings' : 'This Claude API key needs a workspace';
 
         $why = null;

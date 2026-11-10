@@ -460,6 +460,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <input type="hidden" name="action" value="run_now">
           <button type="submit" class="ag-btn w-full justify-center" style="background:#E7952A;color:#0D0102" <?= $_ready ? '' : 'disabled' ?>>Run now</button>
         </form>
+        <p class="text-xs text-slate-500">Software version <?= h(AGENT_CODE_VERSION) ?></p>
       </div>
     </div>
   </div>
