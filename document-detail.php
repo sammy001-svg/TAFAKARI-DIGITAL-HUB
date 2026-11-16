@@ -171,6 +171,24 @@ $pageUrl       = $shareUrl;
   <!-- ── Main ───────────────────────────────────────────────────────────── -->
   <div class="max-w-4xl mx-auto px-6 py-12">
 
+    <?php
+    // A country monitoring update by the Tafakari Agent: offer the Word and Excel versions
+    $_update = null;
+    try { require_once __DIR__ . '/includes/agent-updates.php'; $_update = agent_update_for_post((string) $post['id']); } catch (Throwable $e) {}
+    if ($_update): ?>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 bg-white rounded-3xl border border-amber-100 shadow-md p-6 md:p-8 mb-10">
+        <div class="flex-1 min-w-0">
+          <p class="font-outfit font-bold text-lg text-slate-900 mb-1 leading-snug"><?= $_update['kind'] === 'QUARTER' ? 'Quarterly' : 'Bi-weekly' ?> Country Conflict and Peace Monitoring Update</p>
+          <p class="text-[12px] text-slate-500 mb-4">Overall score <strong style="color:<?= h(hm_tier_color((float) $_update['overallScore'])) ?>"><?= h((string) $_update['overallScore']) ?>/10 (<?= h(hm_tier_label((float) $_update['overallScore'])) ?>)</strong>
+            &bull; <?= count($_update['factCheck']) ?> fact-checked claims &bull; <?= (int) $_update['sourceCount'] ?> independent sources &bull; approved by CRTP</p>
+          <div class="flex flex-wrap gap-3">
+            <a href="/updates/<?= h(rawurlencode($_update['id'])) ?>/word" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm" style="background:#750B25;color:#fff">Download Word</a>
+            <a href="/updates/<?= h(rawurlencode($_update['id'])) ?>/excel" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm border border-slate-200 text-slate-700 hover:bg-slate-50">Download Excel</a>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <!-- Download card -->
     <?php if (!empty($mediaUrl)): ?>
       <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-white rounded-3xl border border-indigo-100 shadow-md p-6 md:p-8 mb-10">

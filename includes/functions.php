@@ -52,6 +52,21 @@ function markdown_to_html(string $raw): string {
     $t = preg_replace_callback('/```(\w*)\n([\s\S]*?)```/m', fn($m) =>
         '<pre class="bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto my-4 text-sm font-mono"><code>' . $m[2] . '</code></pre>', $t);
 
+    // Pipe tables: a header row, a separator row of dashes, then data rows
+    $t = preg_replace_callback('/^(\|[^\n]*\|)[ \t]*\n\|?[ \t]*:?-{2,}[^\n]*\n((?:\|[^\n]*\|?[ \t]*(?:\n|$))+)/m', function ($m) {
+        $cells = fn(string $line) => array_map('trim', explode('|', (string) preg_replace('/^\s*\||\|\s*$/', '', trim($line))));
+        $html = '<div class="overflow-x-auto my-4"><table class="tk-md-table"><thead><tr>';
+        foreach ($cells($m[1]) as $c) $html .= '<th>' . $c . '</th>';
+        $html .= '</tr></thead><tbody>';
+        foreach (preg_split('/\n/', trim($m[2])) ?: [] as $row) {
+            if (trim($row) === '') continue;
+            $html .= '<tr>';
+            foreach ($cells($row) as $c) $html .= '<td>' . $c . '</td>';
+            $html .= '</tr>';
+        }
+        return $html . '</tbody></table></div>' . "\n";
+    }, $t);
+
     // Headings
     $t = preg_replace('/^###### (.+)$/m', '<h6 class="font-bold text-sm mt-4 mb-1 text-slate-800">$1</h6>', $t);
     $t = preg_replace('/^##### (.+)$/m',  '<h5 class="font-bold text-base mt-4 mb-1 text-slate-800">$1</h5>', $t);
@@ -525,13 +540,70 @@ function heatmap_default_elements(): array {
             'International & regional actors',
             'Religious institutions & civil society',
             'Local governance & institutions',
+            'States',
         ],
         'Early Warning Signals' => [
             'Escalation indicators',
             'Social tension & hate speech',
             'Resource & economic stress',
+            'Early response indicators',
         ],
     ];
+}
+
+/**
+ * Elements added to the template after the taxonomy was first configured.
+ * A saved configuration (Admin > Heatmap Config) would otherwise keep the old
+ * lists for ever, so these are added to it once, by category.
+ */
+function heatmap_element_additions(): array {
+    return [
+        'Actors & Institutional Engagement' => ['States'],
+        'Early Warning Signals'             => ['Early response indicators'],
+    ];
+}
+
+/** Category names compared loosely: "Actors and Institutional Engagement" is "Actors & Institutional Engagement". */
+function heatmap_category_key(string $name): string {
+    $k = strtolower(str_replace('&', ' and ', $name));
+    return trim((string) preg_replace('/[^a-z0-9]+/', ' ', $k));
+}
+
+/**
+ * Add the newer elements to a saved taxonomy, once. Returns the saved rows
+ * as they now stand, so the request that did the upgrade uses them too
+ * (get_setting() keeps the first value it saw), or null when nothing changed.
+ */
+function heatmap_taxonomy_upgrade(): ?array {
+    static $done = false;
+    if ($done) return null;
+    $done = true;
+    try {
+        if (get_setting('heatmap_elements_v2', '') === 'ok') return null;
+        $raw  = get_setting('heatmap_categories', '');
+        $rows = $raw !== '' ? json_decode($raw, true) : null;
+        $changed = false;
+        if (is_array($rows)) {
+            $adds = [];
+            foreach (heatmap_element_additions() as $cat => $els) $adds[heatmap_category_key($cat)] = $els;
+            foreach ($rows as $i => $r) {
+                if (!is_array($r)) continue;
+                $key = heatmap_category_key((string) ($r['name'] ?? ''));
+                if (!isset($adds[$key])) continue;
+                $els = array_values(array_filter(array_map(fn($e) => trim((string) $e), (array) ($r['elements'] ?? []))));
+                foreach ($adds[$key] as $e) {
+                    if (!in_array($e, $els, true)) { $els[] = $e; $changed = true; }
+                }
+                $rows[$i]['elements'] = $els;
+            }
+            if ($changed) set_setting('heatmap_categories', json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        }
+        set_setting('heatmap_elements_v2', 'ok');
+        return $changed ? $rows : null;
+    } catch (Throwable $e) {
+        error_log('[heatmap_taxonomy_upgrade] ' . $e->getMessage());
+        return null;
+    }
 }
 
 /**
@@ -550,8 +622,11 @@ function heatmap_taxonomy(): array {
     $out      = [];
 
     try {
-        $raw = get_setting('heatmap_categories', '');
-        $rows = $raw !== '' ? json_decode($raw, true) : null;
+        $rows = heatmap_taxonomy_upgrade();
+        if ($rows === null) {
+            $raw  = get_setting('heatmap_categories', '');
+            $rows = $raw !== '' ? json_decode($raw, true) : null;
+        }
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 if (!is_array($r)) continue;

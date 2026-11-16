@@ -45,7 +45,7 @@ $_pendingCount = 0;
 // Findings waiting in the Tafakari Agent queue (table may not exist yet)
 $_agentCount = 0;
 $_articleCount = 0;
-foreach (['AgentArticle', 'AgentVideo'] as $_t) {
+foreach (['AgentArticle', 'AgentVideo', 'AgentCountryUpdate'] as $_t) {
     try {
         $_articleCount += (int)db()->query("SELECT COUNT(*) FROM `{$_t}` WHERE status='PROPOSED'")->fetchColumn();
     } catch (Throwable $e) {}

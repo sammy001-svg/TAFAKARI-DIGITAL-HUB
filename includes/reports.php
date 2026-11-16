@@ -296,6 +296,8 @@ function report_compute(string $kind, string $periodDate, string $scopeKey, ?arr
         ];
     }
 
+    $ranking = report_ranking($countries, $catList);
+
     // Regions (whole-continent reports only; a region report is itself one row)
     $regions = [];
     if ($scope['type'] === 'ALL') {
@@ -396,6 +398,7 @@ function report_compute(string $kind, string $periodDate, string $scopeKey, ?arr
         'elementsPrev' => report_element_cells($prev, $wkey),
         'regions'     => $regions,
         'countries'   => $countries,
+        'ranking'     => $ranking,
         'movers'      => ['up' => array_slice($up, 0, 10), 'down' => array_slice($down, 0, 10)],
         'critical'    => $critical,
         'share'       => $share,
@@ -407,6 +410,43 @@ function report_compute(string $kind, string $periodDate, string $scopeKey, ?arr
         'crossBorder' => $crossBorder,
         'reports'     => array_slice($list, 0, 300),
     ];
+}
+
+/**
+ * Comparative ratings: the scope's countries ranked by overall score, most
+ * severe first, with each one's previous rank and highest-scoring category.
+ *
+ * @return list<array{rank:int,name:string,overall:float,tier:string,prev:?float,change:string,rankPrev:?int,rankChange:?int,top:string}>
+ */
+function report_ranking(array $countries, array $catList): array {
+    $now = array_values(array_filter($countries, fn($c) => $c['overall'] !== null));
+    usort($now, fn($a, $b) => [$b['overall'], $a['name']] <=> [$a['overall'], $b['name']]);
+    $before = array_values(array_filter($countries, fn($c) => $c['overallPrev'] !== null));
+    usort($before, fn($a, $b) => [$b['overallPrev'], $a['name']] <=> [$a['overallPrev'], $b['name']]);
+    $prevRank = [];
+    foreach ($before as $i => $c) $prevRank[$c['name']] = $i + 1;
+
+    $out = [];
+    foreach ($now as $i => $c) {
+        $top = ''; $topScore = -1.0;
+        foreach ($catList as $cat) {
+            if (isset($c['cells'][$cat]) && $c['cells'][$cat]['score'] > $topScore) { $topScore = (float) $c['cells'][$cat]['score']; $top = $cat; }
+        }
+        $d = $c['overallPrev'] === null ? null : round($c['overall'] - $c['overallPrev'], 1);
+        $rp = $prevRank[$c['name']] ?? null;
+        $out[] = [
+            'rank'       => $i + 1,
+            'name'       => $c['name'],
+            'overall'    => $c['overall'],
+            'tier'       => hm_tier_label($c['overall']),
+            'prev'       => $c['overallPrev'],
+            'change'     => $d === null ? 'new' : (abs($d) < 0.05 ? '0' : sprintf('%+.1f', $d)),
+            'rankPrev'   => $rp,
+            'rankChange' => $rp === null ? null : $rp - ($i + 1),   // positive: moved up the list (more severe)
+            'top'        => $top !== '' ? $top . ' ' . rtrim(rtrim(number_format($topScore, 1), '0'), '.') : '',
+        ];
+    }
+    return $out;
 }
 
 // ── Stored reports ───────────────────────────────────────────────
@@ -530,6 +570,8 @@ Three to five sentences: the overall picture and the most important change.
 The most significant developments, grouped by country or theme, citing the reports by title.
 ## Escalation and de-escalation
 Where scores rose or fell from the previous period, and what the reports suggest is behind the change.
+## Comparative ratings
+How the countries compare: which score highest, which moved most in the ranking, and what separates them, drawing on the ranking in the data. For a report on a single country, compare it with its previous period instead.
 ## Critical situations
 Every critical flag (a report scored 9 or more), or a sentence saying there were none.
 ## Cross-border and regional dynamics
@@ -537,7 +579,7 @@ Developments that concern more than one country, and regional patterns, or a sen
 ## Points to watch
 Two to four cautious observations about what the early-warning scores and recent changes suggest analysts should monitor next. These are prompts for attention, not predictions.
 
-Aim for 500 to 900 words. Use short paragraphs and occasional bullet lists; no tables.
+Aim for 600 to 1,000 words, never more than 1,100, so the printed report stays under ten pages. Use short paragraphs and occasional bullet lists; no tables.
 TXT;
 }
 
@@ -558,6 +600,8 @@ function report_narrative_input(array $snap, array $reports): string {
         'regions'  => array_map(fn($r) => ['name' => $r['name'], 'now' => $catScores($r['cells']), 'previous' => $catScores($r['prev'])], $snap['regions']),
         'countries'=> array_map(fn($c) => ['name' => $c['name'], 'reports' => $c['reports'], 'now' => $catScores($c['cells']),
                                            'previous' => $catScores($c['prev'])], $snap['countries']),
+        'ranking'  => array_map(fn($r) => ['rank' => $r['rank'], 'country' => $r['name'], 'overall' => $r['overall'], 'tier' => $r['tier'],
+                                           'previousOverall' => $r['prev'], 'previousRank' => $r['rankPrev'], 'highestCategory' => $r['top']], $snap['ranking'] ?? []),
         'largestRises' => $snap['movers']['up'],
         'largestFalls' => $snap['movers']['down'],
         'criticalFlags'=> array_map(fn($c) => array_diff_key($c, ['id' => 1, 'url' => 1]), $snap['critical']),

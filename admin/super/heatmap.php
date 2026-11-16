@@ -211,8 +211,8 @@ $defaultCategories = [
     ['name'=>'Conflict & Security Watch',          'color'=>'#ED1C24', 'elements'=>['Armed conflict & security incidents','Armed group statements & activity','Civilian harm & protection']],
     ['name'=>'Peace & Political Track',            'color'=>'#750B25', 'elements'=>['Key peace & conflict developments','Peace initiatives & mediation','Government positions & actions']],
     ['name'=>'Humanitarian & Emergency Situation', 'color'=>'#E7952A', 'elements'=>['Humanitarian situation & access','Displacement & returns','Natural disasters & health emergencies']],
-    ['name'=>'Actors & Institutional Engagement',  'color'=>'#3B82F6', 'elements'=>['International & regional actors','Religious institutions & civil society','Local governance & institutions']],
-    ['name'=>'Early Warning Signals',              'color'=>'#65A30D', 'elements'=>['Escalation indicators','Social tension & hate speech','Resource & economic stress']],
+    ['name'=>'Actors & Institutional Engagement',  'color'=>'#3B82F6', 'elements'=>['International & regional actors','Religious institutions & civil society','Local governance & institutions','States']],
+    ['name'=>'Early Warning Signals',              'color'=>'#65A30D', 'elements'=>['Escalation indicators','Social tension & hate speech','Resource & economic stress','Early response indicators']],
 ];
 
 $defaultIssueMap = [
@@ -242,7 +242,7 @@ if ($saved === 'country_groups') $countryGroups = $clean;
 
 $countries  = json_decode(get_setting('heatmap_countries',  ''), true) ?: $defaultCountries;
 $regions    = json_decode(get_setting('heatmap_regions',    ''), true) ?: $defaultRegions;
-$categories = json_decode(get_setting('heatmap_categories', ''), true) ?: $defaultCategories;
+$categories = heatmap_taxonomy_upgrade() ?? (json_decode(get_setting('heatmap_categories', ''), true) ?: $defaultCategories);
 
 $issueMapRaw = json_decode(get_setting('heatmap_issue_map', ''), true);
 if (is_array($issueMapRaw) && !empty($issueMapRaw)) {

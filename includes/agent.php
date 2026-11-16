@@ -657,14 +657,14 @@ function agent_create_message(Client $client, array $system, array $tools, array
  * @param array $usage  running totals, updated in place
  * @return array{submission:array,seenUrls:array<string,bool>}
  */
-function agent_research_loop(Client $client, array $system, array $tools, array $messages, string $effort, string $toolName, string $nudge, array &$usage, ?string &$served, ?string &$stop): array {
+function agent_research_loop(Client $client, array $system, array $tools, array $messages, string $effort, string $toolName, string $nudge, array &$usage, ?string &$served, ?string &$stop, int $maxCalls = AGENT_MAX_CALLS): array {
     $seenUrls   = [];   // urlKey => true, for every URL the API actually returned
     $nudged     = false;
     $submission = null;
 
     while ($submission === null) {
-        if ($usage['calls'] >= AGENT_MAX_CALLS) {
-            throw new RuntimeException('Stopped after ' . AGENT_MAX_CALLS . ' API calls without a submission.');
+        if ($usage['calls'] >= $maxCalls) {
+            throw new RuntimeException('Stopped after ' . $maxCalls . ' API calls without a submission.');
         }
         $usage['calls']++;
 
@@ -1229,16 +1229,7 @@ function agent_promote_item(string $itemId, string $uid): string {
 
 /** Email the super admins about proposed findings scored critical. Returns how many were sent. */
 function agent_send_critical_alert(string $country, array $items): int {
-    try {
-        $to = array_filter(db()->query("SELECT email FROM User WHERE role = 'SUPER_ADMIN'")->fetchAll(PDO::FETCH_COLUMN), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
-    } catch (Throwable $e) {
-        error_log('[tafakari-agent] alert recipients: ' . $e->getMessage());
-        return 0;
-    }
-    if (!$to) return 0;
-
     $base = defined('APP_URL') ? rtrim((string) constant('APP_URL'), '/') : '';
-    $host = (string) (parse_url($base, PHP_URL_HOST) ?: 'localhost');
     $subject = 'Tafakari alert: ' . count($items) . ' critical finding' . (count($items) === 1 ? '' : 's') . ' in ' . $country;
     $body = "The Tafakari Agent has proposed a finding scored critical (9 or above). It is AI-proposed and has not been verified.\n\n";
     foreach ($items as $it) {
@@ -1248,12 +1239,27 @@ function agent_send_critical_alert(string $country, array $items): int {
                . $it['summary'] . "\n\n";
     }
     $body .= "Review it: {$base}/admin/agent\n";
+    // $country is validated against the country list, so no header can be injected through the subject
+    return agent_mail_super_admins($subject, $body);
+}
+
+/** Plain-text email to every super admin. Returns how many were sent. Tests set $GLOBALS['agent_mailer']. */
+function agent_mail_super_admins(string $subject, string $body): int {
+    try {
+        $to = array_filter(db()->query("SELECT email FROM User WHERE role = 'SUPER_ADMIN'")->fetchAll(PDO::FETCH_COLUMN), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
+    } catch (Throwable $e) {
+        error_log('[tafakari-agent] alert recipients: ' . $e->getMessage());
+        return 0;
+    }
+    if (!$to) return 0;
+    $base = defined('APP_URL') ? rtrim((string) constant('APP_URL'), '/') : '';
+    $host = (string) (parse_url($base, PHP_URL_HOST) ?: 'localhost');
+    $subject = str_replace(["\r", "\n"], ' ', $subject);
     $headers = "From: Tafakari Agent <noreply@{$host}>\r\nContent-Type: text/plain; charset=UTF-8\r\nX-Auto-Response-Suppress: All";
     $send = $GLOBALS['agent_mailer'] ?? 'mail';
     $sent = 0;
     foreach ($to as $addr) {
         try {
-            // $country is validated against the country list, so no header can be injected through the subject
             if ($send($addr, mb_encode_mimeheader($subject, 'UTF-8'), $body, $headers)) $sent++;
         } catch (Throwable $e) {
             error_log('[tafakari-agent] alert mail: ' . $e->getMessage());

@@ -402,3 +402,8 @@
 .tk-ask-teaser__text { background: none; border: 0; text-align: left; padding: 8px 4px 8px 10px; font: 500 13.5px/1.45 var(--tk-font); color: var(--tk-text); cursor: pointer; }
 .tk-ask-teaser__x { background: none; border: 0; width: 26px; height: 26px; color: var(--tk-text-3); font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
 @media print { .no-print, .tk-ask, .tk-ask-fab, .tk-ask-teaser { display: none !important; } }
+/* Tables written in Markdown (reports, monitoring updates) */
+.tk-md-table { width: 100%; border-collapse: collapse; font: 500 13px/1.45 var(--tk-font); color: var(--tk-text-2); }
+.tk-md-table th { text-align: left; padding: 8px 10px; font: 700 10.5px/1.2 var(--tk-font); text-transform: uppercase; letter-spacing: .06em; color: var(--tk-text-3); background: var(--tk-surface-2); border-bottom: 1px solid var(--tk-line); vertical-align: bottom; }
+.tk-md-table td { padding: 8px 10px; border-top: 1px solid var(--tk-line); vertical-align: top; }
+.tk-md-table tr:first-child td { border-top: 0; }

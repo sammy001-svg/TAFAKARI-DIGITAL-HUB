@@ -12,13 +12,15 @@ declare(strict_types=1);
 require_once __DIR__ . '/reports.php';
 require_once __DIR__ . '/agent-articles.php';
 require_once __DIR__ . '/agent-videos.php';
+require_once __DIR__ . '/agent-updates.php';
 
+const AGENT_AUTO_UPDATES_PER_DAY  = 2;   // country monitoring updates: every monitored country once per cycle
 const AGENT_AUTO_ARTICLES_PER_DAY = 2;
-const AGENT_AUTO_FINDINGS_PER_DAY = 8;
+const AGENT_AUTO_FINDINGS_PER_DAY = 4;
 
 /** How many runs of each kind have started today. */
 function agent_auto_today(): array {
-    $out = ['ARTICLE' => 0, 'CRON' => 0, 'VIDEO' => 0];
+    $out = ['ARTICLE' => 0, 'CRON' => 0, 'VIDEO' => 0, 'UPDATE' => 0, 'QUARTER' => 0];
     try {
         $st = db()->prepare('SELECT triggeredBy, COUNT(*) AS n FROM AgentRun WHERE startedAt >= ? GROUP BY triggeredBy');
         $st->execute([date('Y-m-d 00:00:00')]);
@@ -42,6 +44,8 @@ function agent_auto_plan(bool $force): array {
     $today = agent_auto_today();
     $plan  = [];
     if (agent_auto_setting('agent_auto_reports_date') !== date('Y-m-d')) $plan[] = 'reports';
+    if ($today['QUARTER'] === 0) $plan[] = 'quarterly';
+    if ($force || $today['UPDATE'] < AGENT_AUTO_UPDATES_PER_DAY) $plan[] = 'update';
     if ($today['VIDEO'] === 0) $plan[] = 'videos';
     $article = $force || $today['ARTICLE'] < AGENT_AUTO_ARTICLES_PER_DAY;
     $finding = $force || $today['CRON'] < AGENT_AUTO_FINDINGS_PER_DAY;
@@ -66,6 +70,7 @@ function agent_auto_tick(bool $force = false, mixed $transporter = null): array 
     ensure_agent_tables();
     ensure_agent_article_table();
     ensure_agent_video_table();
+    ensure_agent_update_table();
     if ($transporter === null) agent_ensure_workspace();
 
     foreach (agent_auto_plan($force) as $task) {
@@ -75,6 +80,20 @@ function agent_auto_tick(bool $force = false, mixed $transporter = null): array 
                 $lines = [];
                 $ok = report_generate_due(true, function (string $m) use (&$lines) { $lines[] = $m; }, $transporter);
                 return ['status' => $ok ? 'OK' : 'FAILED', 'task' => $task, 'message' => 'Report drafts checked. ' . implode(' ', $lines)];
+
+            case 'quarterly':
+                // One country's quarterly update a day, once the quarter has closed and its bi-weekly updates were approved
+                $q = agent_update_next_quarterly();
+                if ($q === null) break;
+                $r = agent_update_quarterly_run($q['country'], $q['quarter'], null, $transporter);
+                return ['status' => $r['status'] === 'HELD' ? 'OK' : $r['status'], 'task' => $task, 'message' => $r['message']];
+
+            case 'update':
+                // Every monitored country gets its monitoring update once per cycle
+                $c = agent_update_next_country();
+                if ($c === null) break;
+                $r = agent_update_run($c, null, $transporter);
+                return ['status' => $r['status'] === 'HELD' ? 'OK' : $r['status'], 'task' => $task, 'message' => $r['message']];
 
             case 'videos':
                 $g = agent_video_next_group();

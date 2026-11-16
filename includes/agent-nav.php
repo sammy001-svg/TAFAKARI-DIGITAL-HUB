@@ -1,8 +1,9 @@
 <?php
-/** The one navigation shared by every Tafakari Agent page. Needs agent-articles.php and agent-videos.php. */
+/** The one navigation shared by every Tafakari Agent page. Needs agent-updates.php, agent-articles.php and agent-videos.php. */
 function agent_nav(string $active, bool $isSuper): void {
     $count = fn(int $n) => $n > 0 ? " ({$n})" : '';
     $links = [
+        'updates'  => ['Country updates' . $count(agent_update_pending_count()), '/admin/agent/updates'],
         'findings' => ['Findings' . $count(agent_pending_count()), '/admin/agent'],
         'articles' => ['Articles' . $count(agent_article_pending_count()), '/admin/agent/articles'],
         'videos'   => ['Videos' . $count(agent_video_pending_count()), '/admin/agent/videos'],

@@ -13,8 +13,8 @@ function rr_e(?string $s): string { return htmlspecialchars((string) $s, ENT_QUO
 function rr_chip(?array $cell): string {
     if ($cell === null) return '<span class="rr-none">&mdash;</span>';
     $v = (float) $cell['score'];
-    $tip = hm_tier_label($v) . ' · ' . $cell['n'] . ' report' . ($cell['n'] == 1 ? '' : 's') . ' · peak ' . number_format($cell['peak'], 1);
-    $flag = $cell['critical'] && $v < 9;
+    $tip = hm_tier_label($v) . ($cell['n'] !== '' ? ' · ' . $cell['n'] . ' report' . ($cell['n'] == 1 ? '' : 's') . ' · peak ' . number_format((float) $cell['peak'], 1) : '');
+    $flag = !empty($cell['critical']) && $v < 9;
     return '<span class="rr-chip" style="background:' . rr_e(hm_tier_color($v)) . ($flag ? ';box-shadow:0 0 0 2px #fff,0 0 0 4px #ED1C24' : '') . '" title="' . rr_e($tip) . '">'
          . rr_e(ch_num($v)) . '</span>' . ($flag ? '<span class="rr-flag" title="Includes a report scored 9 or more">&#9873; critical</span>' : '');
 }
@@ -178,6 +178,29 @@ function report_render(array $report, bool $public): void {
       <h3>Regional overview</h3>
       <p class="rr-lead">Each report counts once per region, even when it concerns several member countries. Regions overlap.</p>
       <?= rr_matrix($s['regions'], $cats, 'Region', false) ?>
+    </section>
+  <?php endif; ?>
+
+  <?php if (!empty($s['ranking']) && count($s['ranking']) > 1): ?>
+    <section class="rr-sec">
+      <h3>Comparative ratings</h3>
+      <p class="rr-lead">Countries ranked by overall score (the mean of their category scores), with the change from <?= rr_e($s['prev']['label']) ?> and their highest-scoring category.</p>
+      <div class="rr-scroll"><table class="rr-matrix" style="min-width:560px"><thead><tr>
+        <th scope="col" class="c">Rank</th><th scope="col">Country</th><th scope="col" class="c">Overall</th><th scope="col">Tier</th><th scope="col" class="c">Change</th><th scope="col" class="c">Rank change</th><th scope="col">Highest category</th>
+      </tr></thead><tbody>
+      <?php foreach ($s['ranking'] as $r): ?>
+        <tr>
+          <td class="c"><strong><?= (int) $r['rank'] ?></strong></td>
+          <th scope="row"><?= rr_e($r['name']) ?></th>
+          <td class="c"><?= rr_chip(['score' => $r['overall'], 'n' => '', 'peak' => $r['overall'], 'critical' => false]) ?></td>
+          <td><?= rr_e($r['tier']) ?></td>
+          <td class="c"><?= $r['change'] === 'new' ? '<span class="rr-muted">new</span>' : ($r['change'] === '0' ? '<span class="rr-muted">&rarr; 0</span>' : '<span class="' . ($r['change'][0] === '+' ? 'rr-up' : 'rr-down') . '">' . ($r['change'][0] === '+' ? '&uarr; ' : '&darr; ') . rr_e($r['change']) . '</span>') ?></td>
+          <td class="c"><?= $r['rankChange'] === null ? '<span class="rr-muted">new</span>' : ($r['rankChange'] === 0 ? '<span class="rr-muted">&rarr; 0</span>'
+                : ($r['rankChange'] > 0 ? '<span class="rr-up">&uarr; ' . (int) $r['rankChange'] . '</span>' : '<span class="rr-down">&darr; ' . abs((int) $r['rankChange']) . '</span>')) ?></td>
+          <td><?= rr_e($r['top']) ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody></table></div>
     </section>
   <?php endif; ?>
 

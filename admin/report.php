@@ -7,6 +7,7 @@ require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/includes/reports.php';
 require_once dirname(__DIR__) . '/includes/charts.php';
 require_once dirname(__DIR__) . '/includes/report-render.php';
+require_once dirname(__DIR__) . '/includes/exports.php';
 
 $me      = require_auth();
 $isSuper = is_super_admin();
@@ -18,12 +19,7 @@ $id = (string) ($_GET['id'] ?? '');
 $report = $id !== '' ? report_get($id) : null;
 if (!$report) { header('Location: /admin/reports'); exit; }
 
-if (($_GET['format'] ?? '') === 'csv') {
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="tafakari-report-' . $report['periodStart'] . '.csv"');
-    echo report_csv($report);
-    exit;
-}
+report_export_if_requested($report);
 
 if (empty($_SESSION['report_csrf'])) $_SESSION['report_csrf'] = bin2hex(random_bytes(16));
 $csrf = $_SESSION['report_csrf'];
@@ -106,7 +102,9 @@ $adminPageSub   = report_kind_label($report['kind']);
     </p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a href="/admin/reports/<?= h(rawurlencode($id)) ?>?format=csv" class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 bg-white hover:bg-slate-50">Download CSV</a>
+    <?php foreach (['docx' => 'Word', 'xlsx' => 'Excel', 'csv' => 'CSV'] as $f => $l): ?>
+      <a href="/admin/reports/<?= h(rawurlencode($id)) ?>?format=<?= $f ?>" class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 bg-white hover:bg-slate-50"><?= $l ?></a>
+    <?php endforeach; ?>
     <?php if ($locked): ?>
       <a href="/reports/<?= h(rawurlencode($id)) ?>" target="_blank" rel="noopener" class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 bg-white hover:bg-slate-50">View public page</a>
     <?php endif; ?>

@@ -676,6 +676,12 @@ $extraHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@
         <p class="mt-1.5 text-xs md:text-sm leading-relaxed max-w-2xl hidden sm:block" style="color:rgba(248,248,240,.55)" data-i18n="heatmapPage.dashboardDesc">
           Mapping conflict intensity, displacement, and humanitarian crises across the countries CRTP monitors. Click any marker for details.
         </p>
+        <?php $_exportCycle = $isAllTime ? 'all' : $activeCycle['start']; ?>
+        <p class="mt-3 flex flex-wrap items-center gap-2 text-xs" aria-label="Download the heat map">
+          <span class="font-bold" style="color:rgba(248,248,240,.6)">Download <?= $isAllTime ? 'all time' : h($activeCycle['label']) ?>:</span>
+          <a href="/heatmap/export?cycle=<?= h($_exportCycle) ?>&amp;format=docx" class="px-3 py-1.5 rounded-full font-bold" style="background:rgba(255,255,255,.12);color:#fff">Word</a>
+          <a href="/heatmap/export?cycle=<?= h($_exportCycle) ?>&amp;format=xlsx" class="px-3 py-1.5 rounded-full font-bold" style="background:rgba(255,255,255,.12);color:#fff">Excel</a>
+        </p>
       </div>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 shrink-0">

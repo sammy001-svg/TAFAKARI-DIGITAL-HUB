@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/reports.php';
 require_once __DIR__ . '/includes/charts.php';
 require_once __DIR__ . '/includes/report-render.php';
+require_once __DIR__ . '/includes/exports.php';
 
 $report = null;
 try {
@@ -18,12 +19,7 @@ if (!$report || $report['status'] !== 'PUBLISHED') {
     exit;
 }
 
-if (($_GET['format'] ?? '') === 'csv') {
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="tafakari-report-' . $report['periodStart'] . '.csv"');
-    echo report_csv($report);
-    exit;
-}
+report_export_if_requested($report);
 
 $s = $report['snapshotData'];
 $pageTitle = $report['title'] . ' | Tafakari Digital Hub';
@@ -58,7 +54,9 @@ $pageDesc  = report_kind_label($report['kind']) . ' for ' . $s['scope']['label']
       </p>
       <div class="no-print flex flex-wrap gap-3 mt-6">
         <button type="button" onclick="window.print()" class="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-bold" style="background:#E7952A;color:#0D0102">Print or save as PDF</button>
-        <a href="/reports/<?= h(rawurlencode($report['id'])) ?>?format=csv" class="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-bold border" style="border-color:rgba(255,255,255,.35);color:#fff">Download data (CSV)</a>
+        <?php foreach (['docx' => 'Download Word', 'xlsx' => 'Download Excel', 'csv' => 'CSV'] as $f => $l): ?>
+          <a href="/reports/<?= h(rawurlencode($report['id'])) ?>?format=<?= $f ?>" class="inline-flex items-center px-5 py-2.5 rounded-full text-sm font-bold border" style="border-color:rgba(255,255,255,.35);color:#fff"><?= $l ?></a>
+        <?php endforeach; ?>
       </div>
     </div>
   </div>
