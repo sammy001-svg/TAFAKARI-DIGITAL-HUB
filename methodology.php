@@ -102,9 +102,12 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
       <p class="mt-3">
         <?php if ($agentOn): $_ag = agent_settings(); ?>
           The Tafakari Agent also searches institutional and official statements, news, scholarly work, policy briefs and verifiable
-          official social media accounts. It checks the <?= count($_ag['countries']) ?> monitored countries in rotation, looking back
-          <?= (int)$_ag['lookback_days'] ?> days each time, and an analyst reviews everything it finds. It also drafts sourced articles
-          for each monitoring region and indicator and suggests related YouTube videos. Nothing is posted until a CRTP admin has approved it, and each item says AI assisted.
+          official social media accounts, in local languages as well as English. Each monitoring cycle it compiles a
+          <a href="#country-updates" class="font-semibold underline" style="color:#750B25">country monitoring update</a> for each of the
+          <?= count($_ag['countries']) ?> monitored countries, following CRTP's monitoring template, and fact-checks its key claims. Between
+          updates it checks the countries in rotation for new developments, looking back <?= (int)$_ag['lookback_days'] ?> days each time.
+          It also drafts sourced articles for each monitoring region and indicator and suggests related YouTube videos. Nothing is posted
+          until a CRTP admin has approved it, and each item says AI assisted.
         <?php endif; ?>
         Reports are read in <strong><?= (int)$cycLen ?>-day monitoring cycles</strong>. Scores are refreshed
         every cycle, and earlier cycles are kept, never overwritten: any past cycle can be reopened from the
@@ -246,6 +249,46 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
         A change of half a point or more from the previous period is reported as escalation or de-escalation. Each report's narrative is
         written by CRTP analysts, or drafted by the Tafakari Agent from the report's own figures and then edited; every report says which.
       </p>
+      <p class="mt-3">
+        <strong>Comparative ratings.</strong> Every report ranks the countries in its scope by their overall score, the average of their
+        category scores, and shows each country's change in score and in rank since the previous period, with its highest-scoring category.
+      </p>
+      <p class="mt-3">
+        <strong>Downloads.</strong> Reports and the heat map can be downloaded as Word documents, for reading and printing, and as Excel
+        workbooks with every figure. Word versions are kept under ten pages: when a period has more data than fits, the longest tables are
+        shortened and the document says so, and the complete figures remain in the Excel version.
+      </p>
+    </section>
+
+    <!-- Country monitoring updates -->
+    <section class="mt-step" id="country-updates" style="scroll-margin-top:90px">
+      <h2 class="mb-3">Country monitoring updates</h2>
+      <p>
+        Each monitoring cycle, a Bi-weekly Country Conflict and Peace Monitoring Update is compiled for every monitored country, following
+        CRTP's template: an overall peace and security score with its justification; the key developments of the period; the four heat-map
+        clusters (conflict and security; the peace and political track; the humanitarian and emergency situation; and the actors engaged,
+        from international and regional bodies to states, civil society, non-governmental organisations and religious institutions);
+        early warning and early response indicators, each marked increasing, stable or decreasing; an analysis of the period; and an
+        executive summary. A quarterly update for each country is then drawn from the quarter's approved bi-weekly updates.
+      </p>
+      <p class="mt-3">
+        The Tafakari Agent researches and drafts these updates. Every row of every table cites its sources, and a source is accepted only if
+        the agent actually retrieved it during its research; anything citing a source it did not retrieve is removed automatically.
+      </p>
+      <p class="mt-3"><strong>Fact check.</strong> Each update checks its key claims, such as casualty, displacement and case figures, attributions of
+        responsibility, contested events and claims that rest on translation, and marks each one:</p>
+      <ul class="list-disc pl-6 mt-2 space-y-1">
+        <li><strong>Verified:</strong> two or more independent publishers agree. A claim is never marked verified on a single source.</li>
+        <li><strong>Single source:</strong> only one publisher reports it.</li>
+        <li><strong>Disputed:</strong> reputable sources contradict each other, and the update says how.</li>
+        <li><strong>Unverified:</strong> it could not be confirmed and should be read with caution.</li>
+      </ul>
+      <p class="mt-3">
+        An update needs at least three independent publishers; with less evidence the agent declines to write one rather than stretch thin
+        reporting to fill the template. A senior CRTP administrator reviews every update, its fact check and its sources, and may correct it,
+        before approving it. Only an approved bi-weekly update counts on the heat map, labelled as AI-proposed and reviewed by CRTP. Quarterly
+        updates summarise approved updates and do not add to the heat map, so nothing is counted twice.
+      </p>
     </section>
 
     <!-- Outlook -->
@@ -295,6 +338,7 @@ $pageDesc  = 'How the Tafakari conflict heat map turns reports into 1-10 intensi
       <h2 class="mb-3">Limitations</h2>
       <ul class="list-disc pl-6 space-y-1">
         <li>Scores are structured expert judgements, not measurements. They are only as complete as the reporting behind them.</li>
+        <li>A fact check can confirm only what public sources report. Where access is restricted, figures may be incomplete even when sources agree.</li>
         <li>A country or category with no score has no published report in that cycle; it does not mean the situation is calm.</li>
         <li>Coverage favours places and issues that are widely reported. Local and faith-based sources are sought to offset this.</li>
         <li>Changes to the weights apply to every cycle, past ones included, so comparisons stay like for like.</li>

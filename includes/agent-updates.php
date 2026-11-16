@@ -1028,7 +1028,8 @@ function agent_update_xlsx(array $u): string {
             foreach ($sec['tables'] as $tkey => [$heading, $columns]) {
                 $rows = $u['data'][$key][$tkey] ?? [];
                 $rows2 = array_map(fn($r) => $r + ['section' => $heading], $rows);
-                $sheets['sec_' . $key] = $sheets['sec_' . $key] ?? ['name' => mb_substr(preg_replace('/^[A-E]\) /', '', $sec['label']), 0, 31), 'cols' => [['label' => 'Table', 'width' => 32], ['label' => 'Field', 'width' => 22], ['label' => 'Value', 'width' => 60], ['label' => 'Sources', 'width' => 10]], 'rows' => []];
+                $sheetNames = ['conflict_security' => 'Conflict and security', 'peace_political' => 'Peace and political', 'humanitarian' => 'Humanitarian', 'actors' => 'Actors and engagement'];
+                $sheets['sec_' . $key] = $sheets['sec_' . $key] ?? ['name' => $sheetNames[$key] ?? mb_substr($sec['label'], 0, 31), 'cols' => [['label' => 'Table', 'width' => 32], ['label' => 'Field', 'width' => 22], ['label' => 'Value', 'width' => 60], ['label' => 'Sources', 'width' => 10]], 'rows' => []];
                 foreach ($rows as $i => $r) {
                     foreach ($columns as $k => $label) $sheets['sec_' . $key]['rows'][] = [$heading . ' #' . ($i + 1), $label, ['v' => (string) ($r[$k] ?? ''), 's' => 'wrap'], agent_update_cites($r['sources'] ?? [])];
                 }
