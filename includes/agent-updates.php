@@ -188,6 +188,7 @@ function agent_update_task_message(string $country, array $window, ?array $previ
     if ($previous) {
         $msg .= "\nCRTP's previous update for this country ({$previous['label']}) scored the overall situation {$previous['overall']}/10. Its executive summary, for continuity (report what has changed since, and do not repeat it):\n{$previous['summary']}\n";
     }
+    $msg .= agent_feedback_block(agent_reviewer_feedback($country));
     return $msg . "\nResearch this country for the monitoring window, complete every section of the template that the sources support, fact-check the key claims, and submit the update with submit_country_update.";
 }
 
@@ -272,7 +273,10 @@ function agent_update_tools(array $agentSettings): array {
  * @param array<string,bool> $seenUrls
  * @return array{ok:bool,reason?:string,update?:array}
  */
-function agent_update_validate(array $raw, array $seenUrls): array {
+function agent_update_validate(array $raw, array $seenUrls, ?string $windowStart = null): array {
+    // Rows dated outside the monitoring window are dropped (a few days' grace for late reporting)
+    $earliest = $windowStart !== null ? date('Y-m-d', strtotime($windowStart . ' -3 days')) : null;
+    $outOfWindow = 0;
     // Candidate sources by the model's 1-based position; repeats share one entry
     $candidates = []; $byKey = []; $canonical = [];
     foreach (array_values((array) ($raw['sources'] ?? [])) as $i => $s) {
@@ -307,7 +311,7 @@ function agent_update_validate(array $raw, array $seenUrls): array {
     };
     $text = fn(mixed $v, int $max) => agent_clean_text(agent_article_clean_para((string) $v), $max);
 
-    $rows = function (mixed $list, array $columns, array $enums = []) use ($cite, $text): array {
+    $rows = function (mixed $list, array $columns, array $enums = []) use ($cite, $text, $earliest, &$outOfWindow): array {
         $out = [];
         foreach ((array) $list as $r) {
             if (!is_array($r)) continue;
@@ -317,6 +321,11 @@ function agent_update_validate(array $raw, array $seenUrls): array {
                 if (isset($enums[$k]) && !in_array($v, $enums[$k], true)) $v = 'stable';
                 if ($v !== '' && !isset($enums[$k])) $filled = true;
                 $row[$k] = $v;
+            }
+            if ($earliest !== null && isset($row['date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $row['date'])
+                && ($row['date'] < $earliest || $row['date'] > date('Y-m-d'))) {
+                $outOfWindow++;
+                continue;   // checked before citing, so its sources are not listed for nothing
             }
             $row['sources'] = $cite($r['sources'] ?? []);
             if (!$filled || !$row['sources']) continue;   // nothing said, or nothing it can be checked against
@@ -390,6 +399,7 @@ function agent_update_validate(array $raw, array $seenUrls): array {
         'sources'          => $sources,
         'sourceCount'      => count($hosts),
         'confidence'       => in_array($conf, ['low', 'medium', 'high'], true) ? $conf : 'low',
+        'outOfWindow'      => $outOfWindow,
     ]];
 }
 
@@ -483,8 +493,9 @@ function agent_update_run(string $country, ?string $userId = null, mixed $transp
         $raw   = $done['submission'];
         $notes = agent_clean_text((string) ($raw['notes'] ?? ''), 2000);
         if (!empty($raw['sources'])) {
-            $v = agent_update_validate($raw, $done['seenUrls']);
+            $v = agent_update_validate($raw, $done['seenUrls'], $w['start']);
             if ($v['ok']) {
+                if ($v['update']['outOfWindow'] > 0) $notes = trim($notes . "\n\n" . $v['update']['outOfWindow'] . ' row(s) dated outside the monitoring window were removed.');
                 $out['updateId'] = agent_update_store($runId, 'CYCLE', $country, $w['cycleStart'], $w['cycleEnd'], $v['update'], $notes);
                 $out['message']  = "Update drafted for {$country}, {$w['label']}: overall " . $v['update']['overallScore'] . '/10 (' . hm_tier_label($v['update']['overallScore']) . '), '
                                  . count($v['update']['factCheck']) . ' fact-check entries, ' . $v['update']['sourceCount'] . ' independent publishers.';

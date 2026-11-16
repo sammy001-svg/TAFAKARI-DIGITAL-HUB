@@ -12,11 +12,18 @@ function agent_nav(string $active, bool $isSuper): void {
         $links['runs']     = ['Activity', '/admin/agent?tab=runs'];
         $links['settings'] = ['Settings', '/admin/agent?tab=settings'];
     }
+    require_once __DIR__ . '/agent-health.php';
+    $banner = $isSuper ? agent_health_banner() : null;
     ?>
     <nav class="tk-segment" aria-label="Tafakari Agent" style="margin-bottom:20px;flex-wrap:wrap">
       <?php foreach ($links as $key => [$label, $href]): ?>
         <a href="<?= h($href) ?>" class="<?= $key === $active ? 'is-active' : '' ?>"<?= $key === $active ? ' aria-current="page"' : '' ?>><?= h($label) ?></a>
       <?php endforeach; ?>
     </nav>
+    <?php if ($banner): ?>
+      <div class="tk-alert <?= $banner['level'] === 'danger' ? 'tk-alert--danger' : 'tk-alert--warn' ?>" role="status" style="margin-bottom:20px">
+        <span><?= h($banner['text']) ?> <a href="/admin/agent?tab=settings" class="font-bold underline">Settings</a> · <a href="/admin/agent?tab=runs" class="font-bold underline">Activity</a></span>
+      </div>
+    <?php endif; ?>
     <?php
 }

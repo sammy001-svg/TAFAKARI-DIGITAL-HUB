@@ -82,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!agent_sdk_available()) $back('settings', 'Claude API key saved.');
                 // get_setting() caches per request, so test the values just entered
                 $check = agent_check_connection($newKey !== '' ? $newKey : null, $ws);
+                if ($check['ok']) agent_health_reset();   // a pause for a key problem ends when a working key is saved
                 $back('settings', $check['ok'] ? 'Saved. ' . $check['message'] . ' The agent is ready.' : 'Saved, but Claude did not accept it. ' . $check['message'], !$check['ok']);
 
             case 'remove_api_key':
@@ -409,6 +410,22 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
         </label>
         <button type="submit" class="ag-btn text-white" style="background:#750B25">Save</button>
       </form>
+      <?php $_cs = assistant_stats(30); $_rated = $_cs['helpful'] + $_cs['notHelpful']; ?>
+      <div class="tk-card tk-card--pad space-y-3 text-sm text-slate-700">
+        <h2 class="font-outfit font-black text-base text-slate-900">Chat on the website: last 30 days</h2>
+        <?php if ($_cs['questions'] === 0): ?>
+          <p class="text-xs text-slate-500">No questions yet.</p>
+        <?php else: ?>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div><p class="font-outfit font-black text-2xl text-slate-900"><?= (int) $_cs['questions'] ?></p><p class="text-xs text-slate-500">messages</p></div>
+            <div><p class="font-outfit font-black text-2xl text-slate-900"><?= $_cs['questions'] ? round(100 * $_cs['answered'] / $_cs['questions']) : 0 ?>%</p><p class="text-xs text-slate-500">answered from your published work</p></div>
+            <div><p class="font-outfit font-black text-2xl text-slate-900"><?= $_rated ? round(100 * $_cs['helpful'] / $_rated) . '%' : '–' ?></p><p class="text-xs text-slate-500">rated helpful<?= $_rated ? ' (' . $_rated . ' rating' . ($_rated === 1 ? '' : 's') . ')' : '' ?></p></div>
+          </div>
+          <?php if ($_cs['notFound'] > 0): ?><p class="text-xs text-slate-500"><?= (int) $_cs['notFound'] ?> message<?= $_cs['notFound'] == 1 ? '' : 's' ?> could not be answered from published work, or were greetings. Publishing more on frequently asked topics helps.</p><?php endif; ?>
+          <?php if ($_cs['failed'] > 0): ?><p class="text-xs" style="color:#9A5B0F"><?= (int) $_cs['failed'] ?> message<?= $_cs['failed'] == 1 ? '' : 's' ?> failed to get an answer. Activity and the Status card show why.</p><?php endif; ?>
+        <?php endif; ?>
+        <p class="text-xs text-slate-400">Conversations are never stored: only these counts, and each visitor's helpful or not helpful rating.</p>
+      </div>
     </div>
 
     <div class="space-y-6">
@@ -449,8 +466,23 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
         <?php elseif (!$keyOk): ?>
           <p>Add your Claude API key to finish.</p>
         <?php endif; ?>
+        <?php $_h = agent_health_status(); $_plan = $settings['enabled'] ? (agent_auto_plan(false)[0] ?? null) : null;
+              $_planLabel = ['reports' => 'check the report drafts', 'quarterly' => 'write a quarterly country update', 'update' => 'write the next country monitoring update',
+                             'videos' => 'look for videos', 'article' => 'write an article', 'finding' => 'look for new developments'][$_plan] ?? null; ?>
+        <?php if ($_h['paused']): ?>
+          <p class="font-bold" style="color:<?= $_h['kind'] === 'account' ? '#B91C1C' : '#9A5B0F' ?>">Paused until <?= h(date('j M, H:i', strtotime((string) $_h['until']))) ?>.</p>
+          <p class="text-xs text-slate-600"><?= h($_h['reason']) ?></p>
+          <p class="text-xs text-slate-500"><?= $_h['kind'] === 'account' ? 'Fix the cause, then press Run now to restart it straight away.' : 'This is usually temporary. It will try again by itself, or press Run now.' ?></p>
+        <?php elseif (!$settings['enabled']): ?>
+          <p>The agent is switched off.</p>
+        <?php else: ?>
+          <p><strong style="color:#047857">Working normally.</strong>
+            <?php if ($_h['lastOk'] !== ''): ?>Last completed work <?= h(format_relative_time($_h['lastOk'])) ?>.<?php endif; ?>
+            <?= $_planLabel ? 'Next, it will ' . h($_planLabel) . '.' : 'Today\'s work is done.' ?></p>
+          <?php if ($_h['failures'] > 0): ?><p class="text-xs" style="color:#9A5B0F"><?= (int) $_h['failures'] ?> recent run<?= $_h['failures'] == 1 ? '' : 's' ?> failed; it keeps trying. Latest: <?= h(preg_replace('/^[^·]*· /', '', $_h['lastError'])) ?></p><?php endif; ?>
+        <?php endif; ?>
         <?php if ($_auto['running']): ?>
-          <p>The hourly job is running. Last checked in <?= h(format_relative_time($_auto['lastTick'])) ?>.</p>
+          <p class="text-xs text-slate-500">The hourly job is running. Last checked <?= h(format_relative_time($_auto['lastTick'])) ?>.</p>
         <?php else: ?>
           <p>To let it run by itself, add this one line in cPanel &rarr; Cron Jobs, once:</p>
           <code class="block p-2 rounded-lg bg-slate-50 break-all text-xs">0 * * * * /usr/local/bin/php <?= h(dirname(__DIR__)) ?>/cron/agent-auto.php</code>

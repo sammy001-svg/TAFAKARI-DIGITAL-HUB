@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
-/** POST /api/assistant - public question endpoint for the Ask Tafakari widget. */
+/**
+ * POST /api/assistant - the public chat assistant.
+ *   {question, history, page, token}          -> {ok, answer, sources, suggestions, ref}
+ *   {action: "feedback", ref, rating, token}   -> {ok}   rating 1 (helpful) or -1
+ */
 require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
@@ -17,8 +21,14 @@ if (empty($_SESSION['assistant_csrf']) || !hash_equals($_SESSION['assistant_csrf
 }
 // The model call can take a while: do not hold the visitor's session lock
 session_write_close();
-@set_time_limit(120);
 
 $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');   // never a client-supplied header
-$r  = assistant_answer((string) ($body['question'] ?? ''), assistant_ip_hash($ip), null, (array) ($body['history'] ?? []));
-json_response(['ok' => $r['ok'], 'answer' => $r['answer'], 'sources' => $r['sources']]);
+
+if (($body['action'] ?? '') === 'feedback') {
+    json_response(['ok' => assistant_feedback((string) ($body['ref'] ?? ''), assistant_ip_hash($ip), (int) ($body['rating'] ?? 0))]);
+}
+
+@set_time_limit(120);
+$page = (string) ($body['page'] ?? '');
+$r = assistant_answer((string) ($body['question'] ?? ''), assistant_ip_hash($ip), null, (array) ($body['history'] ?? []), mb_substr($page, 0, 300));
+json_response(['ok' => $r['ok'], 'answer' => $r['answer'], 'sources' => $r['sources'], 'suggestions' => $r['suggestions'], 'ref' => $r['ref']]);

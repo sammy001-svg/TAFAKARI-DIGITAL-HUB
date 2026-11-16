@@ -13,6 +13,7 @@ require_once __DIR__ . '/reports.php';
 require_once __DIR__ . '/agent-articles.php';
 require_once __DIR__ . '/agent-videos.php';
 require_once __DIR__ . '/agent-updates.php';
+require_once __DIR__ . '/agent-health.php';
 
 const AGENT_AUTO_UPDATES_PER_DAY  = 2;   // country monitoring updates: every monitored country once per cycle
 const AGENT_AUTO_ARTICLES_PER_DAY = 2;
@@ -56,15 +57,29 @@ function agent_auto_plan(bool $force): array {
 }
 
 /**
- * Do one piece of work.
+ * Do one piece of work, looking after the agent's health around it: runs the
+ * server killed are closed, a paused agent waits, and the outcome is recorded
+ * so repeated problems pause it and alert the super admins once.
  *
- * @param bool $force true for the "Run now" button: ignores the off switch and daily limits
+ * @param bool $force true for the "Run now" button: ignores the off switch, a pause and daily limits
  * @return array{status:string,task:?string,message:string}
  */
 function agent_auto_tick(bool $force = false, mixed $transporter = null): array {
     if (!$force) set_setting('agent_auto_last_tick', date('Y-m-d H:i:s'));
+    agent_health_cleanup();
+    if (!$force && !agent_settings()['enabled']) return ['status' => 'IDLE', 'task' => null, 'message' => 'The agent is switched off.'];
+    $h = agent_health_status();
+    if (!$force && $h['paused']) {
+        return ['status' => 'IDLE', 'task' => null, 'message' => 'Paused until ' . $h['until'] . '. ' . $h['reason']];
+    }
+    $r = agent_auto_work($force, $transporter);
+    agent_health_record($r);
+    return $r;
+}
+
+/** The work itself: the first task in the plan that has something to do. */
+function agent_auto_work(bool $force, mixed $transporter): array {
     $settings = agent_settings();
-    if (!$force && !$settings['enabled'])       return ['status' => 'IDLE', 'task' => null, 'message' => 'The agent is switched off.'];
     if (!agent_sdk_available())                 return ['status' => 'FAILED', 'task' => null, 'message' => 'The Claude software (the vendor folder) is missing from the server. Deploy the latest code from git.'];
     if (agent_api_key() === '')                 return ['status' => 'FAILED', 'task' => null, 'message' => 'Add your Claude API key in Tafakari Agent > Settings.'];
     ensure_agent_tables();

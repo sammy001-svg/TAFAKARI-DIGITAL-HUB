@@ -27,6 +27,17 @@ function ensure_assistant_table(): void {
     static $checked = false;
     if ($checked) return;
     $checked = true;
+    // v2: visitors can rate an answer (migrations/013)
+    if (get_setting('schema_assistant_v1', '') === 'ok' && get_setting('schema_assistant_v2', '') === '') {
+        try {
+            set_setting('schema_assistant_v2', 'attempted');
+            db()->exec('ALTER TABLE `AssistantLog` ADD COLUMN `rating` TINYINT NULL');
+            set_setting('schema_assistant_v2', 'ok');
+        } catch (Throwable $e) {
+            error_log('[ensure_assistant_table] ' . $e->getMessage() . ' - apply migrations/013 manually.');
+            set_setting('schema_assistant_v2', 'failed');
+        }
+    }
     if (get_setting('schema_assistant_v1', '') !== '') return;
     try {
         set_setting('schema_assistant_v1', 'attempted');
@@ -41,11 +52,13 @@ function ensure_assistant_table(): void {
             `cacheReadTokens`  INT NOT NULL DEFAULT 0,
             `cacheWriteTokens` INT NOT NULL DEFAULT 0,
             `costUsd`      DECIMAL(10,4) NOT NULL DEFAULT 0,
+            `rating`       TINYINT NULL,
             PRIMARY KEY (`id`),
             KEY `AssistantLog_createdAt_idx` (`createdAt`),
             KEY `AssistantLog_ip_idx` (`ipHash`, `createdAt`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         set_setting('schema_assistant_v1', 'ok');
+        set_setting('schema_assistant_v2', 'ok');   // created with the rating column
     } catch (Throwable $e) {
         error_log('[ensure_assistant_table] ' . $e->getMessage() . ' - apply migrations/009 manually.');
         set_setting('schema_assistant_v1', 'failed');
@@ -213,6 +226,103 @@ function assistant_sources(string $question): array {
     return $out;
 }
 
+/**
+ * The published item on the page the visitor is reading, if any, so "explain
+ * this report" works. Only published material, looked up by its own id: the
+ * path is never trusted beyond choosing which table to read.
+ */
+function assistant_page_source(string $path): ?array {
+    $path = (string) parse_url($path, PHP_URL_PATH);
+    if (!preg_match('#^/(reports|documents|news|policy-briefs)/([A-Za-z0-9_-]{1,191})/?$#', $path, $m)) {
+        return $path === '/heatmap' || $path === '/heatmap/' ? assistant_heatmap_source() : null;
+    }
+    try {
+        if ($m[1] === 'reports') {
+            $st = db()->prepare("SELECT id, title, narrative, periodEnd, snapshot FROM AnalysisReport WHERE id = ? AND status = 'PUBLISHED' LIMIT 1");
+            $st->execute([$m[2]]);
+            $r = $st->fetch();
+            if (!$r) return null;
+            $snap = json_decode((string) $r['snapshot'], true) ?: [];
+            $rank = array_map(fn($x) => "{$x['rank']}. {$x['name']} {$x['overall']}/10 ({$x['tier']}, change {$x['change']})", array_slice($snap['ranking'] ?? [], 0, 12));
+            $text = trim((string) ($r['narrative'] ?? ''));
+            if ($rank) $text .= "\n\nRanking by overall score:\n" . implode("\n", $rank);
+            return ['title' => $r['title'], 'url' => '/reports/' . $r['id'], 'date' => (string) $r['periodEnd'], 'text' => mb_substr($text, 0, 3500), 'current' => true];
+        }
+        $type = ['documents' => 'DOCUMENT', 'news' => 'ARTICLE', 'policy-briefs' => 'POLICY_BRIEF'][$m[1]];
+        $st = db()->prepare("SELECT id, title, description, content, createdAt FROM Post WHERE id = ? AND type = ? AND status = 'PUBLISHED' LIMIT 1");
+        $st->execute([$m[2], $type]);
+        $p = $st->fetch();
+        if (!$p) return null;
+        $body = trim(preg_replace('/\s+/u', ' ', strip_tags((string) ($p['content'] ?? ''))) ?? '');
+        return ['title' => $p['title'], 'url' => '/' . $m[1] . '/' . $p['id'], 'date' => substr((string) $p['createdAt'], 0, 10),
+                'text' => mb_substr(trim($p['description'] . ' ' . $body), 0, 3500), 'current' => true];
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+/** The latest monitoring cycle's countries, ranked, for a visitor on the heat map. */
+function assistant_heatmap_source(): ?array {
+    try {
+        $all = report_load_scored(date('Y-m-d', strtotime('-70 days')));
+        if (!$all) return null;
+        $cycle = end($all)['cycle'];
+        foreach ($all as $r) if ($r['cycle'] > $cycle) $cycle = $r['cycle'];
+        $cells = hm_build_cells($all, $cycle)['country'];
+        $rows = [];
+        foreach ($cells as $c => $byCat) {
+            if (!$byCat) continue;
+            $avg = round(array_sum(array_column($byCat, 'score')) / count($byCat), 1);
+            arsort($byCat);
+            $rows[] = [$avg, "{$c}: overall {$avg}/10 (" . hm_tier_label($avg) . ')'];
+        }
+        usort($rows, fn($a, $b) => $b[0] <=> $a[0]);
+        $b = hm_cycle_bounds($cycle);
+        return ['title' => 'Heat map, ' . $b['label'], 'url' => '/heatmap?cycle=' . $b['start'], 'date' => $b['end'], 'current' => true,
+                'text' => "The heat map the visitor is looking at. Countries ranked by overall score (mean of their category scores, 1-10):\n" . implode("\n", array_column(array_slice($rows, 0, 20), 1))];
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * Record a visitor's rating of an answer: 1 helpful, -1 not helpful. Only the
+ * visitor who asked (same day's address hash), within a day.
+ */
+function assistant_feedback(string $ref, string $ipHash, int $rating): bool {
+    if (!in_array($rating, [1, -1], true) || !preg_match('/^[A-Za-z0-9_-]{6,191}$/', $ref)) return false;
+    try {
+        ensure_assistant_table();
+        $st = db()->prepare("UPDATE AssistantLog SET rating = ? WHERE id = ? AND ipHash = ? AND createdAt >= ? AND status IN ('OK','NOT_FOUND','REFUSED')");
+        $st->execute([$rating, $ref, $ipHash, date('Y-m-d H:i:s', time() - 86400)]);
+        return $st->rowCount() === 1;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/** Use of the chat over recent days, for Settings. Counts only: no conversation is stored. */
+function assistant_stats(int $days = 30): array {
+    $out = ['questions' => 0, 'answered' => 0, 'notFound' => 0, 'failed' => 0, 'helpful' => 0, 'notHelpful' => 0];
+    try {
+        $since = date('Y-m-d H:i:s', time() - $days * 86400);
+        $st = db()->prepare('SELECT status, COUNT(*) AS n FROM AssistantLog WHERE createdAt >= ? GROUP BY status');
+        $st->execute([$since]);
+        foreach ($st->fetchAll() as $r) {
+            $out['questions'] += (int) $r['n'];
+            if ($r['status'] === 'OK') $out['answered'] = (int) $r['n'];
+            if ($r['status'] === 'NOT_FOUND') $out['notFound'] = (int) $r['n'];
+            if ($r['status'] === 'FAILED') $out['failed'] = (int) $r['n'];
+        }
+        $st = db()->prepare('SELECT SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS up, SUM(CASE WHEN rating = -1 THEN 1 ELSE 0 END) AS down FROM AssistantLog WHERE createdAt >= ?');
+        $st->execute([$since]);
+        $r = $st->fetch();
+        $out['helpful'] = (int) ($r['up'] ?? 0);
+        $out['notHelpful'] = (int) ($r['down'] ?? 0);
+    } catch (Throwable $e) {}
+    return $out;
+}
+
 /** What the visitor's earlier messages may contribute: plain text, recent, bounded. */
 function assistant_clean_history(array $history): array {
     $out = [];
@@ -234,7 +344,9 @@ function assistant_project_facts(): string {
         foreach (about_list('programmes') as $p) if (is_array($p) && !empty($p['title'])) $f[] = 'Programme: ' . $clip((string) $p['title']) . ' - ' . $clip((string) ($p['desc'] ?? ''));
     } catch (Throwable $e) {}
     $f[] = 'Contact: Riara Road, off Ngong Road, Nairobi, Kenya. Email crtp.communications@hekima.ac.ke. Phone +254 729 755905. There is also a Contact page.';
-    $f[] = 'On the website: the Heat Map shows conflict intensity by country and category; Analysis Reports has bi-weekly and quarterly reports and outlooks; News, Documents, Policy Briefs, Podcasts, Videos and Gallery hold published work; Methodology explains how scores are made, each from 1 to 10, where 10 is severe or critical, in two-week monitoring cycles, reviewed by CRTP analysts.';
+    $f[] = 'On the website: the Heat Map shows conflict intensity by country and category; Analysis Reports has bi-weekly and quarterly reports and outlooks, each ranking the countries by score; News, Documents, Policy Briefs, Podcasts, Videos and Gallery hold published work; Methodology explains how scores are made, each from 1 to 10, where 10 is severe or critical, in two-week monitoring cycles, reviewed by CRTP analysts.';
+    $f[] = 'Each monitoring cycle CRTP publishes a Country Conflict and Peace Monitoring Update for each monitored country, in the Documents library: an overall score, key developments, conflict and security, the peace and political track, the humanitarian situation, the actors involved, early warning and early response indicators, analysis and an executive summary, with a fact check of the key claims. They are researched with AI assistance and reviewed and approved by CRTP.';
+    $f[] = 'Downloads: the heat map, every analysis report and every country update can be downloaded as a Word document (under ten pages) or an Excel workbook, from buttons on their pages.';
     return str_replace('Training and Policy', 'Training and Publications', implode("\n", $f));
 }
 
@@ -244,7 +356,13 @@ function assistant_system_prompt(): string {
 You are Tafakari, the friendly chat assistant on the website of the Tafakari Digital Hub, run by the Centre for Research, Training and Publications (CRTP) at Hekima University College in Nairobi. "Tafakari" means "to reflect" in Kiswahili.
 
 ## How you talk
-Be warm, natural and respectful, like a helpful member of CRTP's team welcoming a guest. Greet people who greet you and welcome them, and respond kindly to thanks and goodbyes. Keep replies short, under 120 words unless the visitor asks for detail, in plain text with short paragraphs and no Markdown. If a question is unclear, ask one simple question back. You are an AI assistant: say so if asked, and never claim to be a person.
+Be warm, natural and respectful, like a helpful member of CRTP's team welcoming a guest. Greet people who greet you and welcome them, and respond kindly to thanks and goodbyes. Lead with the direct answer, then the detail. Keep replies short, under 120 words unless the visitor asks for more. Use short paragraphs separated by a blank line; for three or more parallel points, use a list with each item on its own line starting with "- ". Use no other formatting: no headings, bold, tables or links. If a question is unclear, ask one simple question back. You are an AI assistant: say so if asked, and never claim to be a person.
+
+## Suggestions
+In suggestions, offer up to three short follow-up questions, under 60 characters each, in the visitor's language, that the visitor might naturally ask next and that CRTP's published work could answer. Offer none after a goodbye, or when the visitor seems distressed.
+
+## The page the visitor is on
+If a source is marked as the page the visitor is reading, questions such as "this report" or "explain this" refer to it.
 
 ## Language
 Reply in the language of the visitor's latest message, Kiswahili or English, and switch whenever they switch. Write natural, standard Kiswahili. Sources are mostly in English: translate what they say faithfully, keeping names and figures exact. If someone writes in another language, reply in English and say kindly that you can chat in English or Kiswahili.
@@ -272,8 +390,9 @@ function assistant_output_schema(): array {
             'answer'       => ['type' => 'string'],
             'found'        => ['type' => 'boolean'],
             'used_sources' => ['type' => 'array', 'items' => ['type' => 'integer']],
+            'suggestions'  => ['type' => 'array', 'items' => ['type' => 'string']],
         ],
-        'required' => ['answer', 'found', 'used_sources'],
+        'required' => ['answer', 'found', 'used_sources', 'suggestions'],
         'additionalProperties' => false,
     ];
 }
@@ -281,7 +400,10 @@ function assistant_output_schema(): array {
 /** Send one request. Shared with the readiness check. */
 function assistant_call_model(\Anthropic\Client $client, string $question, array $sources, array $history = []): mixed {
     $numbered = [];
-    foreach ($sources as $i => $s) $numbered[] = ['number' => $i + 1, 'title' => $s['title'], 'date' => $s['date'], 'text' => $s['text']];
+    foreach ($sources as $i => $s) {
+        $numbered[] = ['number' => $i + 1, 'title' => $s['title'], 'date' => $s['date']]
+                    + (!empty($s['current']) ? ['note' => 'The page the visitor is reading'] : []) + ['text' => $s['text']];
+    }
     return $client->beta->messages->create(
         model: AGENT_MODEL,
         maxTokens: ASSISTANT_MAX_TOKENS,
@@ -311,19 +433,28 @@ function assistant_clean_reply(array $reply, array $sources): array {
         }
         ksort($cited);
     }
-    return ['answer' => $answer, 'sources' => array_values($cited)];
+    // Follow-up suggestions: short plain questions, no links
+    $suggest = [];
+    foreach ((array) ($reply['suggestions'] ?? []) as $s) {
+        $s = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $s)) ?? '');
+        if ($s === '' || mb_strlen($s) > 90 || preg_match('~https?://|www\.|[<>\[\]]~i', $s)) continue;
+        if (!in_array(mb_strtolower($s), array_map('mb_strtolower', $suggest), true)) $suggest[] = $s;
+        if (count($suggest) >= 3) break;
+    }
+    return ['answer' => $answer, 'sources' => array_values($cited), 'suggestions' => $suggest];
 }
 
 /**
  * Answer one message from a visitor.
  *
- * @param array $history earlier messages, held by the visitor's browser: [{role, text}]
- * @param mixed $transporter optional PSR-18 client (tests)
- * @return array{ok:bool,answer:string,sources:array,status:string}
+ * @param array  $history earlier messages, held by the visitor's browser: [{role, text}]
+ * @param mixed  $transporter optional PSR-18 client (tests)
+ * @param string $page the path of the page the visitor is on, such as /reports/abc
+ * @return array{ok:bool,answer:string,sources:array,status:string,suggestions:array,ref:?string}
  */
-function assistant_answer(string $question, string $ipHash, mixed $transporter = null, array $history = []): array {
+function assistant_answer(string $question, string $ipHash, mixed $transporter = null, array $history = [], string $page = ''): array {
     ensure_assistant_table();
-    $reply = fn(bool $ok, string $a, string $st, array $src = []) => ['ok' => $ok, 'answer' => $a, 'sources' => $src, 'status' => $st];
+    $reply = fn(bool $ok, string $a, string $st, array $src = [], array $sug = [], ?string $ref = null) => ['ok' => $ok, 'answer' => $a, 'sources' => $src, 'status' => $st, 'suggestions' => $sug, 'ref' => $ref];
     $question = trim(strip_tags($question));
     $sw = assistant_is_swahili($question);
     $settings = assistant_settings();
@@ -348,6 +479,12 @@ function assistant_answer(string $question, string $ipHash, mixed $transporter =
         foreach (array_reverse($history) as $m) if ($m['from'] === 'visitor') { $search = $m['text'] . ' ' . $question; break; }
     }
     $sources = assistant_sources($search);
+    // The page the visitor is reading comes first, so "this report" has a number
+    if ($page !== '' && ($cur = assistant_page_source($page)) !== null) {
+        $sources = array_values(array_filter($sources, fn($s) => $s['url'] !== $cur['url']));
+        array_unshift($sources, $cur);
+        $sources = array_slice($sources, 0, ASSISTANT_MAX_SOURCES + 1);
+    }
 
     try {
         $resp = assistant_call_model(agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => ASSISTANT_HTTP_TIMEOUT, 'connect_timeout' => 10])), $question, $sources, $history);
@@ -356,7 +493,7 @@ function assistant_answer(string $question, string $ipHash, mixed $transporter =
                   'cache_read' => (int) ($u->cacheReadInputTokens ?? 0), 'cache_write' => (int) ($u->cacheCreationInputTokens ?? 0), 'searches' => 0];
         if ($resp->stopReason === 'refusal') {
             $finish('REFUSED', count($sources), $usage);
-            return $reply(true, assistant_text('refuse', $sw), 'REFUSED');
+            return $reply(true, assistant_text('refuse', $sw), 'REFUSED', [], [], $id);
         }
         $text = '';
         foreach ($resp->content as $b) if (($b->type ?? '') === 'text') $text .= $b->text;
@@ -368,7 +505,7 @@ function assistant_answer(string $question, string $ipHash, mixed $transporter =
         $clean = assistant_clean_reply($data, $sources);
         $status = !empty($data['found']) ? 'OK' : 'NOT_FOUND';
         $finish($status, count($sources), $usage);
-        return $reply(true, $clean['answer'], $status, $clean['sources']);
+        return $reply(true, $clean['answer'], $status, $clean['sources'], $clean['suggestions'], $id);
     } catch (Throwable $e) {
         error_log('[assistant] ' . get_class($e) . ': ' . $e->getMessage());
         $finish('FAILED', count($sources));

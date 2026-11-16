@@ -526,8 +526,45 @@ function agent_task_message(string $country, array $settings, array $known): str
         $msg .= "\nAlready in CRTP's review queue for this country; do not submit these again unless there is a significant new development:\n";
         foreach ($known as $k) $msg .= "- {$k['title']} ({$k['url']})\n";
     }
+    $msg .= agent_feedback_block(agent_reviewer_feedback($country));
     $msg .= "\nFind the significant developments in this window and submit them with submit_findings.";
     return $msg;
+}
+
+/**
+ * Why CRTP's reviewers rejected recent drafts, so the agent does not repeat the
+ * same mistakes. Rejections for this country come first, then recent ones from
+ * anywhere. Written by CRTP staff, so trusted; kept short.
+ *
+ * @return list<string>
+ */
+function agent_reviewer_feedback(?string $country = null, int $limit = 6): array {
+    $since = date('Y-m-d H:i:s', strtotime('-60 days'));
+    $rows = [];
+    $q = [
+        ["SELECT country AS c, reviewNotes AS n, reviewedAt AS at, 'country update' AS k FROM AgentCountryUpdate WHERE status='REJECTED' AND reviewNotes IS NOT NULL AND reviewNotes <> '' AND reviewedAt >= ? ORDER BY reviewedAt DESC LIMIT 20", true],
+        ["SELECT countries AS c, reviewNotes AS n, reviewedAt AS at, 'finding' AS k FROM AgentItem WHERE status IN ('REJECTED','DUPLICATE') AND reviewNotes IS NOT NULL AND reviewNotes <> '' AND reviewedAt >= ? ORDER BY reviewedAt DESC LIMIT 20", false],
+        ["SELECT countries AS c, reviewNotes AS n, reviewedAt AS at, 'article' AS k FROM AgentArticle WHERE status='REJECTED' AND reviewNotes IS NOT NULL AND reviewNotes <> '' AND reviewedAt >= ? ORDER BY reviewedAt DESC LIMIT 20", false],
+    ];
+    foreach ($q as [$sql, $plain]) {
+        try {
+            $st = db()->prepare($sql);
+            $st->execute([$since]);
+            foreach ($st->fetchAll() as $r) {
+                $cs = $plain ? [(string) $r['c']] : (json_decode((string) $r['c'], true) ?: []);
+                $rows[] = ['mine' => $country !== null && in_array($country, $cs, true), 'at' => (string) $r['at'],
+                           'text' => '(' . $r['k'] . ($cs ? ', ' . implode(', ', array_slice($cs, 0, 3)) : '') . ') ' . agent_clean_text((string) $r['n'], 300)];
+            }
+        } catch (Throwable $e) {}
+    }
+    usort($rows, fn($a, $b) => [$b['mine'], $b['at']] <=> [$a['mine'], $a['at']]);
+    return array_values(array_unique(array_column(array_slice($rows, 0, $limit), 'text')));
+}
+
+/** The feedback as a paragraph of the task message ('' when there is none). */
+function agent_feedback_block(array $feedback): string {
+    if (!$feedback) return '';
+    return "\nCRTP's reviewers rejected some recent drafts for these reasons. Avoid repeating these problems:\n- " . implode("\n- ", $feedback) . "\n";
 }
 
 /** The web search and web fetch tools, under the configured domain rules. */
