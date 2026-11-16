@@ -88,7 +88,7 @@ if ($_askShow):
 
   var TEXT = {
     en: {
-      fab: 'Chat with us', resume: 'Continue chat', fresh: 'New reply', sub: READY ? 'Online · English and Kiswahili' : 'Offline just now',
+      fab: 'Chat with us', resume: 'Continue chat', fresh: 'New reply', sub: READY ? 'Online · AI assistant' : 'Offline just now',
       lang: 'SW', langLabel: 'Badilisha kwenda Kiswahili', send: 'Send', hint: 'Ask about CRTP, our reports or the heat map…', you: 'Your message',
       min: 'Minimise chat', close: 'End chat', teaser: 'Hello! Welcome to Tafakari. Can I help you today?',
       note: 'AI can make mistakes, so check the sources. Please don’t share personal details. Not for emergencies.', privacy: 'Privacy', human: 'Contact CRTP', reset: 'New chat',
@@ -99,7 +99,7 @@ if ($_askShow):
       offline: 'Hello, and welcome to Tafakari! Our assistant is resting just now. You can still reach CRTP by email at crtp.communications@hekima.ac.ke or through our Contact page.', contact: 'Contact CRTP'
     },
     sw: {
-      fab: 'Zungumza nasi', resume: 'Endelea kuzungumza', fresh: 'Jibu jipya', sub: READY ? 'Mtandaoni · Kiswahili na Kiingereza' : 'Hapatikani kwa sasa',
+      fab: 'Zungumza nasi', resume: 'Endelea kuzungumza', fresh: 'Jibu jipya', sub: READY ? 'Mtandaoni · Msaidizi wa AI' : 'Hapatikani kwa sasa',
       lang: 'EN', langLabel: 'Switch to English', send: 'Tuma', hint: 'Uliza kuhusu CRTP, ripoti zetu au ramani…', you: 'Ujumbe wako',
       min: 'Punguza', close: 'Maliza mazungumzo', teaser: 'Habari! Karibu Tafakari. Naweza kukusaidia leo?',
       note: 'AI inaweza kukosea, tafadhali hakiki vyanzo. Usitoe taarifa zako binafsi. Si kwa dharura.', privacy: 'Faragha', human: 'Wasiliana na CRTP', reset: 'Mazungumzo mapya',
@@ -237,7 +237,8 @@ if ($_askShow):
     });
     log.appendChild(row);
   }
-  function bottom() { log.scrollTop = log.scrollHeight; }
+  // Again once fonts and layout settle, so the newest message is fully in view
+  function bottom() { log.scrollTop = log.scrollHeight; setTimeout(function () { log.scrollTop = log.scrollHeight; }, 120); }
 
   function render() {
     log.textContent = '';
