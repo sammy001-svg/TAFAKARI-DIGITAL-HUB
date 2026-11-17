@@ -43,6 +43,8 @@ includes/
   agent-videos.php        Video finder
   agent-auto.php          The hourly plan: what the agent does next
   assistant.php           Public chat assistant (English, French and Kiswahili)
+  issue-categories.php    Several issue categories per item: storage, display, the shared form field
+  agent-classify.php      "Suggest with AI": proposes a document's issue categories
 migrations/               SQL for each schema change, numbered
 docs/admin-guide.md       Guide for the CRTP team
 ```
@@ -104,6 +106,10 @@ The agent uses `claude-opus-5-5` with adaptive thinking, the `web_search_2026020
 
 - **Analysis reports** freeze the heat-map figures for a period and scope (all countries, a region or a country) as a JSON snapshot. That snapshot includes the comparative ratings (a ranking by overall score, with change in score and rank). A published report never changes.
 - **Downloads.** The heat map, every report and every country update come as Word and Excel. Word versions are trimmed to under ten pages by `docx_fit_pages()`: optional tables shorten first, and the document says what was shortened. Excel workbooks always contain everything.
+
+## Issue categories
+
+`Post.issueCategory` holds a comma-separated list, main category first (`A,B`); public filters use `FIND_IN_SET`. Read and write it only through [includes/issue-categories.php](includes/issue-categories.php): `post_issue_categories()`, `issue_categories_from_post()`, `issue_category_pills()` and the shared form field `issue_category_field()`, whose **Suggest with AI** button calls `/api/classify` (signed-in staff, page token; it suggests and saves nothing). AI articles and videos keep their extra categories in a `categories` column (migrations/014, added automatically).
 
 ## Heat-map taxonomy
 

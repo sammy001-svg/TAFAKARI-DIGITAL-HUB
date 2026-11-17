@@ -104,6 +104,16 @@ Word documents are kept **under ten pages**. When there is more data than fits, 
 
 A draft's Word file is marked "DRAFT" at the top. Only published reports and updates can be downloaded from the public site.
 
+## Issue categories
+
+A document, article, policy brief, podcast or video can belong to **several issue categories**. On every content form, each category is a tick-box: tick all that the item addresses. The first one you tick is its **main** category (marked "main"); it leads wherever only one can be shown.
+
+**Suggest with AI** reads the title, summary and text and ticks the categories that fit, each with a short reason. Check the suggestion, change it if needed, or press **Undo**. Nothing is saved until you submit the form. The button appears once the Claude API key is set up.
+
+The Tafakari Agent also tags what it drafts with every category it addresses: country updates and findings from their scores, and articles and videos from its own reading. On an AI article's review page the categories are ticked for you to confirm before publishing.
+
+On the heat map, a document appears under the dot of each of its categories. Its summary shows all of them, with the score for each and the category of the dot you clicked highlighted.
+
 ## Heat-map categories and elements
 
 Scores are given to the elements of five categories. Two elements were added from the template:
