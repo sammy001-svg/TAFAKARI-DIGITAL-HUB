@@ -120,10 +120,13 @@ They are added to the saved configuration automatically. Super admins can rename
 - **Agent on:** switches the agent's automatic work on or off.
 - **Chat button on the website:** shows or hides the public chat assistant.
 - **Claude API key:** paste the key and choose **Save and test**. It should confirm that the agent is ready. Leave Workspace ID blank unless Anthropic asks for one.
-- **Status:** shows whether the hourly job is running. If it is not, it shows the one line to add in cPanel under Cron Jobs. It also shows the **software version**, so you can confirm a deploy reached the server.
-- **Run now:** makes the agent do one piece of work immediately (usually the next country update).
+- **Status:** shows whether the agent is working normally or paused, and whether the hourly job is running. If it is not, it shows the one line to add in cPanel under Cron Jobs. It also shows the **software version**, so you can confirm a deploy reached the server.
+- **Run now:** starts one piece of work immediately (usually the next country update) and takes you to **Activity**, which refreshes itself until the work is done, usually one to five minutes. You can leave the page meanwhile. If Run now is greyed out, the red box at the top of Settings says why.
+- **Check everything:** tests each part the agent and the website chat need: PHP, the Claude software, the database, the API key, the connection, the account's credits, web search and the chat. Every problem it finds comes with what to do. Run it after saving a key, adding credits or deploying an update. It makes a few small test requests to Claude.
 
 **Activity** lists every piece of work the agent has done, with any error.
+
+If something stops the agent or the chat from working at all, a red box at the top of Settings names the problem and the fix. While it is there, Run now is greyed out and visitors see the chat as offline, with CRTP's contact details instead.
 
 ### What the agent does each day
 
@@ -145,7 +148,13 @@ The agent runs on Anthropic's API, which is paid from prepaid credits in the Ant
 
 - **A page shows "Something went wrong" with a reference code.** Note the code. The full technical detail is in the server's error log under the same code (cPanel > Metrics > Errors, or the `error_log` file in the site folder). Send it to your developer.
 - **Settings says Claude did not accept the key.** Read the message: it gives Anthropic's reason. The usual fix is to create a key inside a workspace in the Anthropic Console (under API keys, not Admin keys), paste it, leave Workspace ID blank, and save it again.
-- **Activity says the account has no API credits.** The key is fine. Add credits in the Anthropic Console under Plans & Billing (see above).
+- **Run now is greyed out, or the website chat says it is offline.** Open **Tafakari Agent > Settings**: the red box at the top says why. Then press **Check everything**. The most common causes:
+  - *A key is saved but the server can no longer read it.* The key is stored encrypted using `APP_SECRET` and the database password in `config.php`. If either changes, paste the key again and click **Save and test**.
+  - *The Claude software is missing.* The code has not been fully deployed: in cPanel > Git Version Control, click **Update from Remote**, then **Deploy HEAD Commit**.
+  - *No key is saved.* Paste it and click **Save and test**.
+- **Activity says the account has no API credits.** The key is fine. Add credits in the Anthropic Console under Plans & Billing (see above), then press **Check everything**. Once Claude answers, the agent carries on by itself.
+- **Check everything says web search is not working.** The agent's research needs web search, which an organisation's admin can switch off. In the Anthropic Console, open Settings > Privacy and make sure web search is enabled, then check again.
+- **The agent has paused.** After an account problem (no credits, a rejected key) it pauses for six hours instead of failing every hour, and emails the super admins once. Fix the cause, then press **Check everything** or **Run now**, and it restarts straight away.
 - **A country has no update this cycle.** The agent writes about two a day, so the last countries arrive near the end of the cycle. Activity shows whether it declined a country for lack of reliable reporting. A super admin can click **Write now** to try again.
 - **A download fails with "The file could not be created".** The server needs PHP's zip extension. Ask your host to enable it.
 - **A fix does not seem to take effect.** Check the **Software version** at the bottom of Settings > Status. If it is older than the version your developer gave you, the new code has not reached the server: deploy again in cPanel > Git Version Control.

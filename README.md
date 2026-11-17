@@ -59,6 +59,9 @@ Routes are clean URLs set in [.htaccess](.htaccess), which also blocks web acces
    0 * * * * /usr/local/bin/php /home/USER/public_html/cron/agent-auto.php
    ```
 5. Sign in as a super admin. Open **Tafakari Agent > Settings**, paste a Claude API key, click **Save and test**, and switch the agent on.
+6. Press **Check everything** in Settings. It tests PHP, the SDK, the database, the key, the connection, credits, web search (which must be enabled for the Anthropic organisation) and the chat, and names the fix for anything that fails ([includes/agent-diagnostics.php](includes/agent-diagnostics.php)).
+
+**Run now** replies to the browser at once and finishes the work after the response is closed (`fastcgi_finish_request` or `litespeed_finish_request`, with `noabort` set for `/admin/agent` in `.htaccess`), so long research is not cut off by web-server time limits. It shares a lock with the hourly job, so only one piece of work runs at a time.
 
 New tables and columns are created automatically the first time the relevant page or job runs. Each is attempted once, and the result is recorded in `SiteSetting` (keys `schema_*`). If the database user cannot create tables, run the matching file in `migrations/` in phpMyAdmin.
 

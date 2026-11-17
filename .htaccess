@@ -9,6 +9,10 @@ ErrorDocument 404 /404.php
 RewriteRule ^(vendor|cron)(/|$) - [F,L]
 RewriteRule ^composer\.(json|lock)$ - [F,L]
 
+# Tafakari Agent "Run now" keeps working after the page has been answered.
+# LiteSpeed otherwise stops a PHP script when the browser connection closes.
+RewriteRule ^admin/agent - [E=noabort:1,E=noconntimeout:1]
+
 # Let real files and directories pass through
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

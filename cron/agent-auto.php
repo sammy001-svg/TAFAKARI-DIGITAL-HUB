@@ -19,9 +19,13 @@ require_once $root . '/includes/db.php';
 require_once $root . '/includes/functions.php';
 require_once $root . '/includes/agent-auto.php';
 
-// One piece of work at a time, even if the last one is still running
-$lock = fopen(sys_get_temp_dir() . '/tafakari-auto-' . md5($root) . '.lock', 'c');
-if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) exit(0);
+// One piece of work at a time, including one started with Run now
+$lock = agent_auto_lock();
+if ($lock === false) {
+    set_setting('agent_auto_last_tick', date('Y-m-d H:i:s'));   // the job is alive, just waiting its turn
+    fwrite(STDOUT, '[' . date('Y-m-d H:i:s') . '] busy: other work is still running' . PHP_EOL);
+    exit(0);
+}
 
 try {
     $r = agent_auto_tick();
@@ -29,5 +33,5 @@ try {
     $r = ['status' => 'FAILED', 'task' => null, 'message' => $e->getMessage()];
 }
 fwrite(STDOUT, '[' . date('Y-m-d H:i:s') . '] ' . ($r['task'] ?? '-') . ': ' . $r['status'] . ' ' . $r['message'] . PHP_EOL);
-flock($lock, LOCK_UN);
+agent_auto_unlock($lock);
 exit($r['status'] === 'FAILED' ? 1 : 0);

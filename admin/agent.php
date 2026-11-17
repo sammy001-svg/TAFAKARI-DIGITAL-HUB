@@ -7,6 +7,7 @@ require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/includes/agent.php';
 require_once dirname(__DIR__) . '/includes/assistant.php';
 require_once dirname(__DIR__) . '/includes/agent-auto.php';
+require_once dirname(__DIR__) . '/includes/agent-diagnostics.php';
 require_once dirname(__DIR__) . '/includes/agent-nav.php';
 
 $me      = require_auth();
@@ -92,12 +93,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             case 'run_now':
                 if (!$isSuper) $back('queue', 'Only a super admin can start a run.', true);
-                @set_time_limit(900);
-                ignore_user_abort(true);   // finish and log the run even if the browser gives up
-                session_write_close();     // a run takes minutes: don't lock the user's other tabs
-                $r = agent_auto_tick(true);
+                if ($blk = agent_blockers()) $back('settings', 'The agent cannot run yet. ' . $blk[0][0] . ' ' . $blk[0][1], true);
+                $lock = agent_auto_lock();
+                if ($lock === false) $back('runs', 'The agent is already working on something. Its progress shows below, and this page refreshes by itself.');
+                // Reply at once, then work: research takes minutes, longer than a web page should wait
+                $_SESSION['agent_flash'] = ['msg' => 'Started: the agent is ' . agent_auto_next_label(true) . '. This usually takes one to five minutes. This page refreshes by itself until it is done.', 'err' => false];
+                set_setting('agent_manual_started', date('Y-m-d H:i:s'));
+                set_setting('agent_manual_result', '');
+                session_write_close();
+                agent_respond_and_continue('/admin/agent?tab=runs');
+                try {
+                    $r = agent_auto_tick(true);
+                } catch (Throwable $e) {
+                    error_log('[admin/agent] run_now: ' . $e->getMessage());
+                    $r = ['status' => 'FAILED', 'task' => null, 'message' => 'The run stopped with an error: ' . $e->getMessage()];
+                }
+                set_setting('agent_manual_result', json_encode($r + ['at' => date('Y-m-d H:i:s')], JSON_UNESCAPED_UNICODE));
+                agent_auto_unlock($lock);
+                exit;
+
+            case 'diagnose':
+                if (!$isSuper) $back('queue', 'Only a super admin can run the checks.', true);
+                @set_time_limit(300);
+                session_write_close();
+                $d = agent_diagnose();
                 session_start();
-                $back('runs', $r['message'], $r['status'] === 'FAILED');
+                $bad = count(array_filter($d['checks'], fn($c) => $c['ok'] === false));
+                $back('settings', $bad === 0 ? 'Everything checked works. The agent and the website chat are ready.' : "{$bad} problem" . ($bad === 1 ? '' : 's') . ' found. Each one is listed under Check everything, with what to do.', $bad > 0, ['diag' => 1]);
 
             default:
                 $back($retTab, 'Unknown action.', true);
@@ -171,6 +193,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
 <style>
 .ag-chip  { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; }
 .ag-btn   { display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:12px; font-size:13px; font-weight:700; cursor:pointer; border:0; }
+.ag-btn:disabled { opacity:.4; cursor:not-allowed; filter:grayscale(.6); }
 .ag-input { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:12px; background:#f8fafc; font-size:13px; outline:none; }
 .ag-input:focus { border-color:#750B25; background:#fff; }
 .ag-label { display:block; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:#94a3b8; margin-bottom:6px; }
@@ -344,8 +367,21 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
   <?php endforeach; ?>
   </div>
 
-<?php elseif ($tab === 'runs'): ?>
+<?php elseif ($tab === 'runs'):
+    $_mStart  = agent_setting_fresh('agent_manual_started');
+    $_mResult = json_decode(agent_setting_fresh('agent_manual_result'), true);
+    $_running = (bool) array_filter($runs, fn($r) => $r['status'] === 'RUNNING' && strtotime($r['startedAt']) >= time() - 20 * 60)
+             || ($_mStart !== '' && !$_mResult && strtotime($_mStart) >= time() - 20 * 60);
+?>
   <!-- ── Run log ────────────────────────────────────────────────── -->
+  <?php if ($_running): ?>
+    <div class="tk-alert tk-alert--warn" role="status"><span><strong>The agent is working.</strong> Research usually takes one to five minutes. This page refreshes every 15 seconds; you can also leave it and come back.</span></div>
+    <script>setTimeout(function () { location.reload(); }, 15000);</script>
+  <?php elseif (is_array($_mResult) && strtotime((string) ($_mResult['at'] ?? '')) >= time() - 6 * 3600): ?>
+    <div class="tk-alert <?= ($_mResult['status'] ?? '') === 'FAILED' ? 'tk-alert--danger' : 'tk-alert--ok' ?>" role="status">
+      <span><strong>Run now <?= ($_mResult['status'] ?? '') === 'FAILED' ? 'did not succeed' : 'finished' ?></strong> (<?= h(format_relative_time((string) $_mResult['at'])) ?>): <?= h((string) ($_mResult['message'] ?? '')) ?></span>
+    </div>
+  <?php endif; ?>
   <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-x-auto">
     <table class="w-full text-sm" style="border-collapse:collapse;min-width:980px">
       <thead style="background:#f8fafc">
@@ -387,8 +423,19 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
 <?php elseif ($tab === 'settings'):
     $_as = assistant_settings();
     $_auto = agent_auto_status();
-    $_ready = $sdkOk && $keyOk;
+    $_blk = agent_blockers();
+    $_ready = !$_blk;
+    $_ks = agent_key_state();
+    $_diag = agent_diagnose_last();
+    $_chatWhy = assistant_offline_reason();
 ?>
+  <?php if ($_blk): ?>
+    <div class="tk-alert tk-alert--danger" role="alert" style="max-width:980px">
+      <span><strong>The agent and the website chat cannot work yet.</strong>
+        <?php foreach ($_blk as [$_t, $_f]): ?><span class="block mt-1"><?= h($_t) ?> <strong><?= h($_f) ?></strong></span><?php endforeach; ?>
+      </span>
+    </div>
+  <?php endif; ?>
   <div class="grid lg:grid-cols-2 gap-6" style="max-width:980px">
     <div class="space-y-6">
       <form method="POST" class="tk-card tk-card--pad space-y-5">
@@ -413,6 +460,13 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
       <?php $_cs = assistant_stats(30); $_rated = $_cs['helpful'] + $_cs['notHelpful']; ?>
       <div class="tk-card tk-card--pad space-y-3 text-sm text-slate-700">
         <h2 class="font-outfit font-black text-base text-slate-900">Chat on the website: last 30 days</h2>
+        <?php if ($_chatWhy !== null && $_blk && $_as['enabled']): ?>
+          <p class="text-xs font-bold" style="color:#B91C1C">Visitors see the chat as offline because of the problem shown at the top of this page.</p>
+        <?php elseif ($_chatWhy !== null): ?>
+          <p class="text-xs font-bold" style="color:<?= $_as['enabled'] ? '#B91C1C' : '#64748b' ?>"><?= h($_chatWhy) ?></p>
+        <?php else: ?>
+          <p class="text-xs font-bold" style="color:#047857">Online: visitors can type questions and get answers.</p>
+        <?php endif; ?>
         <?php if ($_cs['questions'] === 0): ?>
           <p class="text-xs text-slate-500">No questions yet.</p>
         <?php else: ?>
@@ -432,7 +486,10 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
       <div class="tk-card tk-card--pad space-y-4">
         <h2 class="font-outfit font-black text-base text-slate-900">Claude API key</h2>
         <p class="text-xs text-slate-500 leading-relaxed">
-          <?php if ($savedKey !== ''): ?>
+          <?php if ($_ks['state'] === 'unreadable'): ?>
+            <span class="font-bold" style="color:#B91C1C">A key is saved, but this server can no longer read it.</span> This happens when APP_SECRET or the
+            database password in config.php changes after a key is saved. Paste the key again below and click Save and test.
+          <?php elseif ($savedKey !== ''): ?>
             A key is saved: <span class="font-bold text-slate-700"><?= h(agent_key_hint($savedKey)) ?></span>. Enter a new one to replace it.
           <?php elseif ($keyOk): ?>
             A key is set on the server. A key saved here will be used instead.
@@ -450,7 +507,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <p class="text-xs text-slate-400">Leave this blank and the system finds it for you.</p>
           <button type="submit" class="ag-btn text-white w-full justify-center" style="background:#750B25">Save and test</button>
         </form>
-        <?php if ($savedKey !== ''): ?>
+        <?php if ($savedKey !== '' || $_ks['state'] === 'unreadable'): ?>
           <form method="POST">
             <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
             <input type="hidden" name="action" value="remove_api_key">
@@ -461,15 +518,14 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
 
       <div class="tk-card tk-card--pad space-y-3 text-sm text-slate-700">
         <h2 class="font-outfit font-black text-base text-slate-900">Status</h2>
-        <?php if (!$sdkOk): ?>
-          <p>The Claude software still has to be installed on the server before the agent can work.</p>
-        <?php elseif (!$keyOk): ?>
-          <p>Add your Claude API key to finish.</p>
+        <?php if ($_blk): ?>
+          <p class="font-bold" style="color:#B91C1C">Not ready: fix the problem shown at the top of this page.</p>
         <?php endif; ?>
         <?php $_h = agent_health_status(); $_plan = $settings['enabled'] ? (agent_auto_plan(false)[0] ?? null) : null;
               $_planLabel = ['reports' => 'check the report drafts', 'quarterly' => 'write a quarterly country update', 'update' => 'write the next country monitoring update',
                              'videos' => 'look for videos', 'article' => 'write an article', 'finding' => 'look for new developments'][$_plan] ?? null; ?>
-        <?php if ($_h['paused']): ?>
+        <?php if ($_blk): ?>
+        <?php elseif ($_h['paused']): ?>
           <p class="font-bold" style="color:<?= $_h['kind'] === 'account' ? '#B91C1C' : '#9A5B0F' ?>">Paused until <?= h(date('j M, H:i', strtotime((string) $_h['until']))) ?>.</p>
           <p class="text-xs text-slate-600"><?= h($_h['reason']) ?></p>
           <p class="text-xs text-slate-500"><?= $_h['kind'] === 'account' ? 'Fix the cause, then press Run now to restart it straight away.' : 'This is usually temporary. It will try again by itself, or press Run now.' ?></p>
@@ -487,14 +543,48 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <p>To let it run by itself, add this one line in cPanel &rarr; Cron Jobs, once:</p>
           <code class="block p-2 rounded-lg bg-slate-50 break-all text-xs">0 * * * * /usr/local/bin/php <?= h(dirname(__DIR__)) ?>/cron/agent-auto.php</code>
         <?php endif; ?>
-        <form method="POST" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Working… this can take a few minutes';">
+        <form method="POST" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Starting…';">
           <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
           <input type="hidden" name="action" value="run_now">
           <button type="submit" class="ag-btn w-full justify-center" style="background:#E7952A;color:#0D0102" <?= $_ready ? '' : 'disabled' ?>>Run now</button>
         </form>
+        <p class="text-xs text-slate-500"><?= $_ready ? 'Starts the next piece of work straight away and shows its progress under Activity.' : 'Run now becomes available once the problem above is fixed.' ?></p>
         <p class="text-xs text-slate-500">Software version <?= h(AGENT_CODE_VERSION) ?></p>
       </div>
     </div>
+  </div>
+
+  <div class="tk-card tk-card--pad space-y-4 text-sm text-slate-700" style="max-width:980px;margin-top:24px" id="check">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h2 class="font-outfit font-black text-base text-slate-900">Check everything</h2>
+        <p class="text-xs text-slate-500 mt-1 max-w-xl">Tests each part the agent and the website chat need, on this server: PHP, the Claude software, the database, the API key,
+          the connection, the account's credits, web search and the chat. It makes a few small test requests to Claude and takes up to a minute.</p>
+      </div>
+      <form method="POST" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Checking… up to a minute';">
+        <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action" value="diagnose">
+        <button type="submit" class="ag-btn text-white" style="background:#750B25">Check everything</button>
+      </form>
+    </div>
+    <?php if ($_diag): ?>
+      <p class="text-xs text-slate-500">Last checked <?= h(format_relative_time($_diag['at'])) ?> (<?= h(format_date($_diag['at'], 'j M Y, H:i')) ?>).</p>
+      <ul style="list-style:none;padding:0;margin:0">
+        <?php foreach ($_diag['checks'] as $_c): $_col = $_c['ok'] === true ? '#047857' : ($_c['ok'] === false ? '#B91C1C' : '#64748b'); ?>
+          <li class="flex items-start gap-3" style="padding:9px 0;border-top:1px solid var(--tk-line)">
+            <span class="font-black shrink-0" style="color:<?= $_col ?>;width:18px;text-align:center" aria-hidden="true"><?= $_c['ok'] === true ? '&#10003;' : ($_c['ok'] === false ? '&#10007;' : '&#8226;') ?></span>
+            <span class="min-w-0">
+              <span class="font-bold text-slate-900"><?= h($_c['name']) ?></span>
+              <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)"><?= $_c['ok'] === true ? 'passed' : ($_c['ok'] === false ? 'failed' : 'information') ?></span>
+              <span class="block text-xs text-slate-600"><?= h($_c['detail']) ?></span>
+              <?php if ($_c['fix'] !== ''): ?><span class="block text-xs font-bold mt-1" style="color:<?= $_col ?>">What to do: <?= h($_c['fix']) ?></span><?php endif; ?>
+            </span>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    <?php else: ?>
+      <p class="text-xs text-slate-500">Not run yet. Press Check everything after saving your key or adding credits.</p>
+    <?php endif; ?>
   </div>
 <?php endif; ?>
 

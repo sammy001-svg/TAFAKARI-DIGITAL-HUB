@@ -137,6 +137,62 @@ function agent_auto_work(bool $force, mixed $transporter): array {
     return ['status' => 'IDLE', 'task' => null, 'message' => "Today's work is done."];
 }
 
+// ── Running in the background ────────────────────────────────────
+
+/**
+ * One piece of work at a time. Returns a lock handle, null when no lock file
+ * can be made (carry on), or false when work is already under way. The hourly
+ * job uses the same lock, and a run recorded as running in the database
+ * counts too, since the web server and the command line may not share files.
+ */
+function agent_auto_lock(): mixed {
+    try {
+        $st = db()->prepare("SELECT COUNT(*) FROM AgentRun WHERE status='RUNNING' AND startedAt >= ?");
+        $st->execute([date('Y-m-d H:i:s', time() - 20 * 60)]);
+        if ((int) $st->fetchColumn() > 0) return false;
+    } catch (Throwable $e) {}
+    $fh = @fopen(sys_get_temp_dir() . '/tafakari-auto-' . md5(dirname(__DIR__)) . '.lock', 'c');
+    if (!$fh) return null;
+    if (!flock($fh, LOCK_EX | LOCK_NB)) { fclose($fh); return false; }
+    return $fh;
+}
+
+function agent_auto_unlock(mixed $fh): void {
+    if (is_resource($fh)) { flock($fh, LOCK_UN); fclose($fh); }
+}
+
+/**
+ * Send the browser on its way now, and keep working after the response is
+ * closed, so long research never hangs the page or meets the web server's
+ * request time limit.
+ */
+function agent_respond_and_continue(string $location): void {
+    ignore_user_abort(true);
+    @set_time_limit(900);
+    while (ob_get_level() > 0) @ob_end_clean();
+    if (!headers_sent()) {
+        header('Location: ' . $location, true, 303);
+        header('Connection: close');
+        header('Content-Length: 0');
+    }
+    if (function_exists('fastcgi_finish_request')) { fastcgi_finish_request(); return; }
+    if (function_exists('litespeed_finish_request')) { litespeed_finish_request(); return; }
+    flush();
+}
+
+/** What Run now will do first, in words. */
+function agent_auto_next_label(bool $force): string {
+    $task = agent_auto_plan($force)[0] ?? null;
+    return [
+        'reports'   => 'checking the analysis report drafts',
+        'quarterly' => 'writing a quarterly country update',
+        'update'    => 'researching the next country monitoring update',
+        'videos'    => 'looking for videos',
+        'article'   => 'writing an article',
+        'finding'   => 'looking for new developments',
+    ][$task] ?? 'looking for work to do';
+}
+
 /** @return array{lastTick:string,running:bool} running = the hourly job has fired recently */
 function agent_auto_status(): array {
     $last = agent_auto_setting('agent_auto_last_tick');

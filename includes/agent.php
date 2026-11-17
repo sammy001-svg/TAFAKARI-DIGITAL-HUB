@@ -29,7 +29,7 @@ use Anthropic\Core\Exceptions\BadRequestException;
 use Anthropic\Core\Exceptions\PermissionDeniedException;
 use Anthropic\Core\Exceptions\RateLimitException;
 
-const AGENT_CODE_VERSION  = '2026-11-17.1';   // shown in Settings > Status: confirms a deploy reached the server
+const AGENT_CODE_VERSION  = '2026-11-17.2';   // shown in Settings > Status: confirms a deploy reached the server
 const AGENT_MODEL         = 'claude-opus-5-5';
 // Server-side refusal fallback: "default" lets the API route a declined
 // request to its recommended substitute model for that refusal category.
@@ -673,17 +673,30 @@ function agent_url_host(string $url): string {
 
 /** The one place a research request is sent: runs and the preflight share it. */
 function agent_create_message(Client $client, array $system, array $tools, array $messages, string $effort): mixed {
-    return $client->beta->messages->create(
+    static $noStrict = false;   // once the API has refused a strict schema, skip strict for the rest of this run
+    $send = fn(array $t) => $client->beta->messages->create(
         model: AGENT_MODEL,
         maxTokens: AGENT_MAX_TOKENS,
         system: $system,
-        tools: $tools,
+        tools: $t,
         messages: $messages,
         thinking: ['type' => 'adaptive'],
         outputConfig: ['effort' => $effort],
         fallbacks: 'default',
         betas: [AGENT_FALLBACK_BETA],
     );
+    $loose = array_map(fn($t) => array_diff_key($t, ['strict' => 1]), $tools);
+    if ($noStrict) return $send($loose);
+    try {
+        return $send($tools);
+    } catch (BadRequestException $e) {
+        // A large strict schema can be refused as too complex to compile. Every
+        // submission is validated in code anyway, so carry on without strict.
+        if ($loose === $tools || !preg_match('/too complex|compil|grammar/i', agent_api_detail($e))) throw $e;
+        error_log('[tafakari-agent] strict tool schema refused, retrying without strict: ' . agent_api_detail($e));
+        $noStrict = true;
+        return $send($loose);
+    }
 }
 
 /**
