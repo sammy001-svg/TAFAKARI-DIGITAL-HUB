@@ -29,7 +29,7 @@ use Anthropic\Core\Exceptions\BadRequestException;
 use Anthropic\Core\Exceptions\PermissionDeniedException;
 use Anthropic\Core\Exceptions\RateLimitException;
 
-const AGENT_CODE_VERSION  = '2026-11-17.3';   // shown in Settings > Status: confirms a deploy reached the server
+const AGENT_CODE_VERSION  = '2026-11-17.4';   // shown in Settings > Status: confirms a deploy reached the server
 const AGENT_MODEL         = 'claude-opus-5-5';
 // Server-side refusal fallback: "default" lets the API route a declined
 // request to its recommended substitute model for that refusal category.

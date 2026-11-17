@@ -452,7 +452,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <input type="checkbox" name="assistant_enabled" value="1" <?= $_as['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
           <span>
             <span class="block text-sm font-bold text-slate-800">Chat button on the website</span>
-            <span class="block text-xs text-slate-500">Welcomes visitors and answers in English or Kiswahili, from your published work only.</span>
+            <span class="block text-xs text-slate-500">Welcomes visitors and answers in English, French or Kiswahili, from your published work only.</span>
           </span>
         </label>
         <button type="submit" class="ag-btn text-white" style="background:#750B25">Save</button>

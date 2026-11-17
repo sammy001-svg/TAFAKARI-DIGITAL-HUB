@@ -42,7 +42,7 @@ includes/
   agent-articles.php      AI articles
   agent-videos.php        Video finder
   agent-auto.php          The hourly plan: what the agent does next
-  assistant.php           Public chat assistant (English and Kiswahili)
+  assistant.php           Public chat assistant (English, French and Kiswahili)
 migrations/               SQL for each schema change, numbered
 docs/admin-guide.md       Guide for the CRTP team
 ```

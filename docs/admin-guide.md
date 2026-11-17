@@ -118,7 +118,7 @@ They are added to the saved configuration automatically. Super admins can rename
 **Tafakari Agent > Settings** has only a few options:
 
 - **Agent on:** switches the agent's automatic work on or off.
-- **Chat button on the website:** shows or hides the public chat assistant.
+- **Chat button on the website:** shows or hides the public chat assistant. It speaks English, French and Kiswahili: it answers in the language each visitor writes in, and its buttons and messages follow the website's language, or the language the visitor picks in the chat's own menu (EN, FR, SW).
 - **Claude API key:** paste the key and choose **Save and test**. It should confirm that the agent is ready. Leave Workspace ID blank unless Anthropic asks for one.
 - **Status:** shows whether the agent is working normally or paused, and whether the hourly job is running. If it is not, it shows the one line to add in cPanel under Cron Jobs. It also shows the **software version**, so you can confirm a deploy reached the server.
 - **Run now:** starts one piece of work immediately (usually the next country update) and takes you to **Activity**, which refreshes itself until the work is done, usually one to five minutes. You can leave the page meanwhile. If Run now is greyed out, the red box at the top of Settings says why.

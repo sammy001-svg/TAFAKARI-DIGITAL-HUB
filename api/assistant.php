@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /**
  * POST /api/assistant - the public chat assistant.
- *   {question, history, page, token}          -> {ok, answer, sources, suggestions, ref}
+ *   {question, history, page, lang, token}    -> {ok, answer, sources, suggestions, ref, language}   lang: en, fr or sw
  *   {action: "feedback", ref, rating, token}   -> {ok}   rating 1 (helpful) or -1
  */
 require_once dirname(__DIR__) . '/config.php';
@@ -30,5 +30,5 @@ if (($body['action'] ?? '') === 'feedback') {
 
 @set_time_limit(120);
 $page = (string) ($body['page'] ?? '');
-$r = assistant_answer((string) ($body['question'] ?? ''), assistant_ip_hash($ip), null, (array) ($body['history'] ?? []), mb_substr($page, 0, 300));
-json_response(['ok' => $r['ok'], 'answer' => $r['answer'], 'sources' => $r['sources'], 'suggestions' => $r['suggestions'], 'ref' => $r['ref']]);
+$r = assistant_answer((string) ($body['question'] ?? ''), assistant_ip_hash($ip), null, (array) ($body['history'] ?? []), mb_substr($page, 0, 300), (string) ($body['lang'] ?? ''));
+json_response(['ok' => $r['ok'], 'answer' => $r['answer'], 'sources' => $r['sources'], 'suggestions' => $r['suggestions'], 'ref' => $r['ref'], 'language' => $r['language']]);

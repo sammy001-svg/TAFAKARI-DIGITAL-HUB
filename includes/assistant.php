@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 /**
- * The public chat assistant, in English and Kiswahili.
+ * The public chat assistant, in English, French and Kiswahili.
  *
  * Greets visitors and answers from what CRTP says about itself and from material
  * it has published: reports, articles, policy briefs, published analysis reports
@@ -84,23 +84,78 @@ function assistant_ip_hash(string $ip): string {
     return hash_hmac('sha256', date('Y-m-d') . '|' . $ip, $secret);
 }
 
-/** True when a message looks like Kiswahili. Used only to choose the language of fixed messages. */
-function assistant_is_swahili(string $text): bool {
-    return (bool) preg_match('/\b(habari|jambo|hujambo|mambo|shikamoo|karibu|asante|tafadhali|naomba|nataka|ninataka|nini|gani|kuhusu|wapi|nani|katika|kwenye|ikoje|je|sijui|ndiyo|hapana|amani|vita|migogoro|mgogoro|wakimbizi|ripoti)\b/iu', $text);
+/** The languages the chat speaks, by code. */
+const ASSISTANT_LANGUAGES = ['en' => 'English', 'fr' => 'French', 'sw' => 'Kiswahili'];
+
+/** A language code the chat speaks, or null. */
+function assistant_lang_code(mixed $code): ?string {
+    $code = strtolower(trim((string) $code));
+    return isset(ASSISTANT_LANGUAGES[$code]) ? $code : null;
 }
 
-/** A fixed message in the visitor's language. */
-function assistant_text(string $key, bool $sw): string {
-    static $t = [
-        'off'    => ['The assistant is not available at the moment.', 'Msaidizi hapatikani kwa sasa.'],
-        'empty'  => ['Please type a message.', 'Tafadhali andika ujumbe wako.'],
-        'long'   => ['Please keep your message under 500 characters.', 'Tafadhali fupisha ujumbe wako usizidi herufi 500.'],
-        'busy'   => ['I have reached my limit for now. Please try again later, or browse our published reports.', 'Nimefikia kikomo changu kwa sasa. Tafadhali jaribu tena baadaye, au angalia ripoti zetu zilizochapishwa.'],
-        'many'   => ['You have sent several messages in a short time. Please try again in a little while.', 'Umetuma ujumbe mwingi kwa muda mfupi. Tafadhali jaribu tena baada ya muda kidogo.'],
-        'refuse' => ["I can't help with that here. You are welcome to browse CRTP's published reports and the heat map.", 'Samahani, siwezi kusaidia na hilo hapa. Karibu uangalie ripoti zilizochapishwa za CRTP na ramani ya joto.'],
-        'failed' => ['Sorry, something went wrong. Please try again shortly.', 'Samahani, kuna tatizo limetokea. Tafadhali jaribu tena baada ya muda mfupi.'],
+/**
+ * The language a message is written in: en, fr or sw. Used for the fixed
+ * messages (limits, errors); the model itself replies in the visitor's
+ * language. When a message is too short to tell, the language the visitor
+ * chose in the interface decides, then English.
+ */
+function assistant_language(string $text, ?string $hint = null): string {
+    static $words = [
+        'sw' => ['habari','jambo','hujambo','mambo','shikamoo','karibu','asante','tafadhali','naomba','nataka','ninataka','nini','gani','kuhusu','wapi','nani','katika','kwenye',
+                 'ikoje','je','sijui','ndiyo','hapana','amani','vita','migogoro','mgogoro','wakimbizi','ripoti','hali','yako','kuna','vipi','sana','unaweza','niambie','eleza',
+                 'ya','wa','za','kwa','na','ni','hii','hiyo','leo','sasa','ramani','usalama','serikali'],
+        'fr' => ['bonjour','bonsoir','salut','merci','svp','plaît','plait','quelle','quelles','quel','quels','comment','pourquoi','où','est-ce','qu','que','qui','quoi',
+                 'les','des','du','une','dans','pour','avec','sur','sont','est','je','vous','nous','pouvez','peux','voudrais','aimerais','savoir','actuelle','actuellement',
+                 'paix','guerre','conflit','conflits','réfugiés','rapport','rapports','aujourd','cette','ces','votre','notre','aux','le','la','et','au','carte','sécurité','pays'],
+        'en' => ['the','what','how','is','are','please','hello','hi','thanks','thank','you','your','latest','about','tell','me','can','could','where','when','which','who','why',
+                 'does','do','report','reports','of','in','on','and','to','for','with','situation','peace','war','conflict','map','country','today','news','morning','good'],
     ];
-    return $t[$key][$sw ? 1 : 0];
+    preg_match_all("/[\\p{L}]+/u", mb_strtolower(strip_tags($text)), $m);
+    $tokens = $m[0];
+    $score = ['en' => 0, 'fr' => 0, 'sw' => 0];
+    foreach ($tokens as $w) foreach ($words as $lang => $list) if (in_array($w, $list, true)) $score[$lang]++;
+    // Accented letters are French here: neither English nor Kiswahili uses them
+    $score['fr'] += 2 * preg_match_all('/[àâçéèêëîïôûùüÿœ]/u', mb_strtolower($text));
+    arsort($score);
+    $best = array_key_first($score);
+    $hint = assistant_lang_code($hint);
+    $top = array_keys($score, $score[$best], true);
+    if ($score[$best] === 0 || count($top) > 1) return $hint !== null && ($score[$best] === 0 || in_array($hint, $top, true)) ? $hint : ($score[$best] === 0 ? 'en' : $top[0]);
+    return $best;
+}
+
+/** True when a message looks like Kiswahili. */
+function assistant_is_swahili(string $text): bool {
+    return assistant_language($text) === 'sw';
+}
+
+/** A fixed message in the visitor's language (en, fr or sw; true means Kiswahili, for older callers). */
+function assistant_text(string $key, string|bool $lang): string {
+    $lang = $lang === true ? 'sw' : ($lang === false ? 'en' : (assistant_lang_code($lang) ?? 'en'));
+    static $t = [
+        'off'    => ['en' => 'The assistant is not available at the moment.',
+                     'fr' => 'L’assistant n’est pas disponible pour le moment.',
+                     'sw' => 'Msaidizi hapatikani kwa sasa.'],
+        'empty'  => ['en' => 'Please type a message.',
+                     'fr' => 'Veuillez saisir un message.',
+                     'sw' => 'Tafadhali andika ujumbe wako.'],
+        'long'   => ['en' => 'Please keep your message under 500 characters.',
+                     'fr' => 'Veuillez limiter votre message à 500 caractères.',
+                     'sw' => 'Tafadhali fupisha ujumbe wako usizidi herufi 500.'],
+        'busy'   => ['en' => 'I have reached my limit for now. Please try again later, or browse our published reports.',
+                     'fr' => 'J’ai atteint ma limite pour le moment. Veuillez réessayer plus tard, ou consulter nos rapports publiés.',
+                     'sw' => 'Nimefikia kikomo changu kwa sasa. Tafadhali jaribu tena baadaye, au angalia ripoti zetu zilizochapishwa.'],
+        'many'   => ['en' => 'You have sent several messages in a short time. Please try again in a little while.',
+                     'fr' => 'Vous avez envoyé plusieurs messages en peu de temps. Veuillez réessayer dans un instant.',
+                     'sw' => 'Umetuma ujumbe mwingi kwa muda mfupi. Tafadhali jaribu tena baada ya muda kidogo.'],
+        'refuse' => ['en' => "I can't help with that here. You are welcome to browse CRTP's published reports and the heat map.",
+                     'fr' => 'Je ne peux pas vous aider sur ce point ici. Nous vous invitons à consulter les rapports publiés du CRTP et la carte thermique.',
+                     'sw' => 'Samahani, siwezi kusaidia na hilo hapa. Karibu uangalie ripoti zilizochapishwa za CRTP na ramani ya joto.'],
+        'failed' => ['en' => 'Sorry, something went wrong. Please try again shortly.',
+                     'fr' => 'Désolé, une erreur est survenue. Veuillez réessayer dans quelques instants.',
+                     'sw' => 'Samahani, kuna tatizo limetokea. Tafadhali jaribu tena baada ya muda mfupi.'],
+    ];
+    return $t[$key][$lang];
 }
 
 /** The key of the fixed message for a limit that has been reached, or null when clear. */
@@ -117,6 +172,10 @@ function assistant_limit_key(string $ipHash, array $settings): ?string {
 function assistant_terms(string $q): array {
     static $stop = ['the','and','for','are','was','were','what','when','where','which','who','why','how','does','did','has','have','had','about','with','from','that','this','there','their','them','into','can','could','would','should','will','you','your','tell','please','any','some','been','being','latest','current','currently','happening',
                     'les','des','une','dans','pour','que','qui','quoi','est','sont','avec','sur','quelle','quelles','quel','quels','comment','pourquoi',
+                    'aux','ces','cette','son','ses','leur','leurs','mais','donc','car','plus','très','tout','tous','toutes','être','avoir','fait','faire','peut','pouvez','peux',
+                    'voudrais','aimerais','savoir','dire','dites','parler','parlez','bonjour','bonsoir','salut','merci','actuelle','actuellement','votre','notre','nous','vous',
+                    'elle','ils','elles','été','entre','depuis','pendant','après','avant','chez','vers','sans','sous','ici','aujourd','hui','dernières','derniers','dernière',
+                    'dernier','nouvelles','informations','infos','plaît','plait','svp','pays','sujet','concernant',
                     'hello','hey','good','morning','afternoon','evening','thanks','thank','bye','goodbye',
                     'nini','gani','kwa','katika','habari','vipi','hali','kuhusu','wapi','nani','ambayo','hii','hiyo','kwenye','sana','tafadhali','naomba','nataka','ninataka','niambie','eleza','jambo','mambo','karibu','asante','hujambo','shikamoo','sasa','leo','ikoje','inafanya','inafanyaje','kazi'];
     // Published work is mostly in English, so Kiswahili words also search as English
@@ -124,27 +183,62 @@ function assistant_terms(string $q): array {
                   'wakimbizi'=>'refugees','mkimbizi'=>'refugee','njaa'=>'hunger','ukame'=>'drought','mafuriko'=>'floods','uchaguzi'=>'election','serikali'=>'government','upatanishi'=>'mediation',
                   'maridhiano'=>'reconciliation','usalama'=>'security','ugaidi'=>'terrorism','magaidi'=>'terrorists','ripoti'=>'report','utafiti'=>'research','haki'=>'rights','wanawake'=>'women',
                   'vijana'=>'youth','mifugo'=>'livestock','ardhi'=>'land','mpaka'=>'border','mipaka'=>'borders','kibinadamu'=>'humanitarian','misaada'=>'aid','msaada'=>'aid','ramani'=>'map','tathmini'=>'assessment'];
+    // and so do French ones
+    static $fr = ['paix'=>'peace','guerre'=>'war','guerres'=>'war','conflit'=>'conflict','conflits'=>'conflict','combats'=>'fighting','violence'=>'violence','violences'=>'violence',
+                  'réfugiés'=>'refugees','refugies'=>'refugees','réfugié'=>'refugee','déplacés'=>'displaced','deplaces'=>'displaced','déplacées'=>'displaced','déplacement'=>'displacement',
+                  'déplacements'=>'displacement','faim'=>'hunger','famine'=>'famine','sécheresse'=>'drought','secheresse'=>'drought','inondations'=>'floods','élection'=>'election',
+                  'élections'=>'election','elections'=>'election','gouvernement'=>'government','médiation'=>'mediation','mediation'=>'mediation','réconciliation'=>'reconciliation',
+                  'sécurité'=>'security','securite'=>'security','terrorisme'=>'terrorism','terroristes'=>'terrorists','rapport'=>'report','rapports'=>'report','recherche'=>'research',
+                  'droits'=>'rights','femmes'=>'women','jeunes'=>'youth','jeunesse'=>'youth','bétail'=>'livestock','terres'=>'land','frontière'=>'border','frontières'=>'border',
+                  'frontiere'=>'border','humanitaire'=>'humanitarian','humanitaires'=>'humanitarian','aide'=>'aid','carte'=>'map','thermique'=>'heat','évaluation'=>'assessment',
+                  'groupes'=>'groups','armés'=>'armed','armes'=>'weapons','milices'=>'militia','attaque'=>'attack','attaques'=>'attacks','pourparlers'=>'talks','négociations'=>'negotiations',
+                  'accord'=>'agreement','cessez'=>'ceasefire','alerte'=>'warning','précoce'=>'early','crise'=>'crisis','choléra'=>'cholera','épidémie'=>'outbreak','santé'=>'health',
+                  'enfants'=>'children','manifestations'=>'protests','politique'=>'political','économique'=>'economic','rebelles'=>'rebels','armée'=>'army','soldats'=>'soldiers',
+                  'morts'=>'killed','tués'=>'killed','victimes'=>'casualties','mise'=>'update','analyse'=>'analysis','méthodologie'=>'methodology','télécharger'=>'download'];
     preg_match_all('/[\p{L}\p{N}]{3,}/u', mb_strtolower(strip_tags($q)), $m);
     $terms = array_values(array_unique(array_diff($m[0], $stop)));
-    foreach ($terms as $w) if (isset($sw[$w])) $terms[] = $sw[$w];
+    foreach ($terms as $w) {
+        if (isset($sw[$w])) $terms[] = $sw[$w];
+        if (isset($fr[$w])) $terms[] = $fr[$w];
+    }
     return array_values(array_slice(array_unique($terms), 0, 15));
 }
 
 /** Countries a question names (including the name of a monitoring region). */
 function assistant_countries(string $q): array {
-    // Kiswahili names first, so "Sudani Kusini" is not read as Sudan
-    $lq = str_replace(
-        ['sudani kusini', 'sudani', 'kongo', 'uhabeshi', 'jibuti', 'chadi', 'afrika mashariki', 'pembe ya afrika', 'maziwa makuu'],
-        ['south sudan', 'sudan', 'dr congo', 'ethiopia', 'djibouti', 'chad', 'east africa', 'horn of africa', 'great lakes'],
-        mb_strtolower($q)
-    );
+    // Kiswahili and French names become the English ones, longest first, so
+    // "Sudani Kusini" and "Soudan du Sud" are not read as Sudan
+    static $names = [
+        'sudani kusini' => 'south sudan', 'sudani' => 'sudan', 'kongo' => 'dr congo', 'uhabeshi' => 'ethiopia', 'jibuti' => 'djibouti', 'chadi' => 'chad',
+        'afrika mashariki' => 'east africa', 'pembe ya afrika' => 'horn of africa', 'maziwa makuu' => 'great lakes',
+        'république démocratique du congo' => 'dr congo', 'republique democratique du congo' => 'dr congo', 'rd congo' => 'dr congo', 'rdc' => 'dr congo',
+        'république du congo' => 'congo', 'republique du congo' => 'congo', 'congo-brazzaville' => 'congo', 'congo brazzaville' => 'congo',
+        'république centrafricaine' => 'central african republic', 'republique centrafricaine' => 'central african republic', 'centrafrique' => 'central african republic',
+        'soudan du sud' => 'south sudan', 'sud-soudan' => 'south sudan', 'soudan' => 'sudan',
+        'guinée-bissau' => 'guinea-bissau', 'guinee-bissau' => 'guinea-bissau', 'guinée bissau' => 'guinea-bissau',
+        'guinée équatoriale' => 'equatorial guinea', 'guinee equatoriale' => 'equatorial guinea', 'guinée' => 'guinea', 'guinee' => 'guinea',
+        "côte d'ivoire" => 'ivory coast', 'côte d’ivoire' => 'ivory coast', "cote d'ivoire" => 'ivory coast', 'cote d’ivoire' => 'ivory coast',
+        'afrique du sud' => 'south africa', "afrique de l'est" => 'east africa', 'afrique de l’est' => 'east africa', 'afrique orientale' => 'east africa',
+        "corne de l'afrique" => 'horn of africa', 'corne de l’afrique' => 'horn of africa', 'grands lacs' => 'great lakes',
+        'éthiopie' => 'ethiopia', 'ethiopie' => 'ethiopia', 'ouganda' => 'uganda', 'tanzanie' => 'tanzania', 'somalie' => 'somalia', 'érythrée' => 'eritrea', 'erythree' => 'eritrea',
+        'tchad' => 'chad', 'mauritanie' => 'mauritania', 'cameroun' => 'cameroon', 'nigéria' => 'nigeria', 'égypte' => 'egypt', 'egypte' => 'egypt', 'maroc' => 'morocco',
+        'algérie' => 'algeria', 'algerie' => 'algeria', 'tunisie' => 'tunisia', 'libye' => 'libya', 'zambie' => 'zambia', 'sénégal' => 'senegal', 'gambie' => 'gambia',
+        'bénin' => 'benin', 'libéria' => 'liberia', 'namibie' => 'namibia', 'comores' => 'comoros', 'cap-vert' => 'cabo verde', 'maurice' => 'mauritius',
+        'sao tomé-et-principe' => 'são tomé and príncipe', 'sao tome-et-principe' => 'são tomé and príncipe',
+    ];
+    $lq = str_replace(array_keys($names), array_values($names), mb_strtolower($q));
     $hit = [];
     foreach (african_countries() as $c) {
         if (preg_match('/\b' . preg_quote(mb_strtolower($c), '/') . '\b/u', $lq)) $hit[$c] = true;
     }
-    // "South Sudan" also matches "Sudan": keep the longer name unless Sudan stands alone
-    if (isset($hit['South Sudan']) && isset($hit['Sudan']) && !preg_match('/(?<!south )\bsudan\b/u', $lq)) unset($hit['Sudan']);
-    if (isset($hit['DR Congo']) && isset($hit['Congo']) && !preg_match('/(?<!dr )\bcongo\b/u', $lq)) unset($hit['Congo']);
+    // A name inside a longer one ("Sudan" in "South Sudan", "Guinea" in "Guinea-Bissau")
+    // counts only when it also appears on its own
+    $found = array_keys($hit);
+    foreach ($found as $c) {
+        $lc = mb_strtolower($c);
+        $longer = array_values(array_filter(array_map('mb_strtolower', $found), fn($ld) => $ld !== $lc && str_contains($ld, $lc)));
+        if ($longer && !preg_match('/\b' . preg_quote($lc, '/') . '\b/u', str_replace($longer, ' ', $lq))) unset($hit[$c]);
+    }
     foreach (hm_country_groups() as $g) {
         if (str_contains($lq, mb_strtolower($g['name']))) foreach ($g['countries'] as $c) $hit[$c] = true;
     }
@@ -365,7 +459,7 @@ In suggestions, offer up to three short follow-up questions, under 60 characters
 If a source is marked as the page the visitor is reading, questions such as "this report" or "explain this" refer to it.
 
 ## Language
-Reply in the language of the visitor's latest message, Kiswahili or English, and switch whenever they switch. Write natural, standard Kiswahili. Sources are mostly in English: translate what they say faithfully, keeping names and figures exact. If someone writes in another language, reply in English and say kindly that you can chat in English or Kiswahili.
+Reply in the language of the visitor's latest message: English, French or Kiswahili. Switch whenever they switch. When the latest message is too short to tell, such as a single name, a number or "ok", reply in the interface language given with the question. Write as an educated professional would in that language: natural, standard Kiswahili; clear, standard French as used in francophone Africa, addressing the visitor formally as "vous", with French punctuation and the French names of places (for example Soudan du Sud, République démocratique du Congo, Afrique de l'Est); plain, clear English. In French, call CRTP "le CRTP" and the heat map "la carte thermique". Sources are mostly in English: translate what they say faithfully, keeping names, figures and dates exact, and keep the titles of CRTP's publications as they are. If someone writes in another language, reply in English and say kindly that you can chat in English, French or Kiswahili. Set language to the language of your answer.
 
 ## What you know
 About CRTP and this website, use only these facts, which need no source number:
@@ -391,14 +485,15 @@ function assistant_output_schema(): array {
             'found'        => ['type' => 'boolean'],
             'used_sources' => ['type' => 'array', 'items' => ['type' => 'integer']],
             'suggestions'  => ['type' => 'array', 'items' => ['type' => 'string']],
+            'language'     => ['type' => 'string', 'enum' => array_keys(ASSISTANT_LANGUAGES)],
         ],
-        'required' => ['answer', 'found', 'used_sources', 'suggestions'],
+        'required' => ['answer', 'found', 'used_sources', 'suggestions', 'language'],
         'additionalProperties' => false,
     ];
 }
 
 /** Send one request. Shared with the readiness check. */
-function assistant_call_model(\Anthropic\Client $client, string $question, array $sources, array $history = []): mixed {
+function assistant_call_model(\Anthropic\Client $client, string $question, array $sources, array $history = [], ?string $uiLang = null): mixed {
     $numbered = [];
     foreach ($sources as $i => $s) {
         $numbered[] = ['number' => $i + 1, 'title' => $s['title'], 'date' => $s['date']]
@@ -410,6 +505,7 @@ function assistant_call_model(\Anthropic\Client $client, string $question, array
         system: [['type' => 'text', 'text' => assistant_system_prompt(), 'cacheControl' => ['type' => 'ephemeral']]],
         messages: [['role' => 'user', 'content' => "<sources>\n" . json_encode($numbered, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n</sources>\n\n"
                     . ($history ? "<earlier_conversation>\n" . json_encode($history, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n</earlier_conversation>\n\n" : '')
+                    . (($l = assistant_lang_code($uiLang)) !== null ? '<interface_language>' . ASSISTANT_LANGUAGES[$l] . "</interface_language>\n\n" : '')
                     . "<question>\n" . $question . "\n</question>"]],
         thinking: ['type' => 'adaptive'],
         outputConfig: ['effort' => 'low', 'format' => ['type' => 'json_schema', 'schema' => assistant_output_schema()]],
@@ -441,7 +537,7 @@ function assistant_clean_reply(array $reply, array $sources): array {
         if (!in_array(mb_strtolower($s), array_map('mb_strtolower', $suggest), true)) $suggest[] = $s;
         if (count($suggest) >= 3) break;
     }
-    return ['answer' => $answer, 'sources' => array_values($cited), 'suggestions' => $suggest];
+    return ['answer' => $answer, 'sources' => array_values($cited), 'suggestions' => $suggest, 'language' => assistant_lang_code($reply['language'] ?? '') ?? assistant_language($answer)];
 }
 
 /**
@@ -450,13 +546,15 @@ function assistant_clean_reply(array $reply, array $sources): array {
  * @param array  $history earlier messages, held by the visitor's browser: [{role, text}]
  * @param mixed  $transporter optional PSR-18 client (tests)
  * @param string $page the path of the page the visitor is on, such as /reports/abc
- * @return array{ok:bool,answer:string,sources:array,status:string,suggestions:array,ref:?string}
+ * @param string $uiLang the interface language the visitor chose: en, fr or sw
+ * @return array{ok:bool,answer:string,sources:array,status:string,suggestions:array,ref:?string,language:string}
  */
-function assistant_answer(string $question, string $ipHash, mixed $transporter = null, array $history = [], string $page = ''): array {
+function assistant_answer(string $question, string $ipHash, mixed $transporter = null, array $history = [], string $page = '', string $uiLang = ''): array {
     ensure_assistant_table();
-    $reply = fn(bool $ok, string $a, string $st, array $src = [], array $sug = [], ?string $ref = null) => ['ok' => $ok, 'answer' => $a, 'sources' => $src, 'status' => $st, 'suggestions' => $sug, 'ref' => $ref];
     $question = trim(strip_tags($question));
-    $sw = assistant_is_swahili($question);
+    $uiLang = assistant_lang_code($uiLang);
+    $sw = assistant_language($question, $uiLang);   // the language of fixed messages: en, fr or sw
+    $reply = fn(bool $ok, string $a, string $st, array $src = [], array $sug = [], ?string $ref = null, ?string $lang = null) => ['ok' => $ok, 'answer' => $a, 'sources' => $src, 'status' => $st, 'suggestions' => $sug, 'ref' => $ref, 'language' => $lang ?? $sw];
     $settings = assistant_settings();
     if (!$settings['enabled'] || !agent_sdk_available() || agent_api_key() === '') return $reply(false, assistant_text('off', $sw), 'DISABLED');
     if ($question === '') return $reply(false, assistant_text('empty', $sw), 'EMPTY');
@@ -487,7 +585,7 @@ function assistant_answer(string $question, string $ipHash, mixed $transporter =
     }
 
     try {
-        $resp = assistant_call_model(agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => ASSISTANT_HTTP_TIMEOUT, 'connect_timeout' => 10])), $question, $sources, $history);
+        $resp = assistant_call_model(agent_client($transporter ?? new \GuzzleHttp\Client(['timeout' => ASSISTANT_HTTP_TIMEOUT, 'connect_timeout' => 10])), $question, $sources, $history, $uiLang);
         $u = $resp->usage;
         $usage = ['input' => (int) $u->inputTokens, 'output' => (int) $u->outputTokens,
                   'cache_read' => (int) ($u->cacheReadInputTokens ?? 0), 'cache_write' => (int) ($u->cacheCreationInputTokens ?? 0), 'searches' => 0];
@@ -505,7 +603,7 @@ function assistant_answer(string $question, string $ipHash, mixed $transporter =
         $clean = assistant_clean_reply($data, $sources);
         $status = !empty($data['found']) ? 'OK' : 'NOT_FOUND';
         $finish($status, count($sources), $usage);
-        return $reply(true, $clean['answer'], $status, $clean['sources'], $clean['suggestions'], $id);
+        return $reply(true, $clean['answer'], $status, $clean['sources'], $clean['suggestions'], $id, $clean['language']);
     } catch (Throwable $e) {
         error_log('[assistant] ' . get_class($e) . ': ' . $e->getMessage());
         $finish('FAILED', count($sources));

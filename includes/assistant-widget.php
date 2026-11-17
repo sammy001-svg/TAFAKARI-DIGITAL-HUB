@@ -44,7 +44,17 @@ if ($_askShow):
       </div>
     </div>
     <div class="tk-ask__actions">
-      <button type="button" class="tk-ask__lang" id="tk-ask-lang"></button>
+      <div class="tk-ask__langwrap">
+        <button type="button" class="tk-ask__lang" id="tk-ask-lang" aria-haspopup="listbox" aria-expanded="false" aria-controls="tk-ask-langs">
+          <span id="tk-ask-lang-code">EN</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul class="tk-ask__langs" id="tk-ask-langs" role="listbox" tabindex="-1" hidden>
+          <li role="option" id="tk-ask-l-en" data-lang="en" lang="en">English</li>
+          <li role="option" id="tk-ask-l-fr" data-lang="fr" lang="fr">Français</li>
+          <li role="option" id="tk-ask-l-sw" data-lang="sw" lang="sw">Kiswahili</li>
+        </ul>
+      </div>
       <?php if ($_askReady): ?>
         <button type="button" class="tk-ask__icon" id="tk-ask-reset">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
@@ -89,7 +99,7 @@ if ($_askShow):
   var TEXT = {
     en: {
       fab: 'Chat with us', resume: 'Continue chat', fresh: 'New reply', sub: READY ? 'Online · AI assistant' : 'Offline just now',
-      lang: 'SW', langLabel: 'Badilisha kwenda Kiswahili', send: 'Send', hint: 'Ask about CRTP, our reports or the heat map…', you: 'Your message',
+      langLabel: 'Chat language: English', send: 'Send', hint: 'Ask about CRTP, our reports or the heat map…', you: 'Your message',
       min: 'Minimise chat', close: 'End chat', teaser: 'Hello! Welcome to Tafakari. Can I help you today?',
       note: 'AI can make mistakes, so check the sources. Please don’t share personal details. Not for emergencies.', privacy: 'Privacy', human: 'Contact CRTP', reset: 'New chat',
       welcome: 'Hello, and welcome to Tafakari! I’m CRTP’s AI assistant. I can answer questions about our work, our reports and the conflict heat map, using what CRTP has published.',
@@ -100,7 +110,7 @@ if ($_askShow):
     },
     sw: {
       fab: 'Zungumza nasi', resume: 'Endelea kuzungumza', fresh: 'Jibu jipya', sub: READY ? 'Mtandaoni · Msaidizi wa AI' : 'Hapatikani kwa sasa',
-      lang: 'EN', langLabel: 'Switch to English', send: 'Tuma', hint: 'Uliza kuhusu CRTP, ripoti zetu au ramani…', you: 'Ujumbe wako',
+      langLabel: 'Lugha ya mazungumzo: Kiswahili', send: 'Tuma', hint: 'Uliza kuhusu CRTP, ripoti zetu au ramani…', you: 'Ujumbe wako',
       min: 'Punguza', close: 'Maliza mazungumzo', teaser: 'Habari! Karibu Tafakari. Naweza kukusaidia leo?',
       note: 'AI inaweza kukosea, tafadhali hakiki vyanzo. Usitoe taarifa zako binafsi. Si kwa dharura.', privacy: 'Faragha', human: 'Wasiliana na CRTP', reset: 'Mazungumzo mapya',
       welcome: 'Habari, karibu Tafakari! Mimi ni msaidizi wa AI wa CRTP. Naweza kujibu maswali kuhusu kazi zetu, ripoti zetu na ramani ya migogoro, kwa kutumia yale ambayo CRTP imechapisha.',
@@ -108,10 +118,24 @@ if ($_askShow):
       typing: 'Ninatafuta katika kazi za CRTP', sources: 'Vyanzo', helpful: 'Imesaidia', notHelpful: 'Haijasaidia', copy: 'Nakili jibu', copied: 'Imenakiliwa', thanks: 'Asante kwa maoni yako',
       error: 'Samahani, siwezi kupatikana kwa sasa.', retry: 'Jaribu tena', count: ' herufi zimebaki',
       offline: 'Habari, karibu Tafakari! Msaidizi wetu amepumzika kwa sasa. Bado unaweza kuwasiliana na CRTP kwa barua pepe crtp.communications@hekima.ac.ke au kupitia ukurasa wetu wa Mawasiliano.', contact: 'Wasiliana nasi'
+    },
+    fr: {
+      fab: 'Discuter avec nous', resume: 'Reprendre la conversation', fresh: 'Nouvelle réponse', sub: READY ? 'En ligne · Assistant IA' : 'Hors ligne pour le moment',
+      langLabel: 'Langue de la conversation\u00a0: français', send: 'Envoyer', hint: 'Votre question sur le CRTP ou nos rapports…', you: 'Votre message',
+      min: 'Réduire la conversation', close: 'Terminer la conversation', teaser: 'Bonjour\u00a0! Bienvenue sur Tafakari. Puis-je vous aider\u00a0?',
+      note: 'L’IA peut se tromper\u00a0: vérifiez les sources. Ne partagez pas d’informations personnelles. Ce service ne traite pas les urgences.', privacy: 'Confidentialité', human: 'Contacter le CRTP', reset: 'Nouvelle conversation',
+      welcome: 'Bonjour et bienvenue sur Tafakari\u00a0! Je suis l’assistant IA du CRTP. Je réponds à vos questions sur nos travaux, nos rapports et la carte thermique des conflits, à partir de ce que le CRTP a publié.',
+      chips: ['Que fait le CRTP\u00a0?', 'Situation au Soudan du Sud', 'Comment la carte est-elle calculée\u00a0?', 'Où télécharger les rapports\u00a0?'],
+      typing: 'Recherche dans les travaux du CRTP', sources: 'Sources', helpful: 'Utile', notHelpful: 'Pas utile', copy: 'Copier la réponse', copied: 'Copié', thanks: 'Merci pour votre retour',
+      error: 'Désolé, je suis momentanément indisponible.', retry: 'Réessayer', count: '\u00a0caractères restants',
+      offline: 'Bonjour et bienvenue sur Tafakari\u00a0! Notre assistant est momentanément indisponible. Vous pouvez joindre le CRTP par e-mail à crtp.communications@hekima.ac.ke ou via notre page Contact.', contact: 'Contacter le CRTP'
     }
   };
-  var lang = read('localStorage', LANG) || (read('localStorage', 'tafakari-locale') === 'sw' ? 'sw' : 'en');
-  var T = TEXT[lang] || TEXT.en;
+  function valid(l) { return typeof l === 'string' && TEXT.hasOwnProperty(l) ? l : null; }
+  function siteLang() { return valid(document.documentElement.getAttribute('data-locale')) || valid(read('localStorage', 'tafakari-locale')); }
+  function browserLang() { return valid(String(navigator.language || '').slice(0, 2).toLowerCase()); }
+  var lang = valid(read('localStorage', LANG)) || siteLang() || browserLang() || 'en';
+  var T = TEXT[lang];
 
   // Kept only in this browser tab, so the chat survives moving between pages
   var items = [];
@@ -121,8 +145,11 @@ if ($_askShow):
 
   function applyText() {
     T = TEXT[lang] || TEXT.en;
+    panel.setAttribute('lang', lang); teaser.setAttribute('lang', lang); fab.setAttribute('lang', lang);
     $('tk-ask-sub').textContent = T.sub;
-    $('tk-ask-lang').textContent = T.lang; $('tk-ask-lang').setAttribute('aria-label', T.langLabel); $('tk-ask-lang').title = T.langLabel;
+    $('tk-ask-lang-code').textContent = lang.toUpperCase();
+    $('tk-ask-lang').setAttribute('aria-label', T.langLabel); $('tk-ask-lang').title = T.langLabel;
+    ['en', 'fr', 'sw'].forEach(function (l) { $('tk-ask-l-' + l).setAttribute('aria-selected', l === lang ? 'true' : 'false'); });
     $('tk-ask-min').setAttribute('aria-label', T.min); $('tk-ask-min').title = T.min;
     $('tk-ask-close').setAttribute('aria-label', T.close); $('tk-ask-close').title = T.close;
     $('tk-ask-note').textContent = T.note;
@@ -262,6 +289,7 @@ if ($_askShow):
         return;
       }
       var box = el('div', 'tk-ask__msg' + (m.err ? ' tk-ask__msg--err' : ''));
+      if (valid(m.language)) box.setAttribute('lang', m.language);
       formatAnswer(box, m.text, m.sources);
       var parts = [box, sourceList(m.sources)];
       if (m.err) {
@@ -306,7 +334,48 @@ if ($_askShow):
   $('tk-ask-teaser-x').addEventListener('click', function () { hideTeaser(); write('sessionStorage', SEEN, '1'); });
   $('tk-ask-min').addEventListener('click', minimise);
   $('tk-ask-close').addEventListener('click', end);
-  $('tk-ask-lang').addEventListener('click', function () { lang = lang === 'sw' ? 'en' : 'sw'; write('localStorage', LANG, lang); applyText(); render(); });
+  // Language menu: English, Français, Kiswahili. Keyboard: arrows, Home/End, Enter or Space to choose, Escape to close.
+  var langBtn = $('tk-ask-lang'), langList = $('tk-ask-langs'), langs = ['en', 'fr', 'sw'], active = 0;
+  function setLang(l, chosenHere) {
+    if (!valid(l)) return;
+    if (chosenHere) write('localStorage', LANG, l);
+    if (l === lang) return;
+    lang = l; applyText();
+    if (!panel.hidden) render();
+  }
+  function highlight(i) {
+    active = (i + langs.length) % langs.length;
+    langs.forEach(function (l, k) { $('tk-ask-l-' + l).classList.toggle('is-active', k === active); });
+    langList.setAttribute('aria-activedescendant', 'tk-ask-l-' + langs[active]);
+  }
+  function openLangs() { langList.hidden = false; langBtn.setAttribute('aria-expanded', 'true'); highlight(langs.indexOf(lang)); langList.focus(); }
+  function closeLangs(refocus) { langList.hidden = true; langBtn.setAttribute('aria-expanded', 'false'); if (refocus) langBtn.focus(); }
+  langBtn.addEventListener('click', function () { if (langList.hidden) openLangs(); else closeLangs(true); });
+  langBtn.addEventListener('keydown', function (e) { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openLangs(); } });
+  langList.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); highlight(active + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); highlight(active - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); highlight(0); }
+    else if (e.key === 'End') { e.preventDefault(); highlight(langs.length - 1); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLang(langs[active], true); closeLangs(true); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeLangs(true); }
+    else if (e.key === 'Tab') { closeLangs(false); }
+  });
+  langList.addEventListener('click', function (e) {
+    var li = e.target.closest ? e.target.closest('[data-lang]') : null;
+    if (li) { setLang(li.getAttribute('data-lang'), true); closeLangs(true); }
+  });
+  document.addEventListener('click', function (e) { if (!langList.hidden && !e.target.closest('.tk-ask__langwrap')) closeLangs(false); });
+  // When the visitor changes the website's language, the chat follows. The site's
+  // language script runs after this one and sets its language on load (English
+  // when nothing is stored): that first setting is not a change.
+  var lastSite = siteLang() || 'en';
+  if (window.MutationObserver) {
+    new MutationObserver(function () {
+      var s = siteLang();
+      if (s && s !== lastSite) { lastSite = s; setLang(s, true); }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-locale'] });
+  }
   panel.addEventListener('keydown', function (e) { if (e.key === 'Escape') minimise(); });
   if (READY) $('tk-ask-reset').addEventListener('click', function () { if (waiting) return; items = []; save(); render(); q.focus(); });
 
@@ -345,10 +414,10 @@ if ($_askShow):
     waiting = true;
     save(); render();
     q.value = ''; grow(); update();
-    post({ question: text, history: history, page: location.pathname })
+    post({ question: text, history: history, page: location.pathname, lang: lang })
       .then(function (j) {
-        if (j && j.ok) items.push({ text: j.answer, sources: j.sources || [], suggestions: j.suggestions || [], ref: j.ref || null, t: Date.now() });
-        else items.push({ text: (j && (j.answer || j.error)) || T.error, err: !(j && j.answer), sources: [], t: Date.now() });
+        if (j && j.ok) items.push({ text: j.answer, sources: j.sources || [], suggestions: j.suggestions || [], ref: j.ref || null, language: valid(j.language), t: Date.now() });
+        else items.push({ text: (j && (j.answer || j.error)) || T.error, err: !(j && j.answer), sources: [], language: valid(j && j.language), t: Date.now() });
       })
       .catch(function () { items.push({ text: T.error, err: true, sources: [], t: Date.now() }); })
       .finally(function () {
