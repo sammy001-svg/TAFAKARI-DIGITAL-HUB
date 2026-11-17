@@ -211,7 +211,7 @@ function doc_icon_color(string $ext): string {
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-800"><?= h($doc['country']) ?></span>
               <?php endif; ?>
               <?php if (!empty($doc['issueCategory'])): ?>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($doc['issueCategory']) ?></span>
+                <?= issue_category_pills($doc, 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600') ?>
               <?php endif; ?>
             </div>
 

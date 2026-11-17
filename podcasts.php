@@ -167,7 +167,7 @@ $pageTitle = 'Podcast Library | Tafakari Digital Hub';
             <div class="flex-grow min-w-0">
               <div class="flex flex-wrap gap-2 mb-2">
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#E7952A"><?= h($ep['country']) ?></span>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($ep['issueCategory']) ?></span>
+                <?= issue_category_pills($ep, 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600') ?>
               </div>
               <h3 class="font-outfit font-bold text-lg text-slate-900 leading-snug mb-1">
                 <a href="/podcasts/<?= h($ep['id']) ?>" class="hover:text-primary transition-colors"><?= h($ep['title']) ?></a>

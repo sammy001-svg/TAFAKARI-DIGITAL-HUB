@@ -108,7 +108,7 @@ $pageImage     = $post['thumbnailUrl'] ?? '';
 $pageType      = 'article';
 $pagePublished = $post['createdAt'] ?? '';
 $pageModified  = $post['updatedAt'] ?? $post['createdAt'] ?? '';
-$pageKeywords  = implode(', ', array_filter([$post['country'] ?? '', $post['issueCategory'] ?? '', $post['region'] ?? '', 'Africa', 'research']));
+$pageKeywords  = implode(', ', array_filter(array_merge([$post['country'] ?? ''], post_issue_categories($post), [$post['region'] ?? '', 'Africa', 'research'])));
 $authorDisplay = $post['authorName'] ?? $post['authorUsername'] ?? 'Staff';
 $pageAuthor    = $authorDisplay;
 ?>
@@ -125,13 +125,13 @@ $pageAuthor    = $authorDisplay;
       <nav class="flex items-center gap-2 text-xs text-white/40 mb-6">
         <a href="/news" class="hover:text-amber-400 transition-colors font-bold text-white/60">News</a>
         <span>&rsaquo;</span>
-        <span class="text-white/40 truncate max-w-xs"><?= h($post['issueCategory']) ?></span>
+        <span class="text-white/40 truncate max-w-xs"><?= h(issue_categories_text($post)) ?></span>
       </nav>
 
       <!-- Badges -->
       <div class="flex flex-wrap gap-2 mb-5">
         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-900" style="background:#E7952A"><?= h($post['country']) ?></span>
-        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style="background:rgba(231,149,42,.15);color:#E7952A"><?= h($post['issueCategory']) ?></span>
+        <?= issue_category_pills($post, 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest', 'background:rgba(231,149,42,.15);color:#E7952A') ?>
       </div>
 
       <!-- Title -->
@@ -363,7 +363,7 @@ $pageAuthor    = $authorDisplay;
                 <?php endif; ?>
               </div>
               <div class="p-5 flex flex-col grow">
-                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h($r['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#E7952A"><?= h(issue_categories_text($r)) ?></span>
                 <h3 class="font-outfit font-bold text-sm text-white leading-snug line-clamp-2 group-hover:text-amber-300 transition-colors grow"><?= h($r['title']) ?></h3>
                 <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
                   <span class="text-[10px] text-white/40"><?= format_date($r['createdAt']) ?></span>

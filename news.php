@@ -193,7 +193,7 @@ $pageTitle = 'News & Articles | Tafakari Digital Hub';
           <!-- Content -->
           <div class="p-6 flex flex-col grow">
             <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b">
-              <?= h($p['issueCategory']) ?>
+              <?= h(issue_categories_text($p)) ?>
             </span>
             <h3 class="font-outfit font-bold text-lg leading-snug text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-2 mb-2 grow">
               <?= h($p['title']) ?>

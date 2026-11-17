@@ -476,14 +476,10 @@ function issue_categories(): array {
         return $cached;
     }
 
-    // Fallback: nothing configured yet
-    $cached = [
-        'Health','Education','Security & Conflict','Climate & Environment',
-        'Economic Development','Policy & Governance','Human Rights',
-        'Migration & Refugees','Agriculture & Food Security',
-        'Infrastructure & Energy','Technology & Innovation',
-        'Gender & Social Affairs',
-    ];
+    // Fallback: nothing configured yet. The heat map's own default categories,
+    // so tagging, AI suggestions and scoring always use one list. Posts tagged
+    // with older names keep them (see issue_categories_with()).
+    $cached = array_keys(heatmap_default_elements());
     return $cached;
 }
 
@@ -1172,3 +1168,5 @@ function admin_page_head(string $eyebrow, ?string $title = null, ?string $sub = 
        . ($sub !== '' ? '<p class="tk-lead">' . h($sub) . '</p>' : '')
        . '</div></header>';
 }
+
+require_once __DIR__ . '/issue-categories.php';

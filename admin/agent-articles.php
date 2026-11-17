@@ -57,12 +57,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($action) {
             case 'save':
                 agent_article_save($id, (string) ($_POST['title'] ?? ''), (string) ($_POST['standfirst'] ?? ''), (string) ($_POST['body'] ?? ''), $uid);
+                if (isset($_POST['issueCategories'])) agent_article_save_categories($id, issue_categories_from_post($_POST, issue_categories()));
                 $back($self, 'Changes saved.');
 
             case 'publish':
                 // Publishes what is on screen, including edits not yet saved
                 agent_article_save($id, (string) ($_POST['title'] ?? ''), (string) ($_POST['standfirst'] ?? ''), (string) ($_POST['body'] ?? ''), $uid);
-                agent_article_publish($id, $uid, isset($_POST['verified']));
+                $cats = isset($_POST['issueCategories']) ? issue_categories_from_post($_POST, issue_categories()) : '';
+                if (isset($_POST['issueCategories']) && $cats === '') throw new RuntimeException('Tick at least one issue category before publishing.');
+                agent_article_save_categories($id, $cats);
+                agent_article_publish($id, $uid, isset($_POST['verified']), $cats);
                 $back($self, 'Published. The article is now live on the site.');
 
             case 'reject':
@@ -167,6 +171,10 @@ $adminPageSub   = 'Drafts by the Tafakari Agent, awaiting verification';
             <label class="tk-label" for="ar-body">Article text</label>
             <textarea id="ar-body" name="body" class="tk-textarea" rows="26" required style="line-height:1.65"><?= h($article['body']) ?></textarea>
             <p class="tk-help">Numbers such as [2] refer to the numbered sources. "## " starts a heading. Save before downloading, so the Word file includes your edits.</p>
+          </div>
+          <div class="tk-field">
+            <?php issue_category_field(agent_article_categories($article), ['options' => issue_categories_with(agent_article_categories($article)), 'fields' => ['title' => 'title', 'description' => 'standfirst', 'content' => 'body']]); ?>
+            <p class="tk-help">The agent ticked the indicator it wrote about and any other categories the article covers. Change them if needed.</p>
           </div>
           <label class="flex items-start gap-3 cursor-pointer" style="padding:14px 16px;border:1px solid var(--tk-line);border-radius:14px">
             <input type="checkbox" name="verified" value="1" id="ar-ok" class="mt-1 w-4 h-4" style="accent-color:#750B25">

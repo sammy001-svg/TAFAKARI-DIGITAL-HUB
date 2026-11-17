@@ -51,12 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
     $mediaUrl      = trim($_POST['mediaUrl']      ?? '');
     $country       = trim($_POST['country']       ?? '');
     $region        = trim($_POST['region']        ?? '');
-    $rawCats = array_filter(array_map('trim', (array)($_POST['issueCategories'] ?? [])));
     // Allow the categories this post already carries, even if they have since
     // been retired from Heatmap Config - otherwise editing an older report
     // would drop them, or empty a required field and block the save entirely.
-    $existingCats  = array_filter(array_map('trim', explode(',', (string)($post['issueCategory'] ?? ''))));
-    $issueCategory = implode(',', array_intersect($rawCats, issue_categories_with($existingCats)));
+    $existingCats  = post_issue_categories($post);
+    $issueCategory = issue_categories_from_post($_POST, issue_categories_with($existingCats));
 
     // Stated author / issuing body; only meaningful for reporting formats
     $byline = trim($_POST['byline'] ?? '');
@@ -159,8 +158,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $lockedMsg !== '') {
 // Pre-populate form from DB or POST
 $f = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $post;
 $selectedCats = $_SERVER['REQUEST_METHOD'] === 'POST'
-    ? array_filter(array_map('trim', (array)($_POST['issueCategories'] ?? [])))
-    : array_filter(array_map('trim', explode(',', $post['issueCategory'] ?? '')));
+    ? post_issue_categories(issue_categories_from_post($_POST, issue_categories_with(post_issue_categories($post))))
+    : post_issue_categories($post);
 
 // Upload widget config based on current post type
 $editType = $f['type'] ?? $post['type'] ?? 'ARTICLE';
@@ -323,37 +322,7 @@ $adminPageSub   = h($post['title'] ?? '');
         <!-- Not shown for gallery images: they carry no heat-map meaning.
              Toggled by bylineToggle() when the content type changes. -->
         <div id="category-field"<?= post_type_needs_category($editType) ? '' : ' style="display:none"' ?>>
-          <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Issue Categories *</label>
-          <div class="relative" id="cat-ms-wrap">
-            <button type="button" id="cat-ms-btn" onclick="catMsToggle()"
-                    class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-left flex items-center justify-between focus:outline-none">
-              <span id="cat-ms-label" class="text-slate-400">Select categories</span>
-              <svg width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div id="cat-ms-dropdown" class="hidden absolute z-50 mt-1 w-full bg-white rounded-xl border border-slate-200 shadow-lg">
-              <div class="p-2 border-b border-slate-100">
-                <input type="text" placeholder="Search categories…" oninput="catMsSearch(this.value)"
-                       class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
-              </div>
-              <div class="overflow-y-auto max-h-52 p-1.5" id="cat-ms-list">
-                <?php foreach (issue_categories_with($selectedCats) as $c):
-                  $retired = is_retired_category($c); ?>
-                  <label class="cat-ms-opt flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 cursor-pointer">
-                    <input type="checkbox" name="issueCategories[]" value="<?= h($c) ?>"
-                           <?= in_array($c, $selectedCats, true) ? 'checked' : '' ?>
-                           onchange="catMsUpdate()"
-                           class="w-4 h-4 rounded" style="accent-color:#750B25">
-                    <span class="text-sm <?= $retired ? 'text-slate-400' : 'text-slate-700' ?>"><?= h($c) ?></span>
-                    <?php if ($retired): ?>
-                      <span class="ml-auto text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
-                            style="background:#f1f5f9;color:#94a3b8"
-                            title="No longer in Heatmap Config; kept so it is not lost">retired</span>
-                    <?php endif; ?>
-                  </label>
-                <?php endforeach; ?>
-              </div>
-            </div>
-          </div>
+          <?php issue_category_field($selectedCats, ['options' => issue_categories_with($selectedCats)]); ?>
         </div>
       </div>
     </div>
@@ -448,42 +417,6 @@ function bylineToggle(type) {
   if (cat) cat.style.display = (type === 'GALLERY_IMAGE') ? 'none' : '';
 }
 
-function catMsToggle() {
-  var dd = document.getElementById('cat-ms-dropdown');
-  if (dd.classList.contains('hidden')) {
-    dd.classList.remove('hidden');
-    dd.querySelector('input[type=text]').focus();
-  } else {
-    dd.classList.add('hidden');
-  }
-}
-function catMsSearch(q) {
-  q = q.toLowerCase();
-  document.querySelectorAll('.cat-ms-opt').forEach(function(el) {
-    el.style.display = el.querySelector('span').textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
-  });
-}
-function catMsUpdate() {
-  var checked = document.querySelectorAll('input[name="issueCategories[]"]:checked');
-  var label = document.getElementById('cat-ms-label');
-  if (checked.length === 0) {
-    label.textContent = 'Select categories';
-    label.style.color = '';
-  } else if (checked.length === 1) {
-    label.textContent = checked[0].value;
-    label.style.color = '#0f172a';
-  } else {
-    label.textContent = checked.length + ' categories selected';
-    label.style.color = '#0f172a';
-  }
-}
-document.addEventListener('click', function(e) {
-  var wrap = document.getElementById('cat-ms-wrap');
-  if (wrap && !wrap.contains(e.target)) {
-    document.getElementById('cat-ms-dropdown').classList.add('hidden');
-  }
-});
-catMsUpdate();
 </script>
 </body>
 </html>

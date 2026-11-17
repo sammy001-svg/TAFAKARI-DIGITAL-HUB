@@ -134,11 +134,11 @@ $pageUrl       = $shareUrl;
       <nav class="flex items-center gap-2 text-xs text-white/40 mb-6">
         <a href="/documents" class="hover:text-amber-400 transition-colors font-bold text-white/60">Documents</a>
         <span>&rsaquo;</span>
-        <span class="text-white/40 truncate max-w-xs"><?= h($post['issueCategory'] ?? '') ?></span>
+        <span class="text-white/40 truncate max-w-xs"><?= h(issue_categories_text($post)) ?></span>
       </nav>
       <div class="flex flex-wrap gap-2 mb-5">
         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-900" style="background:#E7952A"><?= h($post['country'] ?? '') ?></span>
-        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" style="background:rgba(231,149,42,.15);color:#E7952A"><?= h($post['issueCategory'] ?? '') ?></span>
+        <?= issue_category_pills($post, 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest', 'background:rgba(231,149,42,.15);color:#E7952A') ?>
         <?php if ($fileType !== 'Document'): ?>
           <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-500/20 text-indigo-300"><?= h($fileType) ?></span>
         <?php endif; ?>

@@ -248,7 +248,7 @@ $adminPageSub   = 'Control the homepage, carousel, announcement banner and secti
             <div class="grow min-w-0">
               <p class="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-0.5">Currently Featured</p>
               <p class="font-semibold text-sm text-slate-900 leading-snug line-clamp-2"><?= h($featuredPost['title']) ?></p>
-              <p class="text-xs text-slate-400 mt-0.5"><?= h($featuredPost['country']) ?> · <?= h($featuredPost['issueCategory']) ?></p>
+              <p class="text-xs text-slate-400 mt-0.5"><?= h($featuredPost['country']) ?> · <?= h(issue_categories_text($featuredPost)) ?></p>
             </div>
             <form method="POST" class="shrink-0">
               <input type="hidden" name="action" value="featured">

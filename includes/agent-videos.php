@@ -19,7 +19,10 @@ function ensure_agent_video_table(): void {
     static $checked = false;
     if ($checked) return;
     $checked = true;
-    if (get_setting('schema_agent_videos_v1', '') !== '') return;
+    if (get_setting('schema_agent_videos_v1', '') !== '') {
+        if (get_setting('schema_agent_videos_v1', '') === 'ok') agent_categories_column('AgentVideo', 'schema_agent_videos_v2');
+        return;
+    }
     try {
         set_setting('schema_agent_videos_v1', 'attempted');
         db()->exec("CREATE TABLE IF NOT EXISTS `AgentVideo` (
@@ -37,11 +40,13 @@ function ensure_agent_video_table(): void {
             `reviewedBy` VARCHAR(191) NULL,
             `reviewedAt` DATETIME(3) NULL,
             `postId`     VARCHAR(191) NULL,
+            `categories` TEXT NULL,
             PRIMARY KEY (`id`),
             UNIQUE KEY `AgentVideo_videoId_key` (`videoId`),
             KEY `AgentVideo_status_idx` (`status`, `createdAt`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         set_setting('schema_agent_videos_v1', 'ok');
+        set_setting('schema_agent_videos_v2', 'ok');   // created with the categories column
     } catch (Throwable $e) {
         error_log('[ensure_agent_video_table] ' . $e->getMessage() . ' - apply migrations/011 manually.');
         set_setting('schema_agent_videos_v1', 'failed');
@@ -92,10 +97,11 @@ function agent_video_tools(): array {
                             'properties' => [
                                 'url'       => $str + ['description' => 'A YouTube video URL returned by your searches.'],
                                 'summary'   => $str + ['description' => 'What the video covers and why it is relevant.'],
-                                'category'  => ['type' => 'string', 'enum' => array_column(heatmap_taxonomy(), 'name')],
+                                'category'  => ['type' => 'string', 'enum' => array_column(heatmap_taxonomy(), 'name'), 'description' => 'The issue category the video is mainly about.'],
+                                'other_categories' => ['type' => 'array', 'items' => ['type' => 'string', 'enum' => array_column(heatmap_taxonomy(), 'name')], 'description' => 'Other issue categories the video substantively covers. Empty when none.'],
                                 'countries' => ['type' => 'array', 'items' => ['type' => 'string', 'enum' => african_countries()]],
                             ],
-                            'required' => ['url', 'summary', 'category', 'countries'],
+                            'required' => ['url', 'summary', 'category', 'other_categories', 'countries'],
                             'additionalProperties' => false,
                         ],
                     ],
@@ -201,8 +207,11 @@ function agent_video_run(array $group, mixed $transporter = null): array {
             if (agent_video_known($id)) { $duplicate++; continue; }
             $info = agent_video_oembed($id, $http);
             if ($info === null) { $discarded++; continue; }
-            db()->prepare('INSERT INTO AgentVideo (id, runId, status, videoId, title, channel, summary, regionName, category, countries, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
-                ->execute([generate_id(), $runId, 'PROPOSED', $id, $info['title'], $info['channel'], $summary, $group['name'], $category, json_encode(array_values($countries), JSON_UNESCAPED_UNICODE), date('Y-m-d H:i:s')]);
+            $others = is_array($raw) ? array_slice(array_values(array_diff(array_intersect(array_unique(array_map('strval', (array) ($raw['other_categories'] ?? []))), $names), [$category])), 0, 3) : [];
+            $vcols = ['id', 'runId', 'status', 'videoId', 'title', 'channel', 'summary', 'regionName', 'category', 'countries', 'createdAt'];
+            $vvals = [generate_id(), $runId, 'PROPOSED', $id, $info['title'], $info['channel'], $summary, $group['name'], $category, json_encode(array_values($countries), JSON_UNESCAPED_UNICODE), date('Y-m-d H:i:s')];
+            if (agent_categories_column('AgentVideo', 'schema_agent_videos_v2')) { $vcols[] = 'categories'; $vvals[] = json_encode($others, JSON_UNESCAPED_UNICODE); }
+            db()->prepare('INSERT INTO AgentVideo (' . implode(', ', $vcols) . ') VALUES (' . implode(',', array_fill(0, count($vcols), '?')) . ')')->execute($vvals);
             $out['proposed']++;
         }
         $out['status']  = 'OK';
@@ -233,6 +242,12 @@ function agent_video_get(string $id): ?array {
     return $st->fetch() ?: null;
 }
 
+/** A video's issue categories, its main one first. */
+function agent_video_categories(array $v): array {
+    $others = json_decode((string) ($v['categories'] ?? ''), true);
+    return post_issue_categories(issue_categories_merge((string) $v['category'], is_array($others) ? $others : []));
+}
+
 /** The only route from the queue to the site: a named admin or super admin. Returns the Post id. */
 function agent_video_approve(string $id, string $uid): string {
     $v = agent_video_get($id);
@@ -247,7 +262,7 @@ function agent_video_approve(string $id, string $uid): string {
     $url       = 'https://www.youtube.com/watch?v=' . $v['videoId'];
     $content   = $v['summary'] . "\n\n*Video by " . ($v['channel'] !== '' ? $v['channel'] : 'its publisher') . ', on YouTube. Selected with AI assistance and approved by CRTP.*';
     $cols = ['id','title','byline','type','description','content','thumbnailUrl','mediaUrl','country','region','issueCategory','status','authorId','approverId','viewCount','downloadCount','createdAt','updatedAt'];
-    $vals = [$postId, $v['title'], mb_substr($v['channel'], 0, 255), 'VIDEO', mb_substr($v['summary'], 0, 500), $content, 'https://img.youtube.com/vi/' . $v['videoId'] . '/hqdefault.jpg', $url, $primary, $v['regionName'], $v['category'], 'PUBLISHED', $uid, $uid, 0, 0, $now, $now];
+    $vals = [$postId, $v['title'], mb_substr($v['channel'], 0, 255), 'VIDEO', mb_substr($v['summary'], 0, 500), $content, 'https://img.youtube.com/vi/' . $v['videoId'] . '/hqdefault.jpg', $url, $primary, $v['regionName'], issue_categories_store(agent_video_categories($v)), 'PUBLISHED', $uid, $uid, 0, 0, $now, $now];
     if (count($countries) > 1 && post_has_column('additionalCountries')) { $cols[] = 'additionalCountries'; $vals[] = json_encode(array_slice($countries, 1), JSON_UNESCAPED_UNICODE); }
 
     $pdo = db();

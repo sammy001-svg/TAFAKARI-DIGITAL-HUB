@@ -144,7 +144,7 @@ $_schemaJson = json_encode(array_filter($_schema, fn($v) => $v !== null), JSON_U
       <meta property="article:modified_time"  content="<?= htmlspecialchars(date('c', strtotime($_modified)), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta property="article:author" content="<?= htmlspecialchars($_author, ENT_QUOTES, 'UTF-8') ?>">
-    <meta property="article:section" content="<?= htmlspecialchars($post['issueCategory'] ?? 'Research', ENT_QUOTES, 'UTF-8') ?>">
+    <meta property="article:section" content="<?= htmlspecialchars(post_issue_categories($post)[0] ?? 'Research', ENT_QUOTES, 'UTF-8') ?>">
   <?php endif; ?>
 
   <!-- ── Twitter / X Card ─────────────────────────────────────────────────── -->

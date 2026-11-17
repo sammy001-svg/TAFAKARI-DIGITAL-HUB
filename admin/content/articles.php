@@ -20,11 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'crea
     $c_thumbnailUrl  = trim($_POST['thumbnailUrl']  ?? '');
     $c_country       = trim($_POST['country']       ?? '');
     $c_region        = trim($_POST['region']        ?? '');
-    $c_issueCategory = trim($_POST['issueCategory'] ?? '');
+    $c_issueCategory = issue_categories_from_post($_POST, issue_categories());
     if (!$c_title)             $createError = 'Title is required.';
     elseif (!$c_country)       $createError = 'Country is required.';
     elseif (!$c_region)        $createError = 'Region is required.';
-    elseif (!$c_issueCategory) $createError = 'Issue category is required.';
+    elseif (!$c_issueCategory) $createError = 'Tick at least one issue category.';
     else {
         $id     = generate_id();
         $status = ($isSuper && isset($_POST['_publish'])) ? 'PUBLISHED' : 'DRAFT';
@@ -211,7 +211,7 @@ $adminPageSub   = $total . ' article' . ($total !== 1 ? 's' : '') . ($statusFilt
                   <?php endif; ?>
                   <div class="flex items-center gap-2 mt-0.5">
                     <?php if (!empty($p['issueCategory'])): ?>
-                      <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style="background:rgba(117,11,37,.08);color:#750B25"><?= h($p['issueCategory']) ?></span>
+                      <?= issue_category_pills($p, 'text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full', 'background:rgba(117,11,37,.08);color:#750B25') ?>
                     <?php endif; ?>
                     <?php if ($isSuper): ?>
                       <span class="text-[10px] text-slate-400"><?= h($p['authorName'] ?? $p['authorUsername'] ?? '—') ?></span>
@@ -364,13 +364,7 @@ function postAction(url, method, btn, confirmMsg) {
     </div>
 
     <div>
-      <label style="display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#94a3b8;margin-bottom:7px">Issue Category *</label>
-      <select name="issueCategory" required style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;font-size:14px;box-sizing:border-box;outline:none;font-family:inherit">
-        <option value="">Select category</option>
-        <?php foreach (issue_categories() as $c): ?>
-          <option value="<?= h($c) ?>" <?= (($_POST['issueCategory'] ?? '') === $c && $createError) ? 'selected' : '' ?>><?= h($c) ?></option>
-        <?php endforeach; ?>
-      </select>
+      <?php issue_category_field($createError ? post_issue_categories(issue_categories_from_post($_POST, issue_categories())) : [], ['options' => issue_categories()]); ?>
     </div>
 
     <div style="display:flex;gap:12px;padding-top:4px;padding-bottom:8px">

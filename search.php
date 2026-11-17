@@ -210,7 +210,7 @@ $pageKeywords = 'search, Africa research, conflict news, peace studies';
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#E7952A"><?= h($r['country']) ?></span>
                   <?php endif; ?>
                   <?php if (!empty($r['issueCategory'])): ?>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($r['issueCategory']) ?></span>
+                    <?= issue_category_pills($r, 'px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600') ?>
                   <?php endif; ?>
                 </div>
                 <h3 class="font-outfit font-bold text-base text-slate-900 group-hover:text-amber-800 transition-colors line-clamp-1 mb-1"><?= h($r['title']) ?></h3>

@@ -270,6 +270,10 @@ try {
         if ($catAvgs) $cycleIndex[$pCycle['start']]['scored']++;
         // Overall score for this report = mean of its scored categories
         $postAvg = $catAvgs ? round(array_sum($catAvgs) / count($catAvgs), 1) : null;
+        // Every category the document belongs to: those it was tagged with, main
+        // first, then any it was scored in without being tagged
+        $allCats = $mappedCats;
+        foreach (array_keys($catAvgs) as $_sc) if (!in_array($_sc, $allCats, true)) $allCats[] = $_sc;
 
         if ($reportCount > $markerCap && !in_array($pCycle['start'], $askedCycles, true)) continue;
 
@@ -311,8 +315,8 @@ try {
                 'region'      => $ci === 0 ? $region : '',
                 'scoreSource' => $catAvgs ? ($p['scoreSource'] ?? null) : null,
                 'sources'     => $sources,
-                'category'    => $mappedCats[0],
-                'categories'  => $mappedCats,
+                'category'    => $allCats[0],
+                'categories'  => $allCats,
                 'date'        => format_date($p['createdAt']),
                 'dateRaw'     => date('Y-m-d', strtotime($p['createdAt'])),
                 'thumb'       => $p['thumbnailUrl'] ?? '',
@@ -2184,7 +2188,7 @@ function applyFilters() {
       if (dateFrom && d.dateRaw && d.dateRaw < dateFrom) return;
       if (dateTo   && d.dateRaw && d.dateRaw > dateTo)   return;
       if (q) {
-        var haystack = d.title.toLowerCase() + ' ' + (d.countries || [d.country]).join(' ').toLowerCase() + ' ' + (d.region || '').toLowerCase() + ' ' + d.category.toLowerCase() + ' ' + d.type.toLowerCase();
+        var haystack = d.title.toLowerCase() + ' ' + (d.countries || [d.country]).join(' ').toLowerCase() + ' ' + (d.region || '').toLowerCase() + ' ' + dCats.join(' ').toLowerCase() + ' ' + d.type.toLowerCase();
         if (haystack.indexOf(q) === -1) return;
       }
       if (!seenPostIds[d.id]) {
@@ -2192,8 +2196,12 @@ function applyFilters() {
         visiblePosts++;
         visibleRealPosts.push(postDataById[d.id] || d);
       }
-      var key = d.country + '||' + d.category;
-      (groups[key] = groups[key] || []).push(d);
+      // A document with several categories counts under each of them that is shown
+      dCats.forEach(function (c) {
+        if (cats.indexOf(c) === -1) return;
+        var key = d.country + '||' + c;
+        (groups[key] = groups[key] || []).push(d);
+      });
     });
 
     // Count categories per country so we can fan them out around the centroid
@@ -2262,7 +2270,7 @@ function applyFilters() {
       );
       m.on('click', (function(c, k, list) {
         return function() {
-          if (list.length === 1) openPostDetail(list[0]);
+          if (list.length === 1) openPostDetail(list[0], k);
           else openCategoryCluster(c, k, list);
         };
       })(ctry, cat, items));
@@ -2323,9 +2331,8 @@ function renderTable(data, realPosts) {
       + '<td class="px-4 py-3"><span style="font-weight:600;color:#0f172a">' + esc(d.title) + '</span></td>'
       + '<td class="px-4 py-3 hidden md:table-cell"><span style="color:#64748b;font-size:12px">'
       + flag + ' ' + esc(d.country) + '</span></td>'
-      + '<td class="px-4 py-3 hidden sm:table-cell">'
-      + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'35;border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;white-space:nowrap">'
-      + esc(d.category) + '</span></td>'
+      + '<td class="px-4 py-3 hidden sm:table-cell"><div style="display:flex;flex-wrap:wrap;gap:4px">'
+      + categoryPills(d, null, true) + '</div></td>'
       + '<td class="px-4 py-3">'
       + '<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#16a34a">'
       + '<svg width="9" height="9" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>'
@@ -2476,6 +2483,24 @@ function closeDetail() {
 
 /* ── Post detail panel ────────────────────────────────────────────── */
 /* ── Cluster panel: every report behind one category dot ──────────── */
+/* ── A document's issue categories as pills: the one in focus filled, with each score ── */
+function postCats(d) { return d.categories && d.categories.length ? d.categories : [d.category]; }
+function categoryPills(d, focus, small) {
+  var list = postCats(d);
+  if (focus && list.indexOf(focus) === -1) focus = null;
+  return list.map(function (c, i) {
+    var col = CAT_COLORS[c] || '#64748b';
+    var on  = focus ? c === focus : i === 0;
+    var sc  = d.scores && d.scores[c] !== undefined && d.scores[c] !== null && !isNaN(d.scores[c]) ? (+d.scores[c]).toFixed(1) : null;
+    return '<span title="' + esc(c) + (sc ? ': ' + sc + ' / 10' : '') + (i === 0 ? ' (main category)' : '') + '" style="display:inline-flex;align-items:center;gap:5px;'
+      + 'border-radius:20px;padding:' + (small ? '2px 8px' : '3px 10px') + ';font-size:' + (small ? '9.5px' : '10.5px') + ';font-weight:700;'
+      + (on ? 'background:' + col + ';color:#fff;border:1px solid ' + col : 'background:' + col + '14;color:' + col + ';border:1px solid ' + col + '40') + '">'
+      + esc(c)
+      + (sc ? '<span style="font-weight:800;' + (on ? 'opacity:.9' : '') + '">' + sc + '</span>' : '')
+      + '</span>';
+  }).join('');
+}
+
 function openCategoryCluster(country, category, items) {
   var col = CAT_COLORS[category] || '#94a3b8';
   var TYPE_LABEL = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery', POLICY_BRIEF:'Policy Brief'};
@@ -2490,12 +2515,14 @@ function openCategoryCluster(country, category, items) {
       + esc(d.title) + '</p>'
       + '<p style="font-size:10px;color:#94a3b8;margin:0;font-weight:600">'
       + esc(TYPE_LABEL[d.type] || d.type) + ' &middot; ' + esc(d.date || '') + '</p>'
+      + (postCats(d).length > 1 ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">' + categoryPills(d, category, true) + '</div>' : '')
       + '</button>';
   }).join('');
 
   window._clusterItems = items.slice().sort(function(a, b) {
     return (b.dateRaw || '').localeCompare(a.dateRaw || '');
   });
+  window._clusterCategory = category;
 
   var html =
     '<div style="height:4px;background:' + col + '"></div>'
@@ -2520,10 +2547,10 @@ function openCategoryCluster(country, category, items) {
 }
 
 function _clusterOpen(i) {
-  if (window._clusterItems && window._clusterItems[i]) openPostDetail(window._clusterItems[i]);
+  if (window._clusterItems && window._clusterItems[i]) openPostDetail(window._clusterItems[i], window._clusterCategory);
 }
 
-function openPostDetail(d) {
+function openPostDetail(d, focusCat) {
   var TYPE_LABEL  = {ARTICLE:'Article', PODCAST:'Podcast', VIDEO:'Video', DOCUMENT:'Document', GALLERY_IMAGE:'Photo Gallery', POLICY_BRIEF:'Policy Brief'};
   var TYPE_ACTION = {ARTICLE:'Read Article', PODCAST:'Listen to Episode', VIDEO:'Watch Video', DOCUMENT:'View Document', GALLERY_IMAGE:'View Gallery', POLICY_BRIEF:'Read Brief'};
   var col    = POST_TYPE_COLORS[d.type] || '#750B25';
@@ -2557,8 +2584,11 @@ function openPostDetail(d) {
        ? '<span style="background:#750B2512;color:#750B25;border:1px solid #750B2530;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
          + 'Cross-border: also ' + esc(d.countries.slice(1).join(', ')) + '</span>'
        : '')
-    + '<span style="background:'+catC+'18;color:'+catC+';border:1px solid '+catC+'38;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700">'
-    + esc(d.category)+'</span>'
+    + '</div>'
+    + '<div style="margin-bottom:14px">'
+    + '<p style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin:0 0 6px">'
+    + (postCats(d).length > 1 ? postCats(d).length + ' issue categories' : 'Issue category') + '</p>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px">' + categoryPills(d, focusCat, false) + '</div>'
     + '</div>'
     + (d.desc
        ? '<div style="margin-bottom:14px;padding:12px 14px;background:#f8fafc;border-radius:10px;border-left:3px solid '+col+'">'

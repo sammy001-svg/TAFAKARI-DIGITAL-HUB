@@ -181,7 +181,7 @@ $pageTitle = 'Policy Briefs | Tafakari Digital Hub';
           <!-- Content -->
           <div class="p-6 flex flex-col grow">
             <span class="text-[10px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b">
-              <?= h($b['issueCategory']) ?>
+              <?= h(issue_categories_text($b)) ?>
             </span>
             <h3 class="font-outfit font-bold text-lg leading-snug text-slate-900 mb-2 grow">
               <a href="/policy-briefs/<?= h($b['id']) ?>" class="group-hover:text-amber-800 transition-colors line-clamp-2"><?= h($b['title']) ?></a>

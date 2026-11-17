@@ -225,7 +225,7 @@ $pageTitle = 'Video Library | Tafakari Digital Hub';
           <div class="p-5 flex flex-col flex-grow">
             <div class="flex flex-wrap gap-2 mb-3">
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-900" style="background:#E7952A"><?= h($v['country']) ?></span>
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600"><?= h($v['issueCategory']) ?></span>
+              <?= issue_category_pills($v, 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-600') ?>
             </div>
             <h3 class="font-outfit font-bold text-base text-slate-900 leading-snug mb-2 line-clamp-2 flex-grow">
               <a href="/videos/<?= h($v['id']) ?>" class="hover:text-primary transition-colors"><?= h($v['title']) ?></a>

@@ -95,7 +95,7 @@ $adminPageSub   = 'Videos found by the agent';
         <div style="padding:16px 18px;display:flex;flex-direction:column;gap:8px;flex:1">
           <h2 class="font-outfit font-black text-base text-slate-900 leading-snug"><?= h($v['title']) ?></h2>
           <p class="text-xs font-bold" style="color:#750B25"><?= h($v['channel']) ?></p>
-          <p class="text-xs text-slate-500"><?= h($v['regionName']) ?> · <?= h($v['category']) ?></p>
+          <p class="text-xs text-slate-500"><?= h($v['regionName']) ?> · <?= h(implode(' · ', agent_video_categories($v))) ?></p>
           <p class="text-sm text-slate-700 leading-relaxed"><?= h($v['summary']) ?></p>
           <div class="flex flex-wrap gap-2" style="margin-top:auto;padding-top:8px">
             <a href="<?= h($watch) ?>" target="_blank" rel="noopener noreferrer" class="tk-btn tk-btn--outline tk-btn--sm">Watch</a>

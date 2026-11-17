@@ -622,7 +622,7 @@ try {
 
           <div class="flex flex-col grow p-6">
             <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b">
-              <?= h($art['issueCategory']) ?>
+              <?= h(issue_categories_text($art)) ?>
             </span>
             <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
               <?= h($art['title']) ?>
@@ -698,7 +698,7 @@ try {
             <!-- Info -->
             <div class="flex flex-col grow p-6">
               <?php if (!empty($pod['issueCategory'])): ?>
-                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b"><?= h($pod['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b"><?= h(issue_categories_text($pod)) ?></span>
               <?php endif; ?>
               <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2">
                 <?= h($pod['title']) ?>
@@ -772,7 +772,7 @@ try {
             <!-- Info -->
             <div class="flex flex-col grow p-6">
               <?php if (!empty($vid['issueCategory'])): ?>
-                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b"><?= h($vid['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-2 block" style="color:#64748b"><?= h(issue_categories_text($vid)) ?></span>
               <?php endif; ?>
               <h3 class="font-outfit font-bold text-[1.05rem] text-slate-900 leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
                 <?= h($vid['title']) ?>
@@ -828,7 +828,7 @@ try {
             <!-- Info -->
             <div class="flex-1 min-w-0">
               <?php if (!empty($doc['issueCategory'])): ?>
-                <span class="text-[9px] font-black uppercase tracking-widest mb-1.5 block" style="color:#64748b"><?= h($doc['issueCategory']) ?></span>
+                <span class="text-[9px] font-black uppercase tracking-widest mb-1.5 block" style="color:#64748b"><?= h(issue_categories_text($doc)) ?></span>
               <?php endif; ?>
               <h3 class="font-outfit font-bold text-[0.95rem] text-slate-900 leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">
                 <?= h($doc['title']) ?>
