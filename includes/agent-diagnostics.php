@@ -117,6 +117,13 @@ function agent_diagnose(mixed $transporter = null): array {
         $add('Connection to Claude', $conn['ok'], $conn['message'], $conn['ok'] ? '' : 'Follow the instruction in the message, then run this check again.');
         if ($conn['ok']) {
             $client = agent_client($transporter);
+            // Which organization the key belongs to: credits must be bought for this one (free request)
+            $ids = ['organization' => '', 'workspace' => '', 'request' => ''];
+            try { $ids = agent_response_ids($client->models->raw->retrieve(AGENT_MODEL, [])); } catch (Throwable $e) { $ids = agent_response_ids($e); }
+            if ($ids['organization'] !== '') {
+                $add('Anthropic organization', null, 'This key belongs to organization ID ' . $ids['organization'] . ($ids['workspace'] !== '' ? ', workspace ' . $ids['workspace'] : '')
+                     . '. Credits must be bought for this organization. In the Anthropic Console, Settings > Organization shows the ID of the organization you are in.', '');
+            }
             // A tiny request: confirms credits and model access
             try {
                 $r = $client->beta->messages->create(
@@ -128,7 +135,12 @@ function agent_diagnose(mixed $transporter = null): array {
                 $add('Credits and model', true, 'Claude answered (model ' . $r->model . ').', '');
                 $paid = true;
             } catch (Throwable $e) {
-                $add('Credits and model', false, agent_api_error($e), 'Check Plans & Billing in the Anthropic Console, then run this check again.');
+                $org = agent_response_ids($e)['organization'] ?: $ids['organization'];
+                $add('Credits and model', false, agent_api_error($e),
+                     stripos(agent_api_detail($e), 'credit balance') !== false
+                         ? 'In the Anthropic Console, switch to the organization' . ($org !== '' ? " with ID {$org}" : ' this key belongs to') . ' and check its balance under Plans & Billing. '
+                           . 'If the credits are in a different organization, either buy credits in this one, or create a new API key inside the organization that has the credits and save it here. Then run this check again.'
+                         : 'Follow the instruction in the message, then run this check again.');
                 $paid = false;
             }
             if ($paid) {

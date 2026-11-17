@@ -722,6 +722,19 @@ function report_generate_due(bool $narrative, callable $log, mixed $transporter 
         ['OUTLOOK', $today],
     ];
     $ok = true;
+    // A failed commentary makes the job a failure, so the agent's health check sees it;
+    // after an account problem (no credits, a rejected key) the other drafts are not attempted.
+    $draft = function (string $id, string $prefix) use (&$ok, &$narrative, $log, $transporter): void {
+        $n = report_draft_narrative($id, 'cron', $transporter);
+        $log($prefix . $n['message']);
+        if (!$n['ok']) {
+            $ok = false;
+            if (function_exists('agent_health_classify') && agent_health_classify($n['message']) === 'account') {
+                $narrative = false;
+                $log('The other commentaries were not attempted, for the same reason.');
+            }
+        }
+    };
     foreach ($jobs as [$kind, $start]) {
         try {
             $r = report_create($kind, $start, 'ALL', null);
@@ -731,17 +744,13 @@ function report_generate_due(bool $narrative, callable $log, mixed $transporter 
                 if ($narrative) {
                     $existing = report_get($r['id']);
                     if ($existing && $existing['status'] === 'DRAFT' && trim((string) ($existing['narrative'] ?? '')) === '') {
-                        $n = report_draft_narrative($r['id'], 'cron', $transporter);
-                        $log(report_kind_label($kind) . ' commentary retried: ' . $n['message']);
+                        $draft($r['id'], report_kind_label($kind) . ' commentary retried: ');
                     }
                 }
                 continue;
             }
             $log('Created draft ' . report_kind_label($kind) . " for {$p['label']}.");
-            if ($narrative) {
-                $n = report_draft_narrative($r['id'], 'cron', $transporter);
-                $log($n['message']);
-            }
+            if ($narrative) $draft($r['id'], '');
         } catch (Throwable $e) {
             $ok = false;
             $log("FAILED {$kind} {$start}: " . $e->getMessage());

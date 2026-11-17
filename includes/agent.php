@@ -29,7 +29,7 @@ use Anthropic\Core\Exceptions\BadRequestException;
 use Anthropic\Core\Exceptions\PermissionDeniedException;
 use Anthropic\Core\Exceptions\RateLimitException;
 
-const AGENT_CODE_VERSION  = '2026-11-17.2';   // shown in Settings > Status: confirms a deploy reached the server
+const AGENT_CODE_VERSION  = '2026-11-17.3';   // shown in Settings > Status: confirms a deploy reached the server
 const AGENT_MODEL         = 'claude-opus-5-5';
 // Server-side refusal fallback: "default" lets the API route a declined
 // request to its recommended substitute model for that refusal category.
@@ -778,6 +778,21 @@ function agent_research_loop(Client $client, array $system, array $tools, array 
     return ['submission' => $submission, 'seenUrls' => $seenUrls];
 }
 
+/**
+ * Which Anthropic organization and workspace answered, and the request ID,
+ * from the response headers of a reply or of an API error. Empty strings when
+ * not available (no response, or the headers are absent).
+ *
+ * @return array{organization:string,workspace:string,request:string}
+ */
+function agent_response_ids(mixed $from): array {
+    $resp = null;
+    if ($from instanceof \Psr\Http\Message\ResponseInterface) $resp = $from;
+    elseif (is_object($from) && property_exists($from, 'response') && $from->response instanceof \Psr\Http\Message\ResponseInterface) $resp = $from->response;
+    $get = fn(string $h) => $resp ? (string) preg_replace('/[^A-Za-z0-9_-]/', '', mb_substr($resp->getHeaderLine($h), 0, 100)) : '';
+    return ['organization' => $get('anthropic-organization-id'), 'workspace' => $get('anthropic-workspace-id'), 'request' => $get('request-id')];
+}
+
 /** The API's own sentence from an exception, rather than its full JSON dump. */
 function agent_api_detail(Throwable $e): string {
     $m = $e->getMessage();
@@ -799,7 +814,11 @@ function agent_api_error(Throwable $e): string {
         return 'This Claude API key needs a workspace, and one could not be found for it automatically. In Tafakari Agent > Settings, paste your Workspace ID (it starts with wrkspc_) and click Save and test.';
     }
     if (stripos(agent_api_detail($e), 'credit balance') !== false) {
-        return 'The key works, but the Anthropic account behind it has no API credits. A Claude.ai subscription does not cover the API: in the Anthropic Console, open Plans & Billing and add credits, then try again.';
+        $org = agent_response_ids($e)['organization'];
+        return 'The key works, but the Anthropic organization it belongs to has no API credits' . ($org ? " (organization ID {$org})" : '') . '. '
+             . 'Credits only count when they are bought for that same organization: in the Anthropic Console, check that it is the organization selected at the top left'
+             . ($org ? ' (Settings > Organization shows its ID)' : '') . ', then confirm the balance under Plans & Billing. '
+             . 'Credits bought on claude.ai, such as a Claude subscription or extra usage, do not fund the API. A new payment can take a few minutes to arrive.';
     }
     return match (true) {
         $e instanceof AuthenticationException   => 'The API key was rejected. Check the Claude API key in Tafakari Agent > Settings.',
