@@ -29,7 +29,7 @@ use Anthropic\Core\Exceptions\BadRequestException;
 use Anthropic\Core\Exceptions\PermissionDeniedException;
 use Anthropic\Core\Exceptions\RateLimitException;
 
-const AGENT_CODE_VERSION  = '2026-11-17.5';   // shown in Settings > Status: confirms a deploy reached the server
+const AGENT_CODE_VERSION  = '2026-11-18.1';   // shown in Settings > Status: confirms a deploy reached the server
 const AGENT_MODEL         = 'claude-opus-5-5';
 // Server-side refusal fallback: "default" lets the API route a declined
 // request to its recommended substitute model for that refusal category.
@@ -478,6 +478,7 @@ function agent_system_prompt(array $settings): string {
         $tax .= "\n- {$c['name']}: " . implode('; ', $c['elements']);
     }
     $maxItems = (int) $settings['max_items'];
+    $scale    = agent_scoring_scale();
 
     return <<<TXT
 You are the Tafakari Agent, a research assistant to the Centre for Research, Training and Publications (CRTP) at Hekima University College. CRTP analysts maintain a conflict heat map for African countries that peacebuilders, researchers, faith and civil-society actors and government officials use to act early. Your job is to find, verify and summarise recent developments and to propose intensity scores. Analysts decide what is published: nothing you submit is published without human review, so accuracy and honest uncertainty matter more than coverage.
@@ -490,11 +491,7 @@ Classify each finding under one or more of these heat-map categories, by scoring
 
 ## Scoring
 Score each relevant element from 1 to 10 for the severity of what the sources report, not the volume of coverage:
-- 1-2 Stable: no meaningful tension, or routine activity.
-- 3-4 Low: isolated or localised incidents, rhetoric without mobilisation.
-- 5-6 Moderate: repeated incidents, significant tension, limited casualties or displacement, stalled processes.
-- 7-8 High: sustained violence, multiple fatalities, large displacement, a serious breakdown of political or humanitarian conditions.
-- 9-10 Critical: large-scale fighting, mass atrocities, famine conditions, or the collapse of state authority in the area.
+{$scale}
 Score only the elements the evidence actually addresses; leave the others out. Give each score a one- or two-sentence rationale naming the specific facts behind it. For peace-process and engagement elements, a higher score means the situation they describe is more acute (for example, a collapsing ceasefire), not that the effort is larger.
 
 ## Sources
@@ -514,6 +511,17 @@ When a development concerns more than one country, list every country concerned,
 
 ## Submitting
 Call submit_findings exactly once, at the end. Submit at most {$maxItems} findings, preferring fewer well-sourced findings to many thin ones, and merge reports of the same development into one finding. If you found nothing significant and verifiable, call submit_findings with an empty items list and explain why in notes. Write in clear, neutral, plain English; region is the county, district, state or province, or an empty string if unknown; event_date is YYYY-MM-DD or an empty string.
+TXT;
+}
+
+/** CRTP's 1-10 severity scale, shared by every prompt that proposes scores. */
+function agent_scoring_scale(): string {
+    return <<<TXT
+- 1-2 Stable: no meaningful tension, or routine activity.
+- 3-4 Low: isolated or localised incidents, rhetoric without mobilisation.
+- 5-6 Moderate: repeated incidents, significant tension, limited casualties or displacement, stalled processes.
+- 7-8 High: sustained violence, multiple fatalities, large displacement, a serious breakdown of political or humanitarian conditions.
+- 9-10 Critical: large-scale fighting, mass atrocities, famine conditions, or the collapse of state authority in the area.
 TXT;
 }
 

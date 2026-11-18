@@ -413,9 +413,16 @@ $adminPageSub   = $cfg['sub'];
     </div>
 
     <!-- Intensity Assessment -->
-    <?php intensity_scoring_fields(
+    <?php
+      require_once dirname(__DIR__, 2) . '/includes/agent-grades.php';
+      intensity_scoring_fields(
         array_map('intval', (array)($_POST['intensity'] ?? [])),
-        source_count_from_post($_POST)
+        source_count_from_post($_POST),
+        [],
+        agent_grade_blocked() === null
+            ? 'Leave the scores empty and the AI will propose grades about five minutes after you save, for you to check under Tafakari Agent &gt; Document grades.'
+            : '',
+        $defaultType === 'DOCUMENT'
     ); ?>
 
   </div><!-- /.tk-editor__main -->
@@ -597,6 +604,10 @@ function setType(type) {
 
   // Cancel link
   document.getElementById('cancel-link').href = cfg.backHref;
+
+  // The AI grades documents only
+  var aiNote = document.getElementById('int-ai-note');
+  if (aiNote) aiNote.style.display = type === 'DOCUMENT' ? '' : 'none';
 }
 
 function switchTab(tab) {

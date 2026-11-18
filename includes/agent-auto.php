@@ -3,8 +3,10 @@ declare(strict_types=1);
 /**
  * Tafakari Agent - runs by itself.
  *
- * One hourly job calls agent_auto_tick(), which does one piece of work: the
- * day's report drafts, a YouTube search, an article, or a monitoring run.
+ * One scheduled job, every five minutes, calls agent_auto_cron(): documents
+ * posted at least five minutes earlier are graded first, then, once an hour,
+ * agent_auto_tick() does one piece of the other work: the day's report
+ * drafts, a country update, a YouTube search, an article or a monitoring run.
  * Daily limits keep the volume steady.
  * Nothing here publishes: everything lands in a queue for people to approve.
  */
@@ -14,14 +16,53 @@ require_once __DIR__ . '/agent-articles.php';
 require_once __DIR__ . '/agent-videos.php';
 require_once __DIR__ . '/agent-updates.php';
 require_once __DIR__ . '/agent-health.php';
+require_once __DIR__ . '/agent-grades.php';
 
 const AGENT_AUTO_UPDATES_PER_DAY  = 2;   // country monitoring updates: every monitored country once per cycle
 const AGENT_AUTO_ARTICLES_PER_DAY = 2;
 const AGENT_AUTO_FINDINGS_PER_DAY = 4;
+const AGENT_AUTO_WORK_MINUTES     = 55;  // the other work: one piece an hour, however often the job runs
+const AGENT_AUTO_CRON_LINE        = '*/5 * * * *';
+
+/**
+ * One run of the scheduled job. Grading comes first so a new document is
+ * graded about five minutes after it is posted; the hourly work follows when
+ * its hour is up, as before.
+ *
+ * @return array{status:string,task:?string,message:string}
+ */
+function agent_auto_cron(mixed $transporter = null): array {
+    $started = time();
+    agent_auto_mark_tick();
+    agent_health_cleanup();
+    $done = [];
+    $g = agent_grade_scheduled(AGENT_GRADE_PER_RUN, $transporter);
+    if ($g !== null) {
+        agent_health_record($g);
+        $done[] = $g;
+    }
+    $last = agent_auto_setting('agent_auto_last_work');
+    if ($last === '' || strtotime($last) <= $started - AGENT_AUTO_WORK_MINUTES * 60) {
+        // The start of this run, so a long grading pass does not push the next hour back
+        set_setting('agent_auto_last_work', date('Y-m-d H:i:s', $started));
+        $done[] = agent_auto_tick(false, $transporter);
+    }
+    if (!$done) return ['status' => 'IDLE', 'task' => null, 'message' => ''];
+    $status = in_array('FAILED', array_column($done, 'status'), true) ? 'FAILED' : (in_array('OK', array_column($done, 'status'), true) ? 'OK' : 'IDLE');
+    return ['status' => $status, 'task' => implode('+', array_filter(array_column($done, 'task'))) ?: null,
+            'message' => implode(' · ', array_filter(array_column($done, 'message')))];
+}
+
+/** Record that the scheduled job ran, keeping the previous time to see how often it runs. */
+function agent_auto_mark_tick(): void {
+    $prev = agent_auto_setting('agent_auto_last_tick');
+    if ($prev !== '') set_setting('agent_auto_prev_tick', $prev);
+    set_setting('agent_auto_last_tick', date('Y-m-d H:i:s'));
+}
 
 /** How many runs of each kind have started today. */
 function agent_auto_today(): array {
-    $out = ['ARTICLE' => 0, 'CRON' => 0, 'VIDEO' => 0, 'UPDATE' => 0, 'QUARTER' => 0];
+    $out = ['ARTICLE' => 0, 'CRON' => 0, 'VIDEO' => 0, 'UPDATE' => 0, 'QUARTER' => 0, 'GRADE' => 0, 'GRADE_OLD' => 0];
     try {
         $st = db()->prepare('SELECT triggeredBy, COUNT(*) AS n FROM AgentRun WHERE startedAt >= ? GROUP BY triggeredBy');
         $st->execute([date('Y-m-d 00:00:00')]);
@@ -165,13 +206,16 @@ function agent_auto_unlock(mixed $fh): void {
  * Send the browser on its way now, and keep working after the response is
  * closed, so long research never hangs the page or meets the web server's
  * request time limit.
+ *
+ * @param string|null $location where to send the browser; null for an empty reply (background requests)
  */
-function agent_respond_and_continue(string $location): void {
+function agent_respond_and_continue(?string $location): void {
     ignore_user_abort(true);
     @set_time_limit(900);
     while (ob_get_level() > 0) @ob_end_clean();
     if (!headers_sent()) {
-        header('Location: ' . $location, true, 303);
+        if ($location !== null) header('Location: ' . $location, true, 303);
+        else http_response_code(204);
         header('Connection: close');
         header('Content-Length: 0');
     }
@@ -193,8 +237,13 @@ function agent_auto_next_label(bool $force): string {
     ][$task] ?? 'looking for work to do';
 }
 
-/** @return array{lastTick:string,running:bool} running = the hourly job has fired recently */
+/**
+ * @return array{lastTick:string,running:bool,everyMinutes:?int}
+ *         running = the scheduled job has fired recently; everyMinutes = the gap between its last two runs
+ */
 function agent_auto_status(): array {
     $last = agent_auto_setting('agent_auto_last_tick');
-    return ['lastTick' => $last, 'running' => $last !== '' && strtotime($last) >= time() - 3 * 3600];
+    $prev = agent_auto_setting('agent_auto_prev_tick');
+    $every = $last !== '' && $prev !== '' ? (int) round((strtotime($last) - strtotime($prev)) / 60) : null;
+    return ['lastTick' => $last, 'running' => $last !== '' && strtotime($last) >= time() - 3 * 3600, 'everyMinutes' => $every];
 }

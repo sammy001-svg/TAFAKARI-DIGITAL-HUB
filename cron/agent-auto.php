@@ -2,11 +2,11 @@
 declare(strict_types=1);
 /**
  * Tafakari Agent - the one scheduled job (command line only).
- * Run hourly; the agent decides what is due. It never publishes anything.
- *
- * cPanel > Cron Jobs:
- *   0 * * * *  /usr/local/bin/php /home/USER/public_html/cron/agent-auto.php >> /home/USER/agent.log 2>&1
+ * Run every five minutes: documents posted five minutes earlier are graded,
+ * and once an hour the agent does one piece of its other work. It never
+ * publishes anything. The cPanel > Cron Jobs line is below.
  */
+// */5 * * * *  /usr/local/bin/php /home/USER/public_html/cron/agent-auto.php >> /home/USER/agent.log 2>&1
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
@@ -22,16 +22,18 @@ require_once $root . '/includes/agent-auto.php';
 // One piece of work at a time, including one started with Run now
 $lock = agent_auto_lock();
 if ($lock === false) {
-    set_setting('agent_auto_last_tick', date('Y-m-d H:i:s'));   // the job is alive, just waiting its turn
-    fwrite(STDOUT, '[' . date('Y-m-d H:i:s') . '] busy: other work is still running' . PHP_EOL);
+    agent_auto_mark_tick();   // the job is alive, just waiting its turn
     exit(0);
 }
 
 try {
-    $r = agent_auto_tick();
+    $r = agent_auto_cron();
 } catch (Throwable $e) {
     $r = ['status' => 'FAILED', 'task' => null, 'message' => $e->getMessage()];
 }
-fwrite(STDOUT, '[' . date('Y-m-d H:i:s') . '] ' . ($r['task'] ?? '-') . ': ' . $r['status'] . ' ' . $r['message'] . PHP_EOL);
+// Every five minutes: write to the log only when something happened
+if ($r['status'] !== 'IDLE' || $r['task'] !== null) {
+    fwrite(STDOUT, '[' . date('Y-m-d H:i:s') . '] ' . ($r['task'] ?? '-') . ': ' . $r['status'] . ' ' . $r['message'] . PHP_EOL);
+}
 agent_auto_unlock($lock);
 exit($r['status'] === 'FAILED' ? 1 : 0);

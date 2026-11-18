@@ -2,7 +2,7 @@
 
 The conflict and peace monitoring platform of the Centre for Research, Training and Publications (CRTP), Hekima University College. It publishes a conflict heat map of the African countries CRTP monitors, bi-weekly and quarterly analysis reports, country monitoring updates, and CRTP's articles, documents, policy briefs, podcasts and videos.
 
-An AI research assistant, the **Tafakari Agent** (built on Anthropic's Claude), does the routine research. It compiles country monitoring updates, proposes scores, drafts reports and articles, and finds videos. **It never publishes.** Every item waits for a CRTP admin, and monitoring updates and analysis reports need a super admin's approval.
+An AI research assistant, the **Tafakari Agent** (built on Anthropic's Claude), does the routine research. It compiles country monitoring updates, proposes scores, grades the intensity of the documents staff post, drafts reports and articles, and finds videos. **It never publishes.** Every item waits for a CRTP admin, and monitoring updates and analysis reports need a super admin's approval.
 
 - For the CRTP team: [docs/admin-guide.md](docs/admin-guide.md)
 - For the public: the methodology page at `/methodology`
@@ -26,12 +26,13 @@ update-export.php         /updates/{id}/word|excel: a published country update
 admin/                    Admin portal (sign-in required)
   agent.php               Tafakari Agent: findings, Activity, Settings
   agent-updates.php       Country monitoring updates: review, fact check, approve
+  agent-grades.php        Document grades: accept, adjust or reject the AI's intensity grades
   agent-articles.php      AI articles: verify and publish
   agent-videos.php        Suggested videos: approve and post
   reports.php, report.php Analysis reports
   super/                  Super-admin pages: approvals, users, heat-map configuration, ...
 api/                      JSON endpoints used by the admin pages and the chat assistant
-cron/agent-auto.php       The one scheduled job (hourly)
+cron/agent-auto.php       The one scheduled job (every five minutes)
 includes/
   functions.php           Shared helpers, heat-map taxonomy, monitoring cycles, aggregation
   reports.php             Analysis reports: snapshots, comparative ratings, AI narrative
@@ -41,7 +42,9 @@ includes/
   agent-updates.php       Country monitoring updates (the CRTP template), quarterly updates
   agent-articles.php      AI articles
   agent-videos.php        Video finder
-  agent-auto.php          The hourly plan: what the agent does next
+  agent-grades.php        Intensity grades for posted documents: reading, grading, review
+  agent-grade-beacon.php  Lets admin pages start grading that is due (light; no AI code)
+  agent-auto.php          The schedule: grading every five minutes, other work hourly
   assistant.php           Public chat assistant (English, French and Kiswahili)
   issue-categories.php    Several issue categories per item: storage, display, the shared form field
   agent-classify.php      "Suggest with AI": proposes a document's issue categories
@@ -56,14 +59,15 @@ Routes are clean URLs set in [.htaccess](.htaccess), which also blocks web acces
 1. Create the MySQL database in cPanel and import the base tables from [prisma/mysql-init.sql](prisma/mysql-init.sql) in phpMyAdmin. Everything else is created automatically (see below).
 2. Put the real database credentials, `APP_URL` and a long random `APP_SECRET` in `config.php` **on the server only**. The copy in git holds placeholders; never commit real values.
 3. Deploy the code with cPanel > Git Version Control: **Update from Remote**, then **Deploy HEAD Commit**.
-4. Add the hourly job in cPanel > Cron Jobs:
+4. Add the scheduled job in cPanel > Cron Jobs, to run every five minutes:
    ```
-   0 * * * * /usr/local/bin/php /home/USER/public_html/cron/agent-auto.php
+   */5 * * * * /usr/local/bin/php /home/USER/public_html/cron/agent-auto.php
    ```
+   A server set up earlier with an hourly line (`0 * * * *`) keeps working, but grades new documents up to an hour late; Settings > Status says so and shows the line to use.
 5. Sign in as a super admin. Open **Tafakari Agent > Settings**, paste a Claude API key, click **Save and test**, and switch the agent on.
 6. Press **Check everything** in Settings. It tests PHP, the SDK, the database, the key, the connection, credits, web search (which must be enabled for the Anthropic organisation) and the chat, and names the fix for anything that fails ([includes/agent-diagnostics.php](includes/agent-diagnostics.php)).
 
-**Run now** replies to the browser at once and finishes the work after the response is closed (`fastcgi_finish_request` or `litespeed_finish_request`, with `noabort` set for `/admin/agent` in `.htaccess`), so long research is not cut off by web-server time limits. It shares a lock with the hourly job, so only one piece of work runs at a time.
+**Run now** replies to the browser at once and finishes the work after the response is closed (`fastcgi_finish_request` or `litespeed_finish_request`, with `noabort` set for `/admin/agent` in `.htaccess`), so long research is not cut off by web-server time limits. It shares a lock with the scheduled job, so only one piece of work runs at a time.
 
 New tables and columns are created automatically the first time the relevant page or job runs. Each is attempted once, and the result is recorded in `SiteSetting` (keys `schema_*`). If the database user cannot create tables, run the matching file in `migrations/` in phpMyAdmin.
 
@@ -75,10 +79,11 @@ Push to GitHub, then in cPanel choose **Update from Remote** and **Deploy HEAD C
 
 ## The Tafakari Agent
 
-Each hourly run does one piece of work ([includes/agent-auto.php](includes/agent-auto.php)), in this order of priority:
+The scheduled job runs every five minutes ([includes/agent-auto.php](includes/agent-auto.php), `agent_auto_cron()`). Each run first grades the documents that are due, then, once an hour, does one piece of the other work, in this order of priority:
 
 | Work | How often | Output, waiting for review |
 |---|---|---|
+| Document grades | Every run, up to three documents | Proposed intensity scores for documents posted without them (see below) |
 | Analysis report drafts | Once a day | Bi-weekly, quarterly and Outlook drafts with AI commentary |
 | Quarterly country update | One a day, after a quarter closes | Drawn from the quarter's approved bi-weekly updates; no new research |
 | Country monitoring update | Two a day, each country once per cycle | The full CRTP template, with a fact check and proposed scores |
@@ -86,11 +91,22 @@ Each hourly run does one piece of work ([includes/agent-auto.php](includes/agent
 | Article | Two a day | A sourced article on a region and indicator |
 | Finding | Four a day | Single developments with proposed scores |
 
-**Run now** in Settings does the next piece of work, ignoring the daily limits.
+**Run now** in Settings does the next piece of the hourly work, ignoring the daily limits.
+
+### Document grades
+
+[includes/agent-grades.php](includes/agent-grades.php) grades the intensity of `DOCUMENT` posts that have no `intensityScores`:
+
+- **When.** A document is due five minutes after it was posted or last edited (`updatedAt`), newest first. Each run of the scheduled job grades up to three. Documents posted in the last seven days count as new (up to 60 a day); older ones are the backlog (up to 40 a day), so the backlog never holds up a new document. Drafts and documents awaiting approval are graded too; rejected and archived ones are not.
+- **Admin pages help.** Where the job still runs hourly, an admin page that finds a due document asks `/admin/agent/grades/due` in the background (`agent_grade_beacon()`, at most once a minute). That request answers at once with 204 and grades one document after the response is closed.
+- **What the AI reads.** The summary, the description, and the attached file: a PDF up to 20 MB and 100 pages is sent whole as a document block; Word and PowerPoint files are read as text; a linked web page is read as text. Files on the site are read from `public/uploads`; other links are downloaded only from public addresses. With fewer than 150 characters to read and no PDF, nothing is sent and the document is marked "not graded" with what to add.
+- **The grading.** One request: `claude-opus-5-5`, effort `medium`, structured output (`agent_grade_schema()`): a score from 1 to 10 for each element the document gives evidence on, each with a reason, plus confidence and a summary. The scale is the agent's own (`agent_scoring_scale()`), so grades and findings are calibrated alike. Recent reviewer corrections and rejection reasons are sent with each request (`agent_grade_feedback()`).
+- **Review.** Proposals are stored in `AgentGrade` (one row per document, migrations/015) and do not touch the post. Accepting one writes `Post.intensityScores` with `scoreSource` `AI` (accepted as proposed) or `AI_REVIEWED` (adjusted). A document scored by hand in the meantime keeps its scores and the proposal is set aside.
+- **Retrying.** A failure is retried an hour later, up to three times. A document the AI could not grade is tried again when it is edited, or when someone presses **Grade again**.
 
 ### Safeguards
 
-- **Nothing is published by the AI.** Publishing a country update or analysis report needs a super admin, who must tick a review confirmation. Articles need an admin's confirmed verification.
+- **Nothing is published by the AI.** Publishing a country update or analysis report needs a super admin, who must tick a review confirmation. Articles need an admin's confirmed verification. Document grades count on the heat map only once a person accepts them.
 - **Every citation is checked.** The agent may cite only URLs the API returned during that run's web search or fetch. Rows and claims citing anything else are removed, and an update needs at least three independent publishers.
 - **The fact check is enforced in code.** A claim the model marks "verified" is downgraded to "single source" unless two independent publishers it actually retrieved support it.
 - **Provenance is kept.** Approved updates enter the heat map labelled `AI_REVIEWED`. Quarterly updates carry no scores, so nothing is counted twice.

@@ -345,11 +345,25 @@ $adminPageSub   = h($post['title'] ?? '');
               $scorerName = $st->fetchColumn() ?: null;
           } catch (\Throwable $e) {}
       }
+      // What the AI has done, or will do, about grading this document
+      $aiNote = '';
+      if (($post['type'] ?? '') === 'DOCUMENT' && !post_intensity_scores($post['intensityScores'] ?? null)) {
+          require_once dirname(__DIR__, 2) . '/includes/agent-grades.php';
+          $grade = agent_grade_for_post((string) $post['id']);
+          $gradesLink = '<a href="/admin/agent/grades' . ($grade ? '/' . h(rawurlencode((string) $grade['id'])) : '') . '" class="font-bold underline" style="color:#750B25">';
+          if ($grade && $grade['status'] === 'PROPOSED') {
+              $aiNote = 'The AI has proposed grades for this document. ' . $gradesLink . 'Review and accept them</a>, or score it yourself here.';
+          } elseif ($grade && in_array($grade['status'], ['DECLINED', 'FAILED'], true)) {
+              $aiNote = 'The AI did not grade this document: ' . h((string) $grade['notes']) . ' ' . $gradesLink . 'Document grades</a>';
+          } elseif (agent_grade_blocked() === null) {
+              $aiNote = 'Leave the scores empty and the AI will propose grades about five minutes after you save, for you to check under Tafakari Agent &gt; Document grades.';
+          }
+      }
       intensity_scoring_fields($currentScores, $currentSources, [
           'source' => $post['scoreSource'] ?? null,
           'by'     => $scorerName,
           'at'     => $post['scoredAt'] ?? null,
-      ]);
+      ], $aiNote);
     ?>
 
   </div><!-- /.tk-editor__main -->

@@ -19,6 +19,7 @@ Open **Tafakari Agent** in the sidebar. The number beside it shows how many item
 |---|---|---|
 | **Country updates** | A monitoring update for each country, every cycle | Read the update and its fact check, open the sources, correct anything, then a super admin approves it. See below. |
 | **Findings** | Single developments found between updates, with proposed scores | Open the sources. If the finding is sound, choose **Create draft report**, check the scores and submit it. Otherwise reject it with a reason. |
+| **Document grades** | Intensity scores proposed for documents you posted without them | Read the scores and reasons. **Accept grades**, **Adjust** them, or **Reject** them with a reason. See below. |
 | **Articles** | Sourced articles on a region and an indicator | Read the article and the "Check these first" points, open the sources, edit if needed, tick **I have verified this article**, then **Publish**. |
 | **Videos** | YouTube videos on your regions | Click **Watch**. If it is suitable, choose **Approve and post**. Rejected videos are never suggested again. |
 
@@ -70,6 +71,26 @@ If an update is not good enough, **Reject** it with a reason. A rejected update 
 ### Quarterly updates
 
 After a quarter closes, the agent writes a quarterly update for each country from the bi-weekly updates CRTP approved during that quarter. It does no new research for these. Review and approve them the same way. Quarterly updates do not add to the heat map, so nothing is counted twice.
+
+## Document grades
+
+When you post a document and leave its **Intensity Assessment** empty, the AI grades it for you about five minutes later. It reads the summary, the description and the attached file (a PDF, Word or PowerPoint file, or the linked web page), then proposes a score from 1 to 10 for each heat-map element the document reports on, with a short reason for each. The five minutes give you time to finish editing; if you change the document, the five minutes start again.
+
+The grades wait under **Tafakari Agent > Document grades**. They do not count on the heat map until someone accepts them:
+
+1. Read the scores and the reasons. Open the document file if a score looks wrong.
+2. Choose one:
+   - **Accept grades:** they become the document's scores as they are.
+   - **Adjust:** the scoring sliders open at the AI's grades. Change any you disagree with, then **Save and accept**.
+   - **Reject:** the document keeps no scores, and you can score it by hand on its edit page. Say why in the box: the AI reads your reasons, and your adjustments, before grading the next documents.
+
+Any admin can do this. Accepted scores are labelled "AI-proposed scores, accepted by a CRTP analyst" or "adjusted by a CRTP analyst" in the methodology.
+
+**Not graded** lists documents the AI did not grade, with the reason: usually there was too little to read (only a title and a file it cannot open), or the document does not describe a conflict or peace situation, such as a training manual. Add a summary of a few sentences or attach the file as a PDF or Word document, and it is graded again by itself. **Grade again** asks for it at once; **Score by hand** opens the edit page.
+
+If you score a document yourself before reviewing the AI's grades, your scores are kept and the AI's are set aside.
+
+**Documents posted before this feature.** Documents that never had scores are graded too, newest first, up to 40 a day, so the credits are spread out. New documents always come first.
 
 ## Critical alerts
 
@@ -127,11 +148,11 @@ They are added to the saved configuration automatically. Super admins can rename
 
 **Tafakari Agent > Settings** has only a few options:
 
-- **Agent on:** switches the agent's automatic work on or off.
+- **Agent on:** switches the agent's automatic work on or off, document grading included.
 - **Chat button on the website:** shows or hides the public chat assistant. It speaks English, French and Kiswahili: it answers in the language each visitor writes in, and its buttons and messages follow the website's language, or the language the visitor picks in the chat's own menu (EN, FR, SW).
 - **Claude API key:** paste the key and choose **Save and test**. It should confirm that the agent is ready. Leave Workspace ID blank unless Anthropic asks for one.
-- **Status:** shows whether the agent is working normally or paused, and whether the hourly job is running. If it is not, it shows the one line to add in cPanel under Cron Jobs. It also shows the **software version**, so you can confirm a deploy reached the server.
-- **Run now:** starts one piece of work immediately (usually the next country update) and takes you to **Activity**, which refreshes itself until the work is done, usually one to five minutes. You can leave the page meanwhile. If Run now is greyed out, the red box at the top of Settings says why.
+- **Status:** shows whether the agent is working normally or paused, and whether the scheduled job is running. If it is not running, or runs only hourly, it shows the line to use in cPanel under Cron Jobs; it should run every five minutes. It also shows the **software version**, so you can confirm a deploy reached the server.
+- **Run now:** starts one piece of the hourly work immediately (usually the next country update) and takes you to **Activity**, which refreshes itself until the work is done, usually one to five minutes. You can leave the page meanwhile. If Run now is greyed out, the red box at the top of Settings says why.
 - **Check everything:** tests each part the agent and the website chat need: PHP, the Claude software, the database, the API key, the connection, the account's credits, web search and the chat. Every problem it finds comes with what to do. Run it after saving a key, adding credits or deploying an update. It makes a few small test requests to Claude.
 
 **Activity** lists every piece of work the agent has done, with any error.
@@ -140,7 +161,7 @@ If something stops the agent or the chat from working at all, a red box at the t
 
 ### What the agent does each day
 
-Each hour the agent does one piece of work, in this order of priority:
+Every five minutes it grades the documents posted at least five minutes earlier without scores (see **Document grades**). Each hour it also does one piece of other work, in this order of priority:
 
 1. On the first run of the day, it creates the report drafts that are due.
 2. One quarterly update, if a quarter has closed.
@@ -167,9 +188,10 @@ The agent runs on Anthropic's API, which is paid from prepaid credits in the Ant
 - **Check everything says web search is not working.** The agent's research needs web search, which an organisation's admin can switch off. In the Anthropic Console, open Settings > Privacy and make sure web search is enabled, then check again.
 - **The agent has paused.** After an account problem (no credits, a rejected key) it pauses for six hours instead of failing every hour, and emails the super admins once. Fix the cause, then press **Check everything** or **Run now**, and it restarts straight away.
 - **A country has no update this cycle.** The agent writes about two a day, so the last countries arrive near the end of the cycle. Activity shows whether it declined a country for lack of reliable reporting. A super admin can click **Write now** to try again.
+- **A new document was not graded after five minutes.** Check that the agent is on and not paused (**Settings > Status**). If Status says the job runs only hourly, change the cron line to the one it shows; until then, documents are graded while admins are using the portal, or within the hour. The document's edit page, and **Document grades > Not graded**, say why the AI did not grade it.
 - **A download fails with "The file could not be created".** The server needs PHP's zip extension. Ask your host to enable it.
 - **A fix does not seem to take effect.** Check the **Software version** at the bottom of Settings > Status. If it is older than the version your developer gave you, the new code has not reached the server: deploy again in cPanel > Git Version Control.
-- **No new items for several days.** Check **Activity** for errors, and **Settings > Status** to confirm the hourly job is running.
+- **No new items for several days.** Check **Activity** for errors, and **Settings > Status** to confirm the scheduled job is running.
 
 ## If you are locked out
 

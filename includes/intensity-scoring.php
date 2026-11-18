@@ -15,8 +15,10 @@
  * @param int      $sourceCount independent corroborating sources (>= 1)
  * @param array    $provenance  ['source' => ?string, 'by' => ?string name, 'at' => ?string]
  *                              from the stored post; [] when creating
+ * @param string   $noteHtml    an escaped line about AI grading, shown under the description ('' for none)
+ * @param bool     $noteShown   false to render the note hidden (the form shows it for documents only)
  */
-function intensity_scoring_fields(array $current = [], int $sourceCount = 1, array $provenance = []): void {
+function intensity_scoring_fields(array $current = [], int $sourceCount = 1, array $provenance = [], string $noteHtml = '', bool $noteShown = true): void {
     $tax = heatmap_taxonomy();
     $sourceCount = max(1, min(99, $sourceCount));
     ?>
@@ -33,6 +35,11 @@ function intensity_scoring_fields(array $current = [], int $sourceCount = 1, arr
         corroboration and recency &mdash; see <a href="/methodology" target="_blank" rel="noopener"
         class="font-semibold underline" style="color:#750B25">the published methodology</a>.
       </p>
+
+      <?php if ($noteHtml !== ''): ?>
+        <p id="int-ai-note" class="text-xs text-slate-600 mb-5 px-3 py-2 rounded-xl leading-relaxed"
+           style="background:rgba(231,149,42,.10);border:1px solid rgba(231,149,42,.35)<?= $noteShown ? '' : ';display:none' ?>"><?= $noteHtml ?></p>
+      <?php endif; ?>
 
       <?php if (!empty($provenance['source']) || !empty($provenance['at'])): ?>
         <p class="text-[11px] text-slate-500 mb-5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">

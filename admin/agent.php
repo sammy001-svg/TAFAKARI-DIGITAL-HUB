@@ -400,7 +400,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <tr class="border-t border-slate-100 align-top">
             <td class="px-4 py-3 whitespace-nowrap text-xs text-slate-600"><?= h(format_date($r['startedAt'], 'j M Y, H:i')) ?></td>
             <td class="px-4 py-3 font-bold text-slate-800"><?= h($r['country']) ?></td>
-            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', 'PREFLIGHT' => 'Readiness check', 'ARTICLE' => 'Article writer', 'VIDEO' => 'Video search', default => 'Scheduled' }) ?></td>
+            <td class="px-4 py-3 text-xs text-slate-600"><?= h(match ($r['triggeredBy']) { 'MANUAL' => 'Manual' . (!empty($r['starterName']) ? ' (' . $r['starterName'] . ')' : ''), 'REPORT' => 'Report narrative', 'PREFLIGHT' => 'Readiness check', 'ARTICLE' => 'Article writer', 'VIDEO' => 'Video search', 'GRADE' => 'Document grading', 'GRADE_OLD' => 'Document grading (older)', 'CLASSIFY' => 'Issue categories', default => 'Scheduled' }) ?></td>
             <td class="px-4 py-3"><span class="ag-chip" style="background:<?= $sc ?>15;color:<?= $sc ?>"><?= h($r['status']) ?></span></td>
             <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
               <?= (int) $r['itemsProposed'] ?> new · <?= (int) $r['itemsDuplicate'] ?> dup · <?= (int) $r['itemsDiscarded'] ?> discarded</td>
@@ -445,7 +445,7 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
           <input type="checkbox" name="enabled" value="1" <?= $settings['enabled'] ? 'checked' : '' ?> class="mt-1 w-4 h-4" style="accent-color:#750B25">
           <span>
             <span class="block text-sm font-bold text-slate-800">Agent on</span>
-            <span class="block text-xs text-slate-500">It monitors your regions, writes articles and finds YouTube videos by itself. It never publishes.</span>
+            <span class="block text-xs text-slate-500">It monitors your regions, grades the documents you post, writes articles and finds YouTube videos by itself. It never publishes.</span>
           </span>
         </label>
         <label class="flex items-start gap-3 cursor-pointer">
@@ -537,11 +537,16 @@ $adminPageSub   = 'AI-proposed findings awaiting analyst review';
             <?= $_planLabel ? 'Next, it will ' . h($_planLabel) . '.' : 'Today\'s work is done.' ?></p>
           <?php if ($_h['failures'] > 0): ?><p class="text-xs" style="color:#9A5B0F"><?= (int) $_h['failures'] ?> recent run<?= $_h['failures'] == 1 ? '' : 's' ?> failed; it keeps trying. Latest: <?= h(preg_replace('/^[^·]*· /', '', $_h['lastError'])) ?></p><?php endif; ?>
         <?php endif; ?>
-        <?php if ($_auto['running']): ?>
-          <p class="text-xs text-slate-500">The hourly job is running. Last checked <?= h(format_relative_time($_auto['lastTick'])) ?>.</p>
+        <?php $_cronLine = AGENT_AUTO_CRON_LINE . ' /usr/local/bin/php ' . dirname(__DIR__) . '/cron/agent-auto.php'; ?>
+        <?php if ($_auto['running'] && ($_auto['everyMinutes'] === null || $_auto['everyMinutes'] <= 15)): ?>
+          <p class="text-xs text-slate-500">The scheduled job is running. Last checked <?= h(format_relative_time($_auto['lastTick'])) ?>.</p>
+        <?php elseif ($_auto['running']): ?>
+          <p class="text-xs text-slate-500">The scheduled job is running, but only about every <?= $_auto['everyMinutes'] >= 50 ? 'hour' : (int) $_auto['everyMinutes'] . ' minutes' ?>.
+            For new documents to be graded five minutes after they are posted, change it in cPanel &rarr; Cron Jobs to run every five minutes:</p>
+          <code class="block p-2 rounded-lg bg-slate-50 break-all text-xs"><?= h($_cronLine) ?></code>
         <?php else: ?>
           <p>To let it run by itself, add this one line in cPanel &rarr; Cron Jobs, once:</p>
-          <code class="block p-2 rounded-lg bg-slate-50 break-all text-xs">0 * * * * /usr/local/bin/php <?= h(dirname(__DIR__)) ?>/cron/agent-auto.php</code>
+          <code class="block p-2 rounded-lg bg-slate-50 break-all text-xs"><?= h($_cronLine) ?></code>
         <?php endif; ?>
         <form method="POST" onsubmit="var b=this.querySelector('button');b.disabled=true;b.textContent='Starting…';">
           <input type="hidden" name="csrf" value="<?= h($csrf) ?>">
